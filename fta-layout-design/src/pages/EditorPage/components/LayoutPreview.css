@@ -1,0 +1,59 @@
+/* 渐变边框动画 - 使用 GPU 加速优化 */
+@keyframes pulseGradient {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 3px rgba(102, 126, 234, 0.8),
+      0 0 0 6px rgba(118, 75, 162, 0.5),
+      0 0 25px rgba(102, 126, 234, 0.5),
+      inset 0 0 15px rgba(102, 126, 234, 0.1);
+    transform: translateZ(0);
+  }
+  25% {
+    box-shadow: 
+      0 0 0 4px rgba(118, 75, 162, 0.9),
+      0 0 0 7px rgba(102, 126, 234, 0.4),
+      0 0 35px rgba(118, 75, 162, 0.6),
+      inset 0 0 20px rgba(118, 75, 162, 0.15);
+    transform: translateZ(0);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 3px rgba(102, 126, 234, 0.8),
+      0 0 0 8px rgba(118, 75, 162, 0.3),
+      0 0 45px rgba(102, 126, 234, 0.7),
+      inset 0 0 25px rgba(102, 126, 234, 0.2);
+    transform: translateZ(0);
+  }
+  75% {
+    box-shadow: 
+      0 0 0 5px rgba(118, 75, 162, 0.7),
+      0 0 0 9px rgba(102, 126, 234, 0.2),
+      0 0 35px rgba(118, 75, 162, 0.5),
+      inset 0 0 20px rgba(118, 75, 162, 0.15);
+    transform: translateZ(0);
+  }
+}
+
+/* 预览容器样式 */
+.layout-preview-container {
+  max-width: 100%;
+  border: 1px solid rgb(217, 217, 217);
+  background-color: rgb(245, 245, 245);
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  will-change: transform;
+  margin: 0 auto;
+}
+
+/* DSL 元素悬停过渡效果 */
+.layout-preview-element {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s ease;
+  will-change: transform, opacity;
+}
+
+/* 内部内容容器 */
+.layout-preview-content {
+  transform-origin: top left;
+}

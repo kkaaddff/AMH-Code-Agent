@@ -1,0 +1,545 @@
+{
+  "nodeId": "1309:23268",
+  "componentName": "Page",
+  "layout": {
+    "flexDirection": "column",
+    "width": 720,
+    "height": 1560,
+    "backgroundColorToken": "paint_1:0131",
+    "backgroundColor": "#F5F5F5"
+  },
+  "children": [
+    {
+      "nodeId": "1309:23270",
+      "componentName": "Header",
+      "layout": {
+        "flexDirection": "column"
+      },
+      "children": [
+        {
+          "nodeId": "1309:30716",
+          "componentName": "NavBar",
+          "comment": "页面顶部的导航栏，包含标题。",
+          "children": [
+            {
+              "nodeId": "1309:30716/1:0071",
+              "componentName": "Text",
+              "props": {
+                "content": "我的运力池",
+                "fontSize": 36,
+                "color": "#FFFFFF"
+              }
+            },
+            {
+              "nodeId": "1309:30716/1:0075",
+              "componentName": "Flex",
+              "children": [
+                {
+                  "componentName": "Icon",
+                  "props": {
+                    "name": "more"
+                  }
+                },
+                {
+                  "componentName": "Icon",
+                  "props": {
+                    "name": "close"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "1309:30859",
+          "componentName": "NoticeBar",
+          "comment": "“货车定位”提示条。",
+          "children": [
+            {
+              "nodeId": "1309:30859/11:3457",
+              "componentName": "Icon",
+              "props": {
+                "name": "notification"
+              }
+            },
+            {
+              "nodeId": "1309:30859/11:3452",
+              "componentName": "Text",
+              "props": {
+                "content": "货车定位：定位精准，点击查看详情",
+                "fontSize": 28,
+                "color": "#FF7000"
+              }
+            },
+            {
+              "nodeId": "1309:30859/11:3458",
+              "componentName": "Icon",
+              "props": {
+                "name": "arrow-right"
+              }
+            }
+          ]
+        },
+        {
+          "nodeId": "1309:23275",
+          "componentName": "Search",
+          "comment": "搜索框。",
+          "children": [
+            {
+              "nodeId": "1309:23275/1:0324/1:0311",
+              "componentName": "Icon",
+              "props": {
+                "name": "search"
+              }
+            },
+            {
+              "nodeId": "1309:23275/1:0324/1:0313",
+              "componentName": "Input",
+              "props": {
+                "placeholder": "夏",
+                "fontSize": 28,
+                "color": "#1A1A1A"
+              }
+            },
+            {
+              "nodeId": "1309:23275/1:0324/1:0312",
+              "componentName": "Icon",
+              "props": {
+                "name": "close-circle"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "componentName": "ScrollView",
+      "comment": "这是一个虚拟容器，用于包裹可滚动的内容列表。",
+      "layout": {
+        "flex": 1
+      },
+      "children": [
+        {
+          "nodeId": "1309:30095",
+          "componentName": "DriverInfoCard",
+          "comment": "司机信息卡片，这是一个可复用的组件。",
+          "layout": {
+            "margin": "24px 24px 0 24px"
+          },
+          "children": [
+            {
+              "nodeId": "1309:30119",
+              "componentName": "Flex",
+              "layout": {
+                "flexDirection": "row",
+                "alignItems": "center"
+              },
+              "children": [
+                {
+                  "nodeId": "1309:30132",
+                  "componentName": "Avatar"
+                },
+                {
+                  "nodeId": "1309:30121",
+                  "componentName": "Flex",
+                  "layout": {
+                    "flexDirection": "column",
+                    "flex": 1
+                  },
+                  "children": [
+                    {
+                      "nodeId": "1309:30122",
+                      "componentName": "Text",
+                      "props": {
+                        "content": "夏师傅 | 苏A6***G | 9.6米/平板",
+                        "fontSize": 28,
+                        "color": "#1A1A1A"
+                      }
+                    },
+                    {
+                      "nodeId": "1309:30126",
+                      "componentName": "Flex",
+                      "layout": {
+                        "flexDirection": "row"
+                      },
+                      "children": [
+                        {
+                          "nodeId": "1309:30134",
+                          "componentName": "Tag",
+                          "props": {
+                            "content": "通话次数 4",
+                            "fontSize": 20,
+                            "color": "#FF7000"
+                          }
+                        },
+                        {
+                          "nodeId": "1309:30149",
+                          "componentName": "Tag",
+                          "props": {
+                            "content": "好评率98%",
+                            "fontSize": 20,
+                            "color": "#FF7000"
+                          }
+                        },
+                        {
+                          "nodeId": "1309:30144",
+                          "componentName": "Tag",
+                          "props": {
+                            "content": "交易数 999",
+                            "fontSize": 20,
+                            "color": "#FF7000"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "1309:30127",
+                  "componentName": "Icon",
+                  "props": {
+                    "name": "phone"
+                  }
+                }
+              ]
+            },
+            {
+              "nodeId": "1309:30097",
+              "componentName": "Card",
+              "children": [
+                {
+                  "nodeId": "1309:30109",
+                  "componentName": "Flex",
+                  "layout": {
+                    "flexDirection": "row"
+                  },
+                  "children": [
+                    {
+                      "nodeId": "1309:30133",
+                      "componentName": "Icon",
+                      "props": {
+                        "name": "route"
+                      }
+                    },
+                    {
+                      "nodeId": "1309:30111",
+                      "componentName": "Text",
+                      "props": {
+                        "content": "常跑线路",
+                        "fontSize": 24,
+                        "color": "#666666"
+                      }
+                    },
+                    {
+                      "nodeId": "1309:30115",
+                      "componentName": "Text",
+                      "props": {
+                        "content": "上海-南京，苏州-上海，呼和浩特-南宁，鄂尔多斯-哈尔滨，张家界-石家庄",
+                        "fontSize": 24,
+                        "color": "#1A1A1A"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "1309:30099",
+                  "componentName": "Flex",
+                  "layout": {
+                    "flexDirection": "row"
+                  },
+                  "children": [
+                    {
+                      "componentName": "Icon",
+                      "props": {
+                        "name": "location-pin"
+                      }
+                    },
+                    {
+                      "componentName": "Text",
+                      "props": {
+                        "content": "最新定位",
+                        "fontSize": 24,
+                        "color": "#666666"
+                      }
+                    },
+                    {
+                      "nodeId": "1309:30100",
+                      "componentName": "Text",
+                      "props": {
+                        "content": "苏州市 吴江区 2023-11-08 12:00:00\n距我21km",
+                        "fontSize": 24,
+                        "color": "#1A1A1A"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "1309:30435",
+          "componentName": "DriverInfoCard",
+          "comment": "又一个司机信息卡片实例。",
+          "layout": {
+            "margin": "16px 24px 0 24px"
+          },
+          "children": [
+            {
+              "nodeId": "1309:30458",
+              "componentName": "Flex",
+              "layout": {
+                "flexDirection": "row",
+                "alignItems": "center"
+              },
+              "children": [
+                {
+                  "nodeId": "1309:30475",
+                  "componentName": "Avatar"
+                },
+                {
+                  "nodeId": "1309:30463",
+                  "componentName": "Flex",
+                  "layout": {
+                    "flexDirection": "column",
+                    "flex": 1
+                  },
+                  "children": [
+                    {
+                      "nodeId": "1309:30464",
+                      "componentName": "Text",
+                      "props": {
+                        "content": "夏师傅 | 苏A6***G | 9.6米/平板",
+                        "fontSize": 28,
+                        "color": "#1A1A1A"
+                      }
+                    },
+                    {
+                      "nodeId": "1309:30468",
+                      "componentName": "Flex",
+                      "layout": {
+                        "flexDirection": "row"
+                      },
+                      "children": [
+                        {
+                          "nodeId": "1309:30476",
+                          "componentName": "Tag",
+                          "props": {
+                            "content": "通话次数 4",
+                            "fontSize": 20,
+                            "color": "#FF7000"
+                          }
+                        },
+                        {
+                          "nodeId": "1309:30481",
+                          "componentName": "Tag",
+                          "props": {
+                            "content": "好评率98%",
+                            "fontSize": 20,
+                            "color": "#FF7000"
+                          }
+                        },
+                        {
+                          "nodeId": "1309:30486",
+                          "componentName": "Tag",
+                          "props": {
+                            "content": "交易数 999",
+                            "fontSize": 20,
+                            "color": "#FF7000"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "1309:30460",
+                  "componentName": "Icon",
+                  "props": {
+                    "name": "phone"
+                  }
+                }
+              ]
+            },
+            {
+              "nodeId": "1309:30437",
+              "componentName": "Card",
+              "children": [
+                {
+                  "nodeId": "1309:30449",
+                  "componentName": "Flex",
+                  "layout": {
+                    "flexDirection": "row"
+                  },
+                  "children": [
+                    {
+                      "componentName": "Icon",
+                      "props": {
+                        "name": "route"
+                      }
+                    },
+                    {
+                      "componentName": "Text",
+                      "props": {
+                        "content": "常跑线路",
+                        "fontSize": 24,
+                        "color": "#666666"
+                      }
+                    },
+                    {
+                      "nodeId": "1309:30450",
+                      "componentName": "Text",
+                      "props": {
+                        "content": "上海-南京，苏州-上海，呼和浩特-南宁，鄂尔多斯-哈尔滨，张家界-石家庄",
+                        "fontSize": 24,
+                        "color": "#1A1A1A"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "1309:30439",
+                  "componentName": "Flex",
+                  "layout": {
+                    "flexDirection": "row"
+                  },
+                  "children": [
+                    {
+                      "componentName": "Icon",
+                      "props": {
+                        "name": "location-pin"
+                      }
+                    },
+                    {
+                      "componentName": "Text",
+                      "props": {
+                        "content": "最新定位",
+                        "fontSize": 24,
+                        "color": "#666666"
+                      }
+                    },
+                    {
+                      "nodeId": "1309:30440",
+                      "componentName": "Text",
+                      "props": {
+                        "content": "苏州市 吴江区 2023-11-08 12:00:00\n距我21km",
+                        "fontSize": 24,
+                        "color": "#1A1A1A"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "1309:30469",
+          "componentName": "Text",
+          "comment": "“没有更多了”的列表底部提示。",
+          "props": {
+            "content": "没有更多了",
+            "fontSize": 24,
+            "color": "#999999"
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "1309:53960",
+      "componentName": "TabBar",
+      "comment": "底部固定的标签导航栏。",
+      "layout": {
+        "position": "absolute",
+        "bottom": 0,
+        "width": "100%",
+        "flexDirection": "row"
+      },
+      "children": [
+        {
+          "nodeId": "1309:53961",
+          "componentName": "TabItem",
+          "props": {
+            "selected": true
+          },
+          "children": [
+            {
+              "componentName": "Icon",
+              "props": {
+                "name": "my-capacity"
+              }
+            },
+            {
+              "componentName": "Text",
+              "props": {
+                "content": "我的运力池",
+                "fontSize": 22,
+                "color": "#FF7000"
+              }
+            }
+          ]
+        },
+        {
+          "nodeId": "1309:53971",
+          "componentName": "TabItem",
+          "children": [
+            {
+              "componentName": "Icon",
+              "props": {
+                "name": "shipping"
+              }
+            },
+            {
+              "componentName": "Text",
+              "props": {
+                "content": "熟车发货",
+                "fontSize": 22,
+                "color": "#666666"
+              }
+            }
+          ]
+        },
+        {
+          "nodeId": "1309:53966",
+          "componentName": "TabItem",
+          "children": [
+            {
+              "componentName": "Icon",
+              "props": {
+                "name": "my-goods"
+              }
+            },
+            {
+              "componentName": "Text",
+              "props": {
+                "content": "我的货源",
+                "fontSize": 22,
+                "color": "#666666"
+              }
+            }
+          ]
+        },
+        {
+          "nodeId": "1309:53976",
+          "componentName": "TabItem",
+          "children": [
+            {
+              "componentName": "Icon",
+              "props": {
+                "name": "profile"
+              }
+            },
+            {
+              "componentName": "Text",
+              "props": {
+                "content": "个人中心",
+                "fontSize": 22,
+                "color": "#666666"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,173 @@
+# FTA Layout Design - Cursor Rules
+
+## 项目概述
+这是一个基于 React 的 FTA (Figma-to-App) 设计到代码转换平台。应用采用多页面架构，从设计上传、需求分析到代码生成，最终提供交互式布局编辑器。
+
+## 技术栈
+- React 18 + TypeScript + Vite 5
+- React Router DOM v7
+- Ant Design 组件库
+- Zustand 状态管理
+- 其他: Dagre, Lexical, React Flow
+
+## 项目结构与路径别名
+- 根目录: `index.html` (入口)
+- 源代码: `src/` (components, pages, utils, hooks, styles, types, contexts, config)
+- 路径别名 (vite.config.ts):
+  - `@` → `src`
+  - `components` → `src/components`
+  - `utils` → `src/utils`
+  - `types` → `src/types`
+  - `hooks` → `src/hooks`
+- 示例: `import Layout from '@/components/Layout'`
+- 构建输出: `dist/`
+
+## 开发命令
+- `npm run dev` — 启动开发服务器 (HMR)
+- `npm run build` — 类型检查 + Vite 构建
+- `npm run preview` — 预览生产构建
+- 推荐 Node 18+
+
+## 代码风格与命名规范
+- 语言: TypeScript, React 函数组件 (.tsx)
+- 格式化: Prettier (print width 120, 2 空格缩进)
+- 命名约定:
+  - 组件: `PascalCase` (如 `LayoutEditor.tsx`)
+  - 变量/函数: `camelCase`
+  - 类型/接口: `PascalCase`
+- 导入: 优先使用路径别名 (`@/utils/...`) 而非相对路径
+- TypeScript: `strict` 模式启用，无未使用的本地变量/参数
+- 导入排序: 先外部库，后内部模块，保持逻辑分组
+
+## 提交信息规范 (Angular Commit Format - 中文)
+**必须遵循**: 使用中文描述，最多 50 词
+
+### 格式
+```
+<type>(<scope>): <subject>
+
+<body>
+```
+
+### Type 类型
+- `feat` — 新功能
+- `fix` — 修复 bug
+- `docs` — 文档更新
+- `refactor` — 代码重构
+- `style` — 代码格式调整
+- `test` — 测试相关
+- `chore` — 构建/工具配置
+
+### Scope (可选)
+使用中文或英文组件/模块名，如: `组件识别`, `LayoutEditor`, `Canvas`
+
+### Subject
+简洁的中文变更摘要 (一句话)
+
+### Body
+多行详细说明，使用 `-` 列出具体变更项
+
+### 示例
+```
+feat(组件识别): 新增中间层级节点显示与交互功能
+
+- 新增中间层级节点提取工具 intermediateNodeExtractor.ts
+- 在组件识别编辑器中添加显示所有层级开关
+- 支持选择中间节点并自动组合其下的叶子节点
+- 优化 DetectionCanvas 渲染逻辑,添加中间节点虚线边框显示
+```
+
+## Pull Request 规范
+- 清晰的描述说明
+- UI 变更需附带前后对比截图或 GIF
+- 提供测试步骤
+- 关联相关 issue
+- 确保 `npm run build` 通过且无类型错误
+
+## 架构说明
+
+### 应用流程
+1. **首页** (`/`): 上传设计，配置输出设置
+2. **需求分析** (`/requirements`): 查看平台能力
+3. **技术架构** (`/technical`): 了解技术实现
+4. **编辑器** (`/editor`): 交互式编辑
+   - `/editor/component-detect`: 组件识别
+   - `/editor/layout`: 布局编辑
+
+### 核心组件
+- **App** (`src/App.tsx`): 根路由组件
+- **Layout** (`src/components/Layout.tsx`): 共享布局包装器
+- **LayoutEditor** (`src/pages/EditorPage/components/LayoutEditor.tsx`): 三面板编辑器
+- **DSLElement** (`src/components/DSLElement.tsx`): DSL 节点渲染 (React.memo 优化)
+- **LayoutTree** (`src/pages/EditorPage/components/LayoutTree.tsx`): 组件树
+- **LayoutPreview** (`src/pages/EditorPage/components/LayoutPreview.tsx`): 预览区
+- **DetectionCanvas** (`src/pages/EditorPage/components/DetectionCanvas.tsx`): 组件识别画布
+
+### Context 管理
+- **SelectionContext**: 选中和悬停状态
+- **EditContext**: 编辑模式和状态
+- **ProjectContext**: 项目级状态
+- **ComponentDetectionContext**: 组件识别状态
+
+### 关键工具函数
+- **styleUtils** (`src/utils/styleUtils.ts`): DSL 样式解析
+- **nodeUtils** (`src/utils/nodeUtils.ts`): 节点遍历和搜索
+- **nodeMapping** (`src/utils/nodeMapping.ts`): DSL 与 LayoutTree 双向映射
+- **debounce** (`src/utils/debounce.ts`): 性能优化节流
+
+### 数据流
+1. **DSL Data** (`src/demo/DesignDSL.json`): FTA 导出格式
+2. **Layout Tree Data** (`src/demo/LayoutTree.json`): 编辑器组件树
+
+### 类型定义
+- **dsl.ts**: DSL 数据结构
+- **layout.ts**: 布局树节点定义
+- **router.ts**: 路由类型
+- **project.ts**: 项目类型
+
+## 性能优化
+- 使用 `React.memo` + 自定义比较函数
+- 悬停事件节流 (50ms)
+- `useMemo` 缓存样式计算
+- `useCallback` 缓存事件处理器
+
+## DSL 节点渲染
+- **FRAME**: Flexbox 容器
+- **TEXT**: 样式文本 (字体、颜色、文本模式)
+- **LAYER**: 背景图或纯色填充
+- **PATH**: SVG 路径渲染
+- **INSTANCE**: 组件引用
+- **GROUP**: 通用分组容器
+
+## 编辑器特性
+- 三面板布局: 组件树 + 预览区 + 属性面板
+- 实时选择同步
+- 悬停高亮反馈
+- 网格覆盖层切换
+- 编辑模式: 普通视图、绘制模式
+- 显示/隐藏边界框
+- 中间层级节点识别与交互
+
+## 注意事项
+- **测试**: 当前未配置测试框架 (建议 Vitest + React Testing Library)
+- **ESLint**: 已配置但无 npm 脚本
+- **构建**: 使用 `tsc && vite build` 流程
+- **当前分支**: `feat/designable-V`
+
+## 开发最佳实践
+1. 优先编辑已有文件，避免创建不必要的新文件
+2. 保持模块在现有文件夹结构内
+3. 使用路径别名保持导入简洁
+4. 遵循 TypeScript strict 模式
+5. 前端页面变更无需生成测试或启动服务器验证 (除非明确要求)
+6. 提交前确保代码格式化和类型检查通过
+
+## 响应语言
+**所有交互使用中文回复**
+
+## Matplotlib 中文显示 (如需要)
+```python
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+```
+

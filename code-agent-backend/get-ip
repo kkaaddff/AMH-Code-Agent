@@ -1,0 +1,50 @@
+#!/usr/bin/env node
+'use strict'
+
+const http = require('http')
+const os = require('os')
+const fs = require('fs')
+
+function getLocalIpAddress() {
+  const interfaces = os.networkInterfaces()
+  for (const interfaceName in interfaces) {
+    const addresses = interfaces[interfaceName]
+    for (const address of addresses) {
+      if (
+        address.family === 'IPv4' &&
+        !address.internal &&
+        ['192', '172', '10'].some((ip) => address.address.startsWith(ip))
+      ) {
+        return address.address
+      }
+    }
+  }
+  return null
+}
+
+const localIpAddress = getLocalIpAddress()
+
+if (localIpAddress) {
+  const jenkinsUrl = 'http://qa-fta-server.amh-group.com/updateJetkinsUrl?url=' + `http://${localIpAddress}:8899`
+  http
+    .get(jenkinsUrl, (res) => {
+      fs.appendFileSync(
+        './updateJetkinsUrl.log',
+        `${new Date().toLocaleString()} => http://${localIpAddress}:8899 successfully`
+      )
+      console.log('Jenkins URL updated successfully')
+    })
+    .on('error', (err) => {
+      fs.appendFileSync(
+        './updateJetkinsUrl.log',
+        `${new Date().toLocaleString()} => http://${localIpAddress}:8899 Failed`
+      )
+      console.error('Failed to update Jenkins URL:', err)
+    })
+} else {
+  fs.appendFileSync(
+    './updateJetkinsUrl.log',
+    `${new Date().toLocaleString()} => http://${localIpAddress}:8899 Failed to retrieve`
+  )
+  console.error('Failed to retrieve local IP address')
+}
