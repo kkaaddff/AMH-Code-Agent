@@ -135,6 +135,19 @@ export default (appInfo: EggAppInfo) => {
     baseUrl: 'https://mg.amh-group.com',
     token: 'mg_27eea23a42b54a3dbd338ea9ce80ea52',
   }
+
+  /**
+   * 模型网关配置
+   */
+  config.modelGateway = {
+    default: {
+      endpoint: process.env.MODEL_ENDPOINT,
+      apiKey: process.env.MODEL_API_KEY,
+      model: process.env.MODEL_NAME,
+      timeout: process.env.MODEL_TIMEOUT ? Number(process.env.MODEL_TIMEOUT) : undefined,
+      temperature: process.env.MODEL_TEMPERATURE ? Number(process.env.MODEL_TEMPERATURE) : undefined,
+    },
+  }
   /**
    * lion 配置
    */

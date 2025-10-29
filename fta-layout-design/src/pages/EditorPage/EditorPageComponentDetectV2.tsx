@@ -17,7 +17,7 @@ import RequirementDocDrawer from './components/RequirementDocDrawer';
 import { ComponentDetectionProviderV2, useComponentDetectionV2 } from './contexts/ComponentDetectionContextV2';
 import { COMPONENT_STYLES } from './styles/EditorPageStyles';
 import { loadAnnotationState } from './utils/componentStorage';
-import { generateRequirementDoc } from './utils/mockRequirementAPI';
+import { generateRequirementDoc } from './utils/requirementDoc';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
@@ -40,6 +40,7 @@ const EditorPageContent: React.FC = () => {
     saveAnnotations,
     loadAnnotations,
     updateDslRootNode,
+    rootAnnotation,
   } = useComponentDetectionV2();
   const [scale, setScale] = useState(0.5);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -130,9 +131,14 @@ const EditorPageContent: React.FC = () => {
       return;
     }
 
+    if (!rootAnnotation) {
+      message.error('暂无标注数据，无法生成需求规格文档');
+      return;
+    }
+
     try {
       message.loading({ content: '正在生成需求规格文档...', key: 'generating' });
-      const content = await generateRequirementDoc(designId);
+      const content = await generateRequirementDoc(designId, rootAnnotation);
       setDocContent(content);
       setIsDocDrawerOpen(true);
       message.success({ content: '需求规格文档生成成功', key: 'generating' });

@@ -2,6 +2,7 @@ import { ILifeCycle, IMidwayContainer } from '@midwayjs/core'
 import { App, Configuration } from '@midwayjs/decorator'
 import { Application } from '@midwayjs/web'
 import { join } from 'path'
+import * as dotenv from 'dotenv'
 
 import * as crossDomain from '@midwayjs/cross-domain'
 // import * as staticFile from '@midwayjs/static-file'
@@ -13,6 +14,9 @@ import * as typegoose from '@midwayjs/typegoose'
 import * as lion from '@fta/server-middleware-lion'
 import * as upload from '@midwayjs/upload'
 import * as egg from '@midwayjs/web'
+
+// load .env file in process.cwd
+dotenv.config()
 
 @Configuration({
   // imports 的顺序很重要 egg必须在第一个～

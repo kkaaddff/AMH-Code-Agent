@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Put, Query } from '@midwayjs/decorator'
+import { Body, Controller, Get, Inject, Post, Query } from '@midwayjs/decorator'
 import { ApiOkResponse, ApiOperation, ApiTags } from '@midwayjs/swagger'
 import { Context } from '@midwayjs/web'
 import { HttpStatus, MidwayHttpError } from '@midwayjs/core'
@@ -12,8 +12,8 @@ import {
 } from '../../dto/design'
 import { DesignRequirementDocumentService } from '../../service/design'
 
-@ApiTags(['Design'])
-@Controller('/design', { description: 'Requirement Document Management' })
+@ApiTags(['Code Agent'])
+@Controller('/code-agent/requirement', { description: 'Requirement Document Management' })
 export class DesignRequirementDocumentController {
   @Inject()
   ctx: Context
@@ -39,29 +39,29 @@ export class DesignRequirementDocumentController {
 
   @ApiOperation({ summary: '生成需求规格文档草稿' })
   @ApiOkResponse({ type: RequirementDocumentDetailResponse })
-  @Post('/:designId/requirement-docs/generate')
-  async generateRequirementDocument(
-    @Param('designId') designId: string,
-    @Body() body: GenerateRequirementDocumentBody
-  ) {
+  @Post('/generate')
+  async generateRequirementDocument(@Body() body: GenerateRequirementDocumentBody & { designId: string }) {
+    const { designId, ...restBody } = body
     const operatorId = this.resolveOperatorId()
-    const doc = await this.designRequirementDocumentService.generateRequirementDocument(designId, body, operatorId)
+    const doc = await this.designRequirementDocumentService.generateRequirementDocument(designId, restBody, operatorId)
     return new RequirementDocumentDetailResponse(doc)
   }
 
   @ApiOperation({ summary: '更新需求文档' })
   @ApiOkResponse({ type: RequirementDocumentDetailResponse })
-  @Put('/requirement-docs/:docId')
-  async updateRequirementDocument(@Param('docId') docId: string, @Body() body: UpdateRequirementDocumentBody) {
+  @Post('/update')
+  async updateRequirementDocument(@Body() body: UpdateRequirementDocumentBody & { docId: string }) {
+    const { docId, ...restBody } = body
     const operatorId = this.resolveOperatorId()
-    const doc = await this.designRequirementDocumentService.updateRequirementDocument(docId, body, operatorId)
+    const doc = await this.designRequirementDocumentService.updateRequirementDocument(docId, restBody, operatorId)
     return new RequirementDocumentDetailResponse(doc)
   }
 
   @ApiOperation({ summary: '获取需求文档详情' })
   @ApiOkResponse({ type: RequirementDocumentDetailResponse })
-  @Get('/requirement-docs/:docId')
-  async getRequirementDocument(@Param('docId') docId: string) {
+  @Get('/detail')
+  async getRequirementDocument(@Query() query: { docId: string }) {
+    const { docId } = query
     const doc = await this.designRequirementDocumentService.getRequirementDocumentById(docId)
     if (!doc) {
       throw new MidwayHttpError('Requirement document not found', HttpStatus.NOT_FOUND)
@@ -71,19 +71,21 @@ export class DesignRequirementDocumentController {
 
   @ApiOperation({ summary: '分页查询需求文档列表' })
   @ApiOkResponse({ type: RequirementDocumentListResponse })
-  @Get('/:designId/requirement-docs')
-  async listRequirementDocuments(
-    @Param('designId') designId: string,
-    @Query() query: RequirementDocumentPaginationQuery
-  ) {
-    const { list, total } = await this.designRequirementDocumentService.paginateRequirementDocuments(designId, query)
+  @Get('/list')
+  async listRequirementDocuments(@Query() query: RequirementDocumentPaginationQuery & { designId: string }) {
+    const { designId, ...restQuery } = query
+    const { list, total } = await this.designRequirementDocumentService.paginateRequirementDocuments(
+      designId,
+      restQuery
+    )
     return new RequirementDocumentListResponse(list, total)
   }
 
   @ApiOperation({ summary: '导出需求文档文件' })
   @ApiOkResponse({ type: RequirementDocumentExportResponse })
-  @Post('/requirement-docs/:docId/export')
-  async exportRequirementDocument(@Param('docId') docId: string) {
+  @Post('/export')
+  async exportRequirementDocument(@Body() body: { docId: string }) {
+    const { docId } = body
     const operatorId = this.resolveOperatorId()
     const downloadUrl = await this.designRequirementDocumentService.exportRequirementDocument(docId, operatorId)
     return new RequirementDocumentExportResponse(downloadUrl)

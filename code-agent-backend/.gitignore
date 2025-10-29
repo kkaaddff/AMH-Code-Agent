@@ -6,6 +6,7 @@ package-lock.json
 coverage/
 dist/
 .idea/
+.env
 run/
 .DS_Store
 *.sw*

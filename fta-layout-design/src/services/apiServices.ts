@@ -14,11 +14,12 @@ import type {
   DocumentReference,
 } from '@/types/project';
 import { projectMockService } from './mockProjectService';
+import { requirementMockService } from './mockRequirementService';
 
-const ENABLE_PROJECT_MOCK = import.meta.env.VITE_ENABLE_MOCK === 'true';
+const ENABLE_MOCK = import.meta.env.VITE_ENABLE_MOCK === 'true';
 
-const resolveRequest = async <T>(mockHandler: () => Promise<T>, apiHandler: () => Promise<T>) => {
-  if (ENABLE_PROJECT_MOCK) {
+const resolveRequest = async <T>(useMock: boolean, mockHandler: () => Promise<T>, apiHandler: () => Promise<T>) => {
+  if (useMock) {
     return mockHandler();
   }
   return apiHandler();
@@ -63,6 +64,7 @@ export const projectService = {
    */
   async getProjects(params?: ProjectListParams): Promise<ProjectListResponse> {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.getProjects(params),
       async () => {
         const response = await api.project.list(params);
@@ -76,6 +78,7 @@ export const projectService = {
    */
   async createProject(data: CreateProjectForm) {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.createProject(data),
       async () => {
         const response = await api.project.create(data);
@@ -89,6 +92,7 @@ export const projectService = {
    */
   async updateProject(id: string, data: Partial<Project>) {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.updateProject(id, data),
       async () => {
         const response = await api.project.update(id, data);
@@ -102,6 +106,7 @@ export const projectService = {
    */
   async deleteProject(id: string) {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.deleteProject(id),
       async () => {
         const response = await api.project.delete(id);
@@ -115,6 +120,7 @@ export const projectService = {
    */
   async getProjectDetail(id: string) {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.getProjectDetail(id),
       async () => {
         const response = await api.project.detail(id);
@@ -128,6 +134,7 @@ export const projectService = {
    */
   async createPage(projectId: string, data: CreatePageForm) {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.createPage(projectId, data),
       async () => {
         const response = await api.project.page.create({ projectId, ...data });
@@ -145,6 +152,7 @@ export const projectService = {
     updates: Partial<Page> & { designUrls?: string[]; prdUrls?: string[]; openapiUrls?: string[] }
   ) {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.updatePage(projectId, pageId, updates),
       async () => {
         const response = await api.project.page.update({ projectId, pageId, ...updates });
@@ -158,6 +166,7 @@ export const projectService = {
    */
   async deletePage(projectId: string, pageId: string) {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.deletePage(projectId, pageId),
       async () => {
         const response = await api.project.page.delete({ projectId, pageId });
@@ -177,6 +186,7 @@ export const projectService = {
     status: string
   ) {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.updateDocumentStatus(projectId, pageId, type, documentId, status as any),
       async () => {
         const response = await api.project.document.updateStatus({
@@ -196,6 +206,7 @@ export const projectService = {
    */
   async syncDocument(projectId: string, pageId: string, type: 'design' | 'prd' | 'openapi', documentId: string) {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.syncDocument(projectId, pageId, type, documentId),
       async () => {
         const response = await api.project.document.sync({
@@ -214,6 +225,7 @@ export const projectService = {
    */
   async getDocumentContent(params: { documentId: string }): Promise<DocumentReference> {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.getDocumentContent(params),
       async () => {
         const response = await api.project.document.getContent(params);
@@ -227,6 +239,7 @@ export const projectService = {
    */
   async updateDocument(payload: Partial<DocumentReference>) {
     return resolveRequest(
+      ENABLE_MOCK,
       () => projectMockService.updateDocument(payload),
       async () => {
         const response = await api.project.document.update(payload);
@@ -309,25 +322,77 @@ export const requirementService = {
   /**
    * 生成需求文档
    */
-  async generateRequirement(data: { projectId: string; requirements: any[] }) {
-    const response = await api.requirement.generate(data);
-    return response.data;
+  async generateRequirement(params: {
+    designId: string;
+    rootAnnotation?: any;
+    templateKey?: string;
+    annotationVersion?: number;
+    annotationSchemaVersion?: string;
+  }) {
+    return resolveRequest(
+      ENABLE_MOCK,
+      () => requirementMockService.generateRequirement(params),
+      async () => {
+        const response = await api.requirement.generate(params);
+        return response.data;
+      }
+    );
   },
 
   /**
    * 保存需求文档
    */
-  async saveRequirement(data: { projectId: string; document: any }) {
-    const response = await api.requirement.save(data);
-    return response.data;
+  async saveRequirement(data: { docId: string; title?: string; content?: string; status?: string }) {
+    return resolveRequest(
+      ENABLE_MOCK,
+      () => requirementMockService.saveRequirement(data),
+      async () => {
+        const response = await api.requirement.update(data);
+        return response.data;
+      }
+    );
   },
 
   /**
    * 导出需求文档
    */
-  async exportRequirement(params: { projectId: string; format?: string }) {
-    const response = await api.requirement.export(params);
-    return response.data;
+  async exportRequirement(params: { docId: string }) {
+    return resolveRequest(
+      ENABLE_MOCK,
+      () => requirementMockService.exportRequirement(params),
+      async () => {
+        const response = await api.requirement.export(params.docId);
+        return response.data;
+      }
+    );
+  },
+
+  /**
+   * 获取需求文档详情
+   */
+  async getRequirementDetail(docId: string) {
+    return resolveRequest(
+      ENABLE_MOCK,
+      () => requirementMockService.getRequirementDetail({ docId }),
+      async () => {
+        const response = await api.requirement.detail(docId);
+        return response.data;
+      }
+    );
+  },
+
+  /**
+   * 获取需求文档列表
+   */
+  async getRequirementList(params: { designId: string; page?: number; size?: number }) {
+    return resolveRequest(
+      ENABLE_MOCK,
+      () => requirementMockService.getRequirementList(params),
+      async () => {
+        const response = await api.requirement.list(params);
+        return response.data;
+      }
+    );
   },
 };
 

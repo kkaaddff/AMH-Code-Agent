@@ -18,7 +18,7 @@ import {
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import './RequirementDocDrawer.css';
-import { executeCodeGeneration, saveRequirementDoc, loadRequirementDoc } from '../utils/mockRequirementAPI';
+import { executeCodeGeneration, saveRequirementDoc, loadRequirementDoc } from '../utils/requirementDoc';
 
 interface RequirementDocDrawerProps {
   open: boolean;

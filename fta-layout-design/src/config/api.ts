@@ -65,8 +65,10 @@ export const API_ENDPOINTS = {
   },
   // 需求文档相关
   requirement: {
+    list: '/code-agent/requirement/list',
     generate: '/code-agent/requirement/generate',
-    save: '/code-agent/requirement/save',
+    detail: '/code-agent/requirement/detail',
+    update: '/code-agent/requirement/update',
     export: '/code-agent/requirement/export',
   },
   // 布局相关

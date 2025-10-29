@@ -8,6 +8,15 @@ export class GenerateRequirementDocumentBody {
 
   @ApiProperty({ required: false, example: true, description: '是否强制从 DSL 解析最新数据' })
   forceRefresh?: boolean
+
+  @ApiProperty({ required: false, description: '组件标注根节点数据', type: 'object' })
+  rootAnnotation?: Record<string, any>
+
+  @ApiProperty({ required: false, example: 3, description: '标注版本号，用于提示词上下文' })
+  annotationVersion?: number
+
+  @ApiProperty({ required: false, example: '1.0', description: '标注 schema 版本号' })
+  annotationSchemaVersion?: string
 }
 
 export class UpdateRequirementDocumentBody {

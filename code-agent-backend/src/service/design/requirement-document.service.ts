@@ -11,7 +11,7 @@ import type {
 } from '../../dto/design'
 import { DesignDocumentService } from './design-document.service'
 import { DesignComponentAnnotationService } from './component-annotation.service'
-import { generateRequirementMarkdown } from '../../utils/design/requirement-builder'
+import { RequirementSpecModelService } from './requirement-spec-model.service'
 
 const MAX_PAGE_SIZE = 50
 
@@ -26,6 +26,9 @@ export class DesignRequirementDocumentService {
 
   @Inject()
   private designComponentAnnotationService: DesignComponentAnnotationService
+
+  @Inject()
+  private requirementSpecModelService: RequirementSpecModelService
 
   private normalizeDocument(
     doc: DocumentType<DesignRequirementDocumentEntity> | (DesignRequirementDocumentEntity & { _id?: any })
@@ -75,11 +78,34 @@ export class DesignRequirementDocumentService {
       throw new MidwayHttpError('Design document not found', HttpStatus.NOT_FOUND)
     }
 
-    const annotation = await this.designComponentAnnotationService.getLatestAnnotation(designId)
-    const generation = generateRequirementMarkdown({
+    const annotationRecord =
+      payload.rootAnnotation !== undefined
+        ? {
+            rootAnnotation: payload.rootAnnotation,
+            version: payload.annotationVersion,
+            schemaVersion: payload.annotationSchemaVersion,
+          }
+        : await this.designComponentAnnotationService.getLatestAnnotation(designId)
+
+    const rootAnnotation = annotationRecord?.rootAnnotation ?? null
+    const annotationVersion =
+      payload.annotationVersion ??
+      (annotationRecord && typeof (annotationRecord as any).version === 'number'
+        ? (annotationRecord as any).version
+        : undefined)
+    const annotationSchemaVersion =
+      payload.annotationSchemaVersion ??
+      (annotationRecord && typeof (annotationRecord as any).schemaVersion === 'string'
+        ? (annotationRecord as any).schemaVersion
+        : undefined)
+
+    const generation = await this.requirementSpecModelService.generateSpecification({
       design,
-      annotation: annotation ?? undefined,
-      options: { templateKey: payload.templateKey },
+      templateKey: payload.templateKey,
+      rootAnnotation,
+      annotationVersion,
+      annotationSchemaVersion,
+      operatorId,
     })
 
     const title = `${design.name} - 需求规格文档`

@@ -287,11 +287,31 @@ export const api = {
 
   // 需求文档相关
   requirement: {
-    generate: (data: { projectId: string; requirements: any[] }) =>
-      ApiService.post(API_ENDPOINTS.requirement.generate, data),
-    save: (data: { projectId: string; document: any }) => ApiService.post(API_ENDPOINTS.requirement.save, data),
-    export: (params: { projectId: string; format?: string }) =>
-      ApiService.get(API_ENDPOINTS.requirement.export, { params }),
+    list: (params: { designId: string; page?: number; size?: number }) =>
+      ApiService.get(API_ENDPOINTS.requirement.list, { params }),
+    generate: (payload: {
+      designId: string
+      rootAnnotation?: any
+      templateKey?: string
+      annotationVersion?: number
+      annotationSchemaVersion?: string
+    }) =>
+      ApiService.post(API_ENDPOINTS.requirement.generate, {
+        designId: payload.designId,
+        templateKey: payload.templateKey,
+        rootAnnotation: payload.rootAnnotation,
+        annotationVersion: payload.annotationVersion,
+        annotationSchemaVersion: payload.annotationSchemaVersion,
+      }),
+    detail: (docId: string) => ApiService.get(API_ENDPOINTS.requirement.detail, { params: { docId } }),
+    update: (payload: {
+      docId: string
+      title?: string
+      content?: string
+      status?: string
+    }) =>
+      ApiService.post(API_ENDPOINTS.requirement.update, payload),
+    export: (docId: string) => ApiService.post(API_ENDPOINTS.requirement.export, { docId }),
   },
 
   // 布局相关
