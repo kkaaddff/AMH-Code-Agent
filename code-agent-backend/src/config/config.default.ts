@@ -1,25 +1,5 @@
 import { EggAppInfo } from 'egg'
 import { MidwayConfig } from '@midwayjs/core'
-import path from 'path'
-import os from 'os'
-import dayjs from 'dayjs'
-
-function getIP(): string {
-  let ip = ''
-  const networkInfo = os.networkInterfaces()
-
-  Object.keys(networkInfo).forEach((key) => {
-    const list = networkInfo[key]
-    if (list && (key.indexOf('eth0') !== -1 || key.indexOf('WLAN') !== -1)) {
-      list.forEach((item) => {
-        if (item.family === 'IPv4') {
-          ip = item.address
-        }
-      })
-    }
-  })
-  return ip || '127.0.0.1'
-}
 
 // host: 'r-bp12wj0lc2p4m4s1ge.redis.rds.aliyuncs.com',
 // host: 'prod-redis-kong-gateway-sentinel-rds-hz.tairpena.rds.aliyuncs.com',
@@ -33,7 +13,7 @@ export default (appInfo: EggAppInfo) => {
   const config = {} as MidwayConfig
 
   // use for cookie sign key, should change to your own and keep security
-  config.keys = appInfo.name + '_1641386429169_638'
+  config.keys = appInfo.name + '_20251029_638'
 
   config.cors = {
     credentials: true,
@@ -47,72 +27,8 @@ export default (appInfo: EggAppInfo) => {
     maxAge: 600,
   }
 
-  config.midwayFeature = {
-    // true 代表使用 midway logger
-    // false 或者为空代表使用 egg-logger
-    replaceEggLogger: true,
-  }
-
-  const phantomLogPath = '/data/ymmapplogs/fta-server/logs/'
-  const logsPath = process.platform === 'linux' ? phantomLogPath : path.join(process.cwd(), 'logs')
-
-  // 定义通用的日志格式化函数
-  const commonLoggerFormat = (info: any) => {
-    // 处理时间戳，优先使用传入的timestamp，否则使用当前时间
-    let time = ''
-    if (info.timestamp) {
-      try {
-        time = dayjs(info.timestamp.split(',')[0]).format()
-      } catch {
-        time = dayjs().format()
-      }
-    }
-    const threadId = `Thread-${process.pid}`
-    return JSON.stringify({
-      pro: 'code-agent-backend',
-      ip: getIP(),
-      hostName: process.env.HOSTNAME,
-      level: info.level ? info.level.toUpperCase() : 'INFO',
-      time: time,
-      msg: info.message,
-      thread: threadId,
-      loc: info.stack || '<unknown>',
-    })
-  }
-
-  config.midwayLogger = {
-    default: {
-      dir: logsPath,
-      level: 'warn',
-      format: commonLoggerFormat,
-    },
-    clients: {
-      appLogger: {
-        fileLogName: 'app.log',
-        level: 'warn',
-        enableFile: true,
-        format: commonLoggerFormat,
-      },
-      // 错误日志也使用统一格式
-      errorLogger: {
-        fileLogName: 'error.log',
-        level: 'error',
-        enableFile: true,
-        format: commonLoggerFormat,
-      },
-      // 通用日志也使用统一格式
-      coreLogger: {
-        fileLogName: 'midway-core.log',
-        level: 'warn',
-        enableFile: true,
-        format: commonLoggerFormat,
-      },
-    },
-  }
-
   config.egg = {
     port: Number(process.env.YMM_GLOBAL_PORT || 7001),
-    contextLoggerFormat: commonLoggerFormat,
   }
 
   config.mongoose = {
