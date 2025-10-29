@@ -1,6 +1,6 @@
 /**
- * API 服务包装器
- * 为各个业务模块提供专门的 API 服务方法
+ * 项目相关 API 服务
+ * 处理项目、页面和文档的 CRUD 操作
  */
 
 import { api } from '@/utils/apiService';
@@ -14,17 +14,11 @@ import type {
   DocumentReference,
 } from '@/types/project';
 import { projectMockService } from './mockProjectService';
-import { requirementMockService } from './mockRequirementService';
+import { resolveRequest, shouldUseMock } from './baseService';
 
-const ENABLE_MOCK = import.meta.env.VITE_ENABLE_MOCK === 'true';
-
-const resolveRequest = async <T>(useMock: boolean, mockHandler: () => Promise<T>, apiHandler: () => Promise<T>) => {
-  if (useMock) {
-    return mockHandler();
-  }
-  return apiHandler();
-};
-
+/**
+ * 标准化项目列表响应格式
+ */
 const normalizeProjectListResponse = (payload: any, params?: ProjectListParams): ProjectListResponse => {
   const fallbackPage = params?.page ?? 1;
   const fallbackSize = params?.size ?? 0;
@@ -56,7 +50,7 @@ const normalizeProjectListResponse = (payload: any, params?: ProjectListParams):
 };
 
 /**
- * 项目相关 API 服务
+ * 项目服务
  */
 export const projectService = {
   /**
@@ -64,7 +58,7 @@ export const projectService = {
    */
   async getProjects(params?: ProjectListParams): Promise<ProjectListResponse> {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.getProjects(params),
       async () => {
         const response = await api.project.list(params);
@@ -78,7 +72,7 @@ export const projectService = {
    */
   async createProject(data: CreateProjectForm) {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.createProject(data),
       async () => {
         const response = await api.project.create(data);
@@ -92,7 +86,7 @@ export const projectService = {
    */
   async updateProject(id: string, data: Partial<Project>) {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.updateProject(id, data),
       async () => {
         const response = await api.project.update(id, data);
@@ -106,7 +100,7 @@ export const projectService = {
    */
   async deleteProject(id: string) {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.deleteProject(id),
       async () => {
         const response = await api.project.delete(id);
@@ -120,7 +114,7 @@ export const projectService = {
    */
   async getProjectDetail(id: string) {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.getProjectDetail(id),
       async () => {
         const response = await api.project.detail(id);
@@ -134,7 +128,7 @@ export const projectService = {
    */
   async createPage(projectId: string, data: CreatePageForm) {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.createPage(projectId, data),
       async () => {
         const response = await api.project.page.create({ projectId, ...data });
@@ -152,7 +146,7 @@ export const projectService = {
     updates: Partial<Page> & { designUrls?: string[]; prdUrls?: string[]; openapiUrls?: string[] }
   ) {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.updatePage(projectId, pageId, updates),
       async () => {
         const response = await api.project.page.update({ projectId, pageId, ...updates });
@@ -166,7 +160,7 @@ export const projectService = {
    */
   async deletePage(projectId: string, pageId: string) {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.deletePage(projectId, pageId),
       async () => {
         const response = await api.project.page.delete({ projectId, pageId });
@@ -186,7 +180,7 @@ export const projectService = {
     status: string
   ) {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.updateDocumentStatus(projectId, pageId, type, documentId, status as any),
       async () => {
         const response = await api.project.document.updateStatus({
@@ -206,7 +200,7 @@ export const projectService = {
    */
   async syncDocument(projectId: string, pageId: string, type: 'design' | 'prd' | 'openapi', documentId: string) {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.syncDocument(projectId, pageId, type, documentId),
       async () => {
         const response = await api.project.document.sync({
@@ -225,7 +219,7 @@ export const projectService = {
    */
   async getDocumentContent(params: { documentId: string }): Promise<DocumentReference> {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.getDocumentContent(params),
       async () => {
         const response = await api.project.document.getContent(params);
@@ -239,7 +233,7 @@ export const projectService = {
    */
   async updateDocument(payload: Partial<DocumentReference>) {
     return resolveRequest(
-      ENABLE_MOCK,
+      shouldUseMock(),
       () => projectMockService.updateDocument(payload),
       async () => {
         const response = await api.project.document.update(payload);
@@ -247,189 +241,4 @@ export const projectService = {
       }
     );
   },
-};
-
-/**
- * DSL 相关 API 服务
- */
-export const dslService = {
-  /**
-   * 上传 DSL 文件
-   */
-  async uploadDSL(file: File, projectId?: string) {
-    const response = await api.dsl.upload(file, projectId ? { projectId } : undefined);
-    return response.data;
-  },
-
-  /**
-   * 解析 DSL 内容
-   */
-  async parseDSL(data: { dslContent: string; projectId?: string }) {
-    const response = await api.dsl.parse(data);
-    return response.data;
-  },
-
-  /**
-   * 导出 DSL
-   */
-  async exportDSL(params: { projectId: string; format?: string }) {
-    const response = await api.dsl.export(params);
-    return response.data;
-  },
-};
-
-/**
- * 组件识别相关 API 服务
- */
-export const componentService = {
-  /**
-   * 检测组件
-   */
-  async detectComponents(data: { dslData: any; options?: any }) {
-    const response = await api.component.detect(data);
-    return response.data;
-  },
-
-  /**
-   * AI 识别组件
-   */
-  async recognizeComponents(data: { imageData: string; components: any[] }) {
-    const response = await api.component.recognize(data);
-    return response.data;
-  },
-
-  /**
-   * 保存组件识别结果
-   */
-  async saveComponents(data: { projectId: string; components: any[] }) {
-    const response = await api.component.save(data);
-    return response.data;
-  },
-
-  /**
-   * 获取组件列表
-   */
-  async getComponents(projectId: string) {
-    const response = await api.component.list(projectId);
-    return response.data;
-  },
-};
-
-/**
- * 需求文档相关 API 服务
- */
-export const requirementService = {
-  /**
-   * 生成需求文档
-   */
-  async generateRequirement(params: {
-    designId: string;
-    rootAnnotation?: any;
-    templateKey?: string;
-    annotationVersion?: number;
-    annotationSchemaVersion?: string;
-  }) {
-    return resolveRequest(
-      ENABLE_MOCK,
-      () => requirementMockService.generateRequirement(params),
-      async () => {
-        const response = await api.requirement.generate(params);
-        return response.data;
-      }
-    );
-  },
-
-  /**
-   * 保存需求文档
-   */
-  async saveRequirement(data: { docId: string; title?: string; content?: string; status?: string }) {
-    return resolveRequest(
-      ENABLE_MOCK,
-      () => requirementMockService.saveRequirement(data),
-      async () => {
-        const response = await api.requirement.update(data);
-        return response.data;
-      }
-    );
-  },
-
-  /**
-   * 导出需求文档
-   */
-  async exportRequirement(params: { docId: string }) {
-    return resolveRequest(
-      ENABLE_MOCK,
-      () => requirementMockService.exportRequirement(params),
-      async () => {
-        const response = await api.requirement.export(params.docId);
-        return response.data;
-      }
-    );
-  },
-
-  /**
-   * 获取需求文档详情
-   */
-  async getRequirementDetail(docId: string) {
-    return resolveRequest(
-      ENABLE_MOCK,
-      () => requirementMockService.getRequirementDetail({ docId }),
-      async () => {
-        const response = await api.requirement.detail(docId);
-        return response.data;
-      }
-    );
-  },
-
-  /**
-   * 获取需求文档列表
-   */
-  async getRequirementList(params: { designId: string; page?: number; size?: number }) {
-    return resolveRequest(
-      ENABLE_MOCK,
-      () => requirementMockService.getRequirementList(params),
-      async () => {
-        const response = await api.requirement.list(params);
-        return response.data;
-      }
-    );
-  },
-};
-
-/**
- * 布局相关 API 服务
- */
-export const layoutService = {
-  /**
-   * 保存布局数据
-   */
-  async saveLayout(data: { projectId: string; layoutData: any }) {
-    const response = await api.layout.save(data);
-    return response.data;
-  },
-
-  /**
-   * 加载布局数据
-   */
-  async loadLayout(projectId: string) {
-    const response = await api.layout.load(projectId);
-    return response.data;
-  },
-
-  /**
-   * 预览布局
-   */
-  async previewLayout(params: { projectId: string; version?: string }) {
-    const response = await api.layout.preview(params);
-    return response.data;
-  },
-};
-
-// 导出统一的服务对象
-export const apiServices = {
-  project: projectService,
-  dsl: dslService,
-  component: componentService,
-  requirement: requirementService,
-  layout: layoutService,
 };

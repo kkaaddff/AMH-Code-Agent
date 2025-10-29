@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { App } from 'antd';
-import { apiServices } from '@/services/apiServices';
+import { apiServices } from '@/services';
 import { Project, Page, DesignSpec, CreateProjectForm, CreatePageForm, ProjectListParams } from '../types/project';
 
 interface ProjectPagination {

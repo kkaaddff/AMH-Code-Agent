@@ -1,4 +1,4 @@
-import { apiServices } from '@/services/apiServices';
+import { apiServices } from '@/services';
 import type { AnnotationNode } from '../types/componentDetectionV2';
 
 /**
