@@ -84,10 +84,14 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
   const convertToTreeData = (node: AnnotationNode): DataNode => {
     const isRoot = node.isRoot;
     const isContainer = node.isContainer;
-    
+
     const title = (
       <Space size={4}>
-        {isContainer ? <FolderOutlined style={{ color: isRoot ? 'rgb(82, 196, 26)' : 'rgb(24, 144, 255)' }} /> : <FileOutlined style={{ color: 'rgb(140, 140, 140)' }} />}
+        {isContainer ? (
+          <FolderOutlined style={{ color: isRoot ? 'rgb(82, 196, 26)' : 'rgb(24, 144, 255)' }} />
+        ) : (
+          <FileOutlined style={{ color: 'rgb(140, 140, 140)' }} />
+        )}
         <span style={{ fontWeight: isRoot ? 600 : 400 }}>
           {node.ftaComponent}
           {node.name && ` (${node.name})`}
@@ -217,10 +221,10 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
   // 处理右键菜单
   const handleRightClick = ({ event, node }: any) => {
     event.preventDefault();
-    
+
     const nodeKey = node.key as string;
     const annotation: AnnotationNode | null = findAnnotationById(nodeKey);
-    
+
     // 页面根节点不能删除
     if (nodeKey === 'root') {
       modal.warning({
@@ -240,7 +244,11 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
       content: (
         <Space direction="vertical" size={4}>
           <span>确定要删除标注 "{displayName}" 吗？</span>
-          <Checkbox onChange={(e) => { deleteChildren = e.target.checked; }}>
+          <Checkbox
+            onChange={(e) => {
+              deleteChildren = e.target.checked;
+            }}
+          >
             同时删除所有子标注
           </Checkbox>
           <Text type="secondary" style={{ fontSize: 12 }}>
@@ -268,7 +276,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
     // -1: 插入到目标节点之前 (before)
     //  0: 插入到目标节点内部 (inside)
     //  1: 插入到目标节点之后 (after)
-    
+
     // 根节点不允许作为目标（不能在根节点前后插入）
     if (dropNode.key === 'root' && dropPosition !== 0) {
       return false;
@@ -287,15 +295,13 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
 
     // 确定放置位置
     let position: 'before' | 'inside' | 'after';
-    
+
     if (!dropToGap) {
       // 放置在节点内部
       position = 'inside';
     } else {
       // 放置在节点前后
-      const targetParent = rootAnnotation
-        ? findParent(rootAnnotation, targetKey)
-        : null;
+      const targetParent = rootAnnotation ? findParent(rootAnnotation, targetKey) : null;
 
       if (targetParent) {
         const targetIndex = targetParent.children.findIndex((child) => child.id === targetKey);
@@ -344,18 +350,10 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
             图层结构
           </Title>
           <Space size="small">
-            <Button
-              size="small"
-              icon={<DownOutlined />}
-              onClick={expandAll}
-            >
+            <Button size="small" icon={<DownOutlined />} onClick={expandAll}>
               展开全部
             </Button>
-            <Button
-              size="small"
-              icon={<UpOutlined />}
-              onClick={collapseAll}
-            >
+            <Button size="small" icon={<UpOutlined />} onClick={collapseAll}>
               收起全部
             </Button>
             <Button
@@ -393,31 +391,22 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
 
       {/* Footer */}
       {(onSave || onGenerateDoc) && (
-        <div style={{
-          padding: '16px',
-          borderTop: '1px solid rgb(240, 240, 240)',
-          background: 'rgb(255, 255, 255)',
-          borderBottom: '1px solid rgb(240, 240, 240)'
-        }}>
+        <div
+          style={{
+            padding: '16px',
+            borderTop: '1px solid rgb(240, 240, 240)',
+            background: 'rgb(255, 255, 255)',
+            borderBottom: '1px solid rgb(240, 240, 240)',
+          }}
+        >
           <Space size="small" style={{ width: '100%', justifyContent: 'center' }}>
             {onSave && (
-              <Button
-                type="primary"
-                size="small"
-                icon={<SaveOutlined />}
-                onClick={onSave}
-                style={{ minWidth: '80px' }}
-              >
+              <Button type="primary" size="small" icon={<SaveOutlined />} onClick={onSave} style={{ minWidth: '80px' }}>
                 保存
               </Button>
             )}
             {onGenerateDoc && (
-              <Button
-                size="small"
-                icon={<FileTextOutlined />}
-                onClick={onGenerateDoc}
-                style={{ minWidth: '120px' }}
-              >
+              <Button size="small" icon={<FileTextOutlined />} onClick={onGenerateDoc} style={{ minWidth: '120px' }}>
                 生成需求规格文档
               </Button>
             )}

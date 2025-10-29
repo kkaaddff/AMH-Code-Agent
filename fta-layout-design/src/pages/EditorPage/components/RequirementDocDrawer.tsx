@@ -1,53 +1,42 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Drawer, Button, Space, App, Spin } from 'antd';
 import { SaveOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import {
-  MDXEditor,
-  headingsPlugin,
-  listsPlugin,
-  quotePlugin,
-  linkPlugin,
+  BlockTypeSelect,
+  BoldItalicUnderlineToggles,
   codeBlockPlugin,
+  headingsPlugin,
+  linkPlugin,
+  listsPlugin,
+  ListsToggle,
   markdownShortcutPlugin,
+  MDXEditor,
+  MDXEditorMethods,
+  quotePlugin,
   toolbarPlugin,
   UndoRedo,
-  BoldItalicUnderlineToggles,
-  ListsToggle,
-  BlockTypeSelect,
-  MDXEditorMethods,
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
+import { App, Button, Drawer, Space, Spin } from 'antd';
+import React, { useRef, useState } from 'react';
+
+import { useRequirementDoc } from '../contexts/RequirementDocContext';
+import { executeCodeGeneration, saveRequirementDoc } from '../utils/requirementDoc';
 import './RequirementDocDrawer.css';
-import { executeCodeGeneration, saveRequirementDoc, loadRequirementDoc } from '../utils/requirementDoc';
 
 interface RequirementDocDrawerProps {
   open: boolean;
   onClose: () => void;
   designId: string;
-  initialContent: string;
 }
 
-const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClose, designId, initialContent }) => {
+const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClose, designId }) => {
   const { message } = App.useApp();
+  const { docContent, setDocContent } = useRequirementDoc();
   const editorRef = useRef<MDXEditorMethods>(null);
   const [loading, setLoading] = useState(false);
-  const [content, setContent] = useState(initialContent);
-
-  // 当打开 Drawer 时，尝试加载已保存的内容
-  useEffect(() => {
-    if (open) {
-      const savedContent = loadRequirementDoc(designId);
-      if (savedContent) {
-        setContent(savedContent);
-      } else {
-        setContent(initialContent);
-      }
-    }
-  }, [open, designId, initialContent]);
 
   const handleSave = () => {
     try {
-      const currentContent = editorRef.current?.getMarkdown() || content;
+      const currentContent = editorRef.current?.getMarkdown() || docContent;
       saveRequirementDoc(designId, currentContent);
       message.success('需求规格文档已保存');
     } catch (error) {
@@ -59,7 +48,7 @@ const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClo
   const handleSaveAndExecute = async () => {
     try {
       setLoading(true);
-      const currentContent = editorRef.current?.getMarkdown() || content;
+      const currentContent = editorRef.current?.getMarkdown() || docContent;
 
       // 先保存
       saveRequirementDoc(designId, currentContent);
@@ -107,12 +96,13 @@ const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClo
     >
       <Spin spinning={loading} tip="正在提交代码生成任务...">
         <div className="editor-wrapper">
-          {content ? (
+          {docContent ? (
             <div className="editor-container">
               <MDXEditor
-                key={`editor-${designId}-${content.length}`} // 使用 designId 和内容长度作为 key
+                key={`editor-${designId}-${docContent.length}`} // 使用 designId 和内容长度作为 key
                 ref={editorRef}
-                markdown={content}
+                markdown={docContent}
+                onChange={setDocContent}
                 plugins={[
                   toolbarPlugin({
                     toolbarContents: () => (

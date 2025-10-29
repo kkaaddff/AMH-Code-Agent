@@ -15,6 +15,7 @@ import InteractionGuideOverlay from './components/InteractionGuideOverlay';
 import LayerTreePanel from './components/LayerTreePanel';
 import RequirementDocDrawer from './components/RequirementDocDrawer';
 import { ComponentDetectionProviderV2, useComponentDetectionV2 } from './contexts/ComponentDetectionContextV2';
+import { RequirementDocProvider, useRequirementDoc } from './contexts/RequirementDocContext';
 import { COMPONENT_STYLES } from './styles/EditorPageStyles';
 import { loadAnnotationState } from './utils/componentStorage';
 import { generateRequirementDoc } from './utils/requirementDoc';
@@ -32,6 +33,7 @@ const SCALE_OPTIONS = [
 // Inner component that uses the context
 const EditorPageContent: React.FC = () => {
   const { message } = App.useApp();
+  const { setDocContent } = useRequirementDoc();
   const {
     initializeFromDSL,
     isLoading,
@@ -48,7 +50,6 @@ const EditorPageContent: React.FC = () => {
   const [is3DModalOpen, setIs3DModalOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isDocDrawerOpen, setIsDocDrawerOpen] = useState(false);
-  const [docContent, setDocContent] = useState('');
   const [designId, setDesignId] = useState<string>('');
   const [dslTreeSelectedNodeId, setDslTreeSelectedNodeId] = useState<string | null>(null);
   const [dslTreeHoveredNodeId, setDslTreeHoveredNodeId] = useState<string | null>(null);
@@ -298,12 +299,7 @@ const EditorPageContent: React.FC = () => {
       </Layout>
       <Component3DInspectModal open={is3DModalOpen} onClose={() => setIs3DModalOpen(false)} />
       <InteractionGuideOverlay open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
-      <RequirementDocDrawer
-        open={isDocDrawerOpen}
-        onClose={() => setIsDocDrawerOpen(false)}
-        designId={designId}
-        initialContent={docContent}
-      />
+      <RequirementDocDrawer open={isDocDrawerOpen} onClose={() => setIsDocDrawerOpen(false)} designId={designId} />
     </>
   );
 };
@@ -312,9 +308,11 @@ const EditorPageContent: React.FC = () => {
 const EditorPageComponentDetect: React.FC = () => {
   return (
     <AntApp>
-      <ComponentDetectionProviderV2>
-        <EditorPageContent />
-      </ComponentDetectionProviderV2>
+      <RequirementDocProvider>
+        <ComponentDetectionProviderV2>
+          <EditorPageContent />
+        </ComponentDetectionProviderV2>
+      </RequirementDocProvider>
     </AntApp>
   );
 };

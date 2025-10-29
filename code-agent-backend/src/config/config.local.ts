@@ -21,8 +21,10 @@ export const egg = {
 /**
  * 开发环境日志配置 - 更详细的日志输出
  */
-export const logger = {
-  level: 'DEBUG', // 开发环境启用最详细的日志
+export const midwayLogger = {
+  default: {
+    level: 'debug',
+  },
 }
 
 /**

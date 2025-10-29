@@ -17,7 +17,7 @@ export async function generateRequirementDoc(
     throw new Error('designId is required');
   }
 
-  const document = await apiServices.requirement.generateRequirement({
+  const document: string = await apiServices.requirement.generateRequirement({
     designId,
     rootAnnotation,
     templateKey: options?.templateKey,
@@ -25,7 +25,7 @@ export async function generateRequirementDoc(
     annotationSchemaVersion: options?.annotationSchemaVersion,
   });
 
-  const content = document?.content;
+  const content = document;
   if (!content) {
     throw new Error('生成的需求规格文档为空');
   }
