@@ -148,6 +148,14 @@ export default (appInfo: EggAppInfo) => {
       temperature: process.env.MODEL_TEMPERATURE ? Number(process.env.MODEL_TEMPERATURE) : undefined,
     },
   }
+
+  /**
+   * 日志配置 - 简化配置，使用 @midwayjs/logger 默认配置
+   */
+  config.logger = {
+    level: 'INFO',
+  }
+
   /**
    * lion 配置
    */

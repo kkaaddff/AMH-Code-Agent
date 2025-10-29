@@ -53,8 +53,8 @@ export class DesignRequirementDocumentController {
   async updateRequirementDocument(@Body() body: UpdateRequirementDocumentBody & { docId: string }) {
     const { docId, ...restBody } = body
     const operatorId = this.resolveOperatorId()
-    const doc = await this.designRequirementDocumentService.updateRequirementDocument(docId, restBody, operatorId)
-    return new RequirementDocumentDetailResponse(doc)
+    await this.designRequirementDocumentService.updateRequirementDocument(docId, restBody, operatorId)
+    return new RequirementDocumentDetailResponse('doc')
   }
 
   @ApiOperation({ summary: '获取需求文档详情' })
@@ -66,7 +66,7 @@ export class DesignRequirementDocumentController {
     if (!doc) {
       throw new MidwayHttpError('Requirement document not found', HttpStatus.NOT_FOUND)
     }
-    return new RequirementDocumentDetailResponse(doc)
+    return new RequirementDocumentDetailResponse(doc.content)
   }
 
   @ApiOperation({ summary: '分页查询需求文档列表' })

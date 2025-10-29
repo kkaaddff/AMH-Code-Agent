@@ -55,10 +55,10 @@ export class RequirementDocumentListResponse extends AsyncResponse {
 }
 
 export class RequirementDocumentDetailResponse extends AsyncResponse {
-  @ApiProperty({ type: DesignRequirementDocumentEntity, description: '需求文档详情' })
-  data: DesignRequirementDocumentEntity
+  @ApiProperty({ type: String, description: '需求文档详情' })
+  data: string
 
-  constructor(data: DesignRequirementDocumentEntity) {
+  constructor(data: string) {
     super()
     this.data = data
   }

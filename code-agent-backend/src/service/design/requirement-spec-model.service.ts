@@ -1,11 +1,9 @@
-import { MidwayHttpError, Provide, Scope, ScopeEnum, Inject } from '@midwayjs/core'
+import { Provide, Scope, ScopeEnum, Inject } from '@midwayjs/core'
 import dayjs from 'dayjs'
-import type { DesignDocumentEntity } from '../../entity/design'
 import { generateRequirementMarkdown } from '../../utils/design/requirement-builder'
 import { ModelGatewayService, ModelResponse } from '../common'
 
 interface RequirementSpecGenerationParams {
-  design: DesignDocumentEntity
   templateKey?: string
   rootAnnotation?: Record<string, any> | null
   annotationVersion?: number
@@ -137,21 +135,10 @@ export class RequirementSpecModelService {
   }
 
   private buildPrompt(params: RequirementSpecGenerationParams, annotationSummary: string): string {
-    const { design, templateKey, rootAnnotation, annotationVersion, annotationSchemaVersion, operatorId } = params
+    const { templateKey, rootAnnotation, annotationVersion, annotationSchemaVersion, operatorId } = params
     const instructions = this.buildTemplateInstructions(templateKey)
-    const resolvedDesignId = (design as any)?._id ?? (design as any)?.id ?? '未知'
-    const nodeCount =
-      Array.isArray((design as any)?.dslData?.nodes) && (design as any).dslData.nodes.length
-        ? (design as any).dslData.nodes.length
-        : Array.isArray((design as any)?.dslData?.dsl?.nodes)
-        ? (design as any).dslData.dsl.nodes.length
-        : undefined
 
     const contextLines = [
-      `设计名称：${design?.name ?? '未命名设计'}`,
-      `设计 ID：${resolvedDesignId}`,
-      design?.description ? `设计描述：${design.description}` : undefined,
-      nodeCount ? `DSL 节点数量：${nodeCount}` : undefined,
       annotationVersion ? `标注版本：${annotationVersion}` : undefined,
       annotationSchemaVersion ? `标注 Schema：${annotationSchemaVersion}` : undefined,
       operatorId ? `发起人：${operatorId}` : undefined,
@@ -198,58 +185,39 @@ export class RequirementSpecModelService {
     }
   }
 
-  public async generateSpecification(
-    params: RequirementSpecGenerationParams
-  ): Promise<RequirementSpecGenerationResult> {
-    const { design, templateKey } = params
-    if (!design) {
-      throw new MidwayHttpError('Design document payload is required', 400)
-    }
+  public async generateSpecification(params: RequirementSpecGenerationParams): Promise<string> {
+    // const { templateKey } = params
 
     const annotationSummary = this.formatAnnotationSummary(this.flattenAnnotation(params.rootAnnotation))
     const prompt = this.buildPrompt(params, annotationSummary)
     const modelResult = await this.requestModel(prompt)
-    const now = dayjs().toISOString()
 
     if (modelResult?.content) {
-      const config = this.modelGatewayService.getConfig()
-      return {
-        content: modelResult.content.trim(),
-        availableFormats: ['md'],
-        prompt,
-        templateKey: templateKey ?? 'default',
-        provider: {
-          name: 'model-gateway',
-          model: config?.model ?? 'unknown',
-          fallback: false,
-          usage: modelResult.usage,
-          finishedAt: now,
-        },
-      }
+      return modelResult.content.trim()
     }
 
-    const fallbackAnnotation = params.rootAnnotation
-      ? ({ rootAnnotation: params.rootAnnotation, version: params.annotationVersion ?? undefined } as any)
-      : undefined
+    // const fallbackAnnotation = params.rootAnnotation
+    //   ? ({ rootAnnotation: params.rootAnnotation, version: params.annotationVersion ?? undefined } as any)
+    //   : undefined
 
-    const fallback = generateRequirementMarkdown({
-      design,
-      annotation: fallbackAnnotation,
-      options: { templateKey },
-    })
+    // const fallback = generateRequirementMarkdown({
+    //   design,
+    //   annotation: fallbackAnnotation,
+    //   options: { templateKey },
+    // })
 
-    return {
-      content: fallback.content,
-      availableFormats: fallback.availableFormats ?? ['md'],
-      prompt,
-      templateKey: templateKey ?? 'default',
-      provider: {
-        name: 'template-fallback',
-        model: undefined,
-        fallback: true,
-        usage: fallback.stats ? { componentCount: fallback.stats.componentCount } : undefined,
-        finishedAt: now,
-      },
-    }
+    // return {
+    //   content: fallback.content,
+    //   availableFormats: fallback.availableFormats ?? ['md'],
+    //   prompt,
+    //   templateKey: templateKey ?? 'default',
+    //   provider: {
+    //     name: 'template-fallback',
+    //     model: undefined,
+    //     fallback: true,
+    //     usage: fallback.stats ? { componentCount: fallback.stats.componentCount } : undefined,
+    //     finishedAt: now,
+    //   },
+    // }
   }
 }

@@ -72,63 +72,16 @@ export class DesignRequirementDocumentService {
     designId: string,
     payload: GenerateRequirementDocumentBody,
     operatorId: string
-  ): Promise<DesignRequirementDocumentEntity> {
-    const design = await this.designDocumentService.getDesignDocumentById(designId)
-    if (!design) {
-      throw new MidwayHttpError('Design document not found', HttpStatus.NOT_FOUND)
-    }
-
-    const annotationRecord =
-      payload.rootAnnotation !== undefined
-        ? {
-            rootAnnotation: payload.rootAnnotation,
-            version: payload.annotationVersion,
-            schemaVersion: payload.annotationSchemaVersion,
-          }
-        : await this.designComponentAnnotationService.getLatestAnnotation(designId)
-
-    const rootAnnotation = annotationRecord?.rootAnnotation ?? null
-    const annotationVersion =
-      payload.annotationVersion ??
-      (annotationRecord && typeof (annotationRecord as any).version === 'number'
-        ? (annotationRecord as any).version
-        : undefined)
-    const annotationSchemaVersion =
-      payload.annotationSchemaVersion ??
-      (annotationRecord && typeof (annotationRecord as any).schemaVersion === 'string'
-        ? (annotationRecord as any).schemaVersion
-        : undefined)
-
+  ): Promise<string> {
     const generation = await this.requirementSpecModelService.generateSpecification({
-      design,
       templateKey: payload.templateKey,
-      rootAnnotation,
-      annotationVersion,
-      annotationSchemaVersion,
+      rootAnnotation: payload.rootAnnotation,
+      annotationVersion: payload.annotationVersion,
+      annotationSchemaVersion: payload.annotationSchemaVersion,
       operatorId,
     })
 
-    const title = `${design.name} - 需求规格文档`
-    const doc = await this.requirementDocModel.findOneAndUpdate(
-      { designId, title },
-      {
-        $set: {
-          title,
-          content: generation.content,
-          status: 'draft',
-          updatedBy: operatorId,
-          exportFormats: generation.availableFormats,
-          ossObjectKey: undefined,
-        },
-        $setOnInsert: {
-          designId,
-          createdBy: operatorId,
-        },
-      },
-      { upsert: true, new: true }
-    )
-
-    return this.normalizeDocument(doc)
+    return generation
   }
 
   public async updateRequirementDocument(

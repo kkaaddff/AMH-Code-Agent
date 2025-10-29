@@ -137,10 +137,11 @@ const EditorPageContent: React.FC = () => {
     }
 
     try {
-      message.loading({ content: '正在生成需求规格文档...', key: 'generating' });
+      const hide = message.loading({ content: '正在生成需求规格文档...', key: 'generating', duration: 0 });
       const content = await generateRequirementDoc(designId, rootAnnotation);
       setDocContent(content);
       setIsDocDrawerOpen(true);
+      hide();
       message.success({ content: '需求规格文档生成成功', key: 'generating' });
     } catch (error) {
       message.error({ content: '生成需求规格文档失败', key: 'generating' });
