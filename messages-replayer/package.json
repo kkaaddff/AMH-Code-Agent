@@ -1,0 +1,25 @@
+{
+  "name": "messages-replayer",
+  "version": "1.0.0",
+  "description": "Replay LLM conversations recorded in messages.log with optional live axios calls.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "replay": "node src/index.js replay",
+    "replay:live": "node src/index.js replay --mode=live",
+    "parse": "node src/index.js parse"
+  },
+  "keywords": [
+    "llm",
+    "replay",
+    "axios",
+    "logs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5"
+  }
+}
