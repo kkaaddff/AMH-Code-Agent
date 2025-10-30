@@ -7,10 +7,11 @@ import {
   DownOutlined,
   UpOutlined,
   SaveOutlined,
-  FileTextOutlined,
+  // FileTextOutlined,
   ApartmentOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useComponentDetectionV2 } from '../contexts/ComponentDetectionContextV2';
 import { AnnotationNode } from '../types/componentDetectionV2';
@@ -21,6 +22,7 @@ const { Title, Text } = Typography;
 interface LayerTreePanelProps {
   onSave?: () => void;
   onGenerateDoc?: () => void;
+  onGenerateCode?: () => void;
   dslData?: DSLData | null;
   onToggleNodeVisibility?: (nodeId: string, hidden: boolean) => void;
   onResetNodeVisibility?: () => void;
@@ -31,7 +33,8 @@ interface LayerTreePanelProps {
 
 const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
   onSave,
-  onGenerateDoc,
+  onGenerateDoc: _onGenerateDoc,
+  onGenerateCode,
   dslData,
   onToggleNodeVisibility,
   onResetNodeVisibility,
@@ -390,29 +393,28 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
       </div>
 
       {/* Footer */}
-      {(onSave || onGenerateDoc) && (
-        <div
-          style={{
-            padding: '16px',
-            borderTop: '1px solid rgb(240, 240, 240)',
-            background: 'rgb(255, 255, 255)',
-            borderBottom: '1px solid rgb(240, 240, 240)',
-          }}
-        >
-          <Space size="small" style={{ width: '100%', justifyContent: 'center' }}>
-            {onSave && (
-              <Button type="primary" size="small" icon={<SaveOutlined />} onClick={onSave} style={{ minWidth: '80px' }}>
-                保存
-              </Button>
-            )}
-            {onGenerateDoc && (
-              <Button size="small" icon={<FileTextOutlined />} onClick={onGenerateDoc} style={{ minWidth: '120px' }}>
-                生成需求规格文档
-              </Button>
-            )}
-          </Space>
-        </div>
-      )}
+
+      <div
+        style={{
+          padding: '16px',
+          borderTop: '1px solid rgb(240, 240, 240)',
+          background: 'rgb(255, 255, 255)',
+          borderBottom: '1px solid rgb(240, 240, 240)',
+        }}
+      >
+        <Space size="small" style={{ width: '100%', justifyContent: 'center' }}>
+          <Button type="primary" size="small" icon={<SaveOutlined />} onClick={onSave} style={{ minWidth: '80px' }}>
+            保存
+          </Button>
+          {/* <Button size="small" icon={<FileTextOutlined />} onClick={onGenerateDoc} style={{ minWidth: '120px' }}>
+              生成需求规格文档
+            </Button> */}
+          <Button size="small" icon={<ThunderboltOutlined />} onClick={onGenerateCode} style={{ minWidth: '120px' }}>
+            生成代码
+          </Button>
+        </Space>
+      </div>
+
       <Drawer
         placement="left"
         title="组件树"
