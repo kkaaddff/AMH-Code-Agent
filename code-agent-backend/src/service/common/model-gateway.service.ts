@@ -261,42 +261,160 @@ export class ModelGatewayService {
   }
 
   /**
-   * 流式调用模型 (如果支持)
+   * 从流式响应中提取文本
    */
-  public async *callModelStream(options: ModelRequestOptions): AsyncGenerator<string, void, unknown> {
-    try {
-      const payload = this.buildRequestPayload({ ...options, stream: true })
-      const config = this.modelConfig
+  private extractTextFromStreamPayload(payload: any): string | null {
+    if (!payload) {
+      return null
+    }
 
-      if (!config.endpoint) {
-        throw new Error('Model gateway endpoint is not configured')
-      }
+    const choices = payload.choices || payload.data
+    if (Array.isArray(choices) && choices.length > 0) {
+      const choice = choices[0]
+      const delta = choice.delta || choice.message || choice
 
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
-      }
-
-      const response = await axios.post(config.endpoint, payload, {
-        headers,
-        timeout: config.timeout ?? 60_000,
-        responseType: 'stream',
-      })
-
-      // 注意：流式处理需要根据具体的API格式实现
-      // 这里只是一个基础框架
-      for await (const chunk of response.data) {
-        const text = chunk.toString()
-        // 这里需要根据具体的流式格式解析
-        // 例如SSE格式或其他自定义格式
-        if (text.trim()) {
-          yield text
+      if (delta) {
+        if (typeof delta.content === 'string') {
+          return delta.content
+        }
+        if (Array.isArray(delta.content)) {
+          const textPart = delta.content.find((item: any) => item.type === 'text' && typeof item.text === 'string')
+          if (textPart) {
+            return textPart.text
+          }
+        }
+        if (typeof delta.text === 'string') {
+          return delta.text
         }
       }
-    } catch (error) {
-      console.error('[ModelGatewayService] 流式模型调用失败:', error)
-      throw error
+
+      if (typeof choice.text === 'string') {
+        return choice.text
+      }
     }
+
+    if (typeof payload.text === 'string') {
+      return payload.text
+    }
+
+    return null
+  }
+
+  /**
+   * 流式调用模型并将内容通过回调输出
+   */
+  public async streamModel(options: ModelRequestOptions, onChunk: (chunk: string) => void): Promise<boolean> {
+    const payload = this.buildRequestPayload({ ...options, stream: true })
+    const config = this.modelConfig
+
+    if (!config.endpoint) {
+      throw new Error('Model gateway endpoint is not configured')
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+      Connection: 'keep-alive',
+      ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+    }
+
+    const response = await axios.post(config.endpoint, payload, {
+      headers,
+      timeout: config.timeout ?? 600_000,
+      responseType: 'stream',
+    })
+
+    return await new Promise<boolean>((resolve, reject) => {
+      const stream = response.data
+      let buffer = ''
+      let hasChunk = false
+      let finished = false
+      console.log('开始读取流')
+      const cleanup = () => {
+        finished = true
+        stream.removeAllListeners('data')
+        stream.removeAllListeners('end')
+        stream.removeAllListeners('error')
+        stream.removeAllListeners('close')
+      }
+
+      const flushEvents = (force = false) => {
+        const events = buffer.split('\n\n')
+        buffer = force ? '' : events.pop() ?? ''
+
+        for (const rawEvent of events) {
+          const trimmedEvent = rawEvent.trim()
+          if (!trimmedEvent) {
+            continue
+          }
+
+          if (trimmedEvent.startsWith(':')) {
+            continue
+          }
+
+          const lines = trimmedEvent.split('\n')
+          for (const line of lines) {
+            const trimmedLine = line.trim()
+            if (!trimmedLine || !trimmedLine.startsWith('data:')) {
+              continue
+            }
+
+            const dataStr = trimmedLine.slice(5).trim()
+            if (!dataStr) {
+              continue
+            }
+
+            if (dataStr === '[DONE]') {
+              cleanup()
+              resolve(hasChunk)
+              return
+            }
+
+            try {
+              const payload = JSON.parse(dataStr)
+              const text = this.extractTextFromStreamPayload(payload)
+              if (text) {
+                hasChunk = true
+                onChunk(text)
+              }
+            } catch {
+              hasChunk = true
+              onChunk(dataStr)
+            }
+          }
+        }
+      }
+
+      stream.on('data', (chunk: Buffer) => {
+        if (finished) {
+          return
+        }
+        buffer += chunk.toString('utf8')
+        console.log('读取到流buffer', buffer)
+        flushEvents()
+      })
+
+      const handleEnd = () => {
+        if (finished) {
+          return
+        }
+        cleanup()
+        if (buffer.trim()) {
+          flushEvents(true)
+        }
+        resolve(hasChunk)
+      }
+
+      stream.on('end', handleEnd)
+      stream.on('close', handleEnd)
+      stream.on('error', (error: unknown) => {
+        if (finished) {
+          return
+        }
+        cleanup()
+        reject(error)
+      })
+    })
   }
 
   /**

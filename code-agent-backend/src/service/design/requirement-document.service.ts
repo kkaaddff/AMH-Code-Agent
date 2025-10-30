@@ -84,6 +84,28 @@ export class DesignRequirementDocumentService {
     return generation
   }
 
+  public async streamRequirementDocument(
+    designId: string,
+    payload: GenerateRequirementDocumentBody,
+    operatorId: string,
+    handlers: {
+      onChunk: (chunk: string) => void
+      onComplete?: () => void
+      onError?: (error: unknown) => void
+    }
+  ): Promise<void> {
+    await this.requirementSpecModelService.streamSpecification(
+      {
+        templateKey: payload.templateKey,
+        rootAnnotation: payload.rootAnnotation,
+        annotationVersion: payload.annotationVersion,
+        annotationSchemaVersion: payload.annotationSchemaVersion,
+        operatorId,
+      },
+      handlers
+    )
+  }
+
   public async updateRequirementDocument(
     docId: string,
     payload: UpdateRequirementDocumentBody,

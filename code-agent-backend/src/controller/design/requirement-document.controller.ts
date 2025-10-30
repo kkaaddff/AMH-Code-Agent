@@ -43,8 +43,70 @@ export class DesignRequirementDocumentController {
   async generateRequirementDocument(@Body() body: GenerateRequirementDocumentBody & { designId: string }) {
     const { designId, ...restBody } = body
     const operatorId = this.resolveOperatorId()
-    const doc = await this.designRequirementDocumentService.generateRequirementDocument(designId, restBody, operatorId)
-    return new RequirementDocumentDetailResponse(doc)
+    const ctx = this.ctx
+
+    ctx.status = HttpStatus.OK
+    ctx.set('Content-Type', 'text/event-stream; charset=utf-8')
+    ctx.set('Cache-Control', 'no-cache, no-transform')
+    ctx.set('Connection', 'keep-alive')
+    ctx.set('Transfer-Encoding', 'chunked')
+
+    if (typeof ctx.res.flushHeaders === 'function') {
+      ctx.res.flushHeaders()
+    }
+
+    ctx.respond = false
+
+    let clientClosed = false
+    let finished = false
+
+    const writeEvent = (payload: Record<string, any>) => {
+      if (clientClosed || finished) {
+        return
+      }
+      ctx.res.write(`data: ${JSON.stringify(payload)}\n\n`)
+      if (typeof (ctx.res as any).flush === 'function') {
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
+        ;(ctx.res as any).flush()
+      }
+    }
+
+    const handleError = (error: unknown) => {
+      if (clientClosed || finished) {
+        return
+      }
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      writeEvent({ event: 'error', message })
+      endStream()
+    }
+
+    const endStream = () => {
+      if (clientClosed || finished) {
+        return
+      }
+      finished = true
+      ctx.res.end()
+    }
+
+    ctx.req.on('close', () => {
+      clientClosed = true
+    })
+
+    try {
+      await this.designRequirementDocumentService.streamRequirementDocument(designId, restBody, operatorId, {
+        onChunk: (chunk) => {
+          console.log('onChunk controller', chunk)
+          writeEvent({ event: 'chunk', content: chunk })
+        },
+        onComplete: () => {
+          writeEvent({ event: 'done' })
+          endStream()
+        },
+        onError: handleError,
+      })
+    } catch (error) {
+      handleError(error)
+    }
   }
 
   @ApiOperation({ summary: '更新需求文档' })

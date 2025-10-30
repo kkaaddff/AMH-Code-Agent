@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 
 interface RequirementDocContextValue {
   docContent: string;
-  setDocContent: (content: string) => void;
+  setDocContent: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const RequirementDocContext = createContext<RequirementDocContextValue | null>(null);

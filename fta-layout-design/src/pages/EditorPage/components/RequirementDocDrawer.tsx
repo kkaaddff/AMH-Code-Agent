@@ -1,5 +1,5 @@
 import { SaveOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import { App, Button, Drawer, Space, Spin } from 'antd';
+import { App, Button, Drawer, Space } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { Streamdown } from 'streamdown';
 
@@ -11,9 +11,10 @@ interface RequirementDocDrawerProps {
   open: boolean;
   onClose: () => void;
   designId: string;
+  isGenerating?: boolean;
 }
 
-const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClose, designId }) => {
+const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClose, designId, isGenerating }) => {
   const { message } = App.useApp();
   const { docContent } = useRequirementDoc();
   const [loading, setLoading] = useState(false);
@@ -79,11 +80,10 @@ const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClo
         </Space>
       }
     >
-      <Spin spinning={loading} tip="正在提交代码生成任务...">
-        <div className="editor-wrapper">
-          {docContent ? (
-            <div className="editor-container">
-              {/* <div className="editor-pane">
+      <div className="editor-wrapper">
+        {docContent ? (
+          <div className="editor-container">
+            {/* <div className="editor-pane">
                 <div className="editor-pane-header">Markdown 编辑</div>
                 <Input.TextArea
                   value={currentContent}
@@ -94,22 +94,21 @@ const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClo
                   placeholder="在此输入需求规格文档的 Markdown 内容..."
                 />
               </div> */}
-              <div className="editor-pane">
-                <div className="editor-pane-header">实时预览</div>
-                <div className="editor-preview">
-                  {currentContent ? (
-                    <Streamdown>{currentContent}</Streamdown>
-                  ) : (
-                    <div className="editor-preview-empty">暂无内容</div>
-                  )}
-                </div>
+            <div className="editor-pane">
+              <div className="editor-pane-header">实时预览</div>
+              <div className="editor-preview">
+                {currentContent ? (
+                  <Streamdown isAnimating={isGenerating}>{currentContent}</Streamdown>
+                ) : (
+                  <div className="editor-preview-empty">暂无内容</div>
+                )}
               </div>
             </div>
-          ) : (
-            <div className="loading-placeholder">正在加载文档内容...</div>
-          )}
-        </div>
-      </Spin>
+          </div>
+        ) : (
+          <div className="loading-placeholder">正在加载文档内容...</div>
+        )}
+      </div>
     </Drawer>
   );
 };

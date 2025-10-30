@@ -41,6 +41,7 @@ interface RequirementSpecGenerationResult {
 export class RequirementSpecModelService {
   @Inject()
   private modelGatewayService: ModelGatewayService
+  private promptDumpFile = path.join(__dirname, 'prompt.md')
 
   private flattenAnnotation(root?: Record<string, any> | null): AnnotationNodeSummary[] {
     if (!root || typeof root !== 'object') {
@@ -166,6 +167,19 @@ export class RequirementSpecModelService {
     ].join('\n')
   }
 
+  private preparePrompt(params: RequirementSpecGenerationParams): string {
+    const annotationSummary = this.formatAnnotationSummary(this.flattenAnnotation(params.rootAnnotation))
+    const prompt = this.buildPrompt(params, annotationSummary)
+
+    try {
+      fs.writeFileSync(this.promptDumpFile, prompt)
+    } catch (error) {
+      console.warn('[RequirementSpecModelService] 写入 prompt 调试文件失败', error)
+    }
+
+    return prompt
+  }
+
   private async requestModel(prompt: string): Promise<{ content: string; usage?: Record<string, any> } | null> {
     try {
       const result: ModelResponse = await this.modelGatewayService.callModel({
@@ -189,11 +203,7 @@ export class RequirementSpecModelService {
   }
 
   public async generateSpecification(params: RequirementSpecGenerationParams): Promise<string> {
-    // const { templateKey } = params
-
-    const annotationSummary = this.formatAnnotationSummary(this.flattenAnnotation(params.rootAnnotation))
-    const prompt = this.buildPrompt(params, annotationSummary)
-    fs.writeFileSync(path.join(__dirname, 'prompt.md'), prompt)
+    const prompt = this.preparePrompt(params)
     const modelResult = await this.requestModel(prompt)
 
     if (modelResult?.content) {
@@ -223,5 +233,51 @@ export class RequirementSpecModelService {
     //     finishedAt: now,
     //   },
     // }
+  }
+
+  public async streamSpecification(
+    params: RequirementSpecGenerationParams,
+    handlers: {
+      onChunk: (chunk: string) => void
+      onComplete?: () => void
+      onError?: (error: unknown) => void
+    }
+  ): Promise<void> {
+    const prompt = this.preparePrompt(params)
+    let receivedChunk = false
+
+    const handleChunk = (chunk: string) => {
+      if (!chunk) {
+        return
+      }
+      receivedChunk = true
+      handlers.onChunk(chunk)
+    }
+
+    try {
+      await this.modelGatewayService.streamModel(
+        {
+          prompt,
+          temperature: 0.2,
+        },
+        handleChunk
+      )
+    } catch (error) {
+      console.warn('[RequirementSpecModelService] 流式生成失败，将回退至非流式生成。', error)
+    }
+
+    if (!receivedChunk) {
+      try {
+        const fallback = await this.generateSpecification(params)
+        if (fallback) {
+          handlers.onChunk(fallback)
+        }
+      } catch (error) {
+        handlers.onError?.(error)
+        return
+      }
+    }
+
+    handlers.onComplete?.()
   }
 }
