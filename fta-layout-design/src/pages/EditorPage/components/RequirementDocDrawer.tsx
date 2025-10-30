@@ -1,6 +1,6 @@
 import { SaveOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { App, Button, Drawer, Space, Spin } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Streamdown } from 'streamdown';
 
 import { useRequirementDoc } from '../contexts/RequirementDocContext';
@@ -15,15 +15,10 @@ interface RequirementDocDrawerProps {
 
 const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClose, designId }) => {
   const { message } = App.useApp();
-  const { docContent, setDocContent } = useRequirementDoc();
+  const { docContent } = useRequirementDoc();
   const [loading, setLoading] = useState(false);
 
-  const handleContentChange = useCallback(
-    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setDocContent(event.target.value);
-    },
-    [setDocContent]
-  );
+  // 编辑面板暂时只保留预览，如需开启编辑请恢复对应代码并绑定 onChange 更新 setDocContent
 
   const currentContent = useMemo(() => docContent ?? '', [docContent]);
 

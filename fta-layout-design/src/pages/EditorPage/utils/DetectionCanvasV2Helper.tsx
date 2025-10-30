@@ -1,5 +1,5 @@
 import type { DSLNode, DSLData } from '@/types/dsl';
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { GRID_CONFIG, COLORS } from '../constants/CanvasConstant';
 
 /**
@@ -21,11 +21,11 @@ export interface DetectionCanvasV2Props {
  * @param ref 需要监听尺寸变化的 HTMLElement 引用。
  * @returns 当前容器的宽高（width、height）。
  */
-export const useContainerSize = (ref: React.RefObject<HTMLElement>) => {
+export const useContainerSize = <T extends HTMLElement>(ref: { current: T | null }) => {
   const [size, setSize] = useState({ width: 0, height: 0 });
 
   const updateSize = useCallback(() => {
-    const node = ref.current;
+    const node = ref.current as T | null;
     if (!node) return;
     const nextWidth = node.clientWidth;
     const nextHeight = node.clientHeight;

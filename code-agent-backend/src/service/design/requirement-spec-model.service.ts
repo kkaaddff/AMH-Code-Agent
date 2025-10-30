@@ -1,6 +1,6 @@
 import { Provide, Scope, ScopeEnum, Inject } from '@midwayjs/core'
-import dayjs from 'dayjs'
-import { generateRequirementMarkdown } from '../../utils/design/requirement-builder'
+import fs from 'fs'
+import path from 'path'
 import { ModelGatewayService, ModelResponse } from '../common'
 
 interface RequirementSpecGenerationParams {
@@ -101,8 +101,10 @@ export class RequirementSpecModelService {
   private buildTemplateInstructions(templateKey?: string): { preface: string; constraints: string } {
     const defaultPreface = [
       '你是一名资深前端系统分析师，需要根据设计稿与组件标注生成驱动代码生成的需求规格说明（PRD/SRS）。',
-      '请聚焦于帮助工程师理解页面布局、组件层级、关键交互以及数据依赖，确保内容可直接用于代码生成。',
+      '请聚焦于帮助工程师理解页面布局、组件层级、生成一份以下模板对应的实际项目需求规格说明',
     ].join('\n')
+
+    const defaultConstraints1 = fs.readFileSync(path.join(__dirname, 'ai-code-agent-spec-compact.md'), 'utf-8')
 
     const defaultConstraints = [
       '输出必须是 Markdown，并包含以下章节：',
@@ -130,7 +132,7 @@ export class RequirementSpecModelService {
           ].join('\n'),
         }
       default:
-        return { preface: defaultPreface, constraints: defaultConstraints }
+        return { preface: defaultPreface, constraints: defaultConstraints1 }
     }
   }
 
@@ -152,14 +154,15 @@ export class RequirementSpecModelService {
 
     return [
       instructions.preface,
-      '',
+      '=== 需求文档模板 ===',
       instructions.constraints,
       '',
       '=== 设计上下文 ===',
       contextLines.join('\n'),
       '',
       '=== 输出要求 ===',
-      '请按照约束编写 Markdown 文档，保留清晰的层级结构和要点列表。',
+      '请按照需求文档模板编写 Markdown 文档，确保内容符合需求文档模板的要求。',
+      '在需求文档最后添加 TODO 列表，列出最多十条后续要完成的需求项。',
     ].join('\n')
   }
 
@@ -190,6 +193,7 @@ export class RequirementSpecModelService {
 
     const annotationSummary = this.formatAnnotationSummary(this.flattenAnnotation(params.rootAnnotation))
     const prompt = this.buildPrompt(params, annotationSummary)
+    fs.writeFileSync(path.join(__dirname, 'prompt.md'), prompt)
     const modelResult = await this.requestModel(prompt)
 
     if (modelResult?.content) {
