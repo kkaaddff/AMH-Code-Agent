@@ -1,22 +1,7 @@
 import { SaveOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import {
-  BlockTypeSelect,
-  BoldItalicUnderlineToggles,
-  codeBlockPlugin,
-  headingsPlugin,
-  linkPlugin,
-  listsPlugin,
-  ListsToggle,
-  markdownShortcutPlugin,
-  MDXEditor,
-  MDXEditorMethods,
-  quotePlugin,
-  toolbarPlugin,
-  UndoRedo,
-} from '@mdxeditor/editor';
-import '@mdxeditor/editor/style.css';
 import { App, Button, Drawer, Space, Spin } from 'antd';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Streamdown } from 'streamdown';
 
 import { useRequirementDoc } from '../contexts/RequirementDocContext';
 import { executeCodeGeneration, saveRequirementDoc } from '../utils/requirementDoc';
@@ -31,12 +16,19 @@ interface RequirementDocDrawerProps {
 const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClose, designId }) => {
   const { message } = App.useApp();
   const { docContent, setDocContent } = useRequirementDoc();
-  const editorRef = useRef<MDXEditorMethods>(null);
   const [loading, setLoading] = useState(false);
+
+  const handleContentChange = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setDocContent(event.target.value);
+    },
+    [setDocContent]
+  );
+
+  const currentContent = useMemo(() => docContent ?? '', [docContent]);
 
   const handleSave = () => {
     try {
-      const currentContent = editorRef.current?.getMarkdown() || docContent;
       saveRequirementDoc(designId, currentContent);
       message.success('需求规格文档已保存');
     } catch (error) {
@@ -48,8 +40,6 @@ const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClo
   const handleSaveAndExecute = async () => {
     try {
       setLoading(true);
-      const currentContent = editorRef.current?.getMarkdown() || docContent;
-
       // 先保存
       saveRequirementDoc(designId, currentContent);
 
@@ -98,31 +88,27 @@ const RequirementDocDrawer: React.FC<RequirementDocDrawerProps> = ({ open, onClo
         <div className="editor-wrapper">
           {docContent ? (
             <div className="editor-container">
-              <MDXEditor
-                key={`editor-${designId}-${docContent.length}`} // 使用 designId 和内容长度作为 key
-                ref={editorRef}
-                markdown={docContent}
-                onChange={setDocContent}
-                plugins={[
-                  toolbarPlugin({
-                    toolbarContents: () => (
-                      <>
-                        <UndoRedo />
-                        <BoldItalicUnderlineToggles />
-                        <BlockTypeSelect />
-                        <ListsToggle />
-                      </>
-                    ),
-                  }),
-                  headingsPlugin(),
-                  listsPlugin(),
-                  quotePlugin(),
-                  linkPlugin(),
-                  codeBlockPlugin({ defaultCodeBlockLanguage: 'typescript' }),
-                  markdownShortcutPlugin(),
-                ]}
-                className="mdx-editor-custom"
-              />
+              {/* <div className="editor-pane">
+                <div className="editor-pane-header">Markdown 编辑</div>
+                <Input.TextArea
+                  value={currentContent}
+                  onChange={handleContentChange}
+                  className="editor-textarea"
+                  autoSize={false}
+                  style={{ height: '100%' }}
+                  placeholder="在此输入需求规格文档的 Markdown 内容..."
+                />
+              </div> */}
+              <div className="editor-pane">
+                <div className="editor-pane-header">实时预览</div>
+                <div className="editor-preview">
+                  {currentContent ? (
+                    <Streamdown>{currentContent}</Streamdown>
+                  ) : (
+                    <div className="editor-preview-empty">暂无内容</div>
+                  )}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="loading-placeholder">正在加载文档内容...</div>
