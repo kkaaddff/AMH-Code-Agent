@@ -20,7 +20,7 @@ import { RequirementDocProvider, useRequirementDoc } from './contexts/Requiremen
 import { COMPONENT_STYLES } from './styles/EditorPageStyles';
 import { inputBody1 } from './utils/CodeGenerationLoop/input1';
 import { loadAnnotationState } from './utils/componentStorage';
-import streamModelGateway from './utils/modelGateway';
+import { streamModelGateway } from './utils/modelGateway';
 import { generateRequirementDoc } from './utils/requirementDoc';
 
 const { Sider, Content } = Layout;
@@ -48,6 +48,7 @@ const mapTodoStatusToThoughtStatus = (status?: string): ThoughtChainStatus => {
 };
 
 const createTodoItemId = (baseId: string, index: number) => `${baseId}-todo-${index}`;
+const createThoughtId = () => `thought-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 // Inner component that uses the context
 const EditorPageContent: React.FC = () => {
@@ -76,10 +77,8 @@ const EditorPageContent: React.FC = () => {
   const [designId, setDesignId] = useState<string>('');
   const [dslTreeSelectedNodeId, setDslTreeSelectedNodeId] = useState<string | null>(null);
   const [dslTreeHoveredNodeId, setDslTreeHoveredNodeId] = useState<string | null>(null);
-  const codeStreamControllerRef = useRef<AbortController | null>(null);
+  // const codeStreamControllerRef = useRef<AbortController | null>(null);
   const codeRoundRef = useRef(0);
-
-  const createThoughtId = () => `thought-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
   // 从 URL 读取 designId
   useEffect(() => {
@@ -136,7 +135,7 @@ const EditorPageContent: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      codeStreamControllerRef.current?.abort();
+      // codeStreamControllerRef.current?.abort();
     };
   }, []);
 
@@ -196,8 +195,8 @@ const EditorPageContent: React.FC = () => {
       return [...prev, nextNode];
     });
 
-    const controller = new AbortController();
-    codeStreamControllerRef.current = controller;
+    // const controller = new AbortController();
+    // codeStreamControllerRef.current = controller;
 
     const requestMessages: Array<{ role: string; content: string }> = [
       {
@@ -230,8 +229,7 @@ const EditorPageContent: React.FC = () => {
                   return item;
                 }
                 const mergedContent = (item.content || '') + event.text;
-                const nextStatus =
-                  item.status === 'pending' && event.text.trim() ? 'in_progress' : item.status;
+                const nextStatus = item.status === 'pending' && event.text.trim() ? 'in_progress' : item.status;
                 return {
                   ...item,
                   status: nextStatus,
@@ -254,10 +252,7 @@ const EditorPageContent: React.FC = () => {
                 const existing = prev.find((item) => item.id === todoId);
                 const status = mapTodoStatusToThoughtStatus(todo.status);
                 const startedAt = existing?.startedAt || now;
-                const finishedAt =
-                  status === 'success' || status === 'error'
-                    ? existing?.finishedAt || now
-                    : undefined;
+                const finishedAt = status === 'success' || status === 'error' ? existing?.finishedAt || now : undefined;
 
                 return {
                   id: todoId,
@@ -276,11 +271,7 @@ const EditorPageContent: React.FC = () => {
                 return [...filtered, ...todoItems];
               }
 
-              return [
-                ...filtered.slice(0, insertionIndex + 1),
-                ...todoItems,
-                ...filtered.slice(insertionIndex + 1),
-              ];
+              return [...filtered.slice(0, insertionIndex + 1), ...todoItems, ...filtered.slice(insertionIndex + 1)];
             });
           }
         },
@@ -341,7 +332,7 @@ const EditorPageContent: React.FC = () => {
         console.error('代码生成失败:', error);
       }
     } finally {
-      codeStreamControllerRef.current = null;
+      // codeStreamControllerRef.current = null;
       setIsGeneratingCode(false);
     }
   };
@@ -382,7 +373,6 @@ const EditorPageContent: React.FC = () => {
 
   const handleCloseCodeDrawer = () => {
     if (isGeneratingCode) {
-      codeStreamControllerRef.current?.abort();
     }
     setIsCodeDrawerOpen(false);
   };

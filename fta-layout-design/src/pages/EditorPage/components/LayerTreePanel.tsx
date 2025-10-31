@@ -16,6 +16,8 @@ import {
 import { useComponentDetectionV2 } from '../contexts/ComponentDetectionContextV2';
 import { AnnotationNode } from '../types/componentDetectionV2';
 import type { DSLData, DSLNode } from '@/types/dsl';
+import { runCodeGenerationExample } from '../utils/CodeGenerationLoop';
+import { findParent } from '../utils/intermediateNodeExtractor';
 
 const { Title, Text } = Typography;
 
@@ -332,18 +334,6 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
     }
   };
 
-  // 辅助函数：查找父节点
-  const findParent = (root: AnnotationNode, childId: string): AnnotationNode | null => {
-    for (const child of root.children) {
-      if (child.id === childId) {
-        return root;
-      }
-      const found = findParent(child, childId);
-      if (found) return found;
-    }
-    return null;
-  };
-
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'rgb(255, 255, 255)' }}>
       {/* Header */}
@@ -409,7 +399,12 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
           {/* <Button size="small" icon={<FileTextOutlined />} onClick={onGenerateDoc} style={{ minWidth: '120px' }}>
               生成需求规格文档
             </Button> */}
-          <Button size="small" icon={<ThunderboltOutlined />} onClick={onGenerateCode} style={{ minWidth: '120px' }}>
+          <Button
+            size="small"
+            icon={<ThunderboltOutlined />}
+            onClick={runCodeGenerationExample}
+            style={{ minWidth: '120px' }}
+          >
             生成代码
           </Button>
         </Space>

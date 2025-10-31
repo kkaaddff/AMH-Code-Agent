@@ -1,4 +1,5 @@
 const MODEL_GATEWAY_ENDPOINT = 'http://localhost:7001/model-gateway';
+const MODEL_GATEWAY_SYNC_ENDPOINT = 'http://localhost:7001/model-gateway-sync';
 
 export interface StreamModelGatewayTodo {
   id?: string;
@@ -15,6 +16,10 @@ export interface StreamModelGatewayOptions {
   body: Record<string, any>;
   onChunk?: (chunk: StreamModelGatewayEvent) => void;
   onComplete?: () => void;
+}
+
+export interface SyncModelGatewayOptions {
+  body: Record<string, any>;
 }
 
 const extractChunkContent = (payload: any): string => {
@@ -181,11 +186,7 @@ const extractEventsFromPayload = (payload: any): StreamModelGatewayEvent[] => {
   return [];
 };
 
-export const streamModelGateway = async ({
-  body,
-  onChunk,
-  onComplete,
-}: StreamModelGatewayOptions): Promise<void> => {
+export const streamModelGateway = async ({ body, onChunk, onComplete }: StreamModelGatewayOptions): Promise<void> => {
   const response = await fetch(MODEL_GATEWAY_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -267,4 +268,29 @@ export const streamModelGateway = async ({
   }
 };
 
-export default streamModelGateway;
+export const syncModelGateway = async ({ body }: SyncModelGatewayOptions): Promise<StreamModelGatewayEvent[]> => {
+  const response = await fetch(MODEL_GATEWAY_SYNC_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`模型连接失败: ${response.status} ${response.statusText} ${errorText}`);
+  }
+
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error(`模型调用失败: ${result.error || '未知错误'}`);
+  }
+
+  // 从后端返回的 data 字段中提取事件
+  const events = extractEventsFromPayload(result.data);
+
+  return events;
+};

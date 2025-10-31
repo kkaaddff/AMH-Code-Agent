@@ -1,6 +1,6 @@
 /**
  * Agent Scheduler - 自驱动的 TODO 模式任务调度器
- * 
+ *
  * 功能描述：
  * 1. 模型接收输入后，使用 TODO 模式提出一系列 action
  * 2. 模型自己驱动自己完成这些任务
@@ -8,7 +8,7 @@
  * 4. 上次的输出可能作为下次的输入
  * 5. 所有接口请求使用伪函数调用
  */
-
+import { StreamModelGatewayEvent, StreamModelGatewayTodo, syncModelGateway } from '../modelGateway';
 import { commonUserPrompt, commonSystemPrompt } from './CommonPrompt';
 import { systemSetting } from './config';
 import {
@@ -32,117 +32,23 @@ import {
   mcp__ide__executeCode,
   mcp__ide__getDiagnostics,
 } from './tools';
-
-// ==================== 类型定义 ====================
-
-/**
- * TODO 状态
- */
-type TodoStatus = 'pending' | 'in_progress' | 'completed';
-
-/**
- * TODO 项
- */
-interface TodoItem {
-  content: string;
-  status: TodoStatus;
-  activeForm: string;
-}
-
-/**
- * 消息内容类型
- */
-interface MessageContent {
-  type: 'text' | 'tool_use' | 'tool_result';
-  text?: string;
-  id?: string;
-  name?: string;
-  input?: any;
-  tool_use_id?: string;
-  content?: string;
-  cache_control?: { type: 'ephemeral' };
-}
-
-/**
- * 消息
- */
-interface Message {
-  role: 'user' | 'assistant';
-  content: string | MessageContent[];
-}
-
-/**
- * 工具定义
- */
-interface Tool {
-  name: string;
-  description: string;
-  input_schema: any;
-}
-
-/**
- * API 请求体
- */
-interface RequestBody {
-  model?: string;
-  messages: Message[];
-  system?: MessageContent[];
-  tools?: Tool[];
-  betas?: string[];
-  metadata?: any;
-  max_tokens?: number;
-  stream?: boolean;
-  thinking?: any;
-}
-
-/**
- * API 响应
- */
-interface ApiResponse {
-  text: string;
-  tools?: any[];
-  stop_reason?: string;
-}
-
-/**
- * 会话状态
- */
-interface SessionState {
-  uid: string;
-  messages: Message[];
-  todos: TodoItem[];
-  currentTodoIndex: number;
-  isCompleted: boolean;
-}
+import { RequestBody, SessionState, Tool, Message, MessageContent, TodoItem, TodoStatus } from './types';
+import { logToFile, generateUID, formatTodos } from './utils';
 
 // ==================== 伪 API 调用函数 ====================
 
 /**
  * 伪 API 调用 - 发送消息到模型
  */
-async function callModelAPI(requestBody: RequestBody): Promise<ApiResponse> {
+async function callModelAPI(requestBody: RequestBody): Promise<StreamModelGatewayEvent[]> {
   // 这是一个伪函数调用，实际应该调用真实的 API
   console.log('[API Call] 调用模型 API:', {
     model: requestBody.model || systemSetting.model,
     messageCount: requestBody.messages.length,
     hasTools: requestBody.tools && requestBody.tools.length > 0,
   });
-
-  // 模拟 API 响应
-  return {
-    text: '模型响应内容',
-    tools: [],
-    stop_reason: 'end_turn',
-  };
-}
-
-/**
- * 伪 API 调用 - 日志记录
- */
-function logToFile(uid: string, type: string, data: any): void {
-  // 这是一个伪函数调用，实际应该写入日志文件
-  const timestamp = new Date().toISOString();
-  console.log(`[Log] ${timestamp} uid=${uid} ${type}:`, JSON.stringify(data, null, 2));
+  const events = await syncModelGateway({ body: requestBody });
+  return events;
 }
 
 // ==================== 核心调度器类 ====================
@@ -153,6 +59,7 @@ function logToFile(uid: string, type: string, data: any): void {
 export class AgentScheduler {
   private sessions: Map<string, SessionState> = new Map();
   private availableTools: Tool[] = [];
+  private maxIterations: number = 50;
 
   constructor() {
     this.initializeTools();
@@ -226,6 +133,7 @@ export class AgentScheduler {
       todos: [],
       currentTodoIndex: -1,
       isCompleted: false,
+      iterationCount: 0,
     };
 
     this.sessions.set(uid, session);
@@ -246,6 +154,9 @@ export class AgentScheduler {
     logToFile(uid, 'session_start', {});
 
     while (!session.isCompleted) {
+      // 增加迭代计数器
+      session.iterationCount++;
+
       // 发送当前消息到模型
       const requestBody: RequestBody = {
         messages: session.messages,
@@ -290,146 +201,92 @@ export class AgentScheduler {
   /**
    * 处理模型响应
    */
-  private async processResponse(session: SessionState, response: ApiResponse): Promise<void> {
-    // 解析响应中的工具调用
-    const toolCalls = this.extractToolCalls(response);
-
-    // 构建 assistant 消息
-    const assistantMessage: Message = {
-      role: 'assistant',
-      content: [],
-    };
-
-    // 添加文本响应
-    if (response.text) {
-      (assistantMessage.content as MessageContent[]).push({
-        type: 'text',
-        text: response.text,
-      });
+  private async processResponse(session: SessionState, events: StreamModelGatewayEvent[]): Promise<void> {
+    if (!events || events.length === 0) {
+      return;
     }
 
-    // 添加工具调用
-    if (toolCalls.length > 0) {
-      for (const toolCall of toolCalls) {
-        (assistantMessage.content as MessageContent[]).push({
+    const assistantContent: MessageContent[] = [];
+
+    for (const event of events) {
+      if (event.type === 'text') {
+        const text = typeof event.text === 'string' ? event.text : '';
+        if (text.trim()) {
+          assistantContent.push({
+            type: 'text',
+            text,
+          });
+        }
+        continue;
+      }
+
+      if (event.type === 'todo' && event.todos && event.todos.length > 0) {
+        const normalizedTodos = this.mapStreamTodosToTodoItems(event.todos);
+        this.updateTodos(session, normalizedTodos);
+
+        assistantContent.push({
           type: 'tool_use',
-          id: toolCall.id,
-          name: toolCall.name,
-          input: toolCall.input,
+          id: this.generateToolUseId(),
+          name: 'TodoWrite',
+          input: { todos: event.todos },
         });
       }
     }
 
+    if (assistantContent.length === 0) {
+      return;
+    }
+
+    const assistantMessage: Message = {
+      role: 'assistant',
+      content: assistantContent,
+    };
+
     session.messages.push(assistantMessage);
-
-    // 如果有工具调用，执行工具并添加结果
-    if (toolCalls.length > 0) {
-      await this.executeTools(session, toolCalls);
-    }
+    logToFile(session.uid, 'assistant_message', assistantMessage);
   }
 
   /**
-   * 从响应中提取工具调用
+   * 将模型返回的 TODO 列表转换为内部结构
    */
-  private extractToolCalls(response: ApiResponse): any[] {
-    // 解析工具调用（这里简化处理，实际需要根据响应格式解析）
-    if (response.tools && Array.isArray(response.tools)) {
-      return response.tools;
-    }
-
-    // 从文本中提取工具调用（如果响应包含 tool_use）
-    const toolCalls: any[] = [];
-
-    // 模拟提取逻辑
-    // 实际实现需要解析响应文本或使用结构化的响应格式
-
-    return toolCalls;
+  private mapStreamTodosToTodoItems(streamTodos: StreamModelGatewayTodo[]): TodoItem[] {
+    return streamTodos.map((todo) => ({
+      id: todo.id,
+      content: todo.content,
+      status: this.normalizeTodoStatus(todo.status),
+      activeForm: todo.activeForm,
+    }));
   }
 
-  /**
-   * 执行工具调用
-   */
-  private async executeTools(session: SessionState, toolCalls: any[]): Promise<void> {
-    const toolResults: MessageContent[] = [];
-
-    for (const toolCall of toolCalls) {
-      const result = await this.executeTool(session, toolCall);
-
-      toolResults.push({
-        type: 'tool_result',
-        tool_use_id: toolCall.id,
-        content: result,
-      });
-
-      // 特殊处理 TodoWrite 工具
-      if (toolCall.name === 'TodoWrite') {
-        this.updateTodos(session, toolCall.input.todos);
-      }
+  private normalizeTodoStatus(status?: string): TodoStatus {
+    const allowed: TodoStatus[] = ['pending', 'in_progress', 'completed'];
+    if (status && (allowed as string[]).includes(status)) {
+      return status as TodoStatus;
     }
-
-    // 添加工具结果到消息历史
-    if (toolResults.length > 0) {
-      session.messages.push({
-        role: 'user',
-        content: toolResults,
-      });
-    }
+    return 'pending';
   }
 
-  /**
-   * 执行单个工具
-   */
-  private async executeTool(session: SessionState, toolCall: any): Promise<string> {
-    logToFile(session.uid, 'tool_execute', {
-      name: toolCall.name,
-      input: toolCall.input,
-    });
-
-    // 根据工具名称执行相应的操作
-    switch (toolCall.name) {
-      case 'TodoWrite':
-        return commonSystemPrompt.todoModifiedSuccessfully;
-
-      case 'Read':
-        // 模拟文件读取
-        return `File content for ${toolCall.input.file_path}`;
-
-      case 'Write':
-        // 模拟文件写入
-        return `File created successfully at: ${toolCall.input.file_path}`;
-
-      case 'Edit':
-        // 模拟文件编辑
-        return `File edited successfully at: ${toolCall.input.file_path}`;
-
-      case 'Bash':
-        // 模拟命令执行
-        return `Command executed: ${toolCall.input.command}`;
-
-      case 'Glob':
-        // 模拟文件查找
-        return `Found files matching pattern: ${toolCall.input.pattern}`;
-
-      case 'Grep':
-        // 模拟内容搜索
-        return `Search results for pattern: ${toolCall.input.pattern}`;
-
-      default:
-        return `Tool ${toolCall.name} executed successfully`;
-    }
+  private generateToolUseId(): string {
+    return `todo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
   /**
    * 更新 TODO 列表
    */
   private updateTodos(session: SessionState, todos: TodoItem[]): void {
-    session.todos = todos;
+    const copiedTodos = todos.map((todo) => ({ ...todo }));
+    session.todos = copiedTodos;
 
     // 更新当前 TODO 索引
-    session.currentTodoIndex = todos.findIndex((todo) => todo.status === 'in_progress');
+    let currentIndex = copiedTodos.findIndex((todo) => todo.status === 'in_progress');
+    if (currentIndex === -1) {
+      currentIndex = copiedTodos.findIndex((todo) => todo.status === 'pending');
+    }
+
+    session.currentTodoIndex = currentIndex;
 
     logToFile(session.uid, 'todos_updated', {
-      todos,
+      todos: copiedTodos,
       currentIndex: session.currentTodoIndex,
     });
   }
@@ -438,23 +295,19 @@ export class AgentScheduler {
    * 检查会话是否完成
    */
   private isSessionCompleted(session: SessionState): boolean {
-    // 如果没有 TODO，不认为已完成
+    // 检查是否超过最大轮数限制（50 轮）
+    if (session.iterationCount >= this.maxIterations) {
+      logToFile(session.uid, 'session_max_iterations_reached', {
+        iterationCount: session.iterationCount,
+      });
+      return true;
+    }
+
     if (session.todos.length === 0) {
       return false;
     }
 
-    // 检查所有 TODO 是否都已完成
-    const allCompleted = session.todos.every((todo) => todo.status === 'completed');
-
-    // 检查是否有 final 响应
-    const lastMessage = session.messages[session.messages.length - 1];
-    const hasFinalResponse =
-      lastMessage &&
-      lastMessage.role === 'assistant' &&
-      typeof lastMessage.content === 'string' &&
-      lastMessage.content.includes('successfully created');
-
-    return allCompleted && hasFinalResponse;
+    return session.todos.every((todo) => todo.status === 'completed');
   }
 
   /**
@@ -477,40 +330,6 @@ export class AgentScheduler {
   cleanupSession(uid: string): void {
     this.sessions.delete(uid);
     logToFile(uid, 'session_cleanup', {});
-  }
-}
-
-// ==================== 辅助函数 ====================
-
-/**
- * 生成唯一 UID
- */
-export function generateUID(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 9);
-  return `${timestamp}-${random}`;
-}
-
-/**
- * 格式化 TODO 列表为字符串
- */
-export function formatTodos(todos: TodoItem[]): string {
-  return todos
-    .map((todo, index) => {
-      const status = todo.status === 'completed' ? '✓' : todo.status === 'in_progress' ? '→' : '○';
-      return `${status} ${index + 1}. ${todo.content}`;
-    })
-    .join('\n');
-}
-
-/**
- * 解析工具调用结果
- */
-export function parseToolResult(result: string): any {
-  try {
-    return JSON.parse(result);
-  } catch {
-    return result;
   }
 }
 
@@ -550,36 +369,3 @@ export async function runCodeGenerationExample(): Promise<void> {
     scheduler.cleanupSession(uid);
   }
 }
-
-/**
- * 示例：多会话并行执行
- */
-export async function runMultipleSessionsExample(): Promise<void> {
-  const scheduler = new AgentScheduler();
-
-  const prompts = [
-    '创建一个用户详情页面',
-    '创建一个订单列表页面',
-    '创建一个商品展示页面',
-  ];
-
-  const sessions = prompts.map((prompt) => {
-    const uid = generateUID();
-    scheduler.createSession(uid, prompt);
-    return uid;
-  });
-
-  console.log(`创建了 ${sessions.length} 个会话`);
-
-  // 并行执行所有会话
-  await Promise.all(sessions.map((uid) => scheduler.executeSession(uid)));
-
-  console.log('\n所有会话完成!');
-
-  // 清理所有会话
-  sessions.forEach((uid) => scheduler.cleanupSession(uid));
-}
-
-// ==================== 导出 ====================
-
-export default AgentScheduler;
