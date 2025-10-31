@@ -1,8 +1,9 @@
-import { Drawer, Space, Typography, List, Divider } from 'antd';
+import { Drawer, Space, Typography, List, Divider, Button, message } from 'antd';
 import { ThoughtChain, type ThoughtChainItem as AntThoughtChainItem } from '@ant-design/x';
-import { LoadingOutlined, CheckSquareFilled, BorderOutlined } from '@ant-design/icons';
-import React, { useMemo } from 'react';
+import { LoadingOutlined, CheckSquareFilled, BorderOutlined, DownloadOutlined } from '@ant-design/icons';
+import React, { useMemo, useState } from 'react';
 import { useCodeGeneration } from '../contexts/CodeGenerationContext';
+import { extractCodeFilesFromMarkdown, saveFilesToDisk } from '../../../utils/fileSaver';
 
 const { Text, Title } = Typography;
 
@@ -13,6 +14,7 @@ interface CodeGenerationDrawerProps {
 
 const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClose }) => {
   const { thoughtChainItems, isGenerating } = useCodeGeneration();
+  const [isSaving, setIsSaving] = useState(false);
 
   // 分离 TODO 和 迭代数据
   const { todoItems, iterationItems } = useMemo(() => {
@@ -48,16 +50,62 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
     });
   }, [iterationItems]);
 
+  // 处理保存文件
+  const handleSaveFiles = async () => {
+    setIsSaving(true);
+    
+    try {
+      // 从成功的迭代项中提取所有代码文件
+      const successfulIterations = iterationItems.filter(item => item.status === 'success');
+      const allFiles = successfulIterations.flatMap(item => 
+        item.content ? extractCodeFilesFromMarkdown(item.content) : []
+      );
+      
+      if (allFiles.length === 0) {
+        message.warning('没有找到可保存的代码文件');
+        return;
+      }
+      
+      // 保存文件
+      const result = await saveFilesToDisk(allFiles);
+      
+      if (result.error) {
+        message.error(result.error);
+      } else if (result.success) {
+        message.success(`成功保存 ${result.savedCount} 个文件`);
+      } else {
+        message.warning(
+          `部分文件保存失败：成功 ${result.savedCount} 个，失败 ${result.failedFiles.length} 个 (${result.failedFiles.join(', ')})`
+        );
+      }
+    } catch (error) {
+      message.error(`保存文件时出错: ${(error as Error).message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Drawer
       title={
-        <Space direction="vertical" size={4}>
-          <Title level={5} style={{ margin: 0 }}>
-            代码生成
-          </Title>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            根据模型调用实时追踪生成进度
-          </Text>
+        <Space direction="horizontal" size={12} style={{ width: '100%', justifyContent: 'space-between' }}>
+          <Space direction="vertical" size={4}>
+            <Title level={5} style={{ margin: 0 }}>
+              代码生成
+            </Title>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              根据模型调用实时追踪生成进度
+            </Text>
+          </Space>
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={handleSaveFiles}
+            loading={isSaving}
+            disabled={isGenerating || iterationItems.filter(item => item.status === 'success').length === 0}
+          >
+            保存文件
+          </Button>
         </Space>
       }
       placement="right"
