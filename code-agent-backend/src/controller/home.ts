@@ -1,6 +1,8 @@
 import { Context } from '@midwayjs/web'
 import { Body, Controller, Get, Inject, Post, Query, Redirect } from '@midwayjs/decorator'
 import axios from 'axios'
+import fs from 'fs'
+import path from 'path'
 
 // const CLAUDE_BASE_URL = 'https://qa-user.aiapi.amh-group.com/claude/v1/messages'
 // const CLAUDE_API_KEY =
@@ -76,6 +78,24 @@ export class HomeController {
 
   @Post('/model-gateway-sync')
   async modelGatewaySync(@Body() questionBody: any) {
+    const logDir = path.join(process.cwd(), 'logs', 'api')
+    const timestamp = new Date().toISOString()
+    const logFile = path.join(logDir, `model-gateway-sync-${new Date().toISOString().split('T')[0]}.log`)
+
+    // 确保日志目录存在
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true })
+    }
+
+    // 记录入参
+    const requestLog = {
+      timestamp,
+      type: 'REQUEST',
+      method: 'POST',
+      endpoint: '/model-gateway-sync',
+      requestBody: questionBody,
+    }
+
     try {
       // 确保请求体中 stream 参数为 false（如果存在）
       const requestData = {
@@ -93,11 +113,39 @@ export class HomeController {
         },
       })
 
+      // 记录出参
+      const responseLog = {
+        timestamp: new Date().toISOString(),
+        type: 'RESPONSE',
+        method: 'POST',
+        endpoint: '/model-gateway-sync',
+        status: response.status,
+        responseData: response.data,
+      }
+
+      // 写入日志文件
+      const logEntry = JSON.stringify(requestLog) + '\n' + JSON.stringify(responseLog) + '\n' + '---\n'
+      fs.appendFileSync(logFile, logEntry, 'utf8')
+
       return {
         success: true,
         data: response.data,
       }
     } catch (error: any) {
+      // 记录错误日志
+      const errorLog = {
+        timestamp: new Date().toISOString(),
+        type: 'ERROR',
+        method: 'POST',
+        endpoint: '/model-gateway-sync',
+        status: error.response?.status || 500,
+        error: error.response?.data || error.message || 'Request Error',
+      }
+
+      // 写入日志文件
+      const logEntry = JSON.stringify(requestLog) + '\n' + JSON.stringify(errorLog) + '\n' + '---\n'
+      fs.appendFileSync(logFile, logEntry, 'utf8')
+
       this.ctx.status = error.response?.status || 500
       return {
         success: false,

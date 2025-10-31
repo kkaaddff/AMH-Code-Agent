@@ -173,7 +173,7 @@ export const ComponentDetectionProviderV2: React.FC<ComponentDetectionProviderPr
           id: 'root',
           dslNodeId: rootNode.id,
           dslNode: rootNode,
-          ftaComponent: 'Page',
+          ftaComponent: 'View',
           name: 'Page',
           isRoot: true,
           isContainer: true,

@@ -1,6 +1,6 @@
 /**
  * 组件库配置（从 component-schemas.json 的 type 字段动态生成）
- * 
+ *
  * 分类规则：
  * - 基础原子组件：Button、Icon、Text、Avatar、Badge 等基础 UI 元素
  * - 带有插槽的复杂组件：Card、Modal、Form 等需要子内容的容器组件
@@ -13,10 +13,10 @@ import { FTA_COMPONENT_SCHEMAS } from './FTAComponentSchemas';
 // 从 schemas 中按 type 字段分组
 const groupByType = () => {
   const groups: Record<string, string[]> = {
+    基础容器: [],
     基础原子组件: [],
     带有插槽的复杂组件: [],
     复杂整体业务组件: [],
-    基础容器: [],
   };
 
   for (const [name, schema] of Object.entries(FTA_COMPONENT_SCHEMAS)) {

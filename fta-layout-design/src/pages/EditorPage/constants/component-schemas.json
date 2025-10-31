@@ -3531,12 +3531,6 @@
     "sourcePath": "layout/grid.md",
     "type": "基础容器"
   },
-  "I18n": {
-    "component": "I18n",
-    "properties": [],
-    "sourcePath": "i18n/i18n.md",
-    "type": "基础原子组件"
-  },
   "Icon": {
     "component": "Icon",
     "properties": [
