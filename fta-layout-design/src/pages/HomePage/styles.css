@@ -562,7 +562,6 @@
 
 /* 文档关联样式 */
 .document-links-section {
-  margin-bottom: 24px;
 }
 
 .document-link-card {
@@ -680,18 +679,18 @@
   .homepage-container {
     padding: 16px;
   }
-  
+
   .project-header,
   .section-header {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .action-content {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .project-meta {
     flex-direction: column;
     gap: 8px;

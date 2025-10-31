@@ -224,7 +224,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ visible, projec
     }
 
     return (
-      <div className="document-links-section" style={{ marginBottom: 24 }}>
+      <div className="document-links-section">
         <Title level={5} style={{ marginBottom: 16 }}>
           关联文档
         </Title>
