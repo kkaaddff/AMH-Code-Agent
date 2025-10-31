@@ -1,4 +1,5 @@
 import { DSLNode } from '@/types/dsl';
+import { AnnotationNode } from '../types/componentDetectionV2';
 
 // 中间层级节点信息（既不是根节点，也不是叶子节点）
 export interface IntermediateNodeInfo {
@@ -24,7 +25,7 @@ export interface IntermediateNodeInfo {
  */
 export function extractIntermediateNodes(rootNode: DSLNode): IntermediateNodeInfo[] {
   const intermediateNodes: IntermediateNodeInfo[] = [];
-  
+
   // 递归遍历节点树
   function traverse(
     node: DSLNode,
@@ -43,8 +44,8 @@ export function extractIntermediateNodes(rootNode: DSLNode): IntermediateNodeInf
 
     // 如果有子节点且不是根节点，则是中间层级节点
     if (hasChildren && !isRoot) {
-      const childrenIds = node.children!.map(child => child.id);
-      
+      const childrenIds = node.children!.map((child) => child.id);
+
       intermediateNodes.push({
         id: node.id,
         node,
@@ -88,18 +89,29 @@ export function findIntermediateNodeById(
  */
 export function getLeafNodeIdsUnderNode(node: DSLNode): string[] {
   const leafIds: string[] = [];
-  
+
   function traverse(currentNode: DSLNode) {
     if (!currentNode.children || currentNode.children.length === 0) {
       // 叶子节点
       leafIds.push(currentNode.id);
     } else {
       // 继续遍历子节点
-      currentNode.children.forEach(child => traverse(child));
+      currentNode.children.forEach((child) => traverse(child));
     }
   }
-  
+
   traverse(node);
   return leafIds;
 }
 
+// 辅助函数：查找父节点
+export function findParent(root: AnnotationNode, childId: string): AnnotationNode | null {
+  for (const child of root.children) {
+    if (child.id === childId) {
+      return root;
+    }
+    const found = findParent(child, childId);
+    if (found) return found;
+  }
+  return null;
+}

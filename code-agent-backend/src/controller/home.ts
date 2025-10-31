@@ -2,6 +2,13 @@ import { Context } from '@midwayjs/web'
 import { Body, Controller, Get, Inject, Post, Query, Redirect } from '@midwayjs/decorator'
 import axios from 'axios'
 
+// const CLAUDE_BASE_URL = 'https://qa-user.aiapi.amh-group.com/claude/v1/messages'
+// const CLAUDE_API_KEY =
+//    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoicWljaGVuZy56aGFuZyIsImlkIjoiMTAyMzQxOSIsImtleSI6IkJyT1ExS3E2IiwiY29uc3VtZXIiOiJhcGlrZXktNjhmOWVlMGFlNGIwYjI2MzliNjgyNTYzIn0.0h9dqhHBQzk6oWmNqeoZix_aGg-EOefKEBj09Lxv-AI'
+
+const CLAUDE_BASE_URL = 'https://open.bigmodel.cn/api/anthropic/v1/messages'
+const CLAUDE_API_KEY = '1a502e8ee34c4953a3c25b778f094b8e.c33zr72sfzXKf5Fr'
+
 @Controller('/')
 export class HomeController {
   @Inject()
@@ -24,10 +31,6 @@ export class HomeController {
 
   @Post('/model-gateway')
   async modelGateway(@Body() questionBody: any) {
-    const baseUrl = 'https://qa-user.aiapi.amh-group.com/claude/v1/messages?beta=true'
-    const apiKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoicWljaGVuZy56aGFuZyIsImlkIjoiMTAyMzQxOSIsImtleSI6IkJyT1ExS3E2IiwiY29uc3VtZXIiOiJhcGlrZXktNjhmOWVlMGFlNGIwYjI2MzliNjgyNTYzIn0.0h9dqhHBQzk6oWmNqeoZix_aGg-EOefKEBj09Lxv-AI'
-
     this.ctx.res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -37,11 +40,11 @@ export class HomeController {
     await new Promise<void>((resolve, reject) => {
       axios({
         method: 'POST',
-        url: baseUrl,
+        url: CLAUDE_BASE_URL,
         responseType: 'stream',
         data: questionBody,
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${CLAUDE_API_KEY}`,
           'Content-Type': 'application/json',
         },
       })
@@ -69,5 +72,37 @@ export class HomeController {
           reject('Request Error:' + error)
         })
     })
+  }
+
+  @Post('/model-gateway-sync')
+  async modelGatewaySync(@Body() questionBody: any) {
+    try {
+      // 确保请求体中 stream 参数为 false（如果存在）
+      const requestData = {
+        ...questionBody,
+        stream: false,
+      }
+
+      const response = await axios({
+        method: 'POST',
+        url: CLAUDE_BASE_URL,
+        data: requestData,
+        headers: {
+          Authorization: `Bearer ${CLAUDE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error: any) {
+      this.ctx.status = error.response?.status || 500
+      return {
+        success: false,
+        error: error.response?.data || error.message || 'Request Error',
+      }
+    }
   }
 }
