@@ -19,34 +19,26 @@ import {
   Read,
   Write,
   TodoWrite,
-  WebFetch,
   Task,
-  ExitPlanMode,
-  Glob,
-  Grep,
-  KillShell,
-  NotebookEdit,
-  Skill,
-  SlashCommand,
-  WebSearch,
-  mcp__ide__executeCode,
-  mcp__ide__getDiagnostics,
+  // Glob,
+  // ExitPlanMode,
+  // WebFetch,
+  // Grep,
+  // KillShell,
+  // NotebookEdit,
+  // Skill,
+  // SlashCommand,
+  // WebSearch,
+  // mcp__ide__executeCode,
+  // mcp__ide__getDiagnostics,
 } from './tools';
 import { RequestBody, SessionState, Tool, Message, MessageContent, TodoItem, TodoStatus } from './types';
 import { logToFile, generateUID, formatTodos } from './utils';
 
-// ==================== 伪 API 调用函数 ====================
-
 /**
- * 伪 API 调用 - 发送消息到模型
+ * 发送消息到模型 使用 syncModelGateway 中转
  */
 async function callModelAPI(requestBody: RequestBody): Promise<StreamModelGatewayEvent[]> {
-  // 这是一个伪函数调用，实际应该调用真实的 API
-  console.log('[API Call] 调用模型 API:', {
-    model: requestBody.model || systemSetting.model,
-    messageCount: requestBody.messages.length,
-    hasTools: requestBody.tools && requestBody.tools.length > 0,
-  });
   const events = await syncModelGateway({ body: requestBody });
   return events;
 }
@@ -77,18 +69,18 @@ export class AgentScheduler {
       Read,
       Write,
       TodoWrite,
-      WebFetch,
       Task,
-      ExitPlanMode,
-      Glob,
-      Grep,
-      KillShell,
-      NotebookEdit,
-      Skill,
-      SlashCommand,
-      WebSearch,
-      mcp__ide__executeCode,
-      mcp__ide__getDiagnostics,
+      // WebFetch,
+      // ExitPlanMode,
+      // Glob,
+      // Grep,
+      // KillShell,
+      // NotebookEdit,
+      // Skill,
+      // SlashCommand,
+      // WebSearch,
+      // mcp__ide__executeCode,
+      // mcp__ide__getDiagnostics,
     ];
   }
 
@@ -361,39 +353,3 @@ export class AgentScheduler {
   }
 }
 
-// ==================== 使用示例 ====================
-
-/**
- * 示例：创建并执行一个代码生成会话
- */
-export async function runCodeGenerationExample(): Promise<void> {
-  const scheduler = new AgentScheduler();
-
-  // 创建新会话
-  const uid = generateUID();
-  const initialPrompt = commonUserPrompt.mainPrompt;
-
-  scheduler.createSession(uid, initialPrompt);
-
-  console.log(`创建会话: ${uid}`);
-  console.log('初始提示:', initialPrompt);
-
-  try {
-    // 执行会话
-    await scheduler.executeSession(uid);
-
-    // 获取最终状态
-    const finalSession = scheduler.getSession(uid);
-    if (finalSession) {
-      console.log('\n会话完成!');
-      console.log('TODO 列表:');
-      console.log(formatTodos(finalSession.todos));
-      console.log(`\n消息数量: ${finalSession.messages.length}`);
-    }
-  } catch (error) {
-    console.error('会话执行失败:', error);
-  } finally {
-    // 清理会话
-    scheduler.cleanupSession(uid);
-  }
-}

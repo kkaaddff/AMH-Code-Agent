@@ -320,6 +320,11 @@
   resolved "https://npm.amh-group.com/@bcoe%2fv8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha1-daLotRy3WKdVPWgEpZMteqznXDk=
 
+"@byjohann/toon@^0.5.1":
+  version "0.5.1"
+  resolved "https://npm.amh-group.com/@byjohann%2ftoon/-/toon-0.5.1.tgz#4e4d83c08d24c81b21e9911a6f8b73e0651ebd0b"
+  integrity sha512-bGWRVkIbU2JG2XQvGeWYtSG/eCef6Y1oXjZ0AXkjJXoNUMuOacaJs/jgdzkzfp65GKRP2H3lG0pP1T6CP6VTDQ==
+
 "@colors/colors@1.6.0", "@colors/colors@^1.6.0":
   version "1.6.0"
   resolved "https://npm.amh-group.com/@colors%2fcolors/-/colors-1.6.0.tgz"

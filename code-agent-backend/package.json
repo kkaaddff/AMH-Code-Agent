@@ -16,6 +16,7 @@
     "prettier": "prettier --write \"**/*.{js,jsx,tsx,ts,less,md,json}\""
   },
   "dependencies": {
+    "@byjohann/toon": "^0.5.1",
     "@fta/server-middleware-lion": "^0.0.8",
     "@midwayjs/bootstrap": "^3.11.15",
     "@midwayjs/bull": "^3.11.15",
