@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import { App as AntApp, App, Button, Dropdown, Layout, Space, Spin, Typography } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
-import CodeGenerationDrawer, { ThoughtChainItem, ThoughtChainStatus } from './components/CodeGenerationDrawer';
+import CodeGenerationDrawer from './components/CodeGenerationDrawer';
 import Component3DInspectModal from './components/Component3DInspectModal';
 import ComponentPropertyPanelV2 from './components/ComponentPropertyPanelV2';
 import DetectionCanvasV2 from './components/DetectionCanvasV2';
@@ -17,11 +17,13 @@ import LayerTreePanel from './components/LayerTreePanel';
 import RequirementDocDrawer from './components/RequirementDocDrawer';
 import { ComponentDetectionProviderV2, useComponentDetectionV2 } from './contexts/ComponentDetectionContextV2';
 import { RequirementDocProvider, useRequirementDoc } from './contexts/RequirementDocContext';
+import { CodeGenerationProvider, useCodeGeneration } from './contexts/CodeGenerationContext';
 import { COMPONENT_STYLES } from './styles/EditorPageStyles';
-import { inputBody1 } from './utils/CodeGenerationLoop/input1';
 import { loadAnnotationState } from './utils/componentStorage';
-import { streamModelGateway } from './utils/modelGateway';
 import { generateRequirementDoc } from './utils/requirementDoc';
+import { AgentScheduler } from './utils/CodeGenerationLoop';
+import { generateUID } from './utils/CodeGenerationLoop/utils';
+import { commonUserPrompt } from './utils/CodeGenerationLoop/CommonPrompt';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
@@ -32,23 +34,6 @@ const SCALE_OPTIONS = [
   { key: '0.75', label: '75%' },
   { key: '1', label: '100%' },
 ];
-
-const mapTodoStatusToThoughtStatus = (status?: string): ThoughtChainStatus => {
-  const normalized = (status || '').toLowerCase();
-  if (['success', 'completed', 'done', 'finished'].includes(normalized)) {
-    return 'success';
-  }
-  if (['error', 'failed', 'failure'].includes(normalized)) {
-    return 'error';
-  }
-  if (['in_progress', 'working', 'progress'].includes(normalized)) {
-    return 'in_progress';
-  }
-  return 'pending';
-};
-
-const createTodoItemId = (baseId: string, index: number) => `${baseId}-todo-${index}`;
-const createThoughtId = () => `thought-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 // Inner component that uses the context
 const EditorPageContent: React.FC = () => {
@@ -64,6 +49,21 @@ const EditorPageContent: React.FC = () => {
     updateDslRootNode,
     rootAnnotation,
   } = useComponentDetectionV2();
+  const {
+    isDrawerOpen: isCodeDrawerOpen,
+    isGenerating: isGeneratingCode,
+    openDrawer: openCodeDrawer,
+    closeDrawer: closeCodeDrawer,
+    startGeneration,
+    stopGeneration,
+    addThoughtItem,
+    updateThoughtItem,
+    appendToThoughtContent,
+    updateTodos,
+    setCurrentIteration,
+    clearThoughtChain,
+  } = useCodeGeneration();
+
   const [scale, setScale] = useState(0.5);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -71,14 +71,11 @@ const EditorPageContent: React.FC = () => {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isDocDrawerOpen, setIsDocDrawerOpen] = useState(false);
   const [isGeneratingDoc, setIsGeneratingDoc] = useState(false);
-  const [isCodeDrawerOpen, setIsCodeDrawerOpen] = useState(false);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-  const [thoughtChainItems, setThoughtChainItems] = useState<ThoughtChainItem[]>([]);
   const [designId, setDesignId] = useState<string>('');
   const [dslTreeSelectedNodeId, setDslTreeSelectedNodeId] = useState<string | null>(null);
   const [dslTreeHoveredNodeId, setDslTreeHoveredNodeId] = useState<string | null>(null);
-  // const codeStreamControllerRef = useRef<AbortController | null>(null);
-  const codeRoundRef = useRef(0);
+
+  const schedulerRef = useRef<AgentScheduler | null>(null);
 
   // 从 URL 读取 designId
   useEffect(() => {
@@ -166,174 +163,100 @@ const EditorPageContent: React.FC = () => {
 
     if (isGeneratingCode) {
       message.info('代码生成进行中，请稍候');
-      setIsCodeDrawerOpen(true);
+      openCodeDrawer();
       return;
     }
 
-    const startedAt = new Date().toISOString();
-    setIsCodeDrawerOpen(true);
-    setIsGeneratingCode(true);
-    message.open({ type: 'loading', content: '正在生成代码...', key: 'generate-code' });
+    // 打开抽屉并清空之前的数据
+    openCodeDrawer();
+    clearThoughtChain();
+    message.open({ type: 'loading', content: '正在初始化代码生成...', key: 'generate-code' });
 
-    codeRoundRef.current += 1;
-    const currentRound = codeRoundRef.current;
-    const thoughtId = createThoughtId();
+    // 当前迭代的思维链 ID（在 try 块外定义，以便在 catch 块中访问）
+    let currentIterationThoughtId: string | null = null;
 
-    setThoughtChainItems((prev) => {
-      const nextNode: ThoughtChainItem = {
-        id: thoughtId,
-        title: `第${currentRound}轮模型响应`,
-        status: 'pending',
-        content: '',
-        startedAt,
-        kind: 'response',
-      };
-      const last = prev[prev.length - 1];
-      if (last && last.status === 'pending' && !last.content) {
-        return [...prev.slice(0, -1), nextNode];
-      }
-      return [...prev, nextNode];
-    });
-
-    // const controller = new AbortController();
-    // codeStreamControllerRef.current = controller;
-
-    const requestMessages: Array<{ role: string; content: string }> = [
-      {
-        role: 'system',
-        content: '你是一个前端代码生成助手，擅长根据设计标注输出 React 代码。',
-      },
-      {
-        role: 'user',
-        content: `请基于设计稿${designId ? `（ID: ${designId}）` : ''}的标注信息给出代码草稿。`,
-      },
-    ];
-
-    if (rootAnnotation) {
-      const serialized = JSON.stringify(rootAnnotation);
-      const truncated = serialized.length > 4000 ? `${serialized.slice(0, 4000)}…` : serialized;
-      requestMessages.push({
-        role: 'user',
-        content: `标注数据：${truncated}`,
-      });
-    }
-    const requestBody = inputBody1;
     try {
-      await streamModelGateway({
-        body: requestBody,
-        onChunk: (event) => {
-          if (event.type === 'text') {
-            setThoughtChainItems((prev) =>
-              prev.map((item) => {
-                if (item.id !== thoughtId) {
-                  return item;
-                }
-                const mergedContent = (item.content || '') + event.text;
-                const nextStatus = item.status === 'pending' && event.text.trim() ? 'in_progress' : item.status;
-                return {
-                  ...item,
-                  status: nextStatus,
-                  content: mergedContent,
-                };
-              })
-            );
-            return;
+      // 初始化 Scheduler
+      if (!schedulerRef.current) {
+        schedulerRef.current = new AgentScheduler();
+      }
+
+      const scheduler = schedulerRef.current;
+      const sessionId = generateUID();
+
+      // 构建初始提示词
+      let initialPrompt = commonUserPrompt.mainPrompt;
+      if (rootAnnotation) {
+        const annotationData = JSON.stringify(rootAnnotation, null, 2);
+        initialPrompt += `\n\n当前设计标注数据：\n${annotationData}`;
+      }
+
+      // 创建会话
+      scheduler.createSession(sessionId, initialPrompt);
+      startGeneration(sessionId);
+
+      // 执行会话，传入回调函数
+      await scheduler.executeSession(sessionId, {
+        onIterationStart: (iteration) => {
+          console.log(`开始第 ${iteration} 轮迭代`);
+          setCurrentIteration(iteration);
+
+          // 创建新的迭代项
+          const thoughtId = `iteration-${sessionId}-${iteration}`;
+          currentIterationThoughtId = thoughtId;
+          addThoughtItem({
+            id: thoughtId,
+            title: `第 ${iteration} 轮迭代`,
+            status: 'in_progress',
+            content: '',
+            startedAt: new Date().toISOString(),
+            kind: 'iteration',
+          });
+        },
+
+        onTextChunk: (text) => {
+          // 将文本追加到当前迭代项
+          if (currentIterationThoughtId) {
+            appendToThoughtContent(currentIterationThoughtId, text);
           }
+        },
 
-          if (event.type === 'todo') {
-            if (!event.todos.length) {
-              return;
-            }
-            setThoughtChainItems((prev) => {
-              const todoPrefix = `${thoughtId}-todo-`;
-              const now = new Date().toISOString();
-              const todoItems: ThoughtChainItem[] = event.todos.map((todo, index): ThoughtChainItem => {
-                const todoId = createTodoItemId(thoughtId, index);
-                const existing = prev.find((item) => item.id === todoId);
-                const status = mapTodoStatusToThoughtStatus(todo.status);
-                const startedAt = existing?.startedAt || now;
-                const finishedAt = status === 'success' || status === 'error' ? existing?.finishedAt || now : undefined;
+        onTodoUpdate: (todos) => {
+          // 更新 TODO 列表
+          console.log('TODO 更新:', todos);
+          updateTodos(todos);
+        },
 
-                return {
-                  id: todoId,
-                  title: todo.activeForm || todo.content || `任务 ${index + 1}`,
-                  status,
-                  content: todo.content || existing?.content || '',
-                  startedAt,
-                  finishedAt,
-                  kind: 'task',
-                };
-              });
-
-              const filtered = prev.filter((item) => !item.id.startsWith(todoPrefix));
-              const insertionIndex = filtered.findIndex((item) => item.id === thoughtId);
-              if (insertionIndex === -1) {
-                return [...filtered, ...todoItems];
-              }
-
-              return [...filtered.slice(0, insertionIndex + 1), ...todoItems, ...filtered.slice(insertionIndex + 1)];
+        onIterationEnd: (iteration) => {
+          console.log(`第 ${iteration} 轮迭代结束`);
+          // 将当前迭代项标记为完成
+          if (currentIterationThoughtId) {
+            updateThoughtItem(currentIterationThoughtId, {
+              status: 'success',
+              finishedAt: new Date().toISOString(),
             });
           }
         },
+
+        onSessionComplete: () => {
+          console.log('会话完成');
+          message.success({ content: '代码生成完成', key: 'generate-code' });
+          stopGeneration();
+        },
       });
-
-      const finishedAt = new Date().toISOString();
-
-      setThoughtChainItems((prev) => {
-        const updated = prev.map((item) =>
-          item.id === thoughtId
-            ? {
-                ...item,
-                status: 'success' as ThoughtChainStatus,
-                finishedAt,
-              }
-            : item
-        );
-        const placeholder: ThoughtChainItem = {
-          id: createThoughtId(),
-          title: `第${currentRound + 1}轮模型响应`,
-          status: 'pending',
-          content: '',
-          startedAt: finishedAt,
-          kind: 'response',
-        };
-        return [...updated, placeholder];
-      });
-
-      message.success({ content: '代码生成完成', key: 'generate-code' });
     } catch (error) {
-      const finishedAt = new Date().toISOString();
+      console.error('代码生成失败:', error);
+      message.error({ content: '代码生成失败，请稍后重试', key: 'generate-code' });
 
-      setThoughtChainItems((prev) => {
-        const updated = prev.map((item) =>
-          item.id === thoughtId
-            ? {
-                ...item,
-                status: 'error' as ThoughtChainStatus,
-                finishedAt,
-              }
-            : item
-        );
-        const placeholder: ThoughtChainItem = {
-          id: createThoughtId(),
-          title: `第${currentRound + 1}轮模型响应`,
-          status: 'pending',
-          content: '',
-          startedAt: finishedAt,
-          kind: 'response',
-        };
-        return [...updated, placeholder];
-      });
-
-      if ((error as Error).name === 'AbortError') {
-        message.warning({ content: '已取消代码生成', key: 'generate-code' });
-      } else {
-        message.error({ content: '代码生成失败，请稍后重试', key: 'generate-code' });
-        console.error('代码生成失败:', error);
+      // 如果有正在进行的迭代，标记为失败
+      if (currentIterationThoughtId) {
+        updateThoughtItem(currentIterationThoughtId, {
+          status: 'error',
+          finishedAt: new Date().toISOString(),
+        });
       }
-    } finally {
-      // codeStreamControllerRef.current = null;
-      setIsGeneratingCode(false);
+
+      stopGeneration();
     }
   };
 
@@ -372,9 +295,7 @@ const EditorPageContent: React.FC = () => {
   };
 
   const handleCloseCodeDrawer = () => {
-    if (isGeneratingCode) {
-    }
-    setIsCodeDrawerOpen(false);
+    closeCodeDrawer();
   };
   // 如果 DSL 数据还在加载中
   if (dslLoading) {
@@ -526,12 +447,7 @@ const EditorPageContent: React.FC = () => {
       </Layout>
       <Component3DInspectModal open={is3DModalOpen} onClose={() => setIs3DModalOpen(false)} />
       <InteractionGuideOverlay open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
-      <CodeGenerationDrawer
-        open={isCodeDrawerOpen}
-        onClose={handleCloseCodeDrawer}
-        items={thoughtChainItems}
-        isGenerating={isGeneratingCode}
-      />
+      <CodeGenerationDrawer open={isCodeDrawerOpen} onClose={handleCloseCodeDrawer} />
       <RequirementDocDrawer
         open={isDocDrawerOpen}
         onClose={() => setIsDocDrawerOpen(false)}
@@ -547,9 +463,11 @@ const EditorPageComponentDetect: React.FC = () => {
   return (
     <AntApp>
       <RequirementDocProvider>
-        <ComponentDetectionProviderV2>
-          <EditorPageContent />
-        </ComponentDetectionProviderV2>
+        <CodeGenerationProvider>
+          <ComponentDetectionProviderV2>
+            <EditorPageContent />
+          </ComponentDetectionProviderV2>
+        </CodeGenerationProvider>
       </RequirementDocProvider>
     </AntApp>
   );

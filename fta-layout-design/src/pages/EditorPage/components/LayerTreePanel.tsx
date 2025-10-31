@@ -16,7 +16,6 @@ import {
 import { useComponentDetectionV2 } from '../contexts/ComponentDetectionContextV2';
 import { AnnotationNode } from '../types/componentDetectionV2';
 import type { DSLData, DSLNode } from '@/types/dsl';
-import { runCodeGenerationExample } from '../utils/CodeGenerationLoop';
 import { findParent } from '../utils/intermediateNodeExtractor';
 
 const { Title, Text } = Typography;
@@ -32,6 +31,50 @@ interface LayerTreePanelProps {
   onSelectDslNode?: (nodeId: string | null) => void;
   onHoverDslNode?: (nodeId: string | null) => void;
 }
+
+// 处理拖拽验证
+const handleAllowDrop: TreeProps['allowDrop'] = ({ dropNode, dropPosition }) => {
+  // dropPosition:
+  // -1: 插入到目标节点之前 (before)
+  //  0: 插入到目标节点内部 (inside)
+  //  1: 插入到目标节点之后 (after)
+
+  // 根节点不允许作为目标（不能在根节点前后插入）
+  if (dropNode.key === 'root' && dropPosition !== 0) {
+    return false;
+  }
+
+  // 允许拖入根节点内部
+  return true;
+};
+
+// 转换AnnotationNode为Tree DataNode
+const convertToTreeData = (node: AnnotationNode): DataNode => {
+  const isRoot = node.isRoot;
+  const isContainer = node.isContainer;
+
+  const title = (
+    <Space size={4}>
+      {isContainer ? (
+        <FolderOutlined style={{ color: isRoot ? 'rgb(82, 196, 26)' : 'rgb(24, 144, 255)' }} />
+      ) : (
+        <FileOutlined style={{ color: 'rgb(140, 140, 140)' }} />
+      )}
+      <span style={{ fontWeight: isRoot ? 600 : 400 }}>
+        {node.ftaComponent}
+        {node.name && ` (${node.name})`}
+      </span>
+      {isRoot && <span style={{ fontSize: 12, color: 'rgb(82, 196, 26)' }}>[页面根节点]</span>}
+    </Space>
+  );
+
+  return {
+    key: node.id,
+    title,
+    children: node.children.map(convertToTreeData),
+    isLeaf: node.children.length === 0,
+  };
+};
 
 const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
   onSave,
@@ -84,34 +127,6 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
-
-  // 转换AnnotationNode为Tree DataNode
-  const convertToTreeData = (node: AnnotationNode): DataNode => {
-    const isRoot = node.isRoot;
-    const isContainer = node.isContainer;
-
-    const title = (
-      <Space size={4}>
-        {isContainer ? (
-          <FolderOutlined style={{ color: isRoot ? 'rgb(82, 196, 26)' : 'rgb(24, 144, 255)' }} />
-        ) : (
-          <FileOutlined style={{ color: 'rgb(140, 140, 140)' }} />
-        )}
-        <span style={{ fontWeight: isRoot ? 600 : 400 }}>
-          {node.ftaComponent}
-          {node.name && ` (${node.name})`}
-        </span>
-        {isRoot && <span style={{ fontSize: 12, color: 'rgb(82, 196, 26)' }}>[页面根节点]</span>}
-      </Space>
-    );
-
-    return {
-      key: node.id,
-      title,
-      children: node.children.map(convertToTreeData),
-      isLeaf: node.children.length === 0,
-    };
-  };
 
   // 生成Tree数据
   const treeData: DataNode[] = useMemo(() => {
@@ -275,22 +290,6 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
     setExpandedKeys(expandedKeysValue as string[]);
   };
 
-  // 处理拖拽验证
-  const handleAllowDrop: TreeProps['allowDrop'] = ({ dropNode, dropPosition }) => {
-    // dropPosition:
-    // -1: 插入到目标节点之前 (before)
-    //  0: 插入到目标节点内部 (inside)
-    //  1: 插入到目标节点之后 (after)
-
-    // 根节点不允许作为目标（不能在根节点前后插入）
-    if (dropNode.key === 'root' && dropPosition !== 0) {
-      return false;
-    }
-
-    // 允许拖入根节点内部
-    return true;
-  };
-
   // 处理拖拽放置
   const handleDrop: TreeProps['onDrop'] = async (info) => {
     const sourceKey = info.dragNode.key as string;
@@ -399,12 +398,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
           {/* <Button size="small" icon={<FileTextOutlined />} onClick={onGenerateDoc} style={{ minWidth: '120px' }}>
               生成需求规格文档
             </Button> */}
-          <Button
-            size="small"
-            icon={<ThunderboltOutlined />}
-            onClick={runCodeGenerationExample}
-            style={{ minWidth: '120px' }}
-          >
+          <Button size="small" icon={<ThunderboltOutlined />} onClick={onGenerateCode} style={{ minWidth: '120px' }}>
             生成代码
           </Button>
         </Space>

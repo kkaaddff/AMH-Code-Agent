@@ -145,7 +145,16 @@ export class AgentScheduler {
   /**
    * 执行会话 - 主调度循环
    */
-  async executeSession(uid: string): Promise<void> {
+  async executeSession(
+    uid: string,
+    callbacks?: {
+      onIterationStart?: (iteration: number) => void;
+      onTextChunk?: (text: string) => void;
+      onTodoUpdate?: (todos: TodoItem[]) => void;
+      onIterationEnd?: (iteration: number) => void;
+      onSessionComplete?: () => void;
+    }
+  ): Promise<void> {
     const session = this.sessions.get(uid);
     if (!session) {
       throw new Error(`Session ${uid} not found`);
@@ -156,6 +165,9 @@ export class AgentScheduler {
     while (!session.isCompleted) {
       // 增加迭代计数器
       session.iterationCount++;
+
+      // 通知迭代开始
+      callbacks?.onIterationStart?.(session.iterationCount);
 
       // 发送当前消息到模型
       const requestBody: RequestBody = {
@@ -183,13 +195,17 @@ export class AgentScheduler {
 
       logToFile(uid, 'stream.final', response);
 
-      // 处理响应
-      await this.processResponse(session, response);
+      // 处理响应 (传递回调)
+      await this.processResponse(session, response, callbacks);
+
+      // 通知迭代结束
+      callbacks?.onIterationEnd?.(session.iterationCount);
 
       // 检查是否完成
       if (this.isSessionCompleted(session)) {
         session.isCompleted = true;
         logToFile(uid, 'session_completed', {});
+        callbacks?.onSessionComplete?.();
         break;
       }
 
@@ -201,7 +217,14 @@ export class AgentScheduler {
   /**
    * 处理模型响应
    */
-  private async processResponse(session: SessionState, events: StreamModelGatewayEvent[]): Promise<void> {
+  private async processResponse(
+    session: SessionState,
+    events: StreamModelGatewayEvent[],
+    callbacks?: {
+      onTextChunk?: (text: string) => void;
+      onTodoUpdate?: (todos: TodoItem[]) => void;
+    }
+  ): Promise<void> {
     if (!events || events.length === 0) {
       return;
     }
@@ -216,6 +239,8 @@ export class AgentScheduler {
             type: 'text',
             text,
           });
+          // 通知文本更新
+          callbacks?.onTextChunk?.(text);
         }
         continue;
       }
@@ -223,6 +248,9 @@ export class AgentScheduler {
       if (event.type === 'todo' && event.todos && event.todos.length > 0) {
         const normalizedTodos = this.mapStreamTodosToTodoItems(event.todos);
         this.updateTodos(session, normalizedTodos);
+
+        // 通知 TODO 更新
+        callbacks?.onTodoUpdate?.(normalizedTodos);
 
         assistantContent.push({
           type: 'tool_use',
