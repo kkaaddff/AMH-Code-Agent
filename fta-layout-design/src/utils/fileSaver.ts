@@ -41,6 +41,16 @@ export function extractCodeFilesFromMarkdown(markdown: string): ParsedCodeFile[]
       if (hasExtension || isCommonFile) {
         filename = potentialFilename;
       }
+    } else if (language) {
+      // Check if the language itself is a common filename (e.g., Dockerfile)
+      const isCommonFile = commonFilesWithoutExt.some(common => 
+        language.toUpperCase() === common.toUpperCase()
+      );
+      
+      if (isCommonFile) {
+        filename = language;
+        lang = '';
+      }
     }
     
     // Only add if we have a valid filename
