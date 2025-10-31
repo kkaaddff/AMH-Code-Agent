@@ -24,6 +24,7 @@ import { generateRequirementDoc } from './utils/requirementDoc';
 import { AgentScheduler } from './utils/CodeGenerationLoop';
 import { generateUID } from './utils/CodeGenerationLoop/utils';
 import { commonUserPrompt } from './utils/CodeGenerationLoop/CommonPrompt';
+import { flattenAnnotation, formatAnnotationSummary } from './utils/prompt';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
@@ -187,8 +188,8 @@ const EditorPageContent: React.FC = () => {
       // 构建初始提示词
       let initialPrompt = commonUserPrompt.mainPrompt;
       if (rootAnnotation) {
-        const annotationData = JSON.stringify(rootAnnotation, null, 2);
-        initialPrompt += `\n\n当前设计标注数据：\n${annotationData}`;
+        const annotationSummary = formatAnnotationSummary(flattenAnnotation(rootAnnotation));
+        initialPrompt += `\n\n当前设计标注数据：\n${annotationSummary}`;
       }
 
       // 创建会话

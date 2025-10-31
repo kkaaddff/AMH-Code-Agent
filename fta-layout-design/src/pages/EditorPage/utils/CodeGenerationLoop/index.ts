@@ -33,7 +33,7 @@ import {
   // mcp__ide__getDiagnostics,
 } from './tools';
 import { RequestBody, SessionState, Tool, Message, MessageContent, TodoItem, TodoStatus } from './types';
-import { logToFile, generateUID, formatTodos } from './utils';
+import { logToFile } from './utils';
 
 /**
  * 发送消息到模型 使用 syncModelGateway 中转
@@ -106,6 +106,7 @@ export class AgentScheduler {
             {
               type: 'text',
               text: commonUserPrompt.annotatedJsonResult,
+              // text: `<system-reminder>\nResult of calling the Read tool: "${}"<system-reminder>\\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\\n</system-reminder>\\n"\n</system-reminder>`,
             },
             {
               type: 'text',
@@ -263,7 +264,107 @@ export class AgentScheduler {
     };
 
     session.messages.push(assistantMessage);
+
     logToFile(session.uid, 'assistant_message', assistantMessage);
+
+    const toolCalls = assistantContent.filter((content) => content.type === 'tool_use');
+    if (toolCalls.length > 0) {
+      await this.executeTools(session, toolCalls);
+    }
+  }
+
+  /**
+   * 执行工具调用并追加 tool_result 消息
+   */
+  private async executeTools(session: SessionState, toolCalls: MessageContent[]): Promise<void> {
+    const toolResults: MessageContent[] = [];
+
+    for (const call of toolCalls) {
+      if (call.type !== 'tool_use') {
+        continue;
+      }
+
+      const toolUseId = call.id || this.generateToolUseId();
+      if (!call.id) {
+        call.id = toolUseId;
+      }
+
+      const resultContent = await this.executeTool(session, call);
+
+      toolResults.push({
+        type: 'tool_result',
+        tool_use_id: toolUseId,
+        content: resultContent,
+      });
+    }
+
+    if (toolResults.length === 0) {
+      return;
+    }
+
+    const toolResultMessage: Message = {
+      role: 'user',
+      content: toolResults,
+    };
+
+    session.messages.push(toolResultMessage);
+    logToFile(session.uid, 'tool_results', toolResultMessage);
+  }
+
+  /**
+   * 执行单个工具调用，返回工具结果文本
+   */
+  private async executeTool(session: SessionState, toolCall: MessageContent): Promise<string> {
+    const name = toolCall.name || 'UnknownTool';
+    const input = toolCall.input || {};
+
+    logToFile(session.uid, 'tool_execute', {
+      name,
+      input,
+    });
+
+    switch (name) {
+      case 'TodoWrite': {
+        if (Array.isArray(input.todos)) {
+          const mappedTodos = this.mapStreamTodosToTodoItems(input.todos);
+          if (mappedTodos.length > 0) {
+            this.updateTodos(session, mappedTodos);
+          }
+        }
+        return commonSystemPrompt.todoModifiedSuccessfully;
+      }
+
+      case 'Read': {
+        const filePath = input.file_path || input.path || 'unknown file';
+        return `File content for ${filePath}`;
+      }
+
+      case 'Write': {
+        const filePath = input.file_path || input.path || 'unknown file';
+        return `File created successfully at: ${filePath}`;
+      }
+
+      case 'Edit': {
+        const filePath = input.file_path || input.path || 'unknown file';
+        return `File edited successfully at: ${filePath}`;
+      }
+
+      case 'Bash': {
+        const command = input.command || input.commands || 'unknown command';
+        return `Command executed: ${command}`;
+      }
+
+      case 'BashOutput': {
+        return `Captured output for previous bash command`;
+      }
+
+      case 'Task': {
+        return `Task dispatched to sub-agent`;
+      }
+
+      default:
+        return `Tool ${name} executed successfully`;
+    }
   }
 
   /**
@@ -287,7 +388,7 @@ export class AgentScheduler {
   }
 
   private generateToolUseId(): string {
-    return `todo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    return `call_${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
   /**
@@ -352,4 +453,3 @@ export class AgentScheduler {
     logToFile(uid, 'session_cleanup', {});
   }
 }
-

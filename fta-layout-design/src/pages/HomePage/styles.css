@@ -560,11 +560,6 @@
   flex: 1;
 }
 
-/* 文档关联样式 */
-.document-links-section {
-  margin-bottom: 24px;
-}
-
 .document-link-card {
   border-radius: 8px;
   border: 1px solid rgb(240, 240, 240);
@@ -680,18 +675,18 @@
   .homepage-container {
     padding: 16px;
   }
-  
+
   .project-header,
   .section-header {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .action-content {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .project-meta {
     flex-direction: column;
     gap: 8px;

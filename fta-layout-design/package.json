@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ant-design/x": "^1.6.1",
+    "@byjohann/toon": "^0.5.1",
     "@dagrejs/dagre": "^1.1.2",
     "@emoji-mart/data": "^1.2.1",
     "@floating-ui/react": "^0.26.22",
