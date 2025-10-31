@@ -5,6 +5,7 @@ import { ParsedCodeFile, WindowWithFileSystem } from '../types/fileSystem';
  * Supports the following formats:
  * - ```filename`
  * - ```language:filename`
+ * - ```language filename`
  * - Files with extensions (e.g., .js, .ts, .py)
  * - Common files without extensions (README, Dockerfile, Makefile, etc.)
  */
@@ -135,12 +136,17 @@ async function saveFile(
   file: ParsedCodeFile
 ): Promise<void> {
   const pathParts = file.filename.split('/');
-  const filename = pathParts.pop() || file.filename;
+  const filename = pathParts.pop();
+  
+  // Ensure we have a valid filename
+  if (!filename || filename.trim() === '') {
+    throw new Error(`Invalid filename: ${file.filename}`);
+  }
   
   // Navigate/create nested directories
   let currentDirHandle = rootDirHandle;
   for (const dirName of pathParts) {
-    if (dirName) {
+    if (dirName && dirName.trim() !== '') {
       currentDirHandle = await currentDirHandle.getDirectoryHandle(dirName, { create: true });
     }
   }
