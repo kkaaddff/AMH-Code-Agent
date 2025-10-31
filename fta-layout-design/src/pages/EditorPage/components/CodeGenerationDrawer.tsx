@@ -53,6 +53,25 @@ const formatTimestamp = (timestamp?: string) => {
   return date.toLocaleString();
 };
 
+// 扩展 Window 类型以支持 File System Access API
+interface FileSystemDirectoryHandle {
+  getDirectoryHandle(name: string, options?: { create?: boolean }): Promise<FileSystemDirectoryHandle>;
+  getFileHandle(name: string, options?: { create?: boolean }): Promise<FileSystemFileHandle>;
+}
+
+interface FileSystemFileHandle {
+  createWritable(): Promise<FileSystemWritableFileStream>;
+}
+
+interface FileSystemWritableFileStream {
+  write(data: string): Promise<void>;
+  close(): Promise<void>;
+}
+
+interface WindowWithFileSystem extends Window {
+  showDirectoryPicker(options?: { mode?: string }): Promise<FileSystemDirectoryHandle>;
+}
+
 const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClose, items, isGenerating }) => {
   const [isSaving, setIsSaving] = useState(false);
 
@@ -67,8 +86,14 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
       const filename = match[1].trim();
       const fileContent = match[2];
       
-      // 如果文件名看起来像是路径（包含 / 或扩展名）
-      if (filename && (filename.includes('/') || filename.includes('.'))) {
+      // 如果文件名看起来像是有效的文件路径
+      // 接受包含路径分隔符、扩展名，或者常见的无扩展名文件（如 README, Dockerfile 等）
+      const commonFilesWithoutExtension = ['README', 'Dockerfile', 'Makefile', 'LICENSE', 'CHANGELOG'];
+      const isCommonFile = commonFilesWithoutExtension.some(name => 
+        filename.toUpperCase() === name || filename.toUpperCase().startsWith(name + '.')
+      );
+      
+      if (filename && (filename.includes('/') || filename.includes('.') || isCommonFile)) {
         files.push({
           path: filename,
           content: fileContent,
@@ -83,7 +108,8 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
   const handleSaveToFiles = async () => {
     try {
       // 检查浏览器是否支持 File System Access API
-      if (!('showDirectoryPicker' in window)) {
+      const windowWithFS = window as WindowWithFileSystem;
+      if (!('showDirectoryPicker' in windowWithFS)) {
         message.error('当前浏览器不支持文件系统 API，请使用 Chrome 或 Edge 浏览器');
         return;
       }
@@ -105,12 +131,14 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
       setIsSaving(true);
 
       // 让用户选择工作目录
-      const dirHandle = await (window as any).showDirectoryPicker({
+      const dirHandle = await windowWithFS.showDirectoryPicker({
         mode: 'readwrite',
       });
 
       // 循环保存文件
       let savedCount = 0;
+      const errors: Array<{ path: string; error: string }> = [];
+      
       for (const file of allFiles) {
         try {
           // 处理相对路径，创建嵌套目录
@@ -137,11 +165,20 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
           
           savedCount++;
         } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
           console.error(`保存文件 ${file.path} 失败:`, err);
+          errors.push({ path: file.path, error: errorMsg });
         }
       }
 
-      message.success(`成功保存 ${savedCount} 个文件到指定目录`);
+      // 显示保存结果
+      if (errors.length === 0) {
+        message.success(`成功保存 ${savedCount} 个文件到指定目录`);
+      } else if (savedCount > 0) {
+        message.warning(`保存了 ${savedCount} 个文件，${errors.length} 个文件失败。详情请查看控制台。`);
+      } else {
+        message.error(`所有文件保存失败。详情请查看控制台。`);
+      }
     } catch (err: any) {
       if (err.name === 'AbortError') {
         message.info('已取消保存');
