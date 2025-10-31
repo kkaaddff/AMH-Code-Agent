@@ -1,4 +1,4 @@
-import { ParsedCodeFile } from '../types/fileSystem';
+import { ParsedCodeFile, WindowWithFileSystem } from '../types/fileSystem';
 
 /**
  * Extracts code files from markdown content.
@@ -11,12 +11,12 @@ import { ParsedCodeFile } from '../types/fileSystem';
 export function extractCodeFilesFromMarkdown(markdown: string): ParsedCodeFile[] {
   const files: ParsedCodeFile[] = [];
   
-  // Common files without extensions that should be recognized
+  // Common files without extensions that should be recognized (pre-uppercased for performance)
   const commonFilesWithoutExt = [
-    'README', 'LICENSE', 'Dockerfile', 'Makefile', 'Jenkinsfile',
-    'Vagrantfile', 'Procfile', 'Gemfile', 'Rakefile', 'CHANGELOG',
+    'README', 'LICENSE', 'DOCKERFILE', 'MAKEFILE', 'JENKINSFILE',
+    'VAGRANTFILE', 'PROCFILE', 'GEMFILE', 'RAKEFILE', 'CHANGELOG',
     'CONTRIBUTING', 'AUTHORS', 'COPYING', 'INSTALL', 'TODO',
-    '.gitignore', '.dockerignore', '.npmignore', '.eslintrc', '.prettierrc'
+    '.GITIGNORE', '.DOCKERIGNORE', '.NPMIGNORE', '.ESLINTRC', '.PRETTIERRC'
   ];
   
   // Regex to match code blocks with filename metadata
@@ -34,18 +34,14 @@ export function extractCodeFilesFromMarkdown(markdown: string): ParsedCodeFile[]
     if (potentialFilename) {
       // Check if it has an extension or is a common file without extension
       const hasExtension = /\.\w+$/.test(potentialFilename);
-      const isCommonFile = commonFilesWithoutExt.some(common => 
-        potentialFilename.toUpperCase().startsWith(common.toUpperCase())
-      );
+      const isCommonFile = commonFilesWithoutExt.includes(potentialFilename.toUpperCase());
       
       if (hasExtension || isCommonFile) {
         filename = potentialFilename;
       }
     } else if (language) {
       // Check if the language itself is a common filename (e.g., Dockerfile)
-      const isCommonFile = commonFilesWithoutExt.some(common => 
-        language.toUpperCase() === common.toUpperCase()
-      );
+      const isCommonFile = commonFilesWithoutExt.includes(language.toUpperCase());
       
       if (isCommonFile) {
         filename = language;
@@ -76,7 +72,7 @@ export async function saveFilesToDisk(
   files: ParsedCodeFile[],
   workDirHandle?: FileSystemDirectoryHandle
 ): Promise<{ success: boolean; savedCount: number; failedFiles: string[]; error?: string }> {
-  const windowWithFS = window as Window & typeof globalThis & { showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle> };
+  const windowWithFS = window as WindowWithFileSystem;
   
   // Check if File System Access API is supported
   if (!windowWithFS.showDirectoryPicker) {
