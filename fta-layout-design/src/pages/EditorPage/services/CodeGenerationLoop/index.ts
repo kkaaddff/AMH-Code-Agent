@@ -8,7 +8,7 @@
  * 4. 上次的输出可能作为下次的输入
  * 5. 所有接口请求使用伪函数调用
  */
-import { StreamModelGatewayEvent, StreamModelGatewayTodo, syncModelGateway } from '../modelGateway';
+import { StreamModelGatewayEvent, StreamModelGatewayTodo, syncModelGateway } from '../../utils/modelGateway';
 import { commonUserPrompt, commonSystemPrompt } from './CommonPrompt';
 import { systemSetting } from './config';
 import {

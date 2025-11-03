@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { TodoItem } from '../utils/CodeGenerationLoop/types';
+import { TodoItem } from '../services/CodeGenerationLoop/types';
 
 export interface ThoughtChainItem {
   id: string;

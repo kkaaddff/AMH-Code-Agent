@@ -21,9 +21,9 @@ import { CodeGenerationProvider, useCodeGeneration } from './contexts/CodeGenera
 import { COMPONENT_STYLES } from './styles/EditorPageStyles';
 import { loadAnnotationState } from './utils/componentStorage';
 import { generateRequirementDoc } from './utils/requirementDoc';
-import { AgentScheduler } from './utils/CodeGenerationLoop';
-import { generateUID } from './utils/CodeGenerationLoop/utils';
-import { commonUserPrompt } from './utils/CodeGenerationLoop/CommonPrompt';
+import { AgentScheduler } from './services/CodeGenerationLoop';
+import { generateUID } from './services/CodeGenerationLoop/utils';
+import { commonUserPrompt } from './services/CodeGenerationLoop/CommonPrompt';
 import { flattenAnnotation, formatAnnotationSummary } from './utils/prompt';
 
 const { Sider, Content } = Layout;
