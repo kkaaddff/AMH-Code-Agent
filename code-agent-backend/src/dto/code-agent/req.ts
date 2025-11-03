@@ -91,7 +91,7 @@ export class CreatePageRequest {
   @ApiProperty({ description: '页面描述', example: '用户登录页面' })
   description?: string
 
-  @ApiProperty({ description: '设计文档URLs', example: ['https://figma.com/login'], type: [String] })
+  @ApiProperty({ description: '设计文档URLs', example: ['https://MasterGo.com/login'], type: [String] })
   designUrls?: string[]
 
   @ApiProperty({ description: 'PRD文档URLs', example: ['https://docs.company.com/prd/login'], type: [String] })
@@ -121,7 +121,7 @@ export class UpdatePageRequest {
   @ApiProperty({ description: '页面描述', example: '更新的登录页面描述' })
   description?: string
 
-  @ApiProperty({ description: '设计文档URLs', example: ['https://figma.com/login'], type: [String] })
+  @ApiProperty({ description: '设计文档URLs', example: ['https://MasterGo.com/login'], type: [String] })
   designUrls?: string[]
 
   @ApiProperty({ description: 'PRD文档URLs', example: ['https://docs.company.com/prd/login'], type: [String] })

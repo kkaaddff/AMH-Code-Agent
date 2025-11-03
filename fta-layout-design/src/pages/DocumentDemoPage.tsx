@@ -86,7 +86,7 @@ const DocumentDemoPage: React.FC = () => {
             <Space direction="vertical" style={{ width: '100%' }} size="middle">
               <DocumentStatusDemo
                 documentType="design"
-                url="https://figma.com/file/example-design"
+                url="https://MasterGo.com/file/example-design"
                 status={designStatus}
                 progress={designStatus === 'syncing' ? progress : 0}
                 onSync={() => handleSync('design')}

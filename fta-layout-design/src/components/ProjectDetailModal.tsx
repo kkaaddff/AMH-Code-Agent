@@ -364,7 +364,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ visible, projec
                   {fields.map(({ key, name, ...restField }) => (
                     <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
                       <Form.Item {...restField} name={[name]} style={{ flex: 1, marginBottom: 0 }}>
-                        <Input placeholder="https://figma.com/design-url" prefix={<FileImageOutlined />} />
+                        <Input placeholder="https://MasterGo.com/design-url" prefix={<FileImageOutlined />} />
                       </Form.Item>
                       <Button type="text" danger onClick={() => remove(name)}>
                         删除
@@ -473,7 +473,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ visible, projec
                   {fields.map(({ key, name, ...restField }) => (
                     <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
                       <Form.Item {...restField} name={[name]} style={{ flex: 1, marginBottom: 0 }}>
-                        <Input placeholder="https://figma.com/design-url" prefix={<FileImageOutlined />} />
+                        <Input placeholder="https://MasterGo.com/design-url" prefix={<FileImageOutlined />} />
                       </Form.Item>
                       <Button type="text" danger onClick={() => remove(name)}>
                         删除

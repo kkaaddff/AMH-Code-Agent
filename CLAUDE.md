@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个企业级的设计稿到代码转换平台（FTA - Figma-to-App），包含两个核心项目：
+这是一个企业级的设计稿到代码转换平台（FTA - MasterGo-to-App），包含两个核心项目：
 
 1. **fta-layout-design** - React 18 + TypeScript 前端应用
 2. **code-agent-backend** - Midway.js + TypeScript 后端服务

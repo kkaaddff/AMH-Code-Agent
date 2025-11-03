@@ -1,8 +1,8 @@
-# FTA - Figma-to-App 设计稿到代码转换平台
+# FTA - MasterGo-to-App 设计稿到代码转换平台
 
 <div align="center">
 
-![FTA Logo](https://img.shields.io/badge/FTA-Figma--to--App-blue?style=for-the-badge)
+![FTA Logo](https://img.shields.io/badge/FTA-MasterGo--to--App-blue?style=for-the-badge)
 ![React](https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-blue?style=for-the-badge&logo=typescript)
 ![Midway.js](https://img.shields.io/badge/Midway.js-3.11.15-green?style=for-the-badge&logo=node.js)
@@ -20,7 +20,7 @@
 ## ✨ 核心特性
 
 ### 🎨 智能设计稿解析
-- **多格式支持**: Figma、Sketch、Adobe XD等主流设计工具
+- **多格式支持**: MasterGo、Sketch、Adobe XD等主流设计工具
 - **智能组件识别**: AI驱动的组件边界检测和分类
 - **实时预览**: DSL数据实时渲染和可视化
 
@@ -346,7 +346,7 @@ redis-cli ping
 
 <div align="center">
 
-**[⬆ 回到顶部](#fta---figma-to-app-设计稿到代码转换平台)**
+**[⬆ 回到顶部](#fta---MasterGo-to-app-设计稿到代码转换平台)**
 
 Made with ❤️ by FTA Team
 

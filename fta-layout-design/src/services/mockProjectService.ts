@@ -78,7 +78,7 @@ let mockProjects: Project[] = [
     status: 'active',
     progress: 45,
     members: 6,
-    tags: ['Figma', 'DSL', 'Demo'],
+    tags: ['MasterGo', 'DSL', 'Demo'],
     avatar: '📁',
     pages: [
       {
@@ -92,7 +92,7 @@ let mockProjects: Project[] = [
         designSpecs: [],
         prds: [],
         components: [],
-        designDocuments: createDocumentReferences(['https://figma.com/login']),
+        designDocuments: createDocumentReferences(['https://MasterGo.com/login']),
         prdDocuments: createDocumentReferences(['https://docs.company.com/prd/login']),
         openapiDocuments: createDocumentReferences(['https://api.company.com/openapi/login.json']),
       },

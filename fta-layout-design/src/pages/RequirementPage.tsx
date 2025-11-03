@@ -42,7 +42,7 @@ const RequirementPage: React.FC = () => {
   ];
 
   const capabilities = [
-    '支持多种设计工具导入 (Figma, Sketch, MasterGo)',
+    '支持多种设计工具导入 (MasterGo, Figma, Sketch)',
     '智能识别设计规范',
     '自动生成组件代码',
     '支持多种前端框架',

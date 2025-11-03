@@ -1,7 +1,7 @@
 # FTA Layout Design - Cursor Rules
 
 ## 项目概述
-这是一个基于 React 的 FTA (Figma-to-App) 设计到代码转换平台。应用采用多页面架构，从设计上传、需求分析到代码生成，最终提供交互式布局编辑器。
+这是一个基于 React 的 FTA (MasterGo-to-App) 设计到代码转换平台。应用采用多页面架构，从设计上传、需求分析到代码生成，最终提供交互式布局编辑器。
 
 ## 技术栈
 - React 18 + TypeScript + Vite 5
