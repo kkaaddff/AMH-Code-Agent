@@ -87,7 +87,7 @@ export class AgentScheduler {
   /**
    * 创建新会话
    */
-  createSession(uid: string, initialPrompt: string): SessionState {
+  createSession(uid: string, initialUserPrompt: string, dslJsonStr: string): SessionState {
     const session: SessionState = {
       uid,
       messages: [
@@ -118,7 +118,7 @@ export class AgentScheduler {
             },
             {
               type: 'text',
-              text: initialPrompt,
+              text: initialUserPrompt,
             },
           ],
         },
@@ -130,7 +130,7 @@ export class AgentScheduler {
     };
 
     this.sessions.set(uid, session);
-    logToFile(uid, 'session_created', { initialPrompt });
+    logToFile(uid, 'session_created', { initialPrompt: initialUserPrompt });
 
     return session;
   }
@@ -289,13 +289,8 @@ export class AgentScheduler {
         call.id = toolUseId;
       }
 
-      const resultContent = await this.executeTool(session, call);
-
-      toolResults.push({
-        type: 'tool_result',
-        tool_use_id: toolUseId,
-        content: resultContent,
-      });
+      const toolResult = await this.executeTool(session, call, toolUseId);
+      toolResults.push(toolResult);
     }
 
     if (toolResults.length === 0) {
@@ -312,9 +307,13 @@ export class AgentScheduler {
   }
 
   /**
-   * 执行单个工具调用，返回工具结果文本
+   * 执行单个工具调用，返回完整的 tool_result 对象
    */
-  private async executeTool(session: SessionState, toolCall: MessageContent): Promise<string> {
+  private async executeTool(
+    session: SessionState,
+    toolCall: MessageContent,
+    toolUseId: string
+  ): Promise<MessageContent> {
     const name = toolCall.name || 'UnknownTool';
     const input = toolCall.input || {};
 
@@ -322,7 +321,7 @@ export class AgentScheduler {
       name,
       input,
     });
-
+    
     switch (name) {
       case 'TodoWrite': {
         if (Array.isArray(input.todos)) {
@@ -331,39 +330,72 @@ export class AgentScheduler {
             this.updateTodos(session, mappedTodos);
           }
         }
-        return commonSystemPrompt.todoModifiedSuccessfully;
+        return {
+          tool_use_id: toolUseId,
+          type: 'tool_result',
+          content: commonSystemPrompt.todoModifiedSuccessfully,
+        };
       }
 
       case 'Read': {
         const filePath = input.file_path || input.path || 'unknown file';
-        return `File content for ${filePath}`;
+        return {
+          tool_use_id: toolUseId,
+          type: 'tool_result',
+          content: `File content for ${filePath}`,
+        };
       }
 
       case 'Write': {
         const filePath = input.file_path || input.path || 'unknown file';
-        return `File created successfully at: ${filePath}`;
+        return {
+          tool_use_id: toolUseId,
+          type: 'tool_result',
+          content: `File created successfully at: ${filePath}`,
+        };
       }
 
       case 'Edit': {
         const filePath = input.file_path || input.path || 'unknown file';
-        return `File edited successfully at: ${filePath}`;
+        return {
+          tool_use_id: toolUseId,
+          type: 'tool_result',
+          content: `File edited successfully at: ${filePath}`,
+        };
       }
 
       case 'Bash': {
-        const command = input.command || input.commands || 'unknown command';
-        return `Command executed: ${command}`;
+        return {
+          tool_use_id: toolUseId,
+          type: 'tool_result',
+          content: '',
+          is_error: false,
+          cache_control: { type: 'ephemeral' },
+        };
       }
 
       case 'BashOutput': {
-        return `Captured output for previous bash command`;
+        return {
+          tool_use_id: toolUseId,
+          type: 'tool_result',
+          content: `Captured output for previous bash command`,
+        };
       }
 
       case 'Task': {
-        return `Task dispatched to sub-agent`;
+        return {
+          tool_use_id: toolUseId,
+          type: 'tool_result',
+          content: `Task dispatched to sub-agent`,
+        };
       }
 
       default:
-        return `Tool ${name} executed successfully`;
+        return {
+          tool_use_id: toolUseId,
+          type: 'tool_result',
+          content: `Tool ${name} executed successfully`,
+        };
     }
   }
 

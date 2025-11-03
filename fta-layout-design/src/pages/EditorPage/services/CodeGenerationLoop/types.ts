@@ -26,6 +26,7 @@ export interface MessageContent {
   input?: any;
   tool_use_id?: string;
   content?: string;
+  is_error?: boolean;
   cache_control?: { type: 'ephemeral' };
 }
 

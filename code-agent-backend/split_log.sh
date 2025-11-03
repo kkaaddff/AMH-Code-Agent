@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 脚本功能：将日志文件按行拆分，根据内容类型分离REQUEST和RESPONSE
+# 脚本功能：将日志文件按行拆分，根据内容类型分离REQUEST和RESPONSE，并统一输出格式化后的json
 # 使用方法：./split_log.sh <log_file_path>
 
 # 检查是否提供了文件路径参数
@@ -41,6 +41,12 @@ echo "开始处理文件: $LOG_FILE"
 echo "输出目录: $OUTPUT_DIR"
 echo "================================"
 
+# 检查 jq 是否安装
+if ! command -v jq >/dev/null 2>&1; then
+    echo "错误: 需要安装jq以格式化JSON。请先运行: sudo apt-get install jq  或  brew install jq"
+    exit 1
+fi
+
 # 逐行读取文件
 while IFS= read -r line; do
     line_count=$((line_count + 1))
@@ -54,18 +60,28 @@ while IFS= read -r line; do
 
     # 检查是否包含REQUEST类型
     if [[ "$line" == *"\"type\":\"REQUEST\""* ]]; then
-        # REQUEST行 - 写入input文件
+        # REQUEST行 - 写入input文件 (格式化json)
         input_count=$((input_count + 1))
-        input_file="$OUTPUT_DIR/input$input_count.json"
-        echo "$line" > "$input_file"
-        echo "REQUEST 第 $line_count -> $input_file"
+        input_file="$OUTPUT_DIR/${input_count}_input.json"
+        echo "$line" | jq . > "$input_file" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo "REQUEST 第 $line_count -> $input_file (已格式化)"
+        else
+            echo "$line" > "$input_file"
+            echo "REQUEST 第 $line_count -> $input_file (格式化失败，已原样输出)"
+        fi
     # 检查是否包含RESPONSE类型
     elif [[ "$line" == *"\"type\":\"RESPONSE\""* ]]; then
-        # RESPONSE行 - 写入output文件
+        # RESPONSE行 - 写入output文件 (格式化json)
         output_count=$((output_count + 1))
-        output_file="$OUTPUT_DIR/output$output_count.json"
-        echo "$line" > "$output_file"
-        echo "RESPONSE 第 $line_count -> $output_file"
+        output_file="$OUTPUT_DIR/${output_count}_output.json"
+        echo "$line" | jq . > "$output_file" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo "RESPONSE 第 $line_count -> $output_file (已格式化)"
+        else
+            echo "$line" > "$output_file"
+            echo "RESPONSE 第 $line_count -> $output_file (格式化失败，已原样输出)"
+        fi
     else
         # 其他行 - 忽略
         echo "忽略 第 $line_count (非REQUEST/RESPONSE)"

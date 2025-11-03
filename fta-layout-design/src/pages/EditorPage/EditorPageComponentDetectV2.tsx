@@ -1,4 +1,5 @@
 import { useDSLData } from '@/hooks/useDSLData';
+// import { encode } from '@toon-format/toon';
 import {
   AppstoreOutlined,
   DownOutlined,
@@ -191,9 +192,11 @@ const EditorPageContent: React.FC = () => {
         const annotationSummary = formatAnnotationSummary(flattenAnnotation(rootAnnotation));
         initialPrompt += `\n\n当前设计标注数据：\n${annotationSummary}`;
       }
+      const dslJsonStr = JSON.stringify(dslData?.dsl ?? {});
+      // const encodedDsl = encode(dslData?.dsl ?? {});
 
       // 创建会话
-      scheduler.createSession(sessionId, initialPrompt);
+      scheduler.createSession(sessionId, initialPrompt, dslJsonStr);
       startGeneration(sessionId);
 
       // 执行会话，传入回调函数
