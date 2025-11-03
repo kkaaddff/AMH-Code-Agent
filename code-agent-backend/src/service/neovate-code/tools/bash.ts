@@ -1,14 +1,14 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
 import createDebug from 'debug';
-import fs from 'fs';
-import os from 'os';
 import path from 'pathe';
 import { z } from 'zod';
 import type { BackgroundTaskManager } from '../backgroundTaskManager';
 import { BASH_EVENTS, TOOL_NAMES } from '../constants';
 import type { MessageBus } from '../messageBus';
 import { createTool } from '../tool';
-import type { BashPromptBackgroundEvent } from '../ui/store';
+
 import { shouldRunInBackground } from '../utils/background-detection';
 import { getErrorMessage } from '../utils/error';
 import { shellExecute } from '../utils/shell-execution';
@@ -94,8 +94,7 @@ function isHighRiskCommand(command: string): boolean {
   }
 
   return (
-    highRiskPatterns.some((pattern) => pattern.test(command)) ||
-    BANNED_COMMANDS.includes(commandRoot.toLowerCase())
+    highRiskPatterns.some((pattern) => pattern.test(command)) || BANNED_COMMANDS.includes(commandRoot.toLowerCase())
   );
 }
 
@@ -117,19 +116,12 @@ function validateCommand(command: string): string | null {
   return null;
 }
 
-function extractBackgroundPIDs(
-  tempFilePath: string,
-  mainPid: number | null | undefined,
-  isWindows: boolean,
-): number[] {
+function extractBackgroundPIDs(tempFilePath: string, mainPid: number | null | undefined, isWindows: boolean): number[] {
   if (isWindows || !fs.existsSync(tempFilePath)) {
     return [];
   }
 
-  const pgrepLines = fs
-    .readFileSync(tempFilePath, 'utf8')
-    .split('\n')
-    .filter(Boolean);
+  const pgrepLines = fs.readFileSync(tempFilePath, 'utf8').split('\n').filter(Boolean);
 
   const backgroundPIDs: number[] = [];
   for (const line of pgrepLines) {
@@ -144,11 +136,7 @@ function extractBackgroundPIDs(
   return backgroundPIDs;
 }
 
-function createBackgroundResult(
-  command: string,
-  backgroundTaskId: string,
-  outputBuffer: string,
-) {
+function createBackgroundResult(command: string, backgroundTaskId: string, outputBuffer: string) {
   const truncated = truncateOutput(outputBuffer);
   return {
     shouldReturn: true,
@@ -182,13 +170,7 @@ function createBackgroundCheckPromise(
     checkInterval = setInterval(() => {
       if (movedToBackgroundRef.value && backgroundTaskIdRef.value) {
         if (checkInterval) clearInterval(checkInterval);
-        resolve(
-          createBackgroundResult(
-            command,
-            backgroundTaskIdRef.value,
-            outputBufferRef.value,
-          ),
-        );
+        resolve(createBackgroundResult(command, backgroundTaskIdRef.value, outputBufferRef.value));
       }
     }, 100);
 
@@ -215,8 +197,7 @@ function handleBackgroundTransition(
   resultPromise: Promise<any>,
 ): string {
   const backgroundPIDs = extractBackgroundPIDs(tempFilePath, pid, isWindows);
-  const pgid =
-    backgroundPIDs.length > 0 ? backgroundPIDs[0] : (pid ?? undefined);
+  const pgid = backgroundPIDs.length > 0 ? backgroundPIDs[0] : (pid ?? undefined);
   const backgroundTaskId = backgroundTaskManager.createTask({
     command,
     pid: pid ?? 0,
@@ -224,16 +205,8 @@ function handleBackgroundTransition(
   });
 
   resultPromise.then((result) => {
-    const status = result.cancelled
-      ? 'killed'
-      : result.exitCode === 0
-        ? 'completed'
-        : 'failed';
-    backgroundTaskManager.updateTaskStatus(
-      backgroundTaskId,
-      status,
-      result.exitCode,
-    );
+    const status = result.cancelled ? 'killed' : result.exitCode === 0 ? 'completed' : 'failed';
+    backgroundTaskManager.updateTaskStatus(backgroundTaskId, status, result.exitCode);
   });
 
   return backgroundTaskId;
@@ -255,9 +228,7 @@ function formatExecutionResult(
       llmContent += ' There was no output before it was cancelled.';
     }
   } else {
-    const finalError = result.error
-      ? result.error.message.replace(wrappedCommand, command)
-      : '(none)';
+    const finalError = result.error ? result.error.message.replace(wrappedCommand, command) : '(none)';
     llmContent = [
       `Command: ${command}`,
       `Directory: ${cwd || '(root)'}`,
@@ -266,9 +237,7 @@ function formatExecutionResult(
       `Error: ${finalError}`,
       `Exit Code: ${result.exitCode ?? '(none)'}`,
       `Signal: ${result.signal ?? '(none)'}`,
-      `Background PIDs: ${
-        backgroundPIDs.length ? backgroundPIDs.join(', ') : '(none)'
-      }`,
+      `Background PIDs: ${backgroundPIDs.length ? backgroundPIDs.join(', ') : '(none)'}`,
       `Process Group PGID: ${result.pid ?? '(none)'}`,
     ].join('\n');
   }
@@ -278,17 +247,11 @@ function formatExecutionResult(
   let message = '';
   if (result.output?.trim()) {
     debug('result.output:', result.output);
-    const safeOutput =
-      typeof result.output === 'string' ? result.output : String(result.output);
+    const safeOutput = typeof result.output === 'string' ? result.output : String(result.output);
     message = truncateOutput(safeOutput);
 
     if (message !== result.output) {
-      debug(
-        'output was truncated from',
-        result.output.length,
-        'to',
-        message.length,
-      );
+      debug('output was truncated from', result.output.length, 'to', message.length);
     }
   } else {
     if (result.cancelled) {
@@ -360,35 +323,40 @@ async function executeCommand(
     }
   };
 
-  const { result: resultPromise, pid } = shellExecute(
-    wrappedCommand,
-    cwd,
-    actualTimeout,
-    (event) => {
-      if (movedToBackgroundRef.value) {
-        if (event.type === 'data' && backgroundTaskIdRef.value) {
-          backgroundTaskManager.appendOutput(
-            backgroundTaskIdRef.value,
-            event.chunk,
-          );
-        }
-        return;
+  const { result: resultPromise, pid } = shellExecute(wrappedCommand, cwd, actualTimeout, (event) => {
+    if (movedToBackgroundRef.value) {
+      if (event.type === 'data' && backgroundTaskIdRef.value) {
+        backgroundTaskManager.appendOutput(backgroundTaskIdRef.value, event.chunk);
       }
+      return;
+    }
 
-      if (event.type === 'data') {
-        hasOutput = true;
-        outputBufferRef.value += event.chunk;
+    if (event.type === 'data') {
+      hasOutput = true;
+      outputBufferRef.value += event.chunk;
 
-        const elapsed = Date.now() - startTime;
+      const elapsed = Date.now() - startTime;
 
-        if (
-          shouldRunInBackground(command, elapsed, hasOutput, runInBackground) &&
-          !backgroundPromptEmitted
-        ) {
-          backgroundPromptEmitted = true;
+      if (shouldRunInBackground(command, elapsed, hasOutput, runInBackground) && !backgroundPromptEmitted) {
+        backgroundPromptEmitted = true;
 
-          if (runInBackground === true) {
-            if (!movedToBackgroundRef.value) {
+        if (runInBackground === true) {
+          if (!movedToBackgroundRef.value) {
+            movedToBackgroundRef.value = true;
+            const actualTaskId = handleBackgroundTransition(
+              command,
+              pid,
+              tempFilePath,
+              isWindows,
+              backgroundTaskManager,
+              resultPromise,
+            );
+            backgroundTaskIdRef.value = actualTaskId;
+          }
+        } else if (messageBus) {
+          const tempTaskId = `temp_${crypto.randomBytes(6).toString('hex')}`;
+          pendingBackgroundMoves.set(tempTaskId, {
+            moveToBackground: () => {
               movedToBackgroundRef.value = true;
               const actualTaskId = handleBackgroundTransition(
                 command,
@@ -399,47 +367,25 @@ async function executeCommand(
                 resultPromise,
               );
               backgroundTaskIdRef.value = actualTaskId;
-            }
-          } else if (messageBus) {
-            const tempTaskId = `temp_${crypto.randomBytes(6).toString('hex')}`;
-            pendingBackgroundMoves.set(tempTaskId, {
-              moveToBackground: () => {
-                movedToBackgroundRef.value = true;
-                const actualTaskId = handleBackgroundTransition(
-                  command,
-                  pid,
-                  tempFilePath,
-                  isWindows,
-                  backgroundTaskManager,
-                  resultPromise,
-                );
-                backgroundTaskIdRef.value = actualTaskId;
-              },
-            });
+            },
+          });
 
-            // Emit the prompt event
-            const promptEvent: BashPromptBackgroundEvent = {
-              taskId: tempTaskId,
-              command,
-              currentOutput: outputBufferRef.value,
-            };
+          // Emit the prompt event
+          const promptEvent: any = {
+            taskId: tempTaskId,
+            command,
+            currentOutput: outputBufferRef.value,
+          };
 
-            messageBus.emitEvent(BASH_EVENTS.PROMPT_BACKGROUND, promptEvent);
-          }
+          messageBus.emitEvent(BASH_EVENTS.PROMPT_BACKGROUND, promptEvent);
         }
       }
-    },
-  );
+    }
+  });
 
   try {
     const backgroundCheckResult = await Promise.race([
-      createBackgroundCheckPromise(
-        movedToBackgroundRef,
-        backgroundTaskIdRef,
-        outputBufferRef,
-        command,
-        resultPromise,
-      ),
+      createBackgroundCheckPromise(movedToBackgroundRef, backgroundTaskIdRef, outputBufferRef, command, resultPromise),
       resultPromise.then(() => ({ shouldReturn: false, result: null })),
     ]);
 
@@ -455,16 +401,9 @@ async function executeCommand(
   const result = await resultPromise;
   cleanupTempFile();
 
-  const backgroundPIDs = extractBackgroundPIDs(
-    tempFilePath,
-    result.pid,
-    isWindows,
-  );
+  const backgroundPIDs = extractBackgroundPIDs(tempFilePath, result.pid, isWindows);
   if (!isWindows && fs.existsSync(tempFilePath)) {
-    const pgrepLines = fs
-      .readFileSync(tempFilePath, 'utf8')
-      .split('\n')
-      .filter(Boolean);
+    const pgrepLines = fs.readFileSync(tempFilePath, 'utf8').split('\n').filter(Boolean);
     for (const line of pgrepLines) {
       if (!/^\d+$/.test(line)) {
         console.error(`pgrep: ${line}`);
@@ -472,18 +411,10 @@ async function executeCommand(
     }
   }
 
-  return formatExecutionResult(
-    result,
-    command,
-    wrappedCommand,
-    cwd,
-    backgroundPIDs,
-  );
+  return formatExecutionResult(result, command, wrappedCommand, cwd, backgroundPIDs);
 }
 
-export function createBashOutputTool(opts: {
-  backgroundTaskManager: BackgroundTaskManager;
-}) {
+export function createBashOutputTool(opts: { backgroundTaskManager: BackgroundTaskManager }) {
   const { backgroundTaskManager } = opts;
 
   return createTool({
@@ -539,9 +470,7 @@ Usage:
   });
 }
 
-export function createKillBashTool(opts: {
-  backgroundTaskManager: BackgroundTaskManager;
-}) {
+export function createKillBashTool(opts: { backgroundTaskManager: BackgroundTaskManager }) {
   const { backgroundTaskManager } = opts;
 
   return createTool({
@@ -554,9 +483,7 @@ Usage:
 - Returns success or failure status
 - Use this when you need to stop a long-running background task`,
     parameters: z.object({
-      task_id: z
-        .string()
-        .describe('The ID of the background task to terminate'),
+      task_id: z.string().describe('The ID of the background task to terminate'),
     }),
     getDescription: ({ params }) => {
       if (!params.task_id || typeof params.task_id !== 'string') {
@@ -605,29 +532,22 @@ export function createBashTool(opts: {
   const { cwd, backgroundTaskManager, messageBus } = opts;
 
   // Track pending background moves
-  const pendingBackgroundMoves = new Map<
-    string,
-    { moveToBackground: () => void }
-  >();
+  const pendingBackgroundMoves = new Map<string, { moveToBackground: () => void }>();
 
   // Add background move listener only if messageBus is available
   if (messageBus) {
-    messageBus.onEvent(
-      BASH_EVENTS.MOVE_TO_BACKGROUND,
-      ({ taskId }: { taskId: string }) => {
-        const pendingMove = pendingBackgroundMoves.get(taskId);
-        if (pendingMove) {
-          pendingMove.moveToBackground();
-          pendingBackgroundMoves.delete(taskId);
-          messageBus.emitEvent(BASH_EVENTS.BACKGROUND_MOVED, { taskId });
-        }
-      },
-    );
+    messageBus.onEvent(BASH_EVENTS.MOVE_TO_BACKGROUND, ({ taskId }: { taskId: string }) => {
+      const pendingMove = pendingBackgroundMoves.get(taskId);
+      if (pendingMove) {
+        pendingMove.moveToBackground();
+        pendingBackgroundMoves.delete(taskId);
+        messageBus.emitEvent(BASH_EVENTS.BACKGROUND_MOVED, { taskId });
+      }
+    });
   }
   return createTool({
     name: TOOL_NAMES.BASH,
-    description:
-      `Run shell commands in the terminal, ensuring proper handling and security measures.
+    description: `Run shell commands in the terminal, ensuring proper handling and security measures.
 
 Background Execution:
 - Set run_in_background=true to force background execution
@@ -660,17 +580,11 @@ cd /foo/bar && pytest tests
 `.trim(),
     parameters: z.object({
       command: z.string().describe('The command to execute'),
-      timeout: z
-        .number()
-        .optional()
-        .nullable()
-        .describe(`Optional timeout in milliseconds (max ${MAX_TIMEOUT})`),
+      timeout: z.number().optional().nullable().describe(`Optional timeout in milliseconds (max ${MAX_TIMEOUT})`),
       run_in_background: z
         .boolean()
         .optional()
-        .describe(
-          'Set to true to run this command in the background. Use bash_output to read output later.',
-        ),
+        .describe('Set to true to run this command in the background. Use bash_output to read output later.'),
     }),
     getDescription: ({ params }) => {
       if (!params.command || typeof params.command !== 'string') {
@@ -679,11 +593,7 @@ cd /foo/bar && pytest tests
       const command = params.command.trim();
       return command.length > 100 ? command.substring(0, 97) + '...' : command;
     },
-    execute: async ({
-      command,
-      timeout = DEFAULT_TIMEOUT,
-      run_in_background,
-    }) => {
+    execute: async ({ command, timeout = DEFAULT_TIMEOUT, run_in_background }) => {
       try {
         if (!command) {
           return {
@@ -704,9 +614,7 @@ cd /foo/bar && pytest tests
         return {
           isError: true,
           llmContent:
-            e instanceof Error
-              ? `Command execution failed: ${getErrorMessage(e)}`
-              : 'Command execution failed.',
+            e instanceof Error ? `Command execution failed: ${getErrorMessage(e)}` : 'Command execution failed.',
         };
       }
     },
@@ -724,10 +632,7 @@ cd /foo/bar && pytest tests
         }
         // Check if command is banned (these should never be approved)
         const commandRoot = getCommandRoot(command);
-        if (
-          commandRoot &&
-          BANNED_COMMANDS.includes(commandRoot.toLowerCase())
-        ) {
+        if (commandRoot && BANNED_COMMANDS.includes(commandRoot.toLowerCase())) {
           return true; // This will be denied by approval system
         }
         // For other commands, defer to approval mode settings
