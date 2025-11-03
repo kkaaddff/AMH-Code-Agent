@@ -71,34 +71,6 @@ function skip(path: string) {
   return false;
 }
 
-export function listRootDirectory(rootPath: string, productName: string = PRODUCT_NAME): string[] {
-  const results: string[] = [];
-  try {
-    const children = fs.readdirSync(rootPath, { withFileTypes: true });
-    for (const child of children) {
-      if (child.name === 'node_modules' || child.name.startsWith('.')) {
-        continue;
-      }
-
-      const childPath = join(rootPath, child.name);
-
-      // Skip if ignored by gitignore or takumiignore
-      if (isIgnored(childPath, rootPath, productName)) {
-        continue;
-      }
-
-      if (child.isDirectory()) {
-        results.push(child.name + sep);
-      } else {
-        results.push(child.name);
-      }
-    }
-  } catch (e) {
-    // Silently skip root directories we don't have permission to read
-  }
-  return results;
-}
-
 type TreeNode = {
   name: string;
   path: string;

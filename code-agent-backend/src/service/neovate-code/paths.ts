@@ -17,10 +17,6 @@ interface MessageLogEntry {
 
 type LogEntry = ConfigLogEntry | MessageLogEntry;
 
-export function getGlobalDataPath(globalDir: string): string {
-  return path.join(globalDir, 'data.json');
-}
-
 export class Paths {
   globalConfigDir: string;
   globalProjectDir: string;

@@ -64,36 +64,6 @@ const ENCODING_ALIASES = new Map<string, string>([
 ]);
 
 /**
- * Reset the encoding cache - useful for testing or when system configuration changes
- */
-export function resetEncodingCache(): void {
-  encodingCache = {
-    state: 'uninitialized',
-    value: null,
-  };
-  pendingSystemEncodingDetection = null;
-}
-
-/**
- * Returns the system encoding with caching and fallback to buffer detection.
- * Handles concurrent calls gracefully and provides robust error recovery.
- *
- * @param buffer - Buffer to analyze if system detection fails
- * @returns The detected encoding or 'utf-8' as ultimate fallback
- */
-export async function getCachedEncodingForBuffer(buffer: Buffer): Promise<string> {
-  const systemEncoding = await getSystemEncodingCached();
-
-  if (systemEncoding) {
-    return systemEncoding;
-  }
-
-  // Fallback to buffer-specific detection
-  const bufferEncoding = detectEncodingFromBuffer(buffer);
-  return bufferEncoding || 'utf-8';
-}
-
-/**
  * Synchronous version for backward compatibility
  * Note: This may block on first call if system encoding hasn't been cached
  */

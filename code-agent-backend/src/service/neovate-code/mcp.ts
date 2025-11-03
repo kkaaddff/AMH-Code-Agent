@@ -1,7 +1,5 @@
 import { experimental_createMCPClient } from '@ai-sdk/mcp';
 import createDebug from 'debug';
-import { existsSync, readFileSync } from 'fs';
-import { resolve } from 'path';
 import type { ImagePart, TextPart } from './message';
 import type { Tool } from './tool';
 import { safeStringify } from './utils/safeStringify';
@@ -415,42 +413,6 @@ export class MCPManager {
       },
     };
   }
-}
-
-export function parseMcpConfig(mcpConfigArgs: string[], cwd: string): Record<string, MCPConfig> {
-  const mcpServers: Record<string, MCPConfig> = {};
-  for (const configItem of mcpConfigArgs) {
-    let configData: unknown;
-    try {
-      // Try to parse as JSON string first
-      configData = JSON.parse(configItem);
-    } catch (e) {
-      // If JSON parsing fails, treat as file path
-      const configPath = resolve(cwd, configItem);
-      if (!existsSync(configPath)) {
-        throw new Error(`MCP config file not found: ${configPath}`);
-      }
-      try {
-        const fileContent = readFileSync(configPath, 'utf-8');
-        configData = JSON.parse(fileContent);
-      } catch (error) {
-        throw new Error(
-          `Failed to parse MCP config file ${configPath}: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-    }
-    // Extract mcpServer object from the config data
-    if (!configData || typeof configData !== 'object') {
-      throw new Error('MCP config must be a valid JSON object');
-    }
-    const configObj = configData as Record<string, unknown>;
-    if (!configObj.mcpServers || typeof configObj.mcpServers !== 'object') {
-      throw new Error('MCP config must contain an "mcpServers" object');
-    }
-    Object.assign(mcpServers, configObj.mcpServers as Record<string, MCPConfig>);
-  }
-
-  return mcpServers;
 }
 
 function formatParamsDescription(params: Record<string, any>): string {
