@@ -8,13 +8,9 @@
  * 4. 上次的输出可能作为下次的输入
  * 5. 所有接口请求使用伪函数调用
  */
-import {
-  StreamModelGatewayEvent,
-  StreamModelGatewayTodo,
-  syncModelGateway,
-} from "../../utils/modelGateway";
-import { commonUserPrompt, commonSystemPrompt } from "./CommonPrompt";
-import { systemSetting } from "./config";
+import { StreamModelGatewayEvent, StreamModelGatewayTodo, syncModelGateway } from '../../utils/modelGateway';
+import { commonUserPrompt, commonSystemPrompt } from './CommonPrompt';
+import { systemSetting } from './config';
 import {
   AskUserQuestion,
   Bash,
@@ -35,24 +31,14 @@ import {
   // WebSearch,
   // mcp__ide__executeCode,
   // mcp__ide__getDiagnostics,
-} from "./tools";
-import {
-  RequestBody,
-  SessionState,
-  Tool,
-  Message,
-  MessageContent,
-  TodoItem,
-  TodoStatus,
-} from "./types";
-import { logToFile } from "./utils";
+} from './tools';
+import { RequestBody, SessionState, Tool, Message, MessageContent, TodoItem, TodoStatus } from './types';
+import { logToFile } from './utils';
 
 /**
  * 发送消息到模型 使用 syncModelGateway 中转
  */
-async function callModelAPI(
-  requestBody: RequestBody
-): Promise<StreamModelGatewayEvent[]> {
+async function callModelAPI(requestBody: RequestBody): Promise<StreamModelGatewayEvent[]> {
   const events = await syncModelGateway({ body: requestBody });
   return events;
 }
@@ -77,10 +63,10 @@ export class AgentScheduler {
   private initializeTools(): void {
     this.availableTools = [
       AskUserQuestion,
-      Bash,
-      BashOutput,
+      // Bash,
+      // BashOutput,
       Edit,
-      Read,
+      // Read,
       Write,
       TodoWrite,
       Task,
@@ -101,41 +87,37 @@ export class AgentScheduler {
   /**
    * 创建新会话
    */
-  createSession(
-    uid: string,
-    initialUserPrompt: string,
-    dslJsonStr: string
-  ): SessionState {
+  createSession(uid: string, initialUserPrompt: string, dslJsonStr: string): SessionState {
     const session: SessionState = {
       uid,
       messages: [
         {
-          role: "user",
+          role: 'user',
           content: [
             {
-              type: "text",
+              type: 'text',
               text: commonUserPrompt.readAnnotatedJson,
             },
           ],
         },
         {
-          role: "user",
+          role: 'user',
           content: [
             {
-              type: "text",
+              type: 'text',
               text: commonUserPrompt.annotatedJsonResult,
               // text: `<system-reminder>\nResult of calling the Read tool: "${}"<system-reminder>\\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\\n</system-reminder>\\n"\n</system-reminder>`,
             },
             {
-              type: "text",
+              type: 'text',
               text: commonSystemPrompt.todoListEmpty,
             },
             {
-              type: "text",
+              type: 'text',
               text: commonUserPrompt.claudeDotMd,
             },
             {
-              type: "text",
+              type: 'text',
               text: initialUserPrompt,
             },
           ],
@@ -148,7 +130,7 @@ export class AgentScheduler {
     };
 
     this.sessions.set(uid, session);
-    logToFile(uid, "session_created", { initialPrompt: initialUserPrompt });
+    logToFile(uid, 'session_created', { initialPrompt: initialUserPrompt });
 
     return session;
   }
@@ -171,7 +153,7 @@ export class AgentScheduler {
       throw new Error(`Session ${uid} not found`);
     }
 
-    logToFile(uid, "session_start", {});
+    logToFile(uid, 'session_start', {});
 
     while (!session.isCompleted) {
       // 增加迭代计数器
@@ -185,26 +167,26 @@ export class AgentScheduler {
         messages: session.messages,
         system: [
           {
-            type: "text",
+            type: 'text',
             text: commonSystemPrompt.cliPrompt,
-            cache_control: { type: "ephemeral" } as const,
+            cache_control: { type: 'ephemeral' } as const,
           },
           {
-            type: "text",
+            type: 'text',
             text: commonSystemPrompt.mainPrompt,
-            cache_control: { type: "ephemeral" } as const,
+            cache_control: { type: 'ephemeral' } as const,
           },
         ],
         tools: this.availableTools,
         ...systemSetting,
       };
 
-      logToFile(uid, "input", requestBody);
+      logToFile(uid, 'input', 'requestBody');
 
       // 调用模型 API
       const response = await callModelAPI(requestBody);
 
-      logToFile(uid, "stream.final", response);
+      logToFile(uid, 'stream.final', response);
 
       // 处理响应 (传递回调)
       await this.processResponse(session, response, callbacks);
@@ -215,7 +197,7 @@ export class AgentScheduler {
       // 检查是否完成
       if (this.isSessionCompleted(session)) {
         session.isCompleted = true;
-        logToFile(uid, "session_completed", {});
+        logToFile(uid, 'session_completed', {});
         callbacks?.onSessionComplete?.();
         break;
       }
@@ -243,11 +225,11 @@ export class AgentScheduler {
     const assistantContent: MessageContent[] = [];
 
     for (const event of events) {
-      if (event.type === "text") {
-        const text = typeof event.text === "string" ? event.text : "";
+      if (event.type === 'text') {
+        const text = typeof event.text === 'string' ? event.text : '';
         if (text.trim()) {
           assistantContent.push({
-            type: "text",
+            type: 'text',
             text,
           });
           // 通知文本更新
@@ -256,7 +238,7 @@ export class AgentScheduler {
         continue;
       }
 
-      if (event.type === "todo" && event.todos && event.todos.length > 0) {
+      if (event.type === 'todo' && event.todos && event.todos.length > 0) {
         const normalizedTodos = this.mapStreamTodosToTodoItems(event.todos);
         this.updateTodos(session, normalizedTodos);
 
@@ -264,9 +246,9 @@ export class AgentScheduler {
         callbacks?.onTodoUpdate?.(normalizedTodos);
 
         assistantContent.push({
-          type: "tool_use",
+          type: 'tool_use',
           id: this.generateToolUseId(),
-          name: "TodoWrite",
+          name: 'TodoWrite',
           input: { todos: event.todos },
         });
       }
@@ -277,17 +259,15 @@ export class AgentScheduler {
     }
 
     const assistantMessage: Message = {
-      role: "assistant",
+      role: 'assistant',
       content: assistantContent,
     };
 
     session.messages.push(assistantMessage);
 
-    logToFile(session.uid, "assistant_message", assistantMessage);
+    logToFile(session.uid, 'assistant_message', assistantMessage);
 
-    const toolCalls = assistantContent.filter(
-      (content) => content.type === "tool_use"
-    );
+    const toolCalls = assistantContent.filter((content) => content.type === 'tool_use');
     if (toolCalls.length > 0) {
       await this.executeTools(session, toolCalls);
     }
@@ -296,14 +276,11 @@ export class AgentScheduler {
   /**
    * 执行工具调用并追加 tool_result 消息
    */
-  private async executeTools(
-    session: SessionState,
-    toolCalls: MessageContent[]
-  ): Promise<void> {
+  private async executeTools(session: SessionState, toolCalls: MessageContent[]): Promise<void> {
     const toolResults: MessageContent[] = [];
 
     for (const call of toolCalls) {
-      if (call.type !== "tool_use") {
+      if (call.type !== 'tool_use') {
         continue;
       }
 
@@ -321,12 +298,12 @@ export class AgentScheduler {
     }
 
     const toolResultMessage: Message = {
-      role: "user",
+      role: 'user',
       content: toolResults,
     };
 
     session.messages.push(toolResultMessage);
-    logToFile(session.uid, "tool_results", toolResultMessage);
+    logToFile(session.uid, 'tool_results', toolResultMessage);
   }
 
   /**
@@ -337,16 +314,16 @@ export class AgentScheduler {
     toolCall: MessageContent,
     toolUseId: string
   ): Promise<MessageContent> {
-    const name = toolCall.name || "UnknownTool";
+    const name = toolCall.name || 'UnknownTool';
     const input = toolCall.input || {};
 
-    logToFile(session.uid, "tool_execute", {
+    logToFile(session.uid, 'tool_execute', {
       name,
       input,
     });
 
     switch (name) {
-      case "TodoWrite": {
+      case 'TodoWrite': {
         if (Array.isArray(input.todos)) {
           const mappedTodos = this.mapStreamTodosToTodoItems(input.todos);
           if (mappedTodos.length > 0) {
@@ -355,60 +332,60 @@ export class AgentScheduler {
         }
         return {
           tool_use_id: toolUseId,
-          type: "tool_result",
+          type: 'tool_result',
           content: commonSystemPrompt.todoModifiedSuccessfully,
         };
       }
 
-      case "Read": {
-        const filePath = input.file_path || input.path || "unknown file";
+      case 'Read': {
+        const filePath = input.file_path || input.path || 'unknown file';
         return {
           tool_use_id: toolUseId,
-          type: "tool_result",
+          type: 'tool_result',
           content: `File content for ${filePath}`,
         };
       }
 
-      case "Write": {
-        const filePath = input.file_path || input.path || "unknown file";
+      case 'Write': {
+        const filePath = input.file_path || input.path || 'unknown file';
         return {
           tool_use_id: toolUseId,
-          type: "tool_result",
+          type: 'tool_result',
           content: `File created successfully at: ${filePath}`,
         };
       }
 
-      case "Edit": {
-        const filePath = input.file_path || input.path || "unknown file";
+      case 'Edit': {
+        const filePath = input.file_path || input.path || 'unknown file';
         return {
           tool_use_id: toolUseId,
-          type: "tool_result",
+          type: 'tool_result',
           content: `File edited successfully at: ${filePath}`,
         };
       }
 
-      case "Bash": {
+      case 'Bash': {
         return {
           tool_use_id: toolUseId,
-          type: "tool_result",
-          content: "",
+          type: 'tool_result',
+          content: '',
           is_error: false,
-          cache_control: { type: "ephemeral" },
+          cache_control: { type: 'ephemeral' },
         };
       }
 
-      case "BashOutput": {
+      case 'BashOutput': {
         return {
           tool_use_id: toolUseId,
-          type: "tool_result",
+          type: 'tool_result',
           content: `Captured output for previous bash command`,
         };
       }
 
-      case "Task": {
+      case 'Task': {
         return {
           tool_use_id: toolUseId,
-          type: "tool_result",
+          type: 'tool_result',
           content: `Task dispatched to sub-agent`,
         };
       }
@@ -416,7 +393,7 @@ export class AgentScheduler {
       default:
         return {
           tool_use_id: toolUseId,
-          type: "tool_result",
+          type: 'tool_result',
           content: `Tool ${name} executed successfully`,
         };
     }
@@ -425,9 +402,7 @@ export class AgentScheduler {
   /**
    * 将模型返回的 TODO 列表转换为内部结构
    */
-  private mapStreamTodosToTodoItems(
-    streamTodos: StreamModelGatewayTodo[]
-  ): TodoItem[] {
+  private mapStreamTodosToTodoItems(streamTodos: StreamModelGatewayTodo[]): TodoItem[] {
     return streamTodos.map((todo) => ({
       id: todo.id,
       content: todo.content,
@@ -437,17 +412,15 @@ export class AgentScheduler {
   }
 
   private normalizeTodoStatus(status?: string): TodoStatus {
-    const allowed: TodoStatus[] = ["pending", "in_progress", "completed"];
+    const allowed: TodoStatus[] = ['pending', 'in_progress', 'completed'];
     if (status && (allowed as string[]).includes(status)) {
       return status as TodoStatus;
     }
-    return "pending";
+    return 'pending';
   }
 
   private generateToolUseId(): string {
-    return `call_${Date.now().toString(36)}-${Math.random()
-      .toString(36)
-      .slice(2, 8)}`;
+    return `call_${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
   /**
@@ -458,16 +431,14 @@ export class AgentScheduler {
     session.todos = copiedTodos;
 
     // 更新当前 TODO 索引
-    let currentIndex = copiedTodos.findIndex(
-      (todo) => todo.status === "in_progress"
-    );
+    let currentIndex = copiedTodos.findIndex((todo) => todo.status === 'in_progress');
     if (currentIndex === -1) {
-      currentIndex = copiedTodos.findIndex((todo) => todo.status === "pending");
+      currentIndex = copiedTodos.findIndex((todo) => todo.status === 'pending');
     }
 
     session.currentTodoIndex = currentIndex;
 
-    logToFile(session.uid, "todos_updated", {
+    logToFile(session.uid, 'todos_updated', {
       todos: copiedTodos,
       currentIndex: session.currentTodoIndex,
     });
@@ -479,7 +450,7 @@ export class AgentScheduler {
   private isSessionCompleted(session: SessionState): boolean {
     // 检查是否超过最大轮数限制（50 轮）
     if (session.iterationCount >= this.maxIterations) {
-      logToFile(session.uid, "session_max_iterations_reached", {
+      logToFile(session.uid, 'session_max_iterations_reached', {
         iterationCount: session.iterationCount,
       });
       return true;
@@ -489,7 +460,7 @@ export class AgentScheduler {
       return false;
     }
 
-    return session.todos.every((todo) => todo.status === "completed");
+    return session.todos.every((todo) => todo.status === 'completed');
   }
 
   /**
@@ -511,6 +482,6 @@ export class AgentScheduler {
    */
   cleanupSession(uid: string): void {
     this.sessions.delete(uid);
-    logToFile(uid, "session_cleanup", {});
+    logToFile(uid, 'session_cleanup', {});
   }
 }
