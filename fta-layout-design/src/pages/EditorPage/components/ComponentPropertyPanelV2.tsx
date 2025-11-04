@@ -1,29 +1,33 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import { DSLNode } from '@/types/dsl';
+import { CopyOutlined, DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import {
+  App,
+  Button,
+  Card,
+  Checkbox,
+  Divider,
   Form,
   Input,
-  Select,
-  Button,
-  Space,
-  Typography,
-  Divider,
   InputNumber,
-  App,
-  Card,
+  Select,
+  Space,
   Switch,
-  Checkbox,
+  Typography,
 } from 'antd';
-import {
-  SaveOutlined,
-  DeleteOutlined,
-  PlusOutlined,
-  CopyOutlined,
-} from '@ant-design/icons';
-import { useComponentDetectionV2 } from '../contexts/ComponentDetectionContextV2';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSnapshot } from 'valtio';
+
 import { FTA_COMPONENTS } from '../constants/FTAComponents';
 import { getComponentSchema, PropertySchema } from '../constants/FTAComponentSchemas';
+import {
+  calculateDSLNodeAbsolutePosition,
+  componentDetectionActions,
+  componentDetectionStore,
+  findAnnotationByDSLNodeId,
+  findAnnotationById,
+  findDSLNodeById,
+} from '../contexts/ComponentDetectionContextV2';
 import { NodeType } from '../types/componentDetectionV2';
-import { DSLNode } from '@/types/dsl';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -73,22 +77,7 @@ const customFilterOption = (input: string, option: any) => {
 
 const ComponentPropertyPanelV2: React.FC = () => {
   const { message, modal } = App.useApp();
-  
-  const {
-    selectedAnnotationId,
-    selectedDSLNodeId,
-    selectedNodeIds,
-    findAnnotationById,
-    findAnnotationByDSLNodeId,
-    findDSLNodeById,
-    calculateDSLNodeAbsolutePosition,
-    updateAnnotation,
-    deleteAnnotation,
-    createAnnotation,
-    combineSelectedDSLNodes,
-    getSelectedDSLNode,
-  } = useComponentDetectionV2();
-
+  const { selectedAnnotationId, selectedDSLNodeId, selectedNodeIds } = useSnapshot(componentDetectionStore);
   const [form] = Form.useForm();
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedFTAComponent, setSelectedFTAComponent] = useState<string>('');
@@ -97,13 +86,13 @@ const ComponentPropertyPanelV2: React.FC = () => {
   const selectedAnnotation = useMemo(() => {
     if (!selectedAnnotationId) return null;
     return findAnnotationById(selectedAnnotationId);
-  }, [selectedAnnotationId, findAnnotationById]);
+  }, [selectedAnnotationId]);
 
   // 获取选中的DSL节点（用于创建新标注）
   const selectedDSLNode = useMemo(() => {
     if (!selectedDSLNodeId || selectedAnnotation) return null;
-    return getSelectedDSLNode();
-  }, [selectedDSLNodeId, selectedAnnotation, getSelectedDSLNode]);
+    return componentDetectionActions.getSelectedDSLNode();
+  }, [selectedDSLNodeId, selectedAnnotation]);
 
   // 初始化表单值
   useEffect(() => {
@@ -159,7 +148,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
       }
 
       // Update annotation
-      const updated = await updateAnnotation(selectedAnnotation.id, {
+      const updated = await componentDetectionActions.updateAnnotation(selectedAnnotation.id, {
         ftaComponent: values.ftaComponent,
         name: values.name,
         comment: values.comment,
@@ -199,17 +188,18 @@ const ComponentPropertyPanelV2: React.FC = () => {
     modal.confirm({
       title: '删除标注',
       content: (
-        <Space direction="vertical" size={4}>
+        <Space direction='vertical' size={4}>
           <span>
-            确定要删除标注 "
-            {selectedAnnotation.ftaComponent}
-            {selectedAnnotation.name ? ` (${selectedAnnotation.name})` : ''}
-            " 吗？
+            确定要删除标注 "{selectedAnnotation.ftaComponent}
+            {selectedAnnotation.name ? ` (${selectedAnnotation.name})` : ''}" 吗？
           </span>
-          <Checkbox onChange={(e) => { deleteChildren = e.target.checked; }}>
+          <Checkbox
+            onChange={(e) => {
+              deleteChildren = e.target.checked;
+            }}>
             同时删除所有子标注
           </Checkbox>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type='secondary' style={{ fontSize: 12 }}>
             不勾选时仅删除当前标注，子标注将自动提升一级
           </Text>
         </Space>
@@ -218,17 +208,14 @@ const ComponentPropertyPanelV2: React.FC = () => {
       okType: 'danger',
       cancelText: '取消',
       onOk: () => {
-        deleteAnnotation(selectedAnnotation.id, { deleteChildren });
+        componentDetectionActions.deleteAnnotation(selectedAnnotation.id, { deleteChildren });
         message.success('已删除标注');
       },
     });
   };
 
   // 检测是否为多选状态
-  const isMultiSelection = useMemo(
-    () => selectedNodeIds.length > 1,
-    [selectedNodeIds]
-  );
+  const isMultiSelection = useMemo(() => selectedNodeIds.length > 1, [selectedNodeIds]);
 
   // 分别统计已标注和未标注节点数量
   const selectedAnnotationCount = useMemo(
@@ -274,7 +261,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
     });
 
     return bounds;
-  }, [isMultiSelection, selectedNodeIds, findAnnotationById, findDSLNodeById, calculateDSLNodeAbsolutePosition]);
+  }, [isMultiSelection, selectedNodeIds]);
 
   const hasSelectionCollision = useMemo(() => {
     if (selectionBounds.length < 2) return false;
@@ -293,7 +280,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
           ax2 <= b.x || // a 在 b 左侧
           bx2 <= a.x || // b 在 a 左侧
           ay2 <= b.y || // a 在 b 上方
-          by2 <= a.y;   // b 在 a 上方
+          by2 <= a.y; // b 在 a 上方
 
         if (!separated) {
           return true;
@@ -319,7 +306,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
     });
 
     return nodes;
-  }, [isMultiSelection, selectedNodeIds, findDSLNodeById, findAnnotationByDSLNodeId]);
+  }, [isMultiSelection, selectedNodeIds]);
 
   const canBatchCreate = isMultiSelection && !hasSelectionCollision && batchTargetDSLNodes.length > 0;
 
@@ -331,7 +318,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
       let shouldResetForm = false;
 
       if (isMultiSelection) {
-        const combined = combineSelectedDSLNodes(ftaComponent);
+        const combined = componentDetectionActions.combineSelectedDSLNodes(ftaComponent);
         if (combined) {
           message.success('已创建组合标注');
           shouldResetForm = true;
@@ -340,7 +327,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
         }
       } else if (selectedDSLNode) {
         const { ftaComponent: _, name, comment, ...componentProps } = values;
-        const created = await createAnnotation(selectedDSLNode, ftaComponent, {
+        const created = await componentDetectionActions.createAnnotation(selectedDSLNode, ftaComponent, {
           name,
           comment,
           props: componentProps,
@@ -373,7 +360,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
 
       let createdCount = 0;
       for (const dslNode of batchTargetDSLNodes) {
-        const created = await createAnnotation(dslNode, ftaComponent, {
+        const created = await componentDetectionActions.createAnnotation(dslNode, ftaComponent, {
           name,
           comment,
           props: componentProps,
@@ -437,41 +424,41 @@ const ComponentPropertyPanelV2: React.FC = () => {
       // Cmd/Ctrl + Enter: 创建标注
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
-        
+
         // 校验：必须是创建状态（有选中的DSL节点或多选状态），且不是编辑现有标注
         if (selectedAnnotation) {
           return;
         }
-        
+
         if (!isMultiSelection && !selectedDSLNodeId) {
           message.warning('请先选择一个节点');
           return;
         }
-        
+
         handleCreateAnnotation();
       }
-      
+
       // Cmd/Ctrl + Delete: 删除标注
       if ((e.metaKey || e.ctrlKey) && e.key === 'Backspace') {
         e.preventDefault();
-        
+
         // 校验：必须有选中的标注，且不是根节点
         if (!selectedAnnotation) {
           message.warning('请先选择一个标注');
           return;
         }
-        
+
         if (selectedAnnotation.isRoot) {
           message.warning('根节点不可删除');
           return;
         }
-        
+
         handleDelete();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -486,7 +473,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
     if (!schema || schema.properties.length === 0) {
       return (
         <div style={{ padding: '12px', background: 'rgb(245, 245, 245)', borderRadius: '4px' }}>
-          <Text type="secondary">该组件暂无预定义属性，可在创建后通过属性面板编辑</Text>
+          <Text type='secondary'>该组件暂无预定义属性，可在创建后通过属性面板编辑</Text>
         </div>
       );
     }
@@ -516,7 +503,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
           );
         case 'boolean':
           return (
-            <Form.Item key={prop.name} {...commonProps} valuePropName="checked">
+            <Form.Item key={prop.name} {...commonProps} valuePropName='checked'>
               <Switch />
             </Form.Item>
           );
@@ -533,7 +520,10 @@ const ComponentPropertyPanelV2: React.FC = () => {
           const rows = prop.type === 'textarea' ? 3 : 4;
           return (
             <Form.Item key={prop.name} {...commonProps}>
-              <Component rows={rows} placeholder={prop.placeholder || (prop.type === 'json' ? '输入JSON格式数据' : '')} />
+              <Component
+                rows={rows}
+                placeholder={prop.placeholder || (prop.type === 'json' ? '输入JSON格式数据' : '')}
+              />
             </Form.Item>
           );
         default:
@@ -553,10 +543,9 @@ const ComponentPropertyPanelV2: React.FC = () => {
           justifyContent: 'center',
           padding: '20px',
           background: 'rgb(255, 255, 255)',
-        }}
-      >
+        }}>
         <div style={{ textAlign: 'center' }}>
-          <Text type="secondary">请在画布或图层树中选择一个节点</Text>
+          <Text type='secondary'>请在画布或图层树中选择一个节点</Text>
         </div>
       </div>
     );
@@ -570,55 +559,48 @@ const ComponentPropertyPanelV2: React.FC = () => {
           <Title level={5} style={{ margin: 0 }}>
             创建标注
           </Title>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {isMultiSelection
-              ? `为选中的 ${totalSelectedCount} 个节点创建组合标注`
-              : '为选中的节点创建FTA组件标注'}
+          <Text type='secondary' style={{ fontSize: 12 }}>
+            {isMultiSelection ? `为选中的 ${totalSelectedCount} 个节点创建组合标注` : '为选中的节点创建FTA组件标注'}
           </Text>
         </div>
 
         <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
           {isMultiSelection ? (
-            <Card size="small" style={{ marginBottom: 16 }}>
-              <Space direction="vertical" size={4} style={{ width: '100%' }}>
+            <Card size='small' style={{ marginBottom: 16 }}>
+              <Space direction='vertical' size={4} style={{ width: '100%' }}>
                 <Text strong>多选状态</Text>
-                <Text type="secondary">已选择 {totalSelectedCount} 个节点</Text>
+                <Text type='secondary'>已选择 {totalSelectedCount} 个节点</Text>
                 {selectedAnnotationCount > 0 && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type='secondary' style={{ fontSize: 12 }}>
                     • 已标注: {selectedAnnotationCount} 个
                   </Text>
                 )}
                 {selectedDSLNodeCount > 0 && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type='secondary' style={{ fontSize: 12 }}>
                     • 未标注: {selectedDSLNodeCount} 个
                   </Text>
                 )}
-                <Text type="warning" style={{ fontSize: 12, marginTop: 8 }}>
+                <Text type='warning' style={{ fontSize: 12, marginTop: 8 }}>
                   可创建组合标注，或在框线互不重叠时使用下方批量创建按钮
                 </Text>
               </Space>
             </Card>
           ) : (
-            <Card size="small" style={{ marginBottom: 16 }}>
-              <Space direction="vertical" size={0} style={{ width: '100%' }}>
-                <Text type="secondary">DSL节点ID:</Text>
+            <Card size='small' style={{ marginBottom: 16 }}>
+              <Space direction='vertical' size={0} style={{ width: '100%' }}>
+                <Text type='secondary'>DSL节点ID:</Text>
                 <Text code>{selectedDSLNodeId}</Text>
               </Space>
             </Card>
           )}
 
-          <Form form={form} layout="vertical" onValuesChange={handleValuesChange}>
-            <Form.Item 
-              label="FTA 组件类型" 
-              name="ftaComponent" 
-              rules={[{ required: true, message: '请选择组件类型' }]}
-            >
+          <Form form={form} layout='vertical' onValuesChange={handleValuesChange}>
+            <Form.Item label='FTA 组件类型' name='ftaComponent' rules={[{ required: true, message: '请选择组件类型' }]}>
               <Select
-                placeholder="选择组件类型"
+                placeholder='选择组件类型'
                 showSearch
                 filterOption={customFilterOption}
-                onChange={(value) => setSelectedFTAComponent(value)}
-              >
+                onChange={(value) => setSelectedFTAComponent(value)}>
                 {Object.entries(FTA_COMPONENTS).map(([groupName, components]) => (
                   <OptGroup key={groupName} label={groupName}>
                     {components.map((comp) => (
@@ -632,18 +614,18 @@ const ComponentPropertyPanelV2: React.FC = () => {
             </Form.Item>
 
             {/* 基本属性 */}
-            <Form.Item label="组件名称" name="name">
-              <Input placeholder="输入组件实例名称（可选）" />
+            <Form.Item label='组件名称' name='name'>
+              <Input placeholder='输入组件实例名称（可选）' />
             </Form.Item>
 
-            <Form.Item label="组件说明" name="comment">
-              <TextArea rows={2} placeholder="输入组件说明或备注（可选）" />
+            <Form.Item label='组件说明' name='comment'>
+              <TextArea rows={2} placeholder='输入组件说明或备注（可选）' />
             </Form.Item>
 
             {/* 动态属性字段 */}
             {selectedFTAComponent && (
               <>
-                <Divider orientation="left" style={{ margin: '16px 0' }}>
+                <Divider orientation='left' style={{ margin: '16px 0' }}>
                   <Text strong>组件属性</Text>
                 </Divider>
                 {renderDynamicPropertyFields(selectedFTAComponent)}
@@ -657,35 +639,24 @@ const ComponentPropertyPanelV2: React.FC = () => {
             padding: '16px',
             borderTop: '1px solid rgb(240, 240, 240)',
             background: 'rgb(250, 250, 250)',
-          }}
-        >
-          <Space direction="vertical" style={{ width: '100%' }}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              block
-              onClick={handleCreateAnnotation}
-            >
+          }}>
+          <Space direction='vertical' style={{ width: '100%' }}>
+            <Button type='primary' icon={<PlusOutlined />} block onClick={handleCreateAnnotation}>
               {isMultiSelection ? '创建组合标注' : '创建标注'}
             </Button>
 
             {isMultiSelection && (
               <>
-                <Button
-                  icon={<CopyOutlined />}
-                  block
-                  disabled={!canBatchCreate}
-                  onClick={handleBatchCreateAnnotations}
-                >
+                <Button icon={<CopyOutlined />} block disabled={!canBatchCreate} onClick={handleBatchCreateAnnotations}>
                   批量创建标注
                 </Button>
                 {hasSelectionCollision && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type='secondary' style={{ fontSize: 12 }}>
                     选中的框线存在交叉或包含关系，无法批量创建。
                   </Text>
                 )}
                 {!hasSelectionCollision && batchTargetDSLNodes.length === 0 && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type='secondary' style={{ fontSize: 12 }}>
                     选中的节点已创建标注或不可批量处理。
                   </Text>
                 )}
@@ -702,15 +673,15 @@ const ComponentPropertyPanelV2: React.FC = () => {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'rgb(255, 255, 255)' }}>
       {/* Header */}
       <div style={{ padding: '16px', borderBottom: '1px solid rgb(240, 240, 240)' }}>
-        <Space direction="vertical" style={{ width: '100%' }} size={0}>
+        <Space direction='vertical' style={{ width: '100%' }} size={0}>
           <Title level={5} style={{ margin: 0 }}>
             组件属性
           </Title>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type='secondary' style={{ fontSize: 12 }}>
             ID: {selectedAnnotation?.id}
           </Text>
           {selectedAnnotation?.isRoot && (
-            <Text type="success" style={{ fontSize: 12 }}>
+            <Text type='success' style={{ fontSize: 12 }}>
               页面根节点
             </Text>
           )}
@@ -719,21 +690,16 @@ const ComponentPropertyPanelV2: React.FC = () => {
 
       {/* Form */}
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        <Form form={form} layout="vertical" onValuesChange={handleValuesChange}>
+        <Form form={form} layout='vertical' onValuesChange={handleValuesChange}>
           {/* Basic Info */}
           <Title level={5}>基本信息</Title>
 
-          <Form.Item 
-            label="FTA 组件类型" 
-            name="ftaComponent" 
-            rules={[{ required: true, message: '请选择组件类型' }]}
-          >
+          <Form.Item label='FTA 组件类型' name='ftaComponent' rules={[{ required: true, message: '请选择组件类型' }]}>
             <Select
-              placeholder="选择组件类型"
+              placeholder='选择组件类型'
               showSearch
               filterOption={customFilterOption}
-              disabled={selectedAnnotation?.isRoot}
-            >
+              disabled={selectedAnnotation?.isRoot}>
               {Object.entries(FTA_COMPONENTS).map(([groupName, components]) => (
                 <OptGroup key={groupName} label={groupName}>
                   {components.map((comp) => (
@@ -746,12 +712,12 @@ const ComponentPropertyPanelV2: React.FC = () => {
             </Select>
           </Form.Item>
 
-          <Form.Item label="组件名称" name="name">
-            <Input placeholder="输入组件实例名称" />
+          <Form.Item label='组件名称' name='name'>
+            <Input placeholder='输入组件实例名称' />
           </Form.Item>
 
-          <Form.Item label="组件说明" name="comment">
-            <TextArea rows={2} placeholder="输入组件说明或备注" />
+          <Form.Item label='组件说明' name='comment'>
+            <TextArea rows={2} placeholder='输入组件说明或备注' />
           </Form.Item>
 
           <Divider />
@@ -759,18 +725,18 @@ const ComponentPropertyPanelV2: React.FC = () => {
           {/* Layout Properties */}
           <Title level={5}>布局属性</Title>
 
-          <Space style={{ width: '100%' }} size="small">
-            <Form.Item label="宽度" name="width" style={{ flex: 1, marginBottom: 8 }}>
-              <InputNumber min={0} style={{ width: '100%' }} placeholder="auto" />
+          <Space style={{ width: '100%' }} size='small'>
+            <Form.Item label='宽度' name='width' style={{ flex: 1, marginBottom: 8 }}>
+              <InputNumber min={0} style={{ width: '100%' }} placeholder='auto' />
             </Form.Item>
-            <Form.Item label="高度" name="height" style={{ flex: 1, marginBottom: 8 }}>
-              <InputNumber min={0} style={{ width: '100%' }} placeholder="auto" />
+            <Form.Item label='高度' name='height' style={{ flex: 1, marginBottom: 8 }}>
+              <InputNumber min={0} style={{ width: '100%' }} placeholder='auto' />
             </Form.Item>
           </Space>
 
-          <Form.Item label="定位方式" name="position">
+          <Form.Item label='定位方式' name='position'>
             <Select
-              placeholder="选择定位方式"
+              placeholder='选择定位方式'
               options={[
                 { label: 'Relative', value: 'relative' },
                 { label: 'Absolute', value: 'absolute' },
@@ -780,9 +746,9 @@ const ComponentPropertyPanelV2: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item label="Flex 方向" name="flexDirection">
+          <Form.Item label='Flex 方向' name='flexDirection'>
             <Select
-              placeholder="选择 flex 方向"
+              placeholder='选择 flex 方向'
               options={[
                 { label: 'Row', value: 'row' },
                 { label: 'Column', value: 'column' },
@@ -791,9 +757,9 @@ const ComponentPropertyPanelV2: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item label="对齐方式 (alignItems)" name="alignItems">
+          <Form.Item label='对齐方式 (alignItems)' name='alignItems'>
             <Select
-              placeholder="选择对齐方式"
+              placeholder='选择对齐方式'
               options={[
                 { label: 'Flex Start', value: 'flex-start' },
                 { label: 'Center', value: 'center' },
@@ -804,9 +770,9 @@ const ComponentPropertyPanelV2: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item label="主轴对齐 (justifyContent)" name="justifyContent">
+          <Form.Item label='主轴对齐 (justifyContent)' name='justifyContent'>
             <Select
-              placeholder="选择主轴对齐"
+              placeholder='选择主轴对齐'
               options={[
                 { label: 'Flex Start', value: 'flex-start' },
                 { label: 'Center', value: 'center' },
@@ -818,28 +784,28 @@ const ComponentPropertyPanelV2: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item label="Flex" name="flex">
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="0" />
+          <Form.Item label='Flex' name='flex'>
+            <InputNumber min={0} style={{ width: '100%' }} placeholder='0' />
           </Form.Item>
 
-          <Form.Item label="间距 (gap)" name="gap">
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="0" />
+          <Form.Item label='间距 (gap)' name='gap'>
+            <InputNumber min={0} style={{ width: '100%' }} placeholder='0' />
           </Form.Item>
 
-          <Form.Item label="内边距 (padding)" name="padding">
-            <Input placeholder="例如: 10px 或 10px 20px" />
+          <Form.Item label='内边距 (padding)' name='padding'>
+            <Input placeholder='例如: 10px 或 10px 20px' />
           </Form.Item>
 
-          <Form.Item label="外边距 (margin)" name="margin">
-            <Input placeholder="例如: 10px 或 10px 20px" />
+          <Form.Item label='外边距 (margin)' name='margin'>
+            <Input placeholder='例如: 10px 或 10px 20px' />
           </Form.Item>
 
-          <Form.Item label="背景颜色" name="backgroundColor">
-            <Input placeholder="例如: rgb(255, 255, 255) 或 rgb(255, 255, 255)" />
+          <Form.Item label='背景颜色' name='backgroundColor'>
+            <Input placeholder='例如: rgb(255, 255, 255) 或 rgb(255, 255, 255)' />
           </Form.Item>
 
-          <Form.Item label="圆角 (borderRadius)" name="borderRadius">
-            <Input placeholder="例如: 4px 或 50%" />
+          <Form.Item label='圆角 (borderRadius)' name='borderRadius'>
+            <Input placeholder='例如: 4px 或 50%' />
           </Form.Item>
 
           <Divider />
@@ -847,7 +813,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
           {/* Component Props */}
           <Title level={5}>组件属性</Title>
 
-          <Form.Item label="Props (JSON)" name="props" help="以 JSON 格式输入组件的自定义属性">
+          <Form.Item label='Props (JSON)' name='props' help='以 JSON 格式输入组件的自定义属性'>
             <TextArea rows={6} placeholder='例如: {"content": "按钮文字", "type": "primary"}' />
           </Form.Item>
         </Form>
@@ -859,23 +825,13 @@ const ComponentPropertyPanelV2: React.FC = () => {
           padding: '16px',
           borderTop: '1px solid rgb(240, 240, 240)',
           background: 'rgb(250, 250, 250)',
-        }}
-      >
+        }}>
         <Space style={{ width: '100%', justifyContent: 'center' }}>
-          <Button 
-            type="primary" 
-            icon={<SaveOutlined />} 
-            onClick={handleSave} 
-            disabled={!hasChanges}
-          >
+          <Button type='primary' icon={<SaveOutlined />} onClick={handleSave} disabled={!hasChanges}>
             保存
           </Button>
           {!selectedAnnotation?.isRoot && (
-            <Button 
-              danger 
-              icon={<DeleteOutlined />} 
-              onClick={handleDelete}
-            >
+            <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
               删除
             </Button>
           )}

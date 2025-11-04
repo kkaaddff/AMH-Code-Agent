@@ -1,27 +1,22 @@
-import React, { createContext, useContext, useState } from 'react';
+import { proxy } from 'valtio';
 
-interface RequirementDocContextValue {
+interface RequirementDocState {
   docContent: string;
-  setDocContent: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const RequirementDocContext = createContext<RequirementDocContextValue | null>(null);
+interface RequirementDocActions {
+  setDocContent: (value: string | ((prev: string) => string)) => void;
+}
 
-export const RequirementDocProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [docContent, setDocContent] = useState('');
+type RequirementDocStore = ReturnType<typeof createRequirementDocStore>;
 
-  const value: RequirementDocContextValue = {
-    docContent,
-    setDocContent,
-  };
+export const createRequirementDocStore = () =>
+  proxy<RequirementDocState>({
+    docContent: '',
+  });
 
-  return <RequirementDocContext.Provider value={value}>{children}</RequirementDocContext.Provider>;
-};
-
-export const useRequirementDoc = () => {
-  const context = useContext(RequirementDocContext);
-  if (!context) {
-    throw new Error('useRequirementDoc must be used within a RequirementDocProvider');
-  }
-  return context;
-};
+export const createRequirementDocActions = (store: RequirementDocStore): RequirementDocActions => ({
+  setDocContent: (value) => {
+    store.docContent = typeof value === 'function' ? value(store.docContent) : value;
+  },
+});

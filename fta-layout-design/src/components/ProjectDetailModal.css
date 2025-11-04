@@ -1,0 +1,8 @@
+.project-info-content {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e5e6eb; /* 添加浅灰色边框 */
+  border-radius: 6px;
+  padding: 16px;
+  background: #fff;
+}

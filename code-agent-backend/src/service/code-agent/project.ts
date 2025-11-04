@@ -172,8 +172,8 @@ export class ProjectService {
    * Get projects list
    */
   async getProjects(params: ProjectListRequest): Promise<{ projects: Project[]; total: number }> {
-    const page = params.page || 1;
-    const size = params.size || 10;
+    const page = Number(params.page) || 1;
+    const size = Number(params.size) || 10;
     const skip = (page - 1) * size;
 
     const [projects, total] = await Promise.all([

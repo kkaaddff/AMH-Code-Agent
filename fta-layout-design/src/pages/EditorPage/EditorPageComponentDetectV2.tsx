@@ -1,4 +1,6 @@
 import { useDSLData } from '@/hooks/useDSLData';
+import { projectService } from '@/services/projectService';
+import type { Page } from '@/types/project';
 import {
   AppstoreOutlined,
   DownOutlined,
@@ -7,9 +9,8 @@ import {
   QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { App as AntApp, App, Button, Dropdown, Layout, Space, Spin, Typography } from 'antd';
-import type { Page } from '@/types/project';
-import { projectService } from '@/services/projectService';
 import React, { useEffect, useRef, useState } from 'react';
+import { useSnapshot } from 'valtio/react';
 import CodeGenerationDrawer from './components/CodeGenerationDrawer';
 import Component3DInspectModal from './components/Component3DInspectModal';
 import ComponentPropertyPanelV2 from './components/ComponentPropertyPanelV2';
@@ -19,15 +20,16 @@ import LayerTreePanel from './components/LayerTreePanel';
 import OpenAPIDataPanel from './components/OpenAPIDataPanel';
 import OpenAPIUrlPanel from './components/OpenAPIUrlPanel';
 import PRDEditorPanel from './components/PRDEditorPanel';
-import { CodeGenerationProvider, useCodeGeneration } from './contexts/CodeGenerationContext';
-import { ComponentDetectionProviderV2, useComponentDetectionV2 } from './contexts/ComponentDetectionContextV2';
-import { COMPONENT_STYLES } from './styles/EditorPageStyles';
-import { loadAnnotationState } from './utils/componentStorage';
-// import { SSEScheduler } from './services/CodeGenerationLoop/SSEScheduler';
+import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGenerationContext';
+import { componentDetectionActions, componentDetectionStore } from './contexts/ComponentDetectionContextV2';
 import { commonUserPrompt } from './services/CodeGenerationLoop/CommonPrompt';
 import { AgentScheduler } from './services/CodeGenerationLoop/index.AgentScheduler.backup';
 import { generateUID } from './services/CodeGenerationLoop/utils';
+import { COMPONENT_STYLES } from './styles/EditorPageStyles';
+import { AnnotationNode } from './types/componentDetectionV2';
+import { loadAnnotationState } from './utils/componentStorage';
 import { flattenAnnotation, formatAnnotationSummary } from './utils/prompt';
+// import { SSEScheduler } from './services/CodeGenerationLoop/SSEScheduler';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
@@ -42,19 +44,13 @@ const SCALE_OPTIONS = [
 // Inner component that uses the context
 const EditorPageContent: React.FC = () => {
   const { message } = App.useApp();
+  const { initializeFromDSL, toggleShowAllBorders, saveAnnotations, loadAnnotations, updateDslRootNode } =
+    componentDetectionActions;
+
+  const { rootAnnotation, isLoading, showAllBorders } = useSnapshot(componentDetectionStore);
+
+  const { isDrawerOpen: isCodeDrawerOpen, isGenerating: isGeneratingCode } = useSnapshot(codeGenerationStore);
   const {
-    initializeFromDSL,
-    isLoading,
-    showAllBorders,
-    toggleShowAllBorders,
-    saveAnnotations,
-    loadAnnotations,
-    updateDslRootNode,
-    rootAnnotation,
-  } = useComponentDetectionV2();
-  const {
-    isDrawerOpen: isCodeDrawerOpen,
-    isGenerating: isGeneratingCode,
     openDrawer: openCodeDrawer,
     closeDrawer: closeCodeDrawer,
     startGeneration,
@@ -65,7 +61,7 @@ const EditorPageContent: React.FC = () => {
     updateTodos,
     setCurrentIteration,
     clearThoughtChain,
-  } = useCodeGeneration();
+  } = codeGenerationActions;
 
   const [scale, setScale] = useState(0.5);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -86,13 +82,13 @@ const EditorPageContent: React.FC = () => {
   // 从 URL 读取 pageId 或 designId（兼容旧版）
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const pid = params.get('pageId');
+    const pageId = params.get('pageId');
 
     const fetchPageData = async () => {
       setPageLoading(true);
       setPageError(null);
       try {
-        const pageData = await projectService.getPageDetail(pid!);
+        const pageData = await projectService.getPageDetail(pageId!);
         setCurrentPage(pageData);
       } catch (error: any) {
         console.error('获取页面数据失败:', error);
@@ -230,7 +226,7 @@ const EditorPageContent: React.FC = () => {
       // 构建初始提示词
       let initialPrompt = commonUserPrompt.mainPrompt;
       if (rootAnnotation) {
-        const annotationSummary = formatAnnotationSummary(flattenAnnotation(rootAnnotation));
+        const annotationSummary = formatAnnotationSummary(flattenAnnotation(rootAnnotation as AnnotationNode));
         initialPrompt += `\n\n当前设计标注数据：\n${annotationSummary}`;
       }
       const dslJsonStr = JSON.stringify(dslData?.dsl ?? {});
@@ -674,11 +670,7 @@ const EditorPageContent: React.FC = () => {
 const EditorPageComponentDetect: React.FC = () => {
   return (
     <AntApp>
-      <CodeGenerationProvider>
-        <ComponentDetectionProviderV2>
-          <EditorPageContent />
-        </ComponentDetectionProviderV2>
-      </CodeGenerationProvider>
+      <EditorPageContent />
     </AntApp>
   );
 };

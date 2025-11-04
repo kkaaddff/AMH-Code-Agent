@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import { proxy } from 'valtio';
 import { TodoItem } from '../services/CodeGenerationLoop/types';
 
 export interface ThoughtChainItem {
@@ -11,157 +11,96 @@ export interface ThoughtChainItem {
   kind?: 'iteration' | 'task' | 'text';
 }
 
-interface CodeGenerationContextValue {
-  // 抽屉状态
+interface CodeGenerationState {
   isDrawerOpen: boolean;
   isGenerating: boolean;
-  
-  // 思维链数据
   thoughtChainItems: ThoughtChainItem[];
-  
-  // 会话信息
   currentSessionId: string | null;
   currentIteration: number;
-  
-  // 操作方法
-  openDrawer: () => void;
-  closeDrawer: () => void;
-  startGeneration: (sessionId: string) => void;
-  stopGeneration: () => void;
-  
-  // 更新思维链
-  addThoughtItem: (item: ThoughtChainItem) => void;
-  updateThoughtItem: (id: string, updates: Partial<ThoughtChainItem>) => void;
-  appendToThoughtContent: (id: string, text: string) => void;
-  clearThoughtChain: () => void;
-  
-  // 更新迭代信息
-  setCurrentIteration: (iteration: number) => void;
-  
-  // 处理 TODO 更新
-  updateTodos: (todos: TodoItem[]) => void;
 }
 
-const CodeGenerationContext = createContext<CodeGenerationContextValue | null>(null);
+export const codeGenerationStore = proxy<CodeGenerationState>({
+  isDrawerOpen: false,
+  isGenerating: false,
+  thoughtChainItems: [],
+  currentSessionId: null,
+  currentIteration: 0,
+});
 
-export const CodeGenerationProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [thoughtChainItems, setThoughtChainItems] = useState<ThoughtChainItem[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [currentIteration, setCurrentIteration] = useState(0);
-
-  const openDrawer = useCallback(() => {
-    setIsDrawerOpen(true);
-  }, []);
-
-  const closeDrawer = useCallback(() => {
-    setIsDrawerOpen(false);
-  }, []);
-
-  const startGeneration = useCallback((sessionId: string) => {
-    setIsGenerating(true);
-    setCurrentSessionId(sessionId);
-    setCurrentIteration(0);
-  }, []);
-
-  const stopGeneration = useCallback(() => {
-    setIsGenerating(false);
-  }, []);
-
-  const addThoughtItem = useCallback((item: ThoughtChainItem) => {
-    setThoughtChainItems((prev) => [...prev, item]);
-  }, []);
-
-  const updateThoughtItem = useCallback((id: string, updates: Partial<ThoughtChainItem>) => {
-    setThoughtChainItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
+export const codeGenerationActions = {
+  openDrawer: () => {
+    codeGenerationStore.isDrawerOpen = true;
+  },
+  closeDrawer: () => {
+    codeGenerationStore.isDrawerOpen = false;
+  },
+  startGeneration: (sessionId: string) => {
+    codeGenerationStore.isGenerating = true;
+    codeGenerationStore.currentSessionId = sessionId;
+    codeGenerationStore.currentIteration = 0;
+  },
+  stopGeneration: () => {
+    codeGenerationStore.isGenerating = false;
+  },
+  addThoughtItem: (item: ThoughtChainItem) => {
+    codeGenerationStore.thoughtChainItems = [...codeGenerationStore.thoughtChainItems, item];
+  },
+  updateThoughtItem: (id: string, updates: Partial<ThoughtChainItem>) => {
+    codeGenerationStore.thoughtChainItems = codeGenerationStore.thoughtChainItems.map((item) =>
+      item.id === id ? { ...item, ...updates } : item
     );
-  }, []);
-
-  const appendToThoughtContent = useCallback((id: string, text: string) => {
-    setThoughtChainItems((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item;
-        return {
-          ...item,
-          content: (item.content || '') + text,
-          status: item.status === 'pending' && text.trim() ? 'in_progress' : item.status,
-        };
-      })
-    );
-  }, []);
-
-  const clearThoughtChain = useCallback(() => {
-    setThoughtChainItems([]);
-    setCurrentIteration(0);
-  }, []);
-
-  const updateTodos = useCallback((todos: TodoItem[]) => {
+  },
+  appendToThoughtContent: (id: string, text: string) => {
+    codeGenerationStore.thoughtChainItems = codeGenerationStore.thoughtChainItems.map((item) => {
+      if (item.id !== id) return item;
+      const content = (item.content || '') + text;
+      const status = item.status === 'pending' && text.trim() ? 'in_progress' : item.status;
+      return {
+        ...item,
+        content,
+        status,
+      };
+    });
+  },
+  clearThoughtChain: () => {
+    codeGenerationStore.thoughtChainItems = [];
+    codeGenerationStore.currentIteration = 0;
+  },
+  setCurrentIteration: (iteration: number) => {
+    codeGenerationStore.currentIteration = iteration;
+  },
+  updateTodos: (todos: TodoItem[]) => {
     if (!todos || todos.length === 0) return;
 
-    setThoughtChainItems((prev) => {
-      const now = new Date().toISOString();
-      const existingTodoIds = new Set(prev.filter((item) => item.kind === 'task').map((item) => item.id));
+    const previousItems = [...codeGenerationStore.thoughtChainItems];
+    const now = new Date().toISOString();
 
-      const todoItems: ThoughtChainItem[] = todos.map((todo): ThoughtChainItem => {
-        const todoId = `task-${todo.id || Date.now()}`;
-        const existing = prev.find((item) => item.id === todoId);
-        
-        let status: ThoughtChainItem['status'] = 'pending';
-        if (todo.status === 'completed') status = 'success';
-        else if (todo.status === 'in_progress') status = 'in_progress';
+    const todoItems: ThoughtChainItem[] = todos.map((todo) => {
+      const todoId = `task-${todo.id || Date.now()}`;
+      const existing = previousItems.find((item) => item.id === todoId);
 
-        return {
-          id: todoId,
-          title: todo.activeForm || todo.content || '任务',
-          status,
-          content: todo.content || existing?.content || '',
-          startedAt: existing?.startedAt || now,
-          finishedAt: status === 'success' ? now : undefined,
-          kind: 'task',
-        };
-      });
+      let status: ThoughtChainItem['status'] = 'pending';
+      if (todo.status === 'completed') status = 'success';
+      else if (todo.status === 'in_progress') status = 'in_progress';
 
-      // 保留非 task 类型的项，和已存在的 task
-      const nonTasks = prev.filter((item) => item.kind !== 'task');
-      
-      // 合并新旧 task
-      const mergedTasks = todoItems.map((newTask) => {
-        const existingTask = prev.find((item) => item.id === newTask.id);
-        return existingTask ? { ...existingTask, ...newTask } : newTask;
-      });
-
-      return [...nonTasks, ...mergedTasks];
+      return {
+        id: todoId,
+        title: todo.activeForm || todo.content || '任务',
+        status,
+        content: todo.content || existing?.content || '',
+        startedAt: existing?.startedAt || now,
+        finishedAt: status === 'success' ? now : undefined,
+        kind: 'task',
+      };
     });
-  }, []);
 
-  const value: CodeGenerationContextValue = {
-    isDrawerOpen,
-    isGenerating,
-    thoughtChainItems,
-    currentSessionId,
-    currentIteration,
-    openDrawer,
-    closeDrawer,
-    startGeneration,
-    stopGeneration,
-    addThoughtItem,
-    updateThoughtItem,
-    appendToThoughtContent,
-    clearThoughtChain,
-    setCurrentIteration,
-    updateTodos,
-  };
+    const nonTasks = previousItems.filter((item) => item.kind !== 'task');
 
-  return <CodeGenerationContext.Provider value={value}>{children}</CodeGenerationContext.Provider>;
+    const mergedTasks = todoItems.map((newTask) => {
+      const existingTask = previousItems.find((item) => item.id === newTask.id);
+      return existingTask ? { ...existingTask, ...newTask } : newTask;
+    });
+
+    codeGenerationStore.thoughtChainItems = [...nonTasks, ...mergedTasks];
+  },
 };
-
-export const useCodeGeneration = () => {
-  const context = useContext(CodeGenerationContext);
-  if (!context) {
-    throw new Error('useCodeGeneration must be used within a CodeGenerationProvider');
-  }
-  return context;
-};
-

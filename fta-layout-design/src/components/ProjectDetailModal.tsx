@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Card, List, Button, Space, Tag, Typography, Empty, App, Form, Input } from 'antd';
+import { Modal, List, Button, Space, Tag, Typography, Empty, App, Form, Input } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Project, Page, CreatePageForm } from '../types/project';
 import { useProject } from '../contexts/ProjectContext';
+import './ProjectDetailModal.css';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -176,7 +177,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ visible, projec
         }}
         footer={null}
         width={500}
-        destroyOnClose>
+        destroyOnHidden>
         <Form form={form} layout='vertical' onFinish={handleCreatePage}>
           <Form.Item label='页面名称' name='name' rules={[{ required: true, message: '请输入页面名称' }]}>
             <Input placeholder='请输入页面名称' />
@@ -217,7 +218,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ visible, projec
         }}
         footer={null}
         width={500}
-        destroyOnClose>
+        destroyOnHidden>
         <Form form={editPageForm} layout='vertical' onFinish={handleUpdatePage}>
           <Form.Item label='页面名称' name='name' rules={[{ required: true, message: '请输入页面名称' }]}>
             <Input placeholder='请输入页面名称' />
@@ -251,36 +252,32 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ visible, projec
   );
 
   const renderProjectInfo = () => (
-    <div className='project-info-content'>
-      <Card title='项目信息'>
-        <Space direction='vertical' style={{ width: '100%' }}>
-          <div>
-            <Text strong>项目名称：</Text>
-            <Text>{currentProject.name}</Text>
-          </div>
-          <div>
-            <Text strong>项目描述：</Text>
-            <Text>{currentProject.description || '暂无描述'}</Text>
-          </div>
-          <div>
-            <Text strong>项目负责人：</Text>
-            <Text>{currentProject.manager}</Text>
-          </div>
-          <div>
-            <Text strong>Git仓库：</Text>
-            <Text>{currentProject.gitRepository || '未配置'}</Text>
-          </div>
-          <div>
-            <Text strong>创建时间：</Text>
-            <Text>{new Date(currentProject.createdAt).toLocaleString()}</Text>
-          </div>
-          <div>
-            <Text strong>最后更新：</Text>
-            <Text>{new Date(currentProject.updatedAt).toLocaleString()}</Text>
-          </div>
-        </Space>
-      </Card>
-    </div>
+    <Space className='project-info-content' direction='vertical' style={{ width: '100%' }}>
+      <div>
+        <Text strong>项目名称：</Text>
+        <Text>{currentProject.name}</Text>
+      </div>
+      <div>
+        <Text strong>项目描述：</Text>
+        <Text>{currentProject.description || '暂无描述'}</Text>
+      </div>
+      <div>
+        <Text strong>项目负责人：</Text>
+        <Text>{currentProject.manager}</Text>
+      </div>
+      <div>
+        <Text strong>Git仓库：</Text>
+        <Text>{currentProject.gitRepository || '未配置'}</Text>
+      </div>
+      <div>
+        <Text strong>创建时间：</Text>
+        <Text>{new Date(currentProject.createdAt).toLocaleString()}</Text>
+      </div>
+      <div>
+        <Text strong>最后更新：</Text>
+        <Text>{new Date(currentProject.updatedAt).toLocaleString()}</Text>
+      </div>
+    </Space>
   );
 
   return (
@@ -298,7 +295,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ visible, projec
       footer={null}
       width={900}
       style={{ top: 20 }}
-      destroyOnClose>
+      destroyOnHidden>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* 项目信息 */}
         {renderProjectInfo()}

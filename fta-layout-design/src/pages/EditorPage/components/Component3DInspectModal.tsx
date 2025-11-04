@@ -3,8 +3,9 @@ import { Modal, Spin } from 'antd';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import html2canvas from 'html2canvas';
+import { useSnapshot } from 'valtio';
 
-import { useComponentDetectionV2 } from '../contexts/ComponentDetectionContextV2';
+import { calculateDSLNodeAbsolutePosition, componentDetectionStore } from '../contexts/ComponentDetectionContextV2';
 import type { AnnotationNode } from '../types/componentDetectionV2';
 import {
   MODAL_CONFIG,
@@ -71,7 +72,7 @@ const drawRoundedRect = (
 };
 
 const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open, onClose }) => {
-  const { rootAnnotation, calculateDSLNodeAbsolutePosition } = useComponentDetectionV2();
+  const { rootAnnotation } = useSnapshot(componentDetectionStore);
   const containerRef = useRef<HTMLDivElement>(null);
   const textureCacheRef = useRef<Map<string, THREE.Texture>>(new Map());
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -84,7 +85,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
   const disposablesRef = useRef<Array<() => void>>([]);
   const [initializing, setInitializing] = useState(false);
 
-  const annotations = useMemo(() => collectAnnotations(rootAnnotation), [rootAnnotation]);
+  const annotations = useMemo(() => collectAnnotations(rootAnnotation as AnnotationNode), [rootAnnotation]);
 
   const resolveAnnotationMetrics = useCallback(
     (annotation: AnnotationNode) => {
@@ -291,7 +292,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
 
       // 首先计算场景相关变量
       const maxDepth = getMaxDepth(annotations);
-      const { width: rootWidthRaw, height: rootHeightRaw } = resolveAnnotationMetrics(rootAnnotation);
+      const { width: rootWidthRaw, height: rootHeightRaw } = resolveAnnotationMetrics(rootAnnotation as AnnotationNode);
       const rootWidth = Math.max(rootWidthRaw, SCENE_LAYOUT.MIN_WIDTH);
       const rootHeight = Math.max(rootHeightRaw, SCENE_LAYOUT.MIN_HEIGHT);
       const scale = SCENE_LAYOUT.BASE_WIDTH_UNITS / Math.max(rootWidth, SCENE_LAYOUT.MIN_WIDTH);

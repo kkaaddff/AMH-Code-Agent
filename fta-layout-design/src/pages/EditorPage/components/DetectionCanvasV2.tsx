@@ -1,8 +1,13 @@
 import DSLElement from '@/components/DSLElement';
 import type { DSLNode } from '@/types/dsl';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useSnapshot } from 'valtio';
 import { COLORS, DASH_PATTERNS, DRAW_STYLES, LABEL_STYLES, SCALE_CONFIG } from '../constants/CanvasConstant';
-import { useComponentDetectionV2 } from '../contexts/ComponentDetectionContextV2';
+import {
+  componentDetectionActions,
+  componentDetectionStore,
+  findAnnotationByDSLNodeId,
+} from '../contexts/ComponentDetectionContextV2';
 import { AnnotationNode, LabelInstruction, NodeType } from '../types/componentDetectionV2';
 import {
   DetectionCanvasV2Props,
@@ -28,19 +33,8 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
   highlightedNodeId,
   hoveredNodeId,
 }) => {
-  const {
-    annotations,
-    selectedNodeIds,
-    hoveredAnnotationId,
-    hoveredDSLNodeId,
-    selectAnnotation,
-    selectDSLNode,
-    hoverAnnotation,
-    hoverDSLNode,
-    findAnnotationByDSLNodeId,
-    clearSelection,
-    showAllBorders,
-  } = useComponentDetectionV2();
+  const { annotations, selectedNodeIds, hoveredAnnotationId, hoveredDSLNodeId, showAllBorders } =
+    useSnapshot(componentDetectionStore);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -134,7 +128,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       }
 
       if (e.key === 'Escape') {
-        clearSelection();
+        componentDetectionActions.clearSelection();
       }
     };
 
@@ -186,11 +180,11 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isSelecting, clearSelection, isPanning, stopPanning]);
+  }, [isSelecting, isPanning]);
 
   const containerSize = useContainerSize(containerRef);
 
-  const findNodeAtPositionMemo = useCallback((x: number, y: number) => findNodeAtPosition(x, y, rootNode), [rootNode]);
+  const findNodeAtPositionMemo = (x: number, y: number) => findNodeAtPosition(x, y, rootNode);
 
   const getNodeAbsolutePositionMemo = useCallback(
     (node: DSLNode) => getNodeAbsolutePosition(rootNode, node),
@@ -236,10 +230,10 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
   useEffect(() => {
     if (isSpacePressed) {
-      hoverAnnotation(null);
-      hoverDSLNode(null);
+      componentDetectionActions.hoverAnnotation(null);
+      componentDetectionActions.hoverDSLNode(null);
     }
-  }, [isSpacePressed, hoverAnnotation, hoverDSLNode]);
+  }, [isSpacePressed]);
 
   // 统一的交互目标检测
   const getInteractionTarget = useCallback(
@@ -276,26 +270,23 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
       return null;
     },
-    [annotations, findNodeAtPositionMemo]
+    [annotations]
   );
 
   // 绘制DSL节点边框
-  const drawDSLNodeBorders = useCallback(
-    (ctx: CanvasRenderingContext2D, node: DSLNode, parentX = 0, parentY = 0) => {
-      const bounds = getNodeBounds(node, parentX, parentY);
+  const drawDSLNodeBorders = (ctx: CanvasRenderingContext2D, node: DSLNode, parentX = 0, parentY = 0) => {
+    const bounds = getNodeBounds(node, parentX, parentY);
 
-      if (!findAnnotationByDSLNodeId(node.id) && bounds.width > 0 && bounds.height > 0) {
-        drawBorder(ctx, bounds.x, bounds.y, bounds.width, bounds.height, {
-          color: COLORS.UNANNOTATED_BORDER,
-          width: DRAW_STYLES.UNANNOTATED_BORDER_WIDTH,
-          dash: DASH_PATTERNS.UNANNOTATED_DASH,
-        });
-      }
+    if (!findAnnotationByDSLNodeId(node.id) && bounds.width > 0 && bounds.height > 0) {
+      drawBorder(ctx, bounds.x, bounds.y, bounds.width, bounds.height, {
+        color: COLORS.UNANNOTATED_BORDER,
+        width: DRAW_STYLES.UNANNOTATED_BORDER_WIDTH,
+        dash: DASH_PATTERNS.UNANNOTATED_DASH,
+      });
+    }
 
-      node.children?.forEach((child) => drawDSLNodeBorders(ctx, child, bounds.x, bounds.y));
-    },
-    [findAnnotationByDSLNodeId]
-  );
+    node.children?.forEach((child) => drawDSLNodeBorders(ctx, child, bounds.x, bounds.y));
+  };
 
   // 绘制canvas
   useEffect(() => {
@@ -572,8 +563,8 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
       if (isSpacePressed && e.button === 0) {
         e.preventDefault();
-        hoverAnnotation(null);
-        hoverDSLNode(null);
+        componentDetectionActions.hoverAnnotation(null);
+        componentDetectionActions.hoverDSLNode(null);
         setIsSelecting(false);
         setSelectionBox(null);
 
@@ -710,11 +701,11 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
             itemsToRemove.forEach((id) => {
               const annotation = annotations.find((a) => a.id === id);
               if (annotation) {
-                selectAnnotation(id, true); // 取消选中
+                componentDetectionActions.selectAnnotation(id, true); // 取消选中
               } else {
                 const node = findNodeByIdMemo(id);
                 if (node) {
-                  selectDSLNode(node, true); // 取消选中
+                  componentDetectionActions.selectDSLNode(node, true); // 取消选中
                 }
               }
             });
@@ -725,30 +716,27 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       // 3. 根据交互目标执行相应操作
       if (interactionTarget) {
         if (interactionTarget.type === 'annotation') {
-          selectAnnotation(interactionTarget.target.id, multiSelect);
+          componentDetectionActions.selectAnnotation(interactionTarget.target.id, multiSelect);
         } else if (interactionTarget.type === 'dsl') {
           // 检查该DSL节点是否已被标注
           const existingAnnotation = findAnnotationByDSLNodeId(interactionTarget.target.id);
           if (existingAnnotation) {
             // 如果已被标注，选择对应的annotation
-            selectAnnotation(existingAnnotation.id, multiSelect);
+            componentDetectionActions.selectAnnotation(existingAnnotation.id, multiSelect);
           } else {
             // 如果未标注，选择DSL节点
-            selectDSLNode(interactionTarget.target as DSLNode, multiSelect);
+            componentDetectionActions.selectDSLNode(interactionTarget.target as DSLNode, multiSelect);
           }
         }
         return;
       }
 
       // 4. 点击空白区域，取消选择
-      clearSelection();
+      componentDetectionActions.clearSelection();
     },
     [
       annotations,
       effectiveScale,
-      selectAnnotation,
-      selectDSLNode,
-      clearSelection,
       getInteractionTarget,
       findAnnotationByDSLNodeId,
       findNodeByIdMemo,
@@ -758,8 +746,6 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       horizontalPadding,
       verticalPadding,
       isSpacePressed,
-      hoverAnnotation,
-      hoverDSLNode,
       commitPanOffset,
       stopPanning,
     ]
@@ -802,25 +788,23 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       // 根据交互目标执行相应的hover操作
       if (interactionTarget) {
         if (interactionTarget.type === 'annotation') {
-          hoverAnnotation(interactionTarget.target.id);
-          hoverDSLNode(null);
+          componentDetectionActions.hoverAnnotation(interactionTarget.target.id);
+          componentDetectionActions.hoverDSLNode(null);
           canvas.style.cursor = 'pointer';
         } else if (interactionTarget.type === 'dsl') {
-          hoverAnnotation(null);
-          hoverDSLNode(interactionTarget.target.id);
+          componentDetectionActions.hoverAnnotation(null);
+          componentDetectionActions.hoverDSLNode(interactionTarget.target.id);
           canvas.style.cursor = 'pointer';
         }
       } else {
         // 没有hover任何内容
-        hoverAnnotation(null);
-        hoverDSLNode(null);
+        componentDetectionActions.hoverAnnotation(null);
+        componentDetectionActions.hoverDSLNode(null);
         canvas.style.cursor = 'default';
       }
     },
     [
       effectiveScale,
-      hoverAnnotation,
-      hoverDSLNode,
       getInteractionTarget,
       isSelecting,
       isShiftPressed,
@@ -835,10 +819,10 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
   const handleCanvasMouseLeave = useCallback(() => {
     // 只清除 hover 状态，不影响框选或拖拽
     if (!isSelecting && !isPanning) {
-      hoverAnnotation(null);
-      hoverDSLNode(null);
+      componentDetectionActions.hoverAnnotation(null);
+      componentDetectionActions.hoverDSLNode(null);
     }
-  }, [hoverAnnotation, hoverDSLNode, isSelecting, isPanning]);
+  }, [isSelecting, isPanning]);
 
   // 处理框选完成逻辑
   useEffect(() => {
@@ -882,32 +866,22 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
       // 选中所有符合条件的项目
       if (outermostItems.length > 0) {
-        clearSelection();
+        componentDetectionActions.clearSelection();
         outermostItems.forEach((item, index) => {
           const isFirst = index === 0;
           if (item.type === 'annotation') {
-            selectAnnotation(item.id, !isFirst);
+            componentDetectionActions.selectAnnotation(item.id, !isFirst);
           } else if (item.type === 'dsl' && item.node) {
-            selectDSLNode(item.node, !isFirst);
+            componentDetectionActions.selectDSLNode(item.node, !isFirst);
           }
         });
       } else {
-        clearSelection();
+        componentDetectionActions.clearSelection();
       }
 
       setSelectionBox(null);
     }
-  }, [
-    isSelecting,
-    selectionBox,
-    rootNode,
-    selectDSLNode,
-    selectAnnotation,
-    clearSelection,
-    findAnnotationByDSLNodeId,
-    annotations,
-    filterToOutermostItems,
-  ]);
+  }, [isSelecting, selectionBox, rootNode, findAnnotationByDSLNodeId, annotations, filterToOutermostItems]);
 
   // 组件卸载时清理 document 监听器
   useEffect(() => {
@@ -1012,14 +986,13 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
   return (
     <div
-      id="detection-canvas-container-v2"
+      id='detection-canvas-container-v2'
       style={{
         width: '100%',
         height: '100%',
         backgroundColor: COLORS.OUTER_BACKGROUND,
       }}
-      onWheel={handleWheel}
-    >
+      onWheel={handleWheel}>
       <div ref={containerRef} style={styles.container}>
         <div style={styles.panWrapper}>
           <div style={styles.scaledContent}>
@@ -1035,7 +1008,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
             {/* Overlay canvas for annotations */}
             <canvas
-              id="detection-canvas-v2"
+              id='detection-canvas-v2'
               ref={canvasRef}
               style={styles.canvas}
               onMouseDown={handleCanvasMouseDown}

@@ -13,10 +13,11 @@ import {
   DeleteOutlined,
   LinkOutlined,
 } from '@ant-design/icons';
-import { useComponentDetectionV2 } from '../contexts/ComponentDetectionContextV2';
+import { componentDetectionActions, componentDetectionStore } from '../contexts/ComponentDetectionContextV2';
 import { AnnotationNode } from '../types/componentDetectionV2';
 import { DocumentReference } from '@/types/project';
 import { getDocumentStatusColor, getDocumentStatusText } from '@/utils/documentStatus';
+import { useSnapshot } from 'valtio';
 
 const { Title, Text } = Typography;
 
@@ -70,15 +71,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
   onGenerateCode,
 }) => {
   const { modal, message } = App.useApp();
-  const {
-    rootAnnotation,
-    selectedAnnotationId,
-    expandedKeys,
-    selectAnnotation,
-    setExpandedKeys,
-    expandAll,
-    collapseAll,
-  } = useComponentDetectionV2();
+  const { rootAnnotation, selectedAnnotationId, expandedKeys } = useSnapshot(componentDetectionStore);
 
   const [addDocModalVisible, setAddDocModalVisible] = useState(false);
   const [addDocType, setAddDocType] = useState<'design' | 'prd' | 'openapi'>('design');
@@ -87,21 +80,21 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
   // 生成Tree数据（仅在选中设计文档时显示）
   const treeData: DataNode[] = useMemo(() => {
     if (!rootAnnotation || selectedDocument?.type !== 'design') return [];
-    return [convertToTreeData(rootAnnotation)];
+    return [convertToTreeData(rootAnnotation as AnnotationNode)];
   }, [rootAnnotation, selectedDocument]);
 
   // 处理节点选择
   const handleSelect = (selectedKeys: React.Key[]) => {
     if (selectedKeys.length > 0) {
-      selectAnnotation(selectedKeys[0] as string, false);
+      componentDetectionActions.selectAnnotation(selectedKeys[0] as string, false);
     } else {
-      selectAnnotation(null);
+      componentDetectionActions.selectAnnotation(null);
     }
   };
 
   // 处理展开/收起
   const handleExpand = (expandedKeysValue: React.Key[]) => {
-    setExpandedKeys(expandedKeysValue as string[]);
+    componentDetectionActions.setExpandedKeys(expandedKeysValue as string[]);
   };
 
   // 处理添加文档
@@ -110,7 +103,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
     setAddDocModalVisible(true);
   };
 
-  const handleAddDocumentSubmit = async (values: { url: string; name?: string }) => {
+  const handleAddDocumentSubmit = async (_values: { url: string; name?: string }) => {
     try {
       // 这里应该调用 API 添加文档
       // 暂时只是关闭模态框
@@ -226,10 +219,10 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
                   标注结构
                 </Text>
                 <Space size='small'>
-                  <Button size='small' type='text' onClick={expandAll}>
+                  <Button size='small' type='text' onClick={componentDetectionActions.expandAll}>
                     展开
                   </Button>
-                  <Button size='small' type='text' onClick={collapseAll}>
+                  <Button size='small' type='text' onClick={componentDetectionActions.collapseAll}>
                     收起
                   </Button>
                 </Space>
@@ -237,7 +230,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
               <Tree
                 treeData={treeData}
                 selectedKeys={selectedAnnotationId ? [selectedAnnotationId] : []}
-                expandedKeys={expandedKeys}
+                expandedKeys={expandedKeys as string[]}
                 onSelect={handleSelect}
                 onExpand={handleExpand}
                 showLine={{ showLeafIcon: false }}
