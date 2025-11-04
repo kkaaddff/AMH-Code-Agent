@@ -12,6 +12,10 @@ import {
   ApiOutlined,
   DeleteOutlined,
   LinkOutlined,
+  DownOutlined,
+  ExpandOutlined,
+  CompressOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { componentDetectionActions, componentDetectionStore } from '../contexts/ComponentDetectionContextV2';
 import { AnnotationNode } from '../types/componentDetectionV2';
@@ -34,30 +38,68 @@ interface LayerTreePanelProps {
   onGenerateCode?: () => void;
 }
 
+const showLine = { showLeafIcon: false };
+
 // 转换AnnotationNode为Tree DataNode
-const convertToTreeData = (node: AnnotationNode): DataNode => {
+const convertToTreeData = (node: AnnotationNode, isFirstLevel = false): DataNode => {
   const isRoot = node.isRoot;
   const isContainer = node.isContainer;
 
   const title = (
-    <Space size={4}>
-      {isContainer ? (
-        <FolderOutlined style={{ color: isRoot ? 'rgb(82, 196, 26)' : 'rgb(24, 144, 255)' }} />
-      ) : (
-        <FileOutlined style={{ color: 'rgb(140, 140, 140)' }} />
+    <Space size={4} style={{ width: '100%', justifyContent: 'space-between' }}>
+      <Space size={4}>
+        {isContainer ? (
+          <FolderOutlined style={{ color: isRoot ? 'rgb(82, 196, 26)' : 'rgb(24, 144, 255)' }} />
+        ) : (
+          <FileOutlined style={{ color: 'rgb(140, 140, 140)' }} />
+        )}
+        <span style={{ fontWeight: isRoot ? 600 : 400 }}>
+          {node.ftaComponent}
+          {node.name && ` (${node.name})`}
+        </span>
+        {isRoot && <span style={{ fontSize: 12, color: 'rgb(82, 196, 26)' }}>[主页面]</span>}
+      </Space>
+      {isFirstLevel && (
+        <Space size={4}>
+          <Button
+            type='text'
+            size='small'
+            icon={<ExpandOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              componentDetectionActions.expandAll();
+            }}
+            title='展开全部'
+          />
+          <Button
+            type='text'
+            size='small'
+            icon={<CompressOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              componentDetectionActions.collapseAll();
+            }}
+            title='收起全部'
+          />
+          <Button
+            type='text'
+            size='small'
+            icon={<SettingOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              // TODO: 添加设置功能
+            }}
+            title='设置'
+          />
+        </Space>
       )}
-      <span style={{ fontWeight: isRoot ? 600 : 400 }}>
-        {node.ftaComponent}
-        {node.name && ` (${node.name})`}
-      </span>
-      {isRoot && <span style={{ fontSize: 12, color: 'rgb(82, 196, 26)' }}>[页面根节点]</span>}
     </Space>
   );
 
   return {
     key: node.id,
     title,
-    children: node.children.map(convertToTreeData),
+    children: node.children.map((child) => convertToTreeData(child, false)),
     isLeaf: node.children.length === 0,
   };
 };
@@ -78,9 +120,9 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
   const [addDocForm] = Form.useForm();
 
   // 生成Tree数据（仅在选中设计文档时显示）
-  const treeData: DataNode[] = useMemo(() => {
+  const designTreeData: DataNode[] = useMemo(() => {
     if (!rootAnnotation || selectedDocument?.type !== 'design') return [];
-    return [convertToTreeData(rootAnnotation as AnnotationNode)];
+    return [convertToTreeData(rootAnnotation as AnnotationNode, true)];
   }, [rootAnnotation, selectedDocument]);
 
   // 处理节点选择
@@ -196,51 +238,25 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
           }}
         />
       ),
-      children: (
-        <>
-          {documents.design.length > 0 ? (
-            <List
-              size='small'
-              dataSource={documents.design}
-              renderItem={(doc) => renderDocumentItem(doc, 'design')}
-              style={{ marginBottom: 16 }}
-            />
-          ) : (
-            <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
-              暂无设计稿
-            </Text>
-          )}
-
-          {/* 当选中设计文档时，显示标注树 */}
-          {selectedDocument?.type === 'design' && treeData.length > 0 && (
-            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgb(240, 240, 240)' }}>
-              <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text strong style={{ fontSize: 12 }}>
-                  标注结构
-                </Text>
-                <Space size='small'>
-                  <Button size='small' type='text' onClick={componentDetectionActions.expandAll}>
-                    展开
-                  </Button>
-                  <Button size='small' type='text' onClick={componentDetectionActions.collapseAll}>
-                    收起
-                  </Button>
-                </Space>
-              </Space>
-              <Tree
-                treeData={treeData}
-                selectedKeys={selectedAnnotationId ? [selectedAnnotationId] : []}
-                expandedKeys={expandedKeys as string[]}
-                onSelect={handleSelect}
-                onExpand={handleExpand}
-                showLine={{ showLeafIcon: false }}
-                showIcon
-                blockNode
-              />
-            </div>
-          )}
-        </>
-      ),
+      /* 当选中设计文档时，显示标注树 */
+      children:
+        designTreeData.length > 0 ? (
+          <Tree
+            treeData={designTreeData}
+            selectedKeys={selectedAnnotationId ? [selectedAnnotationId] : []}
+            expandedKeys={expandedKeys as string[]}
+            onSelect={handleSelect}
+            onExpand={handleExpand}
+            switcherIcon={<DownOutlined />}
+            showLine={showLine}
+            showIcon
+            blockNode
+          />
+        ) : (
+          <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+            暂无标注结构
+          </Text>
+        ),
     },
     {
       key: 'prd',

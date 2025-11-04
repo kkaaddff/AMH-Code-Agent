@@ -38,7 +38,7 @@ export interface AnnotationNode {
   ftaComponent: string; // FTA组件类型
   name?: string; // 组件实例名称
   comment?: string; // 组件说明
-  isRoot: boolean; // 是否为页面根节点
+  isRoot: boolean; // 是否为主页面
   isContainer: boolean; // 是否为容器组件
   children: AnnotationNode[]; // 子组件
   absoluteX: number;
@@ -156,7 +156,6 @@ export type LabelInstruction = {
   backgroundColor: string;
 };
 
-
 // Component mapping (confirmed or pending)
 export interface ComponentMapping {
   id: string; // Unique mapping ID
@@ -164,27 +163,27 @@ export interface ComponentMapping {
   ftaComponent: string; // FTA component type
   name?: string; // Component instance name
   comment?: string; // Component comment/description
-  
+
   // Position and size (calculated from nodeIds)
   absoluteX: number;
   absoluteY: number;
   width: number;
   height: number;
-  
+
   // Layout properties
   layout?: LayoutTreeNode['layout'];
-  
+
   // Component props
   props?: Record<string, any>;
-  
+
   // Recognition metadata
   confidence?: number; // AI confidence if recognized
   isConfirmed: boolean; // User has confirmed this mapping
   isManuallyAdjusted: boolean; // User modified the AI suggestion
-  
+
   // Original nodes (for grouped components)
   originChildren?: LeafNodeInfo[];
-  
+
   // Timestamps
   createdAt: number;
   updatedAt: number;
