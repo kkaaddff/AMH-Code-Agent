@@ -42,11 +42,11 @@ export async function resolveTools(opts: ResolveToolsOpts) {
     ? [
         createWriteTool({ cwd }),
         createEditTool({ cwd }),
-        createBashTool({
-          cwd,
-          backgroundTaskManager: opts.context.backgroundTaskManager,
-          messageBus: opts.context.messageBus,
-        }),
+        // createBashTool({
+        //   cwd,
+        //   backgroundTaskManager: opts.context.backgroundTaskManager,
+        //   messageBus: opts.context.messageBus,
+        // }),
       ]
     : [];
   const todoTools = (() => {
@@ -68,11 +68,11 @@ export async function resolveTools(opts: ResolveToolsOpts) {
     : [];
   const mcpTools = await getMcpTools(opts.context);
   return [
-    ...readonlyTools,
+    // ...readonlyTools,
     ...writeTools,
     ...todoTools,
-    ...backgroundTools,
-    ...mcpTools,
+    // ...backgroundTools,
+    // ...mcpTools,
   ];
 }
 

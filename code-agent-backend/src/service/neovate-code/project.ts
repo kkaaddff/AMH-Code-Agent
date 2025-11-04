@@ -36,6 +36,8 @@ export class Project {
       onTextDelta?: (text: string) => Promise<void>;
       onChunk?: (chunk: any, requestId: string) => Promise<void>;
       onStreamResult?: (result: StreamResult) => Promise<void>;
+      onTodoUpdate?: (todos: any[]) => Promise<void>;
+      onTurn?: (turn: { iteration: number; startTime: Date; endTime: Date }) => Promise<void>;
       signal?: AbortSignal;
       attachments?: ImagePart[];
       parentUuid?: string;
@@ -72,6 +74,8 @@ export class Project {
       ...opts,
       tools,
       systemPrompt,
+      onTodoUpdate: opts.onTodoUpdate,
+      onTurn: opts.onTurn,
     });
   }
 
@@ -135,6 +139,8 @@ export class Project {
       onTextDelta?: (text: string) => Promise<void>;
       onChunk?: (chunk: any, requestId: string) => Promise<void>;
       onStreamResult?: (result: StreamResult) => Promise<void>;
+      onTodoUpdate?: (todos: any[]) => Promise<void>;
+      onTurn?: (turn: { iteration: number; startTime: Date; endTime: Date }) => Promise<void>;
       signal?: AbortSignal;
       tools?: Tool[];
       systemPrompt?: string;
@@ -233,6 +239,7 @@ export class Project {
         : [userMessage];
     const filteredInput = input.filter((message) => message !== null);
     const toolsManager = new Tools(tools);
+    let iterationCount = 0;
     const result = await runLoop({
       input: filteredInput,
       model,
@@ -292,7 +299,7 @@ export class Project {
         });
       },
       onToolResult: async (toolUse, toolResult, approved) => {
-        return await this.context.apply({
+        const result = await this.context.apply({
           hook: "toolResult",
           args: [
             {
@@ -304,12 +311,27 @@ export class Project {
           memo: toolResult,
           type: PluginHookType.SeriesLast,
         });
+        
+        // 检测 TODO 更新
+        if (
+          result.returnDisplay &&
+          typeof result.returnDisplay === "object" &&
+          (result.returnDisplay as any).type === "todo_write"
+        ) {
+          const newTodos = (result.returnDisplay as any).newTodos;
+          if (newTodos && Array.isArray(newTodos)) {
+            await opts.onTodoUpdate?.(newTodos);
+          }
+        }
+        
+        return result;
       },
       onTurn: async (turn: {
         usage: Usage;
         startTime: Date;
         endTime: Date;
       }) => {
+        iterationCount++;
         await this.context.apply({
           hook: "query",
           args: [
@@ -321,6 +343,13 @@ export class Project {
             },
           ],
           type: PluginHookType.Series,
+        });
+        
+        // 通知迭代信息
+        await opts.onTurn?.({
+          iteration: iterationCount,
+          startTime: turn.startTime,
+          endTime: turn.endTime,
         });
       },
       onToolApprove: async (toolUse) => {

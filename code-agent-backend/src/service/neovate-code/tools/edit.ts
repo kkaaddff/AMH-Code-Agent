@@ -45,8 +45,8 @@ Usage:
           "search-replace"
         );
         const dir = path.dirname(fullFilePath);
-        fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(fullFilePath, updatedFile, "utf-8");
+        // fs.mkdirSync(dir, { recursive: true });
+        // fs.writeFileSync(fullFilePath, updatedFile, "utf-8");
         return {
           llmContent: `File ${file_path} successfully edited.`,
           returnDisplay: {

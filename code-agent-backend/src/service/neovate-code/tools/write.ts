@@ -28,9 +28,9 @@ export function createWriteTool(opts: { cwd: string }) {
           : "";
         // TODO: backup old content
         // TODO: let user know if they want to write to a file that already exists
-        const dir = path.dirname(fullFilePath);
-        fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(fullFilePath, format(content));
+        // const dir = path.dirname(fullFilePath);
+        // fs.mkdirSync(dir, { recursive: true });
+        // fs.writeFileSync(fullFilePath, format(content));
         return {
           llmContent: `File successfully written to ${file_path}`,
           returnDisplay: {

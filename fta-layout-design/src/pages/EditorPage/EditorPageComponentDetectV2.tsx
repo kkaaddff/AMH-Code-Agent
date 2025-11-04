@@ -22,10 +22,11 @@ import { CodeGenerationProvider, useCodeGeneration } from './contexts/CodeGenera
 import { COMPONENT_STYLES } from './styles/EditorPageStyles';
 import { loadAnnotationState } from './utils/componentStorage';
 import { generateRequirementDoc } from './utils/requirementDoc';
-import { AgentScheduler } from './services/CodeGenerationLoop';
+// import { SSEScheduler } from './services/CodeGenerationLoop/SSEScheduler';
 import { generateUID } from './services/CodeGenerationLoop/utils';
 import { commonUserPrompt } from './services/CodeGenerationLoop/CommonPrompt';
 import { flattenAnnotation, formatAnnotationSummary } from './utils/prompt';
+import { AgentScheduler } from './services/CodeGenerationLoop/index.AgentScheduler.backup';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
@@ -77,6 +78,7 @@ const EditorPageContent: React.FC = () => {
   const [dslTreeSelectedNodeId, setDslTreeSelectedNodeId] = useState<string | null>(null);
   const [dslTreeHoveredNodeId, setDslTreeHoveredNodeId] = useState<string | null>(null);
 
+  // const schedulerRef = useRef<SSEScheduler | null>(null);
   const schedulerRef = useRef<AgentScheduler | null>(null);
 
   // 从 URL 读取 designId
@@ -172,15 +174,20 @@ const EditorPageContent: React.FC = () => {
     // 打开抽屉并清空之前的数据
     openCodeDrawer();
     clearThoughtChain();
-    message.open({ type: 'loading', content: '正在初始化代码生成...', key: 'generate-code' });
+    message.open({
+      type: 'loading',
+      content: '正在初始化代码生成...',
+      key: 'generate-code',
+    });
 
     // 当前迭代的思维链 ID（在 try 块外定义，以便在 catch 块中访问）
     let currentIterationThoughtId: string | null = null;
 
     try {
-      // 初始化 Scheduler
+      // 初始化 SSE Scheduler
       if (!schedulerRef.current) {
         schedulerRef.current = new AgentScheduler();
+        // schedulerRef.current = new SSEScheduler()
       }
 
       const scheduler = schedulerRef.current;
@@ -194,7 +201,6 @@ const EditorPageContent: React.FC = () => {
       }
       const dslJsonStr = JSON.stringify(dslData?.dsl ?? {});
       // const encodedDsl = encode(dslData?.dsl ?? {});
-
       // 创建会话
       scheduler.createSession(sessionId, initialPrompt, dslJsonStr);
       startGeneration(sessionId);
@@ -248,9 +254,85 @@ const EditorPageContent: React.FC = () => {
           stopGeneration();
         },
       });
+      // // 执行 SSE 会话，传入回调函数
+      // await scheduler.execute(
+      //   {
+      //     message: initialPrompt,
+      //     sessionId,
+      //   },
+      //   {
+      //     onIterationStart: (iteration) => {
+      //       console.log(`开始第 ${iteration} 轮迭代`);
+      //       setCurrentIteration(iteration);
+
+      //       // 创建新的迭代项
+      //       const thoughtId = `iteration-${sessionId}-${iteration}`;
+      //       currentIterationThoughtId = thoughtId;
+      //       addThoughtItem({
+      //         id: thoughtId,
+      //         title: `第 ${iteration} 轮迭代`,
+      //         status: 'in_progress',
+      //         content: '',
+      //         startedAt: new Date().toISOString(),
+      //         kind: 'iteration',
+      //       });
+      //     },
+
+      //     onTextChunk: (text) => {
+      //       // 将文本追加到当前迭代项
+      //       if (currentIterationThoughtId) {
+      //         appendToThoughtContent(currentIterationThoughtId, text);
+      //       }
+      //     },
+
+      //     onTodoUpdate: (todos) => {
+      //       // 更新 TODO 列表
+      //       console.log('TODO 更新:', todos);
+      //       updateTodos(todos);
+      //     },
+
+      //     onIterationEnd: (iteration) => {
+      //       console.log(`第 ${iteration} 轮迭代结束`);
+      //       // 将当前迭代项标记为完成
+      //       if (currentIterationThoughtId) {
+      //         updateThoughtItem(currentIterationThoughtId, {
+      //           status: 'success',
+      //           finishedAt: new Date().toISOString(),
+      //         });
+      //       }
+      //     },
+
+      //     onSessionComplete: (returnedSessionId) => {
+      //       console.log('会话完成，SessionId:', returnedSessionId);
+      //       message.success({ content: '代码生成完成', key: 'generate-code' });
+      //       stopGeneration();
+      //     },
+
+      //     onError: (error) => {
+      //       console.error('SSE 错误:', error);
+      //       message.error({
+      //         content: `代码生成失败: ${error}`,
+      //         key: 'generate-code',
+      //       });
+
+      //       // 如果有正在进行的迭代，标记为失败
+      //       if (currentIterationThoughtId) {
+      //         updateThoughtItem(currentIterationThoughtId, {
+      //           status: 'error',
+      //           finishedAt: new Date().toISOString(),
+      //         });
+      //       }
+
+      //       stopGeneration();
+      //     },
+      //   }
+      // );
     } catch (error) {
       console.error('代码生成失败:', error);
-      message.error({ content: '代码生成失败，请稍后重试', key: 'generate-code' });
+      message.error({
+        content: '代码生成失败，请稍后重试',
+        key: 'generate-code',
+      });
 
       // 如果有正在进行的迭代，标记为失败
       if (currentIterationThoughtId) {
@@ -305,7 +387,7 @@ const EditorPageContent: React.FC = () => {
   if (dslLoading) {
     return (
       <div style={COMPONENT_STYLES.loadingContainer}>
-        <Spin size="large" tip="加载中..." />
+        <Spin size='large' tip='加载中...' />
       </div>
     );
   }
@@ -314,7 +396,7 @@ const EditorPageContent: React.FC = () => {
   if (dslError) {
     return (
       <div style={COMPONENT_STYLES.errorContainer}>
-        <Typography.Text type="danger">加载 DSL 数据失败：{dslError.message}</Typography.Text>
+        <Typography.Text type='danger'>加载 DSL 数据失败：{dslError.message}</Typography.Text>
       </div>
     );
   }
@@ -323,7 +405,7 @@ const EditorPageContent: React.FC = () => {
   if (!dslData) {
     return (
       <div style={COMPONENT_STYLES.errorContainer}>
-        <Typography.Text type="secondary">未找到 DSL 数据</Typography.Text>
+        <Typography.Text type='secondary'>未找到 DSL 数据</Typography.Text>
       </div>
     );
   }
@@ -332,7 +414,7 @@ const EditorPageContent: React.FC = () => {
   if (isLoading) {
     return (
       <div style={COMPONENT_STYLES.loadingContainer}>
-        <Spin size="large" tip="初始化中..." />
+        <Spin size='large' tip='初始化中...' />
       </div>
     );
   }
@@ -342,14 +424,13 @@ const EditorPageContent: React.FC = () => {
       <Layout style={COMPONENT_STYLES.mainLayout}>
         <Sider
           width={350}
-          theme="light"
+          theme='light'
           collapsible
           collapsed={leftCollapsed}
           onCollapse={setLeftCollapsed}
           collapsedWidth={0}
           trigger={null}
-          style={COMPONENT_STYLES.sider}
-        >
+          style={COMPONENT_STYLES.sider}>
           <LayerTreePanel
             dslData={dslData}
             onToggleNodeVisibility={updateNodeVisibility}
@@ -372,35 +453,34 @@ const EditorPageContent: React.FC = () => {
               <Space>
                 <Button
                   type={showAllBorders ? 'primary' : 'default'}
-                  size="small"
+                  size='small'
                   icon={showAllBorders ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                   onClick={toggleShowAllBorders}
-                  style={COMPONENT_STYLES.button}
-                >
+                  style={COMPONENT_STYLES.button}>
                   框线
                 </Button>
                 <Button
                   type={is3DModalOpen ? 'primary' : 'default'}
-                  size="small"
+                  size='small'
                   icon={<AppstoreOutlined />}
                   onClick={() => setIs3DModalOpen(true)}
-                  style={COMPONENT_STYLES.button}
-                >
+                  style={COMPONENT_STYLES.button}>
                   3D 检视
                 </Button>
                 <Button
                   type={isGuideOpen ? 'primary' : 'default'}
-                  size="small"
+                  size='small'
                   icon={<QuestionCircleOutlined />}
                   onClick={() => setIsGuideOpen(true)}
-                  style={COMPONENT_STYLES.button}
-                >
+                  style={COMPONENT_STYLES.button}>
                   交互引导
                 </Button>
                 <Dropdown
-                  menu={{ items: SCALE_OPTIONS, onClick: ({ key }) => handleScaleChange(parseFloat(key)) }}
-                  trigger={['click']}
-                >
+                  menu={{
+                    items: SCALE_OPTIONS,
+                    onClick: ({ key }) => handleScaleChange(parseFloat(key)),
+                  }}
+                  trigger={['click']}>
                   <a onClick={(e) => e.preventDefault()}>
                     {Math.round(scale * 100)}% <DownOutlined />
                   </a>
@@ -411,19 +491,23 @@ const EditorPageContent: React.FC = () => {
             <div style={COMPONENT_STYLES.canvasContainer}>
               <div
                 onClick={() => setLeftCollapsed(!leftCollapsed)}
-                style={{ ...COMPONENT_STYLES.collapseButton, ...COMPONENT_STYLES.leftCollapseButton }}
-              >
+                style={{
+                  ...COMPONENT_STYLES.collapseButton,
+                  ...COMPONENT_STYLES.leftCollapseButton,
+                }}>
                 {leftCollapsed ? '▶' : '◀'}
               </div>
 
               <div
                 onClick={() => setRightCollapsed(!rightCollapsed)}
-                style={{ ...COMPONENT_STYLES.collapseButton, ...COMPONENT_STYLES.rightCollapseButton }}
-              >
+                style={{
+                  ...COMPONENT_STYLES.collapseButton,
+                  ...COMPONENT_STYLES.rightCollapseButton,
+                }}>
                 {rightCollapsed ? '◀' : '▶'}
               </div>
 
-              <div id="detection-canvas-container" style={COMPONENT_STYLES.detectionCanvasContainer}>
+              <div id='detection-canvas-container' style={COMPONENT_STYLES.detectionCanvasContainer}>
                 <DetectionCanvasV2
                   dslData={dslData}
                   scale={scale}
@@ -438,14 +522,13 @@ const EditorPageContent: React.FC = () => {
 
         <Sider
           width={350}
-          theme="light"
+          theme='light'
           collapsible
           collapsed={rightCollapsed}
           onCollapse={setRightCollapsed}
           collapsedWidth={0}
           trigger={null}
-          style={COMPONENT_STYLES.rightSider}
-        >
+          style={COMPONENT_STYLES.rightSider}>
           <ComponentPropertyPanelV2 />
         </Sider>
       </Layout>

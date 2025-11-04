@@ -45,3 +45,13 @@ export function deepMapValues(
 
   return newObj;
 }
+
+export const omitUndefined = (input: Record<string, any>) => {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result;
+};
