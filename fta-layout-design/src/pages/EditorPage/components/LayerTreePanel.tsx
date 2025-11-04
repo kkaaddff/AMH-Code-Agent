@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Tree, Button, Space, Typography, App, Collapse, List, Tag, Modal, Input, Form } from 'antd';
+import { Tree, Button, Space, Typography, App, Collapse, List, Tag, Modal, Input, Form, Tooltip } from 'antd';
 import type { DataNode } from 'antd/es/tree';
 import {
   FolderOutlined,
@@ -61,36 +61,39 @@ const convertToTreeData = (node: AnnotationNode, isFirstLevel = false): DataNode
       </Space>
       {isFirstLevel && (
         <Space size={4}>
-          <Button
-            type='text'
-            size='small'
-            icon={<ExpandOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              componentDetectionActions.expandAll();
-            }}
-            title='展开全部'
-          />
-          <Button
-            type='text'
-            size='small'
-            icon={<CompressOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              componentDetectionActions.collapseAll();
-            }}
-            title='收起全部'
-          />
-          <Button
-            type='text'
-            size='small'
-            icon={<SettingOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              // TODO: 添加设置功能
-            }}
-            title='设置'
-          />
+          <Tooltip title='展开全部' color='#eee'>
+            <Button
+              type='text'
+              size='small'
+              icon={<ExpandOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                componentDetectionActions.expandAll();
+              }}
+            />
+          </Tooltip>
+          <Tooltip title='收起全部' color='#eee'>
+            <Button
+              type='text'
+              size='small'
+              icon={<CompressOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                componentDetectionActions.collapseAll();
+              }}
+            />
+          </Tooltip>
+          <Tooltip title='设置' color='#eee'>
+            <Button
+              type='text'
+              size='small'
+              icon={<SettingOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                // TODO: 添加设置功能
+              }}
+            />
+          </Tooltip>
         </Space>
       )}
     </Space>
@@ -122,7 +125,11 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
   // 生成Tree数据（仅在选中设计文档时显示）
   const designTreeData: DataNode[] = useMemo(() => {
     if (!rootAnnotation || selectedDocument?.type !== 'design') return [];
-    return [convertToTreeData(rootAnnotation as AnnotationNode, true)];
+    return [
+      convertToTreeData(rootAnnotation as AnnotationNode, true),
+      // 测试用
+      convertToTreeData(rootAnnotation as AnnotationNode, true),
+    ];
   }, [rootAnnotation, selectedDocument]);
 
   // 处理节点选择

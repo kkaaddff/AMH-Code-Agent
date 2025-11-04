@@ -8,7 +8,12 @@ import { renderRoutes } from './utils/routerUtils';
 
 function App() {
   return (
-    <ConfigProvider theme={theme.defaultConfig}>
+    <ConfigProvider
+      theme={{
+        algorithm: [
+          theme.compactAlgorithm, // 启用紧凑主题算法
+        ],
+      }}>
       <AntApp>
         <Router>
           <Routes>{renderRoutes(routes)}</Routes>
