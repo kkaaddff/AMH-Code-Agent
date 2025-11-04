@@ -7,7 +7,7 @@ import LayoutTree from './components/LayoutTree';
 import LayoutPreview from './components/LayoutPreview';
 import PropertyPanel from './components/PropertyPanel';
 import { EditProvider } from '@/contexts/EditContext';
-import { SelectionProvider, useSelection } from '@/contexts/SelectionContext';
+import { useSelection } from '@/contexts/SelectionContext';
 import layoutData from '@/demo/LayoutTree.json';
 import type { DSLData, DSLNode } from '@/types/dsl';
 import type { LayoutTreeNode } from '@/types/layout';
@@ -388,11 +388,9 @@ const EditorPageLayout: React.FC = () => {
   const state = location.state as LocationState;
 
   return (
-    <SelectionProvider>
-      <EditProvider>
-        <EditorPageLayoutContent confirmedComponents={state?.confirmedComponents} />
-      </EditProvider>
-    </SelectionProvider>
+    <EditProvider>
+      <EditorPageLayoutContent confirmedComponents={state?.confirmedComponents} />
+    </EditProvider>
   );
 };
 

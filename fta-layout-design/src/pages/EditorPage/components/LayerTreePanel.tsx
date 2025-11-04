@@ -21,7 +21,6 @@ import { getDocumentStatusColor, getDocumentStatusText } from '@/utils/documentS
 const { Title, Text } = Typography;
 
 interface LayerTreePanelProps {
-  pageId: string;
   documents: {
     design: DocumentReference[];
     prd: DocumentReference[];
@@ -29,7 +28,6 @@ interface LayerTreePanelProps {
   };
   selectedDocument: { type: 'design' | 'prd' | 'openapi'; id: string } | null;
   onSelectDocument: (type: 'design' | 'prd' | 'openapi', id: string) => void;
-  onAddDocument: (type: 'design' | 'prd' | 'openapi') => void;
   onDeleteDocument: (type: 'design' | 'prd' | 'openapi', id: string) => void;
   onSave?: () => void;
   onGenerateCode?: () => void;
@@ -64,11 +62,9 @@ const convertToTreeData = (node: AnnotationNode): DataNode => {
 };
 
 const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
-  pageId,
   documents,
   selectedDocument,
   onSelectDocument,
-  onAddDocument,
   onDeleteDocument,
   onSave,
   onGenerateCode,
@@ -118,6 +114,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
     try {
       // 这里应该调用 API 添加文档
       // 暂时只是关闭模态框
+      debugger;
       message.success('文档添加功能待实现');
       setAddDocModalVisible(false);
       addDocForm.resetFields();

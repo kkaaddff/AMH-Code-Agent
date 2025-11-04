@@ -117,7 +117,7 @@ npm run dev
 | TypeScript | 5.5.3 | 类型安全 |
 | Vite | 5.4.0 | 构建工具 |
 | Ant Design | 5.12.0 | UI组件库 |
-| Zustand | 4.5.2 | 状态管理 |
+| Valtio | 1.13.0 | 状态管理 |
 | React Flow | 11.11.4 | 流程图组件 |
 | Three.js | 0.180.0 | 3D渲染 |
 | Lexical | 0.35.0 | 文本编辑器 |
@@ -261,7 +261,7 @@ npm run cov              # 测试覆盖率报告
 ### 前端优化策略
 - **组件级优化**: React.memo + 自定义比较函数
 - **渲染优化**: 虚拟滚动、条件渲染、懒加载
-- **状态管理**: Zustand + use-context-selector
+- **状态管理**: Valtio + use-context-selector
 - **代码分割**: 路由级和组件级代码分割
 
 ### 后端优化策略

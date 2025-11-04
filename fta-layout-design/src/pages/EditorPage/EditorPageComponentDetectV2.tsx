@@ -72,7 +72,6 @@ const EditorPageContent: React.FC = () => {
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [is3DModalOpen, setIs3DModalOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const [pageId, setPageId] = useState<string>('');
   const [designId, setDesignId] = useState<string>('');
   const [selectedDocType, setSelectedDocType] = useState<'design' | 'prd' | 'openapi' | null>(null);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -88,10 +87,6 @@ const EditorPageContent: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const pid = params.get('pageId');
-
-    if (pid) {
-      setPageId(pid);
-    }
 
     const fetchPageData = async () => {
       setPageLoading(true);
@@ -404,11 +399,6 @@ const EditorPageContent: React.FC = () => {
     }
   };
 
-  // 处理添加文档
-  const handleAddDocument = (type: 'design' | 'prd' | 'openapi') => {
-    message.info(`添加${type === 'design' ? '设计稿' : type === 'prd' ? 'PRD文档' : 'OpenAPI文档'}功能待实现`);
-  };
-
   // 处理删除文档
   const handleDeleteDocument = (type: 'design' | 'prd' | 'openapi', _id: string) => {
     message.info(`删除${type === 'design' ? '设计稿' : type === 'prd' ? 'PRD文档' : 'OpenAPI文档'}功能待实现`);
@@ -490,11 +480,9 @@ const EditorPageContent: React.FC = () => {
           trigger={null}
           style={COMPONENT_STYLES.sider}>
           <LayerTreePanel
-            pageId={pageId}
             documents={documents}
             selectedDocument={selectedDocType && selectedDocId ? { type: selectedDocType, id: selectedDocId } : null}
             onSelectDocument={handleSelectDocument}
-            onAddDocument={handleAddDocument}
             onDeleteDocument={handleDeleteDocument}
             onSave={handleSave}
             onGenerateCode={handleGenerateCode}

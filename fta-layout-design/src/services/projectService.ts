@@ -56,7 +56,7 @@ export const projectService = {
   /**
    * 获取项目列表
    */
-  async getProjects(params?: ProjectListParams): Promise<ProjectListResponse> {
+  async getProjects(params: ProjectListParams): Promise<ProjectListResponse> {
     return resolveRequest(
       shouldUseMock(),
       () => projectMockService.getProjects(params),

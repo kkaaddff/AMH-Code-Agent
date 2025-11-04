@@ -1,40 +1,29 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { proxy } from 'valtio';
+import { useSnapshot } from 'valtio/react';
 
-interface SelectionContextType {
+interface SelectionStoreState {
   selectedNodeId: string | null;
   hoveredNodeId: string | null;
-  setSelectedNodeId: (nodeId: string | null) => void;
-  setHoveredNodeId: (nodeId: string | null) => void;
 }
 
-const SelectionContext = createContext<SelectionContextType | undefined>(undefined);
+const selectionStore = proxy<SelectionStoreState>({
+  selectedNodeId: null,
+  hoveredNodeId: null,
+});
 
-export const useSelection = () => {
-  const context = useContext(SelectionContext);
-  if (!context) {
-    throw new Error('useSelection must be used within SelectionProvider');
-  }
-  return context;
+const setSelectedNodeId = (nodeId: string | null) => {
+  selectionStore.selectedNodeId = nodeId;
 };
 
-interface SelectionProviderProps {
-  children: ReactNode;
-}
+const setHoveredNodeId = (nodeId: string | null) => {
+  selectionStore.hoveredNodeId = nodeId;
+};
 
-export const SelectionProvider: React.FC<SelectionProviderProps> = ({ children }) => {
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-
-  return (
-    <SelectionContext.Provider
-      value={{
-        selectedNodeId,
-        hoveredNodeId,
-        setSelectedNodeId,
-        setHoveredNodeId
-      }}
-    >
-      {children}
-    </SelectionContext.Provider>
-  );
+export const useSelection = () => {
+  const state = useSnapshot(selectionStore);
+  return {
+    ...state,
+    setSelectedNodeId,
+    setHoveredNodeId,
+  };
 };

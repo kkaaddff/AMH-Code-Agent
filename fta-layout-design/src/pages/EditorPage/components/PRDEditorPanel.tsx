@@ -60,7 +60,7 @@ const MOCK_PRD_CONTENT = `# 产品需求文档 (PRD)
 - React 18
 - TypeScript
 - Ant Design
-- Zustand
+- Valtio
 
 ### 5.2 后端技术栈
 - Node.js

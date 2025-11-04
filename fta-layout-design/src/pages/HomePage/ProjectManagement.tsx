@@ -45,7 +45,7 @@ const ProjectManagement: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   useEffect(() => {
-    loadProjects().catch(() => undefined);
+    loadProjects({ page: 1, size: 10 }, message).catch(() => undefined);
   }, [loadProjects]);
 
   const getStatusColor = (status: string) => {
@@ -134,24 +134,24 @@ const ProjectManagement: React.FC = () => {
   });
 
   return (
-    <div className="project-management">
-      <div className="project-header">
-        <div className="header-content">
+    <div className='project-management'>
+      <div className='project-header'>
+        <div className='header-content'>
           <Title level={3}>项目管理</Title>
-          <Text type="secondary">管理您的所有项目，跟踪进度和协作</Text>
+          <Text type='secondary'>管理您的所有项目，跟踪进度和协作</Text>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => setCreateModalVisible(true)}>
+        <Button type='primary' icon={<PlusOutlined />} size='large' onClick={() => setCreateModalVisible(true)}>
           创建新项目
         </Button>
       </div>
 
-      <div className="project-filters">
-        <Row gutter={16} align="middle">
-          <Col flex="auto">
+      <div className='project-filters'>
+        <Row gutter={16} align='middle'>
+          <Col flex='auto'>
             <Search
-              placeholder="搜索项目名称或描述..."
+              placeholder='搜索项目名称或描述...'
               allowClear
-              size="large"
+              size='large'
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -161,86 +161,84 @@ const ProjectManagement: React.FC = () => {
             <Select
               value={statusFilter}
               onChange={setStatusFilter}
-              size="large"
+              size='large'
               style={{ width: 120 }}
-              suffixIcon={<FilterOutlined />}
-            >
-              <Option value="all">全部状态</Option>
-              <Option value="active">进行中</Option>
-              <Option value="completed">已完成</Option>
-              <Option value="paused">已暂停</Option>
-              <Option value="archived">已归档</Option>
-              <Option value="draft">草稿</Option>
+              suffixIcon={<FilterOutlined />}>
+              <Option value='all'>全部状态</Option>
+              <Option value='active'>进行中</Option>
+              <Option value='completed'>已完成</Option>
+              <Option value='paused'>已暂停</Option>
+              <Option value='archived'>已归档</Option>
+              <Option value='draft'>草稿</Option>
             </Select>
           </Col>
         </Row>
       </div>
 
-      <div className="project-grid">
+      <div className='project-grid'>
         {filteredProjects.length > 0 ? (
           <Row gutter={[16, 16]}>
             {filteredProjects.map((project) => (
               <Col xs={24} sm={12} lg={8} xl={6} key={project.id}>
                 <Card
-                  className="project-card"
+                  className='project-card'
                   hoverable
                   onClick={() => handleViewProject(project)}
                   actions={[
                     <Button
-                      type="text"
+                      type='text'
                       icon={<EyeOutlined />}
-                      title="查看详情"
+                      title='查看详情'
                       onClick={() => handleViewProject(project)}
                     />,
                     <Button
-                      type="text"
+                      type='text'
                       icon={<EditOutlined />}
-                      title="编辑项目"
+                      title='编辑项目'
                       onClick={() => handleEditProject(project)}
                     />,
                     <Button
-                      type="text"
+                      type='text'
                       icon={<ShareAltOutlined />}
-                      title="分享项目"
+                      title='分享项目'
                       onClick={() => handleShareProject(project)}
                     />,
                     <Button
-                      type="text"
+                      type='text'
                       icon={<DeleteOutlined />}
-                      title="删除项目"
+                      title='删除项目'
                       danger
                       onClick={() => handleDeleteProject(project.id)}
                     />,
-                  ]}
-                >
-                  <div className="project-card-header">
-                    <div className="project-avatar-wrapper">
-                      <Avatar size={48} className="project-avatar">
+                  ]}>
+                  <div className='project-card-header'>
+                    <div className='project-avatar-wrapper'>
+                      <Avatar size={48} className='project-avatar'>
                         {project.avatar || '📁'}
                       </Avatar>
-                      {project.status === 'active' && <div className="status-indicator active"></div>}
+                      {project.status === 'active' && <div className='status-indicator active'></div>}
                     </div>
-                    <div className="project-info">
-                      <div className="project-title-row">
-                        <Title level={5} className="project-name" ellipsis={{ tooltip: project.name }}>
+                    <div className='project-info'>
+                      <div className='project-title-row'>
+                        <Title level={5} className='project-name' ellipsis={{ tooltip: project.name }}>
                           {project.name}
                         </Title>
-                        <Tag color={getStatusColor(project.status)} className="status-tag">
+                        <Tag color={getStatusColor(project.status)} className='status-tag'>
                           {getStatusText(project.status)}
                         </Tag>
                       </div>
-                      <Text type="secondary" className="project-manager">
+                      <Text type='secondary' className='project-manager'>
                         负责人: {project.manager}
                       </Text>
                     </div>
                   </div>
 
-                  <Text type="secondary" className="project-description">
+                  <Text type='secondary' className='project-description'>
                     {project.description || '暂无描述'}
                   </Text>
 
-                  <div className="project-progress">
-                    <div className="progress-header">
+                  <div className='project-progress'>
+                    <div className='progress-header'>
                       <Text strong>进度</Text>
                       <Text>{project.progress || 0}%</Text>
                     </div>
@@ -254,20 +252,20 @@ const ProjectManagement: React.FC = () => {
                     />
                   </div>
 
-                  <div className="project-tags">
+                  <div className='project-tags'>
                     {(project.tags || []).map((tag, index) => (
                       <Tag key={index}>{tag}</Tag>
                     ))}
                   </div>
 
-                  <div className="project-meta">
+                  <div className='project-meta'>
                     <Space>
                       <UserOutlined />
-                      <Text type="secondary">{project.members || 1} 成员</Text>
+                      <Text type='secondary'>{project.members || 1} 成员</Text>
                     </Space>
                     <Space>
                       <CalendarOutlined />
-                      <Text type="secondary">{new Date(project.updatedAt).toLocaleDateString()}</Text>
+                      <Text type='secondary'>{new Date(project.updatedAt).toLocaleDateString()}</Text>
                     </Space>
                   </div>
                 </Card>
@@ -275,7 +273,7 @@ const ProjectManagement: React.FC = () => {
             ))}
           </Row>
         ) : (
-          <Empty description="没有找到匹配的项目" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty description='没有找到匹配的项目' image={Empty.PRESENTED_IMAGE_SIMPLE} />
         )}
       </div>
 

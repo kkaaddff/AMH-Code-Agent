@@ -85,7 +85,7 @@ FTA前端应用是整个设计稿到代码转换平台的核心用户界面，�
 ### 状态管理
 | 技术 | 版本 | 说明 |
 |------|------|------|
-| Zustand | 4.5.2 | 轻量级状态管理 |
+| Valtio | 1.13.0 | 代理式状态管理 |
 | use-context-selector | 1.4.1 | Context性能优化 |
 | React Context | 内置 | 组件级状态管理 |
 
@@ -256,11 +256,11 @@ App
     └── 标注管理
 ```
 
-### Zustand状态管理
-使用Zustand + use-context-selector优化性能：
-- 细粒度状态订阅
-- 避免不必要的重渲染
-- 中间件支持（持久化、日志等）
+### Valtio状态管理
+使用Valtio proxy + useSnapshot管理跨文件状态：
+- 项目、编辑、选择各自拥有独立store保持单一职责
+- 快照订阅让组件仅在相关字段变化时更新
+- Provider仅负责注入外部依赖（消息、回调），核心状态由store托管
 
 ## 🔌 API集成
 

@@ -112,7 +112,7 @@ npm run cov
 - Ant Design 5.12.0 (UI组件库)
 
 **状态管理：**
-- Zustand 4.5.2 (全局状态)
+- Valtio 1.13.0 (跨模块代理状态)
 - React Context (组件级状态)
 - use-context-selector (性能优化)
 
@@ -253,7 +253,7 @@ npm run cov
 4. **ComponentDetectionContextV2** - 组件识别上下文
    - 高级组件识别状态管理
    - 多选支持和标注管理
-   - Zustand + use-context-selector优化
+   - Valtio + use-context-selector优化
 
 #### 后端数据模型
 
@@ -438,7 +438,7 @@ feat(组件检测): 新增3D检视功能与相关依赖
 
 3. **数据管理优化：**
    - 增量更新DSL数据
-   - Zustand状态管理优化
+   - Valtio状态管理优化
    - 资源按需加载
 
 ### 后端优化
@@ -532,5 +532,3 @@ npm run dev
 5. 生成需求文档
 
 这个平台展现了现代全栈开发的最佳实践，集成了React、TypeScript、Three.js、Midway.js等先进技术，提供了完整的设计稿到代码转换解决方案。
-
-

@@ -109,7 +109,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ visible, projec
 
       {currentProject.pages.length > 0 ? (
         <List
-          dataSource={currentProject.pages}
+          dataSource={currentProject.pages as Page[]}
           renderItem={(page: Page) => (
             <List.Item key={page.id}>
               <div

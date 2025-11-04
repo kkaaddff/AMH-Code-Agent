@@ -8,7 +8,7 @@ Repo hosts `code-agent-backend/` (Midway TypeScript service) and `fta-layout-des
 - Frontend (Node 18+): `npm install`; `npm run dev`; `npm run build`; `npm run preview` to review the built assets.
 
 ## Coding Style & Naming Conventions
-Backend follows `mwts`: 2-space indentation, single quotes, no dangling semicolons, and decorators each on their own line. Export named classes/functions per Midway conventions and mirror folder names when adding services or queues. Frontend modules keep 2-space indentation, prefer PascalCase for components and context providers, camelCase for hooks/utilities, and UPPER_SNAKE_CASE for constants. Respect the aliases defined in `vite.config.ts` (`@`, `components`, `hooks`, etc.) and run Prettier before staging changes.
+Backend follows `mwts`: 2-space indentation, single quotes, no dangling semicolons, and decorators each on their own line. Export named classes/functions per Midway conventions and mirror folder names when adding services or queues. Frontend modules keep 2-space indentation, prefer PascalCase for components and context providers, camelCase for hooks/utilities, and UPPER_SNAKE_CASE for constants. Cross-file state lives in Valtio stores that surface through slim Context providers—maintain single-responsibility store boundaries. Respect the aliases defined in `vite.config.ts` (`@`, `components`, `hooks`, etc.) and run Prettier before staging changes.
 
 ## Testing Guidelines
 Place backend specs under `test/<area>/*.test.ts`; use `@midwayjs/mock` and `jest.setup.js` for context scaffolding. Run `npm run cov` before merging and explain coverage drops. The frontend currently lacks automation—supply manual verification notes or add colocated Vitest + React Testing Library cases when extending UI logic.
