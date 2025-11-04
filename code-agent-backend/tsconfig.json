@@ -13,20 +13,11 @@
     "skipLibCheck": true,
     "pretty": true,
     "declaration": true,
-    "typeRoots": [
-      "./typings"
-    ],
-    "types": [
-      "jest"
-    ],
+    "typeRoots": ["./typings"],
+    "types": ["jest"],
     "outDir": "dist"
   },
-  "exclude": [
-    "dist",
-    "node_modules",
-    "src-mg",
-    "test"
-  ],
+  "exclude": ["dist", "node_modules", "src-mg", "test"],
   "ts-node": {
     "compilerOptions": {
       "module": "commonjs"

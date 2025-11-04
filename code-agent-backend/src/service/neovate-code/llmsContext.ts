@@ -1,12 +1,12 @@
-import fs from 'fs';
-import path from 'pathe';
-import { platform } from 'process';
-import type { Context } from './context';
-import { PluginHookType } from './plugin';
-import { getLlmsRules } from './rules';
-import { createLSTool } from './tools/ls';
-import { getGitStatus, getLlmGitStatus } from './utils/git';
-import { isProjectDirectory } from './utils/project';
+import fs from "fs";
+import path from "pathe";
+import { platform } from "process";
+import type { Context } from "./context";
+import { PluginHookType } from "./plugin";
+import { getLlmsRules } from "./rules";
+import { createLSTool } from "./tools/ls";
+import { getGitStatus, getLlmGitStatus } from "./utils/git";
+import { isProjectDirectory } from "./utils/project";
 
 export type LlmsContextCreateOpts = {
   context: Context;
@@ -36,7 +36,7 @@ export class LlmsContext {
         cwd: opts.context.cwd,
         productName: opts.context.productName,
       });
-      const result = await LSTool.execute({ dir_path: '.' });
+      const result = await LSTool.execute({ dir_path: "." });
       if (result) {
         llmsContext.directoryStructure = `
 ${result.returnDisplay}
@@ -56,13 +56,13 @@ ${result.llmContent}
       llmsContext.rules = rules.llmsDescription;
     }
     // 4. readme
-    const readmePath = path.join(opts.context.cwd, 'README.md');
+    const readmePath = path.join(opts.context.cwd, "README.md");
     if (fs.existsSync(readmePath)) {
-      llmsContext.readme = fs.readFileSync(readmePath, 'utf-8');
+      llmsContext.readme = fs.readFileSync(readmePath, "utf-8");
     }
 
     llmsContext = await opts.context.apply({
-      hook: 'context',
+      hook: "context",
       args: [
         {
           sessionId: opts.sessionId,
@@ -77,17 +77,17 @@ ${result.llmContent}
 As you answer the user's questions, you can use the following context:
 ${Object.entries(llmsContext)
   .map(([key, value]) => `<context name="${key}">${value}</context>`)
-  .join('\n')}
+  .join("\n")}
     `.trim();
 
     let llmsEnv = {
-      'Working directory': opts.context.cwd,
-      'Is directory a git repo': gitStatus ? 'YES' : 'NO',
+      "Working directory": opts.context.cwd,
+      "Is directory a git repo": gitStatus ? "YES" : "NO",
       Platform: platform,
       "Today's date": new Date().toLocaleDateString(),
     };
     llmsEnv = await opts.context.apply({
-      hook: 'env',
+      hook: "env",
       args: [
         {
           sessionId: opts.sessionId,
@@ -102,7 +102,7 @@ ${Object.entries(llmsContext)
 Here is useful information about the environment you are running in.
 ${Object.entries(llmsEnv)
   .map(([key, value]) => `<env name="${key}">${value}</env>`)
-  .join('\n')}
+  .join("\n")}
     `.trim();
 
     return new LlmsContext({ messages: [llmsContextStr, llmsEnvStr] });

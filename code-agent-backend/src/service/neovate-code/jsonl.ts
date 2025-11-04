@@ -1,8 +1,8 @@
-import fs from 'fs';
-import path from 'pathe';
-import type { StreamResult } from './loop';
-import type { NormalizedMessage } from './message';
-import { createUserMessage } from './message';
+import fs from "fs";
+import path from "pathe";
+import type { StreamResult } from "./loop";
+import type { NormalizedMessage } from "./message";
+import { createUserMessage } from "./message";
 
 export class JsonlLogger {
   filePath: string;
@@ -16,8 +16,8 @@ export class JsonlLogger {
     if (!fs.existsSync(this.filePath)) {
       return null;
     }
-    const file = fs.readFileSync(this.filePath, 'utf8');
-    const lines = file.split('\n').filter(Boolean);
+    const file = fs.readFileSync(this.filePath, "utf8");
+    const lines = file.split("\n").filter(Boolean);
     const lastLine = lines[lines.length - 1];
     if (!lastLine) {
       return null;
@@ -32,7 +32,7 @@ export class JsonlLogger {
       fs.mkdirSync(dir, { recursive: true });
     }
     const message = opts.message;
-    fs.appendFileSync(this.filePath, JSON.stringify(message) + '\n');
+    fs.appendFileSync(this.filePath, JSON.stringify(message) + "\n");
     this.lastUuid = message.uuid;
     return message;
   }
@@ -56,7 +56,7 @@ export class RequestLogger {
   }
 
   private getFilePath(requestId: string): string {
-    const requestsDir = path.join(this.globalProjectDir, 'requests');
+    const requestsDir = path.join(this.globalProjectDir, "requests");
     if (!fs.existsSync(requestsDir)) {
       fs.mkdirSync(requestsDir, { recursive: true });
     }
@@ -65,16 +65,16 @@ export class RequestLogger {
 
   logMetadata(opts: {
     requestId: string;
-    prompt: StreamResult['prompt'];
-    model: StreamResult['model'];
-    tools: StreamResult['tools'];
-    request?: StreamResult['request'];
-    response?: StreamResult['response'];
-    error?: StreamResult['error'];
+    prompt: StreamResult["prompt"];
+    model: StreamResult["model"];
+    tools: StreamResult["tools"];
+    request?: StreamResult["request"];
+    response?: StreamResult["response"];
+    error?: StreamResult["error"];
   }) {
     const filePath = this.getFilePath(opts.requestId);
     const entry = {
-      type: 'metadata',
+      type: "metadata",
       requestId: opts.requestId,
       timestamp: new Date().toISOString(),
       prompt: opts.prompt,
@@ -84,17 +84,17 @@ export class RequestLogger {
       response: opts.response,
       error: opts.error,
     };
-    fs.appendFileSync(filePath, JSON.stringify(entry) + '\n');
+    fs.appendFileSync(filePath, JSON.stringify(entry) + "\n");
   }
 
   logChunk(requestId: string, chunk: any) {
     const filePath = this.getFilePath(requestId);
     const entry = {
-      type: 'chunk',
+      type: "chunk",
       requestId,
       timestamp: new Date().toISOString(),
       chunk,
     };
-    fs.appendFileSync(filePath, JSON.stringify(entry) + '\n');
+    fs.appendFileSync(filePath, JSON.stringify(entry) + "\n");
   }
 }

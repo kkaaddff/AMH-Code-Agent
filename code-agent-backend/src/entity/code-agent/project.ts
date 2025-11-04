@@ -1,147 +1,159 @@
-import { modelOptions, prop, Severity } from '@typegoose/typegoose'
-import { EntityModel } from '@midwayjs/typegoose'
+import { modelOptions, prop, Severity } from "@typegoose/typegoose";
+import { EntityModel } from "@midwayjs/typegoose";
 
-export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'completed' | 'editing'
+export type SyncStatus =
+  | "pending"
+  | "syncing"
+  | "synced"
+  | "failed"
+  | "completed"
+  | "editing";
 
 @EntityModel()
 @modelOptions({
   schemaOptions: {
-    collection: 'code_agent_document_reference',
+    collection: "code_agent_document_reference",
     timestamps: true,
   },
   options: { allowMixed: Severity.ALLOW },
 })
 export class DocumentReference {
-  _id: any
+  _id: any;
 
   @prop({ required: true })
-  id: string
+  id: string;
 
   @prop({ required: true })
-  url: string
+  url: string;
 
   @prop({ required: true })
-  name: string
+  name: string;
 
-  @prop({ enum: ['pending', 'syncing', 'synced', 'failed', 'completed', 'editing'], default: 'pending' })
-  status: SyncStatus
+  @prop({
+    enum: ["pending", "syncing", "synced", "failed", "completed", "editing"],
+    default: "pending",
+  })
+  status: SyncStatus;
 
   @prop({ default: 0, min: 0, max: 100 })
-  progress: number
+  progress: number;
 
   @prop()
-  lastSyncAt?: Date
+  lastSyncAt?: Date;
 
   @prop({ type: Object })
-  data?: Record<string, any>
+  data?: Record<string, any>;
 
   @prop({ type: Object })
-  annotationData?: Record<string, any>
+  annotationData?: Record<string, any>;
 
   @prop({ required: true })
-  createdAt: Date
+  createdAt: Date;
 
   @prop({ required: true })
-  updatedAt: Date
+  updatedAt: Date;
 }
 
 @EntityModel()
 @modelOptions({
   schemaOptions: {
-    collection: 'code_agent_page',
+    collection: "code_agent_page",
     timestamps: true,
   },
   options: { allowMixed: Severity.ALLOW },
 })
 export class Page {
-  _id: any
+  _id: any;
 
   @prop({ required: true })
-  id: string
+  id: string;
 
   @prop({ required: true })
-  projectId: string
+  projectId: string;
 
   @prop({ required: true })
-  name: string
+  name: string;
 
   @prop({ required: true })
-  routePath: string
+  routePath: string;
 
   @prop()
-  description: string
+  description: string;
 
   // Skip ApiProperty for DocumentReference arrays to avoid circular references
   @prop({ ref: () => DocumentReference, default: () => [] })
-  designDocuments: DocumentReference[]
+  designDocuments: DocumentReference[];
 
   @prop({ ref: () => DocumentReference, default: () => [] })
-  prdDocuments: DocumentReference[]
+  prdDocuments: DocumentReference[];
 
   @prop({ ref: () => DocumentReference, default: () => [] })
-  openapiDocuments: DocumentReference[]
+  openapiDocuments: DocumentReference[];
 
   @prop({ default: () => [] })
-  designSpecs: string[]
+  designSpecs: string[];
 
   @prop({ default: () => [] })
-  prds: string[]
+  prds: string[];
 
   @prop({ default: () => [] })
-  components: string[]
+  components: string[];
 
   @prop({ required: true })
-  createdAt: Date
+  createdAt: Date;
 
   @prop({ required: true })
-  updatedAt: Date
+  updatedAt: Date;
 }
 
 @EntityModel()
 @modelOptions({
   schemaOptions: {
-    collection: 'code_agent_project',
+    collection: "code_agent_project",
     timestamps: true,
   },
   options: { allowMixed: Severity.ALLOW },
 })
 export class Project {
   @prop({ required: true, unique: true })
-  id: string
+  id: string;
 
   @prop({ required: true })
-  name: string
+  name: string;
 
   @prop()
-  description: string
+  description: string;
 
   @prop()
-  gitRepository: string
+  gitRepository: string;
 
   @prop({ required: true })
-  manager: string
+  manager: string;
 
-  @prop({ enum: ['active', 'paused', 'completed', 'archived'], default: 'active' })
-  status: string
+  @prop({
+    enum: ["active", "paused", "completed", "archived"],
+    default: "active",
+  })
+  status: string;
 
   @prop({ default: 0, min: 0, max: 100 })
-  progress: number
+  progress: number;
 
   @prop({ default: 1, min: 1 })
-  members: number
+  members: number;
 
   @prop({ default: () => [] })
-  tags: string[]
+  tags: string[];
 
-  @prop({ default: '📁' })
-  avatar: string
+  @prop({ default: "📁" })
+  avatar: string;
 
   @prop({ ref: () => Page, default: () => [] })
-  pages: Page[]
+  pages: Page[];
 
   @prop({ required: true })
-  createdAt: Date
+  createdAt: Date;
 
   @prop({ required: true })
-  updatedAt: Date
+  updatedAt: Date;
 }

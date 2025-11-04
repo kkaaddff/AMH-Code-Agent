@@ -1,9 +1,9 @@
-import fs from 'fs';
-import { readFile, writeFile } from 'fs/promises';
-import path from 'pathe';
-import { z } from 'zod';
-import { TOOL_NAMES } from '../constants';
-import { createTool } from '../tool';
+import fs from "fs";
+import { readFile, writeFile } from "fs/promises";
+import path from "pathe";
+import { z } from "zod";
+import { TOOL_NAMES } from "../constants";
+import { createTool } from "../tool";
 
 const TODO_WRITE_PROMPT = `
 Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.
@@ -187,9 +187,9 @@ const TODO_READ_PROMPT = `Use this tool to read your todo list`;
 
 const TodoItemSchema = z.object({
   id: z.string(),
-  content: z.string().min(1, 'Content cannot be empty'),
-  status: z.enum(['pending', 'in_progress', 'completed']),
-  priority: z.enum(['low', 'medium', 'high']),
+  content: z.string().min(1, "Content cannot be empty"),
+  status: z.enum(["pending", "in_progress", "completed"]),
+  priority: z.enum(["low", "medium", "high"]),
 });
 
 const TodoListSchema = z.array(TodoItemSchema);
@@ -202,7 +202,7 @@ async function loadTodosFromFile(filePath: string) {
   if (!fs.existsSync(filePath)) return [];
 
   try {
-    const fileContent = await readFile(filePath, { encoding: 'utf-8' });
+    const fileContent = await readFile(filePath, { encoding: "utf-8" });
     const parsedData = JSON.parse(fileContent);
     return TodoListSchema.parse(parsedData);
   } catch (error) {
@@ -237,7 +237,7 @@ export function createTodoTool(opts: { filePath: string }) {
     name: TOOL_NAMES.TODO_WRITE,
     description: TODO_WRITE_PROMPT,
     parameters: z.object({
-      todos: TodoListSchema.describe('The updated todo list'),
+      todos: TodoListSchema.describe("The updated todo list"),
     }),
     async execute({ todos }) {
       try {
@@ -247,8 +247,8 @@ export function createTodoTool(opts: { filePath: string }) {
 
         return {
           llmContent:
-            'Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable',
-          returnDisplay: { type: 'todo_write', oldTodos, newTodos },
+            "Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable",
+          returnDisplay: { type: "todo_write", oldTodos, newTodos },
         };
       } catch (error) {
         return {
@@ -256,12 +256,12 @@ export function createTodoTool(opts: { filePath: string }) {
           llmContent:
             error instanceof Error
               ? `Failed to write todos: ${error.message}`
-              : 'Unknown error',
+              : "Unknown error",
         };
       }
     },
     approval: {
-      category: 'read',
+      category: "read",
     },
   });
 
@@ -275,9 +275,9 @@ export function createTodoTool(opts: { filePath: string }) {
         return {
           llmContent:
             todos.length === 0
-              ? 'Todo list is empty'
+              ? "Todo list is empty"
               : `Found ${todos.length} todos`,
-          returnDisplay: { type: 'todo_read', todos },
+          returnDisplay: { type: "todo_read", todos },
         };
       } catch (error) {
         return {
@@ -285,12 +285,12 @@ export function createTodoTool(opts: { filePath: string }) {
           llmContent:
             error instanceof Error
               ? `Failed to read todos: ${error.message}`
-              : 'Unknown error',
+              : "Unknown error",
         };
       }
     },
     approval: {
-      category: 'read',
+      category: "read",
     },
   });
 

@@ -1,9 +1,9 @@
-import TurndownService from 'turndown';
-import { z } from 'zod';
-import type { ModelInfo } from '../model';
-import { query } from '../query';
-import { createTool } from '../tool';
-import { safeStringify } from '../utils/safeStringify';
+import TurndownService from "turndown";
+import { z } from "zod";
+import type { ModelInfo } from "../model";
+import { query } from "../query";
+import { createTool } from "../tool";
+import { safeStringify } from "../utils/safeStringify";
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5min
 const urlCache = new Map();
@@ -11,19 +11,19 @@ const MAX_CONTENT_LENGTH = 15000; // 15k
 
 export function createFetchTool(opts: { model: ModelInfo }) {
   return createTool({
-    name: 'fetch',
+    name: "fetch",
     description: `
 Fetch content from url.
 Remembers:
 - IMPORTANT: If an MCP-provided web fetch tool is available, prefer using that tool instead of this one, as it may have fewer restrictions. All MCP-provided tools start with "mcp__"
     `.trim(),
     parameters: z.object({
-      url: z.string().describe('The url to fetch content from'),
-      prompt: z.string().describe('The prompt to run on the fetched content'),
+      url: z.string().describe("The url to fetch content from"),
+      prompt: z.string().describe("The prompt to run on the fetched content"),
     }),
     getDescription: ({ params }) => {
-      if (!params.url || typeof params.url !== 'string') {
-        return 'No URL provided';
+      if (!params.url || typeof params.url !== "string") {
+        return "No URL provided";
       }
       return params.url;
     },
@@ -46,26 +46,31 @@ Remembers:
         try {
           new URL(url);
         } catch (e) {
-          throw new Error('Invalid URL');
+          throw new Error("Invalid URL");
         }
 
         const response = await fetch(url);
         if (!response.ok) {
-          throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch ${url}: ${response.status} ${response.statusText}`
+          );
         }
         const rawText = await response.text();
-        const contentType = response.headers.get('content-type') ?? '';
-        const bytes = Buffer.byteLength(rawText, 'utf-8');
+        const contentType = response.headers.get("content-type") ?? "";
+        const bytes = Buffer.byteLength(rawText, "utf-8");
 
         let content: string;
-        if (contentType.includes('text/html')) {
+        if (contentType.includes("text/html")) {
           content = new TurndownService().turndown(rawText);
         } else {
           content = rawText;
         }
 
         if (content.length > MAX_CONTENT_LENGTH) {
-          content = `${content.substring(0, MAX_CONTENT_LENGTH)}...[content truncated]`;
+          content = `${content.substring(
+            0,
+            MAX_CONTENT_LENGTH
+          )}...[content truncated]`;
         }
 
         const input = `
@@ -85,9 +90,11 @@ Provide a concise response based only on the content above. In your response:
         const result = await query({
           userPrompt: input,
           model: opts.model,
-          systemPrompt: '',
+          systemPrompt: "",
         });
-        const llmResult = result.success ? result.data.text : `Failed to fetch content from ${url}`;
+        const llmResult = result.success
+          ? result.data.text
+          : `Failed to fetch content from ${url}`;
 
         const code = response.status;
         const codeText = response.statusText;
@@ -108,12 +115,12 @@ Provide a concise response based only on the content above. In your response:
       } catch (e) {
         return {
           isError: true,
-          llmContent: e instanceof Error ? e.message : 'Unknown error',
+          llmContent: e instanceof Error ? e.message : "Unknown error",
         };
       }
     },
     approval: {
-      category: 'network',
+      category: "network",
     },
   });
 }

@@ -1,15 +1,15 @@
-import { execFileNoThrow } from './execFileNoThrow';
+import { execFileNoThrow } from "./execFileNoThrow";
 
 export async function getGitStatus(opts: { cwd: string }) {
   const cwd = opts.cwd;
   const isGit = await (async () => {
     const { code } = await execFileNoThrow(
       cwd,
-      'git',
-      ['rev-parse', '--is-inside-work-tree'],
+      "git",
+      ["rev-parse", "--is-inside-work-tree"],
       undefined,
       undefined,
-      false,
+      false
     );
     return code === 0;
   })();
@@ -17,40 +17,68 @@ export async function getGitStatus(opts: { cwd: string }) {
     return null;
   }
   const branch = await (async () => {
-    const { stdout } = await execFileNoThrow(cwd, 'git', ['branch', '--show-current'], undefined, undefined, false);
+    const { stdout } = await execFileNoThrow(
+      cwd,
+      "git",
+      ["branch", "--show-current"],
+      undefined,
+      undefined,
+      false
+    );
     return stdout.trim();
   })();
   const mainBranch = await (async () => {
     const { stdout } = await execFileNoThrow(
       cwd,
-      'git',
-      ['rev-parse', '--abbrev-ref', 'origin/HEAD'],
+      "git",
+      ["rev-parse", "--abbrev-ref", "origin/HEAD"],
       undefined,
       undefined,
-      false,
+      false
     );
-    return stdout.replace('origin/', '').trim();
+    return stdout.replace("origin/", "").trim();
   })();
   const status = await (async () => {
-    const { stdout } = await execFileNoThrow(cwd, 'git', ['status', '--short'], undefined, undefined, false);
+    const { stdout } = await execFileNoThrow(
+      cwd,
+      "git",
+      ["status", "--short"],
+      undefined,
+      undefined,
+      false
+    );
     return stdout.trim();
   })();
   const log = await (async () => {
-    const { stdout } = await execFileNoThrow(cwd, 'git', ['log', '--oneline', '-n', '5'], undefined, undefined, false);
+    const { stdout } = await execFileNoThrow(
+      cwd,
+      "git",
+      ["log", "--oneline", "-n", "5"],
+      undefined,
+      undefined,
+      false
+    );
     return stdout.trim();
   })();
   const author = await (async () => {
-    const { stdout } = await execFileNoThrow(cwd, 'git', ['config', 'user.email'], undefined, undefined, false);
+    const { stdout } = await execFileNoThrow(
+      cwd,
+      "git",
+      ["config", "user.email"],
+      undefined,
+      undefined,
+      false
+    );
     return stdout.trim();
   })();
   const authorLog = await (async () => {
     const { stdout } = await execFileNoThrow(
       cwd,
-      'git',
-      ['log', '--author', author, '--oneline', '-n', '5'],
+      "git",
+      ["log", "--author", author, "--oneline", "-n", "5"],
       undefined,
       undefined,
-      false,
+      false
     );
     return stdout.trim();
   })();
@@ -64,7 +92,9 @@ export async function getGitStatus(opts: { cwd: string }) {
   };
 }
 
-export async function getLlmGitStatus(status: Awaited<ReturnType<typeof getGitStatus>>) {
+export async function getLlmGitStatus(
+  status: Awaited<ReturnType<typeof getGitStatus>>
+) {
   if (!status) {
     return null;
   }
@@ -75,12 +105,12 @@ Current branch: ${status.branch}
 Main branch (you will usually use this for PRs): ${status.mainBranch}
 
 Status:
-${status.status || '(clean)'}
+${status.status || "(clean)"}
 
 Recent commits:
 ${status.log}
 
 Your recent commits:
-${status.authorLog || '(no recent commits)'}
+${status.authorLog || "(no recent commits)"}
   `.trim();
 }

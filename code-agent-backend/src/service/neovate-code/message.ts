@@ -1,24 +1,24 @@
-import { CANCELED_MESSAGE_TEXT } from './constants';
-import type { ToolResult } from './tool';
-import { randomUUID } from './utils/randomUUID';
+import { CANCELED_MESSAGE_TEXT } from "./constants";
+import type { ToolResult } from "./tool";
+import { randomUUID } from "./utils/randomUUID";
 
 export type SystemMessage = {
-  role: 'system';
+  role: "system";
   content: string;
 };
 export type TextPart = {
-  type: 'text';
+  type: "text";
   text: string;
 };
 
 export type ImagePart = {
-  type: 'image';
+  type: "image";
   data: string;
   mimeType: string;
 };
 
 export type FilePart = {
-  type: 'file';
+  type: "file";
   filename?: string;
   data: string;
   mimeType: string;
@@ -27,7 +27,7 @@ export type FilePart = {
 export type UserContent = string | Array<TextPart | ImagePart>;
 
 export type ToolUsePart = {
-  type: 'tool_use';
+  type: "tool_use";
   id: string;
   name: string;
   input: Record<string, any>;
@@ -35,12 +35,14 @@ export type ToolUsePart = {
   description?: string;
 };
 export type ReasoningPart = {
-  type: 'reasoning';
+  type: "reasoning";
   text: string;
 };
-export type AssistantContent = string | Array<TextPart | ReasoningPart | ToolUsePart>;
+export type AssistantContent =
+  | string
+  | Array<TextPart | ReasoningPart | ToolUsePart>;
 export type AssistantMessage = {
-  role: 'assistant';
+  role: "assistant";
   content: AssistantContent;
   text: string;
   model: string;
@@ -52,20 +54,20 @@ export type AssistantMessage = {
   };
 };
 export type UserMessage = {
-  role: 'user';
+  role: "user";
   content: UserContent;
   hidden?: boolean;
 };
 export type ToolMessage = {
-  role: 'user';
+  role: "user";
   content: ToolContent;
 };
 export type ToolMessage2 = {
-  role: 'tool';
+  role: "tool";
   content: ToolResultPart2[];
 };
 export type ToolResultPart2 = {
-  type: 'tool-result';
+  type: "tool-result";
   toolCallId: string;
   toolName: string;
   input: Record<string, any>;
@@ -73,51 +75,71 @@ export type ToolResultPart2 = {
 };
 export type ToolContent = Array<ToolResultPart>;
 export type ToolResultPart = {
-  type: 'tool_result';
+  type: "tool_result";
   id: string;
   name: string;
   input: Record<string, any>;
   result: ToolResult;
 };
 
-export type Message = SystemMessage | UserMessage | AssistantMessage | ToolMessage | ToolMessage2;
+export type Message =
+  | SystemMessage
+  | UserMessage
+  | AssistantMessage
+  | ToolMessage
+  | ToolMessage2;
 export type NormalizedMessage = Message & {
-  type: 'message';
+  type: "message";
   timestamp: string;
   uuid: string;
   parentUuid: string | null;
   uiContent?: string;
 };
 
-export function createUserMessage(content: string, parentUuid: string | null): NormalizedMessage {
+export function createUserMessage(
+  content: string,
+  parentUuid: string | null
+): NormalizedMessage {
   return {
     parentUuid,
     uuid: randomUUID(),
-    role: 'user',
+    role: "user",
     content,
-    type: 'message',
+    type: "message",
     timestamp: new Date().toISOString(),
   };
 }
 
 export function isToolResultMessage(message: Message) {
-  return Array.isArray(message.content) && message.content.length === 1 && message.content[0].type === 'tool_result';
+  return (
+    Array.isArray(message.content) &&
+    message.content.length === 1 &&
+    message.content[0].type === "tool_result"
+  );
 }
 
 export function isCanceledMessage(message: Message) {
   return (
-    message.role === 'user' &&
+    message.role === "user" &&
     Array.isArray(message.content) &&
     message.content.length === 1 &&
-    message.content[0].type === 'text' &&
+    message.content[0].type === "text" &&
     message.content[0].text === CANCELED_MESSAGE_TEXT
   );
 }
 
 export function isUserBashCommandMessage(message: Message) {
-  return message.role === 'user' && typeof message.content === 'string' && message.content.startsWith('<bash-input>');
+  return (
+    message.role === "user" &&
+    typeof message.content === "string" &&
+    message.content.startsWith("<bash-input>")
+  );
 }
 
 export function isUserBashOutputMessage(message: Message) {
-  return message.role === 'user' && typeof message.content === 'string' && message.content.startsWith('<bash-stdout>');
+  return (
+    message.role === "user" &&
+    typeof message.content === "string" &&
+    message.content.startsWith("<bash-stdout>")
+  );
 }

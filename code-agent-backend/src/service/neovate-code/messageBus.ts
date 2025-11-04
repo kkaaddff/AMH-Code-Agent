@@ -1,5 +1,5 @@
-import EventEmitter from 'events';
-import { randomUUID } from './utils/randomUUID';
+import EventEmitter from "events";
+import { randomUUID } from "./utils/randomUUID";
 
 export type MessageId = string;
 export type BaseMessage = {
@@ -7,22 +7,28 @@ export type BaseMessage = {
   timestamp: number;
 };
 export type RequestMessage = BaseMessage & {
-  type: 'request';
+  type: "request";
   method: string;
   params: any;
 };
 export type ResponseMessage = BaseMessage & {
-  type: 'response';
+  type: "response";
   result?: any;
   error?: any;
 };
 export type EventMessage = BaseMessage & {
-  type: 'event';
+  type: "event";
   event: string;
   data: any;
 };
 export type Message = RequestMessage | ResponseMessage | EventMessage;
-export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error' | 'closed';
+export type ConnectionState =
+  | "disconnected"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "error"
+  | "closed";
 export interface MessageTransport {
   send: (message: Message) => Promise<void>;
   onMessage: (handler: (message: Message) => void) => void;
@@ -32,9 +38,13 @@ export interface MessageTransport {
   isConnected: () => boolean;
 }
 
-function createRequest(id: MessageId, method: string, params: any): RequestMessage {
+function createRequest(
+  id: MessageId,
+  method: string,
+  params: any
+): RequestMessage {
   return {
-    type: 'request',
+    type: "request",
     id,
     method,
     params,
@@ -42,9 +52,13 @@ function createRequest(id: MessageId, method: string, params: any): RequestMessa
   };
 }
 
-function createResponse(id: MessageId, result: any, error?: any): ResponseMessage {
+function createResponse(
+  id: MessageId,
+  result: any,
+  error?: any
+): ResponseMessage {
   return {
-    type: 'response',
+    type: "response",
     id,
     result,
     error,
@@ -53,7 +67,7 @@ function createResponse(id: MessageId, result: any, error?: any): ResponseMessag
 }
 function createErrorResponse(id: MessageId, error: any): ResponseMessage {
   return {
-    type: 'response',
+    type: "response",
     id,
     error,
     timestamp: Date.now(),
@@ -61,7 +75,7 @@ function createErrorResponse(id: MessageId, error: any): ResponseMessage {
 }
 function createEvent(id: MessageId, event: string, data: any): EventMessage {
   return {
-    type: 'event',
+    type: "event",
     id,
     event,
     data,
@@ -73,7 +87,7 @@ const MAX_BUFFER_SIZE = 1000;
 
 export class DirectTransport extends EventEmitter implements MessageTransport {
   private peer?: DirectTransport;
-  private state: ConnectionState = 'connected';
+  private state: ConnectionState = "connected";
   private messageBuffer: Message[] = [];
   constructor() {
     super();
@@ -90,16 +104,16 @@ export class DirectTransport extends EventEmitter implements MessageTransport {
     this.flushBuffer();
   }
   isConnected() {
-    return this.state === 'connected';
+    return this.state === "connected";
   }
   onMessage(handler: (message: Message) => void): void {
-    this.on('message', handler);
+    this.on("message", handler);
   }
   onError(handler: (error: Error) => void): void {
-    this.on('error', handler);
+    this.on("error", handler);
   }
   onClose(handler: () => void): void {
-    this.on('close', handler);
+    this.on("close", handler);
   }
   async send(message: Message) {
     try {
@@ -111,19 +125,23 @@ export class DirectTransport extends EventEmitter implements MessageTransport {
         this.messageBuffer.push(message);
       }
     } catch (error) {
-      this.emit('error', error);
+      this.emit("error", error);
       throw error;
     }
   }
   async close() {
-    this.state = 'closed';
+    this.state = "closed";
   }
   private flushBuffer() {
-    if (!this.peer || !this.peer.isConnected() || this.messageBuffer.length === 0) {
+    if (
+      !this.peer ||
+      !this.peer.isConnected() ||
+      this.messageBuffer.length === 0
+    ) {
       return;
     }
     if (this.messageBuffer.length > MAX_BUFFER_SIZE) {
-      this.emit('error', new Error('Message buffer overflow'));
+      this.emit("error", new Error("Message buffer overflow"));
       return;
     }
     const messages = [...this.messageBuffer];
@@ -135,13 +153,13 @@ export class DirectTransport extends EventEmitter implements MessageTransport {
     }
   }
   private receive(message: Message) {
-    if (this.state !== 'connected') {
+    if (this.state !== "connected") {
       return;
     }
     try {
-      this.emit('message', message);
+      this.emit("message", message);
     } catch (error) {
-      this.emit('error', error);
+      this.emit("error", error);
     }
   }
 }
@@ -171,22 +189,26 @@ export class MessageBus extends EventEmitter {
       this.handleIncomingMessage(message);
     });
     transport.onError((error) => {
-      this.emit('error', error);
+      this.emit("error", error);
     });
     transport.onClose(() => {
-      this.emit('close');
+      this.emit("close");
     });
-    this.emit('transportReady');
+    this.emit("transportReady");
   }
   isConnected() {
     return this.transport?.isConnected() ?? false;
   }
-  async request(method: string, params: any, options: { timeout?: number } = {}) {
+  async request(
+    method: string,
+    params: any,
+    options: { timeout?: number } = {}
+  ) {
     if (!this.transport) {
-      throw new Error('No transport available');
+      throw new Error("No transport available");
     }
     if (!this.transport.isConnected()) {
-      throw new Error('Transport is not connected');
+      throw new Error("Transport is not connected");
     }
     const id = randomUUID();
     const timeout = options.timeout ?? 0;
@@ -263,23 +285,23 @@ export class MessageBus extends EventEmitter {
   private async handleIncomingMessage(message: Message) {
     try {
       if (!message.id || !message.timestamp || !message.type) {
-        throw new Error('Invalid message format');
+        throw new Error("Invalid message format");
       }
       switch (message.type) {
-        case 'request':
+        case "request":
           await this.handleRequest(message as RequestMessage);
           break;
-        case 'response':
+        case "response":
           this.handleResponse(message as ResponseMessage);
           break;
-        case 'event':
+        case "event":
           this.handleEvent(message as EventMessage);
           break;
         default:
           break;
       }
     } catch (error) {
-      this.emit('messageError', error, message);
+      this.emit("messageError", error, message);
     }
   }
   private async handleRequest(message: RequestMessage) {
@@ -289,8 +311,8 @@ export class MessageBus extends EventEmitter {
       await this.sendResponse(
         createErrorResponse(id, {
           message: `No handler registered for method: ${method}`,
-          code: 'METHOD_NOT_FOUND',
-        }),
+          code: "METHOD_NOT_FOUND",
+        })
       );
       return;
     }
@@ -302,9 +324,9 @@ export class MessageBus extends EventEmitter {
       await this.sendResponse(
         createErrorResponse(id, {
           message: error instanceof Error ? error.message : String(error),
-          code: 'HANDLER_ERROR',
+          code: "HANDLER_ERROR",
           details: error instanceof Error ? { stack: error.stack } : undefined,
-        }),
+        })
       );
     }
   }
@@ -321,17 +343,17 @@ export class MessageBus extends EventEmitter {
     if (error) {
       // Create a more informative error
       const errorMessage =
-        typeof error === 'object' && error.message
+        typeof error === "object" && error.message
           ? error.message
-          : typeof error === 'string'
-            ? error
-            : 'Request failed';
+          : typeof error === "string"
+          ? error
+          : "Request failed";
 
       const err = new Error(errorMessage);
       // Attach the full error details
       (err as any).details = error.details
         ? Array.isArray(error.details)
-          ? error.details.join('\n')
+          ? error.details.join("\n")
           : JSON.stringify(error.details)
         : error;
       (err as any).method = pending.method;
@@ -351,7 +373,7 @@ export class MessageBus extends EventEmitter {
       try {
         handler(data);
       } catch (error) {
-        this.emit('eventHandlerError', error, event, data);
+        this.emit("eventHandlerError", error, event, data);
       }
     }
   }

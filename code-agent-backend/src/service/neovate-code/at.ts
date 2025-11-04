@@ -1,7 +1,7 @@
-import type { LanguageModelV2Prompt } from '@ai-sdk/provider';
-import fs from 'fs';
-import path from 'pathe';
-import { IMAGE_EXTENSIONS } from './constants';
+import type { LanguageModelV2Prompt } from "@ai-sdk/provider";
+import fs from "fs";
+import path from "pathe";
+import { IMAGE_EXTENSIONS } from "./constants";
 
 const MAX_LINE_LENGTH_TEXT_FILE = 2000;
 const MAX_LINES_TO_READ = 2000;
@@ -16,7 +16,7 @@ export class At {
   }
 
   getContent() {
-    const prompt = this.userPrompt || '';
+    const prompt = this.userPrompt || "";
     const ats = this.extractAtPaths(prompt);
     const files: string[] = [];
     for (const at of ats) {
@@ -49,7 +49,7 @@ export class At {
         path = path.slice(1, -1);
       } else {
         // Unescape spaces
-        path = path.replace(/\\ /g, ' ');
+        path = path.replace(/\\ /g, " ");
       }
       paths.push(path);
       match = regex.exec(prompt);
@@ -65,12 +65,14 @@ export class At {
         const stat = fs.statSync(fc);
         if (stat.size > MAX_FILE_SIZE) {
           return {
-            content: '// File too large to display',
-            metadata: `File size: ${Math.round(stat.size / 1024 / 1024)}MB (skipped)`,
+            content: "// File too large to display",
+            metadata: `File size: ${Math.round(
+              stat.size / 1024 / 1024
+            )}MB (skipped)`,
             file: fc,
           };
         }
-        const content = fs.readFileSync(fc, 'utf-8');
+        const content = fs.readFileSync(fc, "utf-8");
         const result = this.processFileContent(content);
         return {
           content: result.content,
@@ -87,9 +89,9 @@ export class At {
         <path>${path.relative(this.cwd, result.file)}</path>
         <metadata>${result.metadata}</metadata>
         <content><![CDATA[${result.content}]]></content>
-      </file>`,
+      </file>`
       )
-      .join('');
+      .join("");
 
     return `<files>This section contains the contents of the repository's files.\n${fileContents}\n</files>`;
   }
@@ -106,7 +108,10 @@ export class At {
             files.push(itemPath);
           } else if (stat.isDirectory()) {
             // Skip hidden directories and common ignore patterns
-            if (!item.startsWith('.') && !['node_modules', 'dist', 'build'].includes(item)) {
+            if (
+              !item.startsWith(".") &&
+              !["node_modules", "dist", "build"].includes(item)
+            ) {
               traverse(itemPath);
             }
           }
@@ -124,7 +129,7 @@ export class At {
     if (line.length <= MAX_LINE_LENGTH_TEXT_FILE) {
       return line;
     }
-    return line.substring(0, MAX_LINE_LENGTH_TEXT_FILE) + '... [truncated]';
+    return line.substring(0, MAX_LINE_LENGTH_TEXT_FILE) + "... [truncated]";
   }
 
   private processFileContent(content: string): {
@@ -138,7 +143,7 @@ export class At {
     if (totalLines <= MAX_LINES_TO_READ) {
       const processedLines = allLines.map((line) => this.truncateLine(line));
       return {
-        content: processedLines.join('\n'),
+        content: processedLines.join("\n"),
         metadata: `Complete file (${totalLines} lines)`,
       };
     }
@@ -148,21 +153,24 @@ export class At {
     const truncatedLines = selectedLines.map((line) => this.truncateLine(line));
 
     return {
-      content: truncatedLines.join('\n'),
+      content: truncatedLines.join("\n"),
       metadata: `Showing first ${MAX_LINES_TO_READ} lines of ${totalLines} total lines`,
     };
   }
 
-  static normalizeLanguageV2Prompt(opts: { input: LanguageModelV2Prompt; cwd: string }): LanguageModelV2Prompt {
+  static normalizeLanguageV2Prompt(opts: {
+    input: LanguageModelV2Prompt;
+    cwd: string;
+  }): LanguageModelV2Prompt {
     const lastUserMessage = [...opts.input].reverse().find((item) => {
-      return 'role' in item && item.role === 'user';
+      return "role" in item && item.role === "user";
     });
     if (!lastUserMessage) {
       return opts.input;
     }
     const content = lastUserMessage.content;
     for (const item of content) {
-      if (item.type === 'text') {
+      if (item.type === "text") {
         const userPrompt = item.text;
         const at = new At({
           userPrompt,

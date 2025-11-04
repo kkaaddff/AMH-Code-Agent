@@ -1,13 +1,18 @@
-import fs from 'node:fs';
-import { createJiti } from 'jiti';
-import path from 'pathe';
-import resolve from 'resolve';
-import { BackgroundTaskManager } from './backgroundTaskManager';
-import { type Config, ConfigManager } from './config';
-import { MCPManager } from './mcp';
-import type { MessageBus } from './messageBus';
-import { Paths } from './paths';
-import { type Plugin, type PluginApplyOpts, PluginHookType, PluginManager } from './plugin';
+import fs from "node:fs";
+import { createJiti } from "jiti";
+import path from "pathe";
+import resolve from "resolve";
+import { BackgroundTaskManager } from "./backgroundTaskManager";
+import { type Config, ConfigManager } from "./config";
+import { MCPManager } from "./mcp";
+import type { MessageBus } from "./messageBus";
+import { Paths } from "./paths";
+import {
+  type Plugin,
+  type PluginApplyOpts,
+  PluginHookType,
+  PluginManager,
+} from "./plugin";
 
 type ContextOpts = {
   cwd: string;
@@ -60,7 +65,7 @@ export class Context {
     this.messageBus = opts.messageBus;
   }
 
-  async apply(applyOpts: Omit<PluginApplyOpts, 'pluginContext'>) {
+  async apply(applyOpts: Omit<PluginApplyOpts, "pluginContext">) {
     return this.#pluginManager.apply({
       ...applyOpts,
       pluginContext: this,
@@ -70,7 +75,7 @@ export class Context {
   async destroy() {
     await this.mcpManager.destroy();
     await this.apply({
-      hook: 'destroy',
+      hook: "destroy",
       args: [],
       type: PluginHookType.Parallel,
     });
@@ -83,11 +88,19 @@ export class Context {
       productName,
       cwd,
     });
-    const configManager = new ConfigManager(cwd, productName, opts.argvConfig || {});
+    const configManager = new ConfigManager(
+      cwd,
+      productName,
+      opts.argvConfig || {}
+    );
     const initialConfig = configManager.config;
     const buildInPlugins: Plugin[] = [];
-    const globalPlugins = scanPlugins(path.join(paths.globalConfigDir, 'plugins'));
-    const projectPlugins = scanPlugins(path.join(paths.projectConfigDir, 'plugins'));
+    const globalPlugins = scanPlugins(
+      path.join(paths.globalConfigDir, "plugins")
+    );
+    const projectPlugins = scanPlugins(
+      path.join(paths.projectConfigDir, "plugins")
+    );
     const pluginsConfigs: (string | Plugin)[] = [
       ...buildInPlugins,
       ...globalPlugins,
@@ -107,7 +120,7 @@ export class Context {
       pluginManager,
     };
     const resolvedConfig = await apply({
-      hook: 'config',
+      hook: "config",
       args: [{ config: initialConfig, argvConfig: opts.argvConfig }],
       memo: initialConfig,
       type: PluginHookType.SeriesMerge,
@@ -139,7 +152,7 @@ function normalizePlugins(cwd: string, plugins: (string | Plugin)[]) {
   let jiti: any = null;
   return Promise.all(
     plugins.map(async (plugin) => {
-      if (typeof plugin === 'string') {
+      if (typeof plugin === "string") {
         const pluginPath = resolve.sync(plugin, { basedir: cwd });
         if (!jiti) {
           jiti = createJiti(__dirname);
@@ -149,7 +162,7 @@ function normalizePlugins(cwd: string, plugins: (string | Plugin)[]) {
         })) as Plugin;
       }
       return plugin;
-    }),
+    })
   );
 }
 
@@ -160,7 +173,7 @@ function scanPlugins(pluginDir: string): string[] {
     }
     const files = fs.readdirSync(pluginDir);
     return files
-      .filter((file) => file.endsWith('.js') || file.endsWith('.ts'))
+      .filter((file) => file.endsWith(".js") || file.endsWith(".ts"))
       .map((file) => path.join(pluginDir, file));
   } catch (error) {
     return [];

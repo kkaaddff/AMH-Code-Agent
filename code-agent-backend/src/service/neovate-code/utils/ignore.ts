@@ -1,6 +1,6 @@
-import fs from 'fs';
-import { homedir } from 'os';
-import { join, relative, sep } from 'pathe';
+import fs from "fs";
+import { homedir } from "os";
+import { join, relative, sep } from "pathe";
 
 /**
  * Gets the global gitignore file path
@@ -8,9 +8,9 @@ import { join, relative, sep } from 'pathe';
 function getGlobalGitignorePath(): string | null {
   // Check common default locations
   const commonPaths = [
-    join(homedir(), '.gitignore_global'),
-    join(homedir(), '.config', 'git', 'ignore'),
-    join(homedir(), '.gitignore'),
+    join(homedir(), ".gitignore_global"),
+    join(homedir(), ".config", "git", "ignore"),
+    join(homedir(), ".gitignore"),
   ];
 
   for (const path of commonPaths) {
@@ -30,18 +30,21 @@ function getGlobalGitignorePath(): string | null {
  * Gets the repository-specific exclude file path
  */
 function getRepoExcludePath(rootPath: string): string {
-  return join(rootPath, '.git', 'info', 'exclude');
+  return join(rootPath, ".git", "info", "exclude");
 }
 
 function parseIgnoreFiles(
   rootPath: string,
-  productName: string,
+  productName: string
 ): {
   patterns: string[];
   negationPatterns: string[];
 } {
-  const gitignorePath = join(rootPath, '.gitignore');
-  const productIgnorePath = join(rootPath, `.${productName.toLowerCase()}ignore`);
+  const gitignorePath = join(rootPath, ".gitignore");
+  const productIgnorePath = join(
+    rootPath,
+    `.${productName.toLowerCase()}ignore`
+  );
   const globalGitignorePath = getGlobalGitignorePath();
   const repoExcludePath = getRepoExcludePath(rootPath);
 
@@ -51,8 +54,11 @@ function parseIgnoreFiles(
   // Parse global gitignore first (lowest precedence)
   if (globalGitignorePath) {
     try {
-      const globalContent = fs.readFileSync(globalGitignorePath, 'utf8');
-      const { patterns: globalPatterns, negationPatterns: globalNegationPatterns } = parseIgnoreContent(globalContent);
+      const globalContent = fs.readFileSync(globalGitignorePath, "utf8");
+      const {
+        patterns: globalPatterns,
+        negationPatterns: globalNegationPatterns,
+      } = parseIgnoreContent(globalContent);
       patterns.push(...globalPatterns);
       negationPatterns.push(...globalNegationPatterns);
     } catch (_e) {
@@ -62,9 +68,11 @@ function parseIgnoreFiles(
 
   // Parse .git/info/exclude second
   try {
-    const repoExcludeContent = fs.readFileSync(repoExcludePath, 'utf8');
-    const { patterns: excludePatterns, negationPatterns: excludeNegationPatterns } =
-      parseIgnoreContent(repoExcludeContent);
+    const repoExcludeContent = fs.readFileSync(repoExcludePath, "utf8");
+    const {
+      patterns: excludePatterns,
+      negationPatterns: excludeNegationPatterns,
+    } = parseIgnoreContent(repoExcludeContent);
     patterns.push(...excludePatterns);
     negationPatterns.push(...excludeNegationPatterns);
   } catch (_e) {
@@ -73,8 +81,9 @@ function parseIgnoreFiles(
 
   // Parse .gitignore third
   try {
-    const gitignoreContent = fs.readFileSync(gitignorePath, 'utf8');
-    const { patterns: gitPatterns, negationPatterns: gitNegationPatterns } = parseIgnoreContent(gitignoreContent);
+    const gitignoreContent = fs.readFileSync(gitignorePath, "utf8");
+    const { patterns: gitPatterns, negationPatterns: gitNegationPatterns } =
+      parseIgnoreContent(gitignoreContent);
     patterns.push(...gitPatterns);
     negationPatterns.push(...gitNegationPatterns);
   } catch (_e) {
@@ -83,9 +92,11 @@ function parseIgnoreFiles(
 
   // Parse .takumiignore last (highest precedence)
   try {
-    const takumiIgnoreContent = fs.readFileSync(productIgnorePath, 'utf8');
-    const { patterns: takumiPatterns, negationPatterns: takumiNegationPatterns } =
-      parseIgnoreContent(takumiIgnoreContent);
+    const takumiIgnoreContent = fs.readFileSync(productIgnorePath, "utf8");
+    const {
+      patterns: takumiPatterns,
+      negationPatterns: takumiNegationPatterns,
+    } = parseIgnoreContent(takumiIgnoreContent);
     patterns.push(...takumiPatterns);
     negationPatterns.push(...takumiNegationPatterns);
   } catch (_e) {
@@ -102,7 +113,7 @@ function parseIgnoreContent(content: string): {
   patterns: string[];
   negationPatterns: string[];
 } {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   const patterns: string[] = [];
   const negationPatterns: string[] = [];
 
@@ -110,12 +121,12 @@ function parseIgnoreContent(content: string): {
     const trimmed = line.trim();
 
     // Skip empty lines and comments
-    if (!trimmed || trimmed.startsWith('#')) {
+    if (!trimmed || trimmed.startsWith("#")) {
       continue;
     }
 
     // Handle negation patterns (starting with !)
-    if (trimmed.startsWith('!')) {
+    if (trimmed.startsWith("!")) {
       const pattern = trimmed.slice(1);
       negationPatterns.push(normalizePattern(pattern));
       continue;
@@ -134,12 +145,12 @@ function normalizePattern(pattern: string): string {
   let normalized = pattern;
 
   // Handle leading slash (root-relative patterns)
-  if (normalized.startsWith('/')) {
+  if (normalized.startsWith("/")) {
     normalized = normalized.slice(1);
   }
 
   // Handle trailing slash (directory-only patterns)
-  if (normalized.endsWith('/')) {
+  if (normalized.endsWith("/")) {
     normalized = normalized.slice(0, -1);
   }
 
@@ -157,24 +168,24 @@ function matchesPattern(filePath: string, pattern: string): boolean {
   }
 
   // Handle ** (match any number of directories)
-  if (pattern.includes('**')) {
-    const parts = pattern.split('**');
+  if (pattern.includes("**")) {
+    const parts = pattern.split("**");
     if (parts.length === 2) {
       const [prefix, suffix] = parts;
-      const prefixMatch = prefix === '' || filePath.startsWith(prefix);
-      const suffixMatch = suffix === '' || filePath.endsWith(suffix);
+      const prefixMatch = prefix === "" || filePath.startsWith(prefix);
+      const suffixMatch = suffix === "" || filePath.endsWith(suffix);
       return prefixMatch && suffixMatch;
     }
   }
 
   // Handle single * wildcard
-  if (pattern.includes('*')) {
-    const regex = new RegExp('^' + pattern.replace(/\*/g, '[^/]*') + '$');
+  if (pattern.includes("*")) {
+    const regex = new RegExp("^" + pattern.replace(/\*/g, "[^/]*") + "$");
     return regex.test(filePath);
   }
 
   // Directory pattern - match if file is under the directory
-  if (filePath.startsWith(pattern + '/')) {
+  if (filePath.startsWith(pattern + "/")) {
     return true;
   }
 
@@ -184,8 +195,15 @@ function matchesPattern(filePath: string, pattern: string): boolean {
 /**
  * Checks if a file or directory should be ignored based on ignore rules
  */
-export function isIgnored(filePath: string, rootPath: string, productName: string = 'neovate'): boolean {
-  const { patterns, negationPatterns } = parseIgnoreFiles(rootPath, productName);
+export function isIgnored(
+  filePath: string,
+  rootPath: string,
+  productName: string = "neovate"
+): boolean {
+  const { patterns, negationPatterns } = parseIgnoreFiles(
+    rootPath,
+    productName
+  );
 
   // If no patterns, nothing is ignored
   if (patterns.length === 0 && negationPatterns.length === 0) {
@@ -196,7 +214,7 @@ export function isIgnored(filePath: string, rootPath: string, productName: strin
   const relativePath = relative(rootPath, filePath);
 
   // Normalize path separators for cross-platform compatibility
-  const normalizedPath = relativePath.split(sep).join('/');
+  const normalizedPath = relativePath.split(sep).join("/");
 
   // Check if any ignore pattern matches
   let isIgnoredByPattern = false;

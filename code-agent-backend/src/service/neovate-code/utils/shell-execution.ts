@@ -6,11 +6,11 @@
  * Based on Apache License, thanks to the original work:
  * ref: https://github.com/google-gemini/gemini-cli/blob/main/packages/core/src/services/shellExecutionService.ts
  */
-import { spawn } from 'child_process';
-import os from 'os';
-import stripAnsi from 'strip-ansi';
-import { TextDecoder } from 'util';
-import { getCachedEncodingForBufferSync } from './system-encoding';
+import { spawn } from "child_process";
+import os from "os";
+import stripAnsi from "strip-ansi";
+import { TextDecoder } from "util";
+import { getCachedEncodingForBufferSync } from "./system-encoding";
 
 const SIGKILL_TIMEOUT_MS = 200;
 const MAX_OUTPUT_SIZE = 100 * 1024 * 1024; // 100MB limit to prevent memory overflow
@@ -47,19 +47,19 @@ export interface ShellExecutionHandle {
 export type ShellOutputEvent =
   | {
       /** The event contains a chunk of output data. */
-      type: 'data';
+      type: "data";
       /** The stream from which the data originated. */
-      stream: 'stdout' | 'stderr';
+      stream: "stdout" | "stderr";
       /** The decoded string chunk. */
       chunk: string;
     }
   | {
       /** Signals that the output stream has been identified as binary. */
-      type: 'binary_detected';
+      type: "binary_detected";
     }
   | {
       /** Provides progress updates for a binary stream. */
-      type: 'binary_progress';
+      type: "binary_progress";
       /** The total number of bytes received so far. */
       bytesReceived: number;
     };
@@ -71,19 +71,19 @@ export function shellExecute(
   cwd: string,
   timeout: number,
   // Reserved for future streaming output
-  onOutputEvent?: (event: ShellOutputEvent) => void,
+  onOutputEvent?: (event: ShellOutputEvent) => void
 ): ShellExecutionHandle {
-  const isWindows = os.platform() === 'win32';
-  const shell = isWindows ? 'cmd.exe' : 'bash';
-  const shellArgs = [isWindows ? '/c' : '-c', commandToExecute];
+  const isWindows = os.platform() === "win32";
+  const shell = isWindows ? "cmd.exe" : "bash";
+  const shellArgs = [isWindows ? "/c" : "-c", commandToExecute];
 
   const child = spawn(shell, shellArgs, {
     cwd,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ["ignore", "pipe", "pipe"],
     detached: !isWindows, // Use process groups on non-Windows for robust killing
     env: {
       ...process.env,
-      TAKUMI_AI_CLI: '1',
+      TAKUMI_AI_CLI: "1",
     },
   });
 
@@ -106,7 +106,7 @@ export function shellExecute(
     let sniffBuffer = Buffer.alloc(0);
     let sniffedBytes = 0;
 
-    const handleOutput = (data: Buffer, stream: 'stdout' | 'stderr') => {
+    const handleOutput = (data: Buffer, stream: "stdout" | "stderr") => {
       // Check memory limit to prevent overflow
       totalOutputSize += data.length;
       if (totalOutputSize > MAX_OUTPUT_SIZE) {
@@ -123,17 +123,27 @@ export function shellExecute(
         } catch {
           // If the encoding is not supported, fall back to utf-8.
           // This can happen on some platforms for certain encodings like 'utf-32le'.
-          stdoutDecoder = new TextDecoder('utf-8');
-          stderrDecoder = new TextDecoder('utf-8');
+          stdoutDecoder = new TextDecoder("utf-8");
+          stderrDecoder = new TextDecoder("utf-8");
         }
       }
 
       outputChunks.push(data);
 
       // Optimized binary detection - avoid repeated Buffer.concat operations
-      if (!binaryDetected && isStreamingRawContent && sniffedBytes < MAX_SNIFF_SIZE) {
-        const remainingSniffSize = Math.min(MAX_SNIFF_SIZE - sniffedBytes, BINARY_SNIFF_CHUNK_SIZE);
-        const dataToSniff = data.subarray(0, Math.min(data.length, remainingSniffSize));
+      if (
+        !binaryDetected &&
+        isStreamingRawContent &&
+        sniffedBytes < MAX_SNIFF_SIZE
+      ) {
+        const remainingSniffSize = Math.min(
+          MAX_SNIFF_SIZE - sniffedBytes,
+          BINARY_SNIFF_CHUNK_SIZE
+        );
+        const dataToSniff = data.subarray(
+          0,
+          Math.min(data.length, remainingSniffSize)
+        );
 
         if (dataToSniff.length > 0) {
           sniffBuffer = Buffer.concat([sniffBuffer, dataToSniff]);
@@ -142,57 +152,57 @@ export function shellExecute(
           if (isBinary(sniffBuffer)) {
             binaryDetected = true;
             isStreamingRawContent = false;
-            onOutputEvent?.({ type: 'binary_detected' });
+            onOutputEvent?.({ type: "binary_detected" });
           }
         }
       }
 
       const decodedChunk =
-        stream === 'stdout'
+        stream === "stdout"
           ? stdoutDecoder.decode(data, { stream: true })
           : stderrDecoder.decode(data, { stream: true });
       const strippedChunk = stripAnsi(decodedChunk);
 
       // Collect chunks in arrays instead of string concatenation
-      if (stream === 'stdout') {
+      if (stream === "stdout") {
         stdoutChunks.push(strippedChunk);
       } else {
         stderrChunks.push(strippedChunk);
       }
 
       if (isStreamingRawContent) {
-        onOutputEvent?.({ type: 'data', stream, chunk: strippedChunk });
+        onOutputEvent?.({ type: "data", stream, chunk: strippedChunk });
       } else {
         // Use cached totalOutputSize instead of reduce
         onOutputEvent?.({
-          type: 'binary_progress',
+          type: "binary_progress",
           bytesReceived: totalOutputSize,
         });
       }
     };
 
-    child.stdout.on('data', (data) => handleOutput(data, 'stdout'));
-    child.stderr.on('data', (data) => handleOutput(data, 'stderr'));
-    child.on('error', (err) => {
+    child.stdout.on("data", (data) => handleOutput(data, "stdout"));
+    child.stderr.on("data", (data) => handleOutput(data, "stderr"));
+    child.on("error", (err) => {
       error = err;
     });
 
     const abortHandler = async () => {
       if (child.pid && !exited) {
         if (isWindows) {
-          spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t']);
+          spawn("taskkill", ["/pid", child.pid.toString(), "/f", "/t"]);
         } else {
           try {
             // Kill the entire process group (negative PID).
             // SIGTERM first, then SIGKILL if it doesn't die.
-            process.kill(-child.pid, 'SIGTERM');
+            process.kill(-child.pid, "SIGTERM");
             await new Promise((res) => setTimeout(res, SIGKILL_TIMEOUT_MS));
             if (!exited) {
-              process.kill(-child.pid, 'SIGKILL');
+              process.kill(-child.pid, "SIGKILL");
             }
           } catch (_e) {
             // Fall back to killing just the main process if group kill fails.
-            if (!exited) child.kill('SIGKILL');
+            if (!exited) child.kill("SIGKILL");
           }
         }
       }
@@ -204,7 +214,7 @@ export function shellExecute(
       abortHandler();
     }, timeout);
 
-    child.on('exit', (code, signal) => {
+    child.on("exit", (code, signal) => {
       exited = true;
       clearTimeout(timeoutId);
 
@@ -223,13 +233,14 @@ export function shellExecute(
       }
 
       // Join chunks efficiently at the end
-      const stdout = stdoutChunks.join('');
-      const stderr = stderrChunks.join('');
-      const finalBuffer = outputChunks.length > 0 ? Buffer.concat(outputChunks) : Buffer.alloc(0);
+      const stdout = stdoutChunks.join("");
+      const stderr = stderrChunks.join("");
+      const finalBuffer =
+        outputChunks.length > 0 ? Buffer.concat(outputChunks) : Buffer.alloc(0);
 
       resolve({
         rawOutput: finalBuffer,
-        output: stdout + (stderr ? `\n${stderr}` : ''),
+        output: stdout + (stderr ? `\n${stderr}` : ""),
         stdout,
         stderr,
         exitCode: code,
@@ -244,7 +255,10 @@ export function shellExecute(
   return { pid: child.pid, result };
 }
 
-export function isBinary(data: Buffer | null | undefined, sampleSize = 512): boolean {
+export function isBinary(
+  data: Buffer | null | undefined,
+  sampleSize = 512
+): boolean {
   if (!data || data.length === 0) {
     return false;
   }

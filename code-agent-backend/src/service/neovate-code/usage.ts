@@ -1,4 +1,4 @@
-import type { AssistantMessage } from './message';
+import type { AssistantMessage } from "./message";
 
 export class Usage {
   promptTokens: number;
@@ -16,9 +16,12 @@ export class Usage {
   }
 
   static fromEventUsage(eventUsage: any): Usage {
-    const promptTokens = eventUsage?.promptTokens ?? eventUsage?.inputTokens ?? 0;
-    const completionTokens = eventUsage?.completionTokens ?? eventUsage?.outputTokens ?? 0;
-    const totalTokens = eventUsage?.totalTokens ?? promptTokens + completionTokens;
+    const promptTokens =
+      eventUsage?.promptTokens ?? eventUsage?.inputTokens ?? 0;
+    const completionTokens =
+      eventUsage?.completionTokens ?? eventUsage?.outputTokens ?? 0;
+    const totalTokens =
+      eventUsage?.totalTokens ?? promptTokens + completionTokens;
 
     return new Usage({
       promptTokens: Number.isNaN(promptTokens) ? 0 : promptTokens,
@@ -56,6 +59,10 @@ export class Usage {
   }
 
   isValid(): boolean {
-    return this.promptTokens >= 0 && this.completionTokens >= 0 && this.totalTokens >= 0;
+    return (
+      this.promptTokens >= 0 &&
+      this.completionTokens >= 0 &&
+      this.totalTokens >= 0
+    );
   }
 }
