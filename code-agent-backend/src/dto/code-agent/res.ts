@@ -134,6 +134,27 @@ export class DeletePageResponse extends BaseResponse<SimpleProject> {
   }
 }
 
+// Simple page type for Swagger
+interface SimplePage {
+  id: string;
+  projectId?: string;
+  name: string;
+  routePath: string;
+  description?: string;
+  designUrls?: string[];
+  prdUrls?: string[];
+  openapiUrls?: string[];
+  documents?: any[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export class PageDetailResponse extends BaseResponse<SimplePage> {
+  constructor(page: SimplePage | any) {
+    super(page as SimplePage, true, "Page retrieved successfully");
+  }
+}
+
 export class UpdateDocumentStatusResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
     super(

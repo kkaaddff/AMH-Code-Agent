@@ -1,52 +1,39 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { Tree, Button, Space, Typography, App, Checkbox, Drawer, Tooltip } from 'antd';
-import type { DataNode, TreeProps } from 'antd/es/tree';
+import React, { useMemo, useState } from 'react';
+import { Tree, Button, Space, Typography, App, Collapse, List, Tag, Modal, Input, Form } from 'antd';
+import type { DataNode } from 'antd/es/tree';
 import {
   FolderOutlined,
   FileOutlined,
-  DownOutlined,
-  UpOutlined,
   SaveOutlined,
-  // FileTextOutlined,
-  ApartmentOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined,
   ThunderboltOutlined,
+  PlusOutlined,
+  FileImageOutlined,
+  FileTextOutlined,
+  ApiOutlined,
+  DeleteOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import { useComponentDetectionV2 } from '../contexts/ComponentDetectionContextV2';
 import { AnnotationNode } from '../types/componentDetectionV2';
-import type { DSLData, DSLNode } from '@/types/dsl';
-import { findParent } from '../utils/intermediateNodeExtractor';
+import { DocumentReference } from '@/types/project';
+import { getDocumentStatusColor, getDocumentStatusText } from '@/utils/documentStatus';
 
 const { Title, Text } = Typography;
 
 interface LayerTreePanelProps {
+  pageId: string;
+  documents: {
+    design: DocumentReference[];
+    prd: DocumentReference[];
+    openapi: DocumentReference[];
+  };
+  selectedDocument: { type: 'design' | 'prd' | 'openapi'; id: string } | null;
+  onSelectDocument: (type: 'design' | 'prd' | 'openapi', id: string) => void;
+  onAddDocument: (type: 'design' | 'prd' | 'openapi') => void;
+  onDeleteDocument: (type: 'design' | 'prd' | 'openapi', id: string) => void;
   onSave?: () => void;
-  onGenerateDoc?: () => void;
   onGenerateCode?: () => void;
-  dslData?: DSLData | null;
-  onToggleNodeVisibility?: (nodeId: string, hidden: boolean) => void;
-  onResetNodeVisibility?: () => void;
-  dslSelectedNodeId?: string | null;
-  onSelectDslNode?: (nodeId: string | null) => void;
-  onHoverDslNode?: (nodeId: string | null) => void;
 }
-
-// 处理拖拽验证
-const handleAllowDrop: TreeProps['allowDrop'] = ({ dropNode, dropPosition }) => {
-  // dropPosition:
-  // -1: 插入到目标节点之前 (before)
-  //  0: 插入到目标节点内部 (inside)
-  //  1: 插入到目标节点之后 (after)
-
-  // 根节点不允许作为目标（不能在根节点前后插入）
-  if (dropNode.key === 'root' && dropPosition !== 0) {
-    return false;
-  }
-
-  // 允许拖入根节点内部
-  return true;
-};
 
 // 转换AnnotationNode为Tree DataNode
 const convertToTreeData = (node: AnnotationNode): DataNode => {
@@ -77,15 +64,14 @@ const convertToTreeData = (node: AnnotationNode): DataNode => {
 };
 
 const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
+  pageId,
+  documents,
+  selectedDocument,
+  onSelectDocument,
+  onAddDocument,
+  onDeleteDocument,
   onSave,
-  onGenerateDoc: _onGenerateDoc,
   onGenerateCode,
-  dslData,
-  onToggleNodeVisibility,
-  onResetNodeVisibility,
-  dslSelectedNodeId,
-  onSelectDslNode,
-  onHoverDslNode,
 }) => {
   const { modal, message } = App.useApp();
   const {
@@ -93,196 +79,28 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
     selectedAnnotationId,
     expandedKeys,
     selectAnnotation,
-    deleteAnnotation,
     setExpandedKeys,
     expandAll,
     collapseAll,
-    findAnnotationById,
-    validateMove,
-    moveAnnotation,
   } = useComponentDetectionV2();
 
-  // 键盘状态监听
-  const [isCmdPressed, setIsCmdPressed] = useState(false);
-  const [isDslDrawerOpen, setIsDslDrawerOpen] = useState(false);
+  const [addDocModalVisible, setAddDocModalVisible] = useState(false);
+  const [addDocType, setAddDocType] = useState<'design' | 'prd' | 'openapi'>('design');
+  const [addDocForm] = Form.useForm();
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Meta' || e.key === 'Control') {
-        setIsCmdPressed(true);
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Meta' || e.key === 'Control') {
-        setIsCmdPressed(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
-
-  // 生成Tree数据
+  // 生成Tree数据（仅在选中设计文档时显示）
   const treeData: DataNode[] = useMemo(() => {
-    if (!rootAnnotation) return [];
+    if (!rootAnnotation || selectedDocument?.type !== 'design') return [];
     return [convertToTreeData(rootAnnotation)];
-  }, [rootAnnotation]);
-
-  const handleDslNodeVisibilityToggle = useCallback(
-    (node: DSLNode, nextHidden: boolean) => {
-      onToggleNodeVisibility?.(node.id, nextHidden);
-    },
-    [onToggleNodeVisibility]
-  );
-
-  const buildDslTreeData = useCallback(
-    (nodes?: DSLNode[]): DataNode[] =>
-      (nodes || []).map((dslNode) => {
-        const hidden = Boolean(dslNode.hidden);
-        const title = (
-          <Space size={6}>
-            <span
-              style={{
-                opacity: hidden ? 0.45 : 1,
-                textDecoration: hidden ? 'line-through' : undefined,
-              }}
-            >
-              {dslNode.name || dslNode.type}
-            </span>
-            <Tooltip title={hidden ? '显示节点' : '隐藏节点'}>
-              <Button
-                size="small"
-                type="text"
-                icon={hidden ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleDslNodeVisibilityToggle(dslNode, !hidden);
-                }}
-              />
-            </Tooltip>
-          </Space>
-        );
-
-        return {
-          key: dslNode.id,
-          title,
-          children: buildDslTreeData(dslNode.children),
-        };
-      }),
-    [handleDslNodeVisibilityToggle]
-  );
-
-  const dslTreeData = useMemo(() => {
-    const nodes = dslData?.dsl?.nodes || [];
-    return buildDslTreeData(nodes);
-  }, [buildDslTreeData, dslData]);
-
-  const hasHiddenNodes = useMemo(() => {
-    const checkHidden = (nodes?: DSLNode[]): boolean => {
-      if (!nodes) return false;
-      return nodes.some((node) => node.hidden || checkHidden(node.children));
-    };
-    return checkHidden(dslData?.dsl?.nodes);
-  }, [dslData]);
-
-  const handleDslTreeSelect: TreeProps['onSelect'] = (selectedKeysValue) => {
-    if (!selectedKeysValue.length) {
-      onSelectDslNode?.(null);
-      return;
-    }
-    const targetKey = selectedKeysValue[selectedKeysValue.length - 1] as string;
-    const isSameSelection = dslSelectedNodeId === targetKey;
-    if (isSameSelection) {
-      onSelectDslNode?.(null);
-      return;
-    }
-    onSelectDslNode?.(targetKey);
-  };
-
-  const handleDslTreeMouseEnter: TreeProps['onMouseEnter'] = ({ node }) => {
-    onHoverDslNode?.(node.key as string);
-  };
-
-  const handleDslTreeMouseLeave: TreeProps['onMouseLeave'] = () => {
-    onHoverDslNode?.(null);
-  };
-
-  const handleShowAllNodes = useCallback(() => {
-    if (!onResetNodeVisibility) {
-      message.warning('当前 DSL 数据不可编辑');
-      return;
-    }
-    onResetNodeVisibility();
-    message.success('已显示所有节点');
-  }, [message, onResetNodeVisibility]);
-
-  const handleCloseDslDrawer = useCallback(() => {
-    setIsDslDrawerOpen(false);
-    onSelectDslNode?.(null);
-    onHoverDslNode?.(null);
-  }, [onHoverDslNode, onSelectDslNode]);
+  }, [rootAnnotation, selectedDocument]);
 
   // 处理节点选择
   const handleSelect = (selectedKeys: React.Key[]) => {
     if (selectedKeys.length > 0) {
-      // 如果按住 Cmd/Ctrl 键，使用多选模式；否则使用单选模式
-      selectAnnotation(selectedKeys[0] as string, isCmdPressed);
+      selectAnnotation(selectedKeys[0] as string, false);
     } else {
       selectAnnotation(null);
     }
-  };
-
-  // 处理右键菜单
-  const handleRightClick = ({ event, node }: any) => {
-    event.preventDefault();
-
-    const nodeKey = node.key as string;
-    const annotation: AnnotationNode | null = findAnnotationById(nodeKey);
-
-    // 页面根节点不能删除
-    if (nodeKey === 'root') {
-      modal.warning({
-        title: '无法删除',
-        content: '页面根节点不能删除',
-      });
-      return;
-    }
-
-    let deleteChildren = false;
-    const displayName = annotation
-      ? `${annotation.ftaComponent}${annotation.name ? ` (${annotation.name})` : ''}`
-      : nodeKey;
-
-    modal.confirm({
-      title: '删除标注',
-      content: (
-        <Space direction="vertical" size={4}>
-          <span>确定要删除标注 "{displayName}" 吗？</span>
-          <Checkbox
-            onChange={(e) => {
-              deleteChildren = e.target.checked;
-            }}
-          >
-            同时删除所有子标注
-          </Checkbox>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            不勾选时仅删除当前标注，子标注将自动提升一级
-          </Text>
-        </Space>
-      ),
-      okText: '删除',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: () => {
-        deleteAnnotation(nodeKey, { deleteChildren });
-      },
-    });
   };
 
   // 处理展开/收起
@@ -290,144 +108,310 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
     setExpandedKeys(expandedKeysValue as string[]);
   };
 
-  // 处理拖拽放置
-  const handleDrop: TreeProps['onDrop'] = async (info) => {
-    const sourceKey = info.dragNode.key as string;
-    const targetKey = info.node.key as string;
-    const dropPosition = info.dropPosition;
-    const dropToGap = info.dropToGap; // 是否放置在节点间隙
+  // 处理添加文档
+  const handleAddDocumentClick = (type: 'design' | 'prd' | 'openapi') => {
+    setAddDocType(type);
+    setAddDocModalVisible(true);
+  };
 
-    // 确定放置位置
-    let position: 'before' | 'inside' | 'after';
-
-    if (!dropToGap) {
-      // 放置在节点内部
-      position = 'inside';
-    } else {
-      // 放置在节点前后
-      const targetParent = rootAnnotation ? findParent(rootAnnotation, targetKey) : null;
-
-      if (targetParent) {
-        const targetIndex = targetParent.children.findIndex((child) => child.id === targetKey);
-        // dropPosition 是相对于整个树的位置，需要判断是 before 还是 after
-        position = dropPosition < 0 || (dropPosition === 0 && targetIndex === 0) ? 'before' : 'after';
-      } else {
-        // 根节点
-        position = dropPosition > 0 ? 'after' : 'before';
-      }
-    }
-
-    // 先验证
-    const validation = validateMove(sourceKey, targetKey, position);
-    if (!validation.valid) {
-      message.warning(validation.reason || '不允许此操作');
-      return;
-    }
-
-    // 执行移动
-    const result = await moveAnnotation(sourceKey, targetKey, position);
-    if (!result.success) {
-      message.error(result.error || '移动失败');
-    } else {
-      message.success('移动成功');
+  const handleAddDocumentSubmit = async (values: { url: string; name?: string }) => {
+    try {
+      // 这里应该调用 API 添加文档
+      // 暂时只是关闭模态框
+      message.success('文档添加功能待实现');
+      setAddDocModalVisible(false);
+      addDocForm.resetFields();
+    } catch (error) {
+      message.error('添加文档失败');
     }
   };
+
+  // 处理删除文档
+  const handleDeleteDocumentClick = (type: 'design' | 'prd' | 'openapi', id: string) => {
+    modal.confirm({
+      title: '确认删除',
+      content: '确定要删除这个文档吗？此操作不可恢复。',
+      okText: '确认删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        onDeleteDocument(type, id);
+      },
+    });
+  };
+
+  // 渲染文档列表项
+  const renderDocumentItem = (doc: DocumentReference, type: 'design' | 'prd' | 'openapi') => {
+    const isSelected = selectedDocument?.type === type && selectedDocument?.id === doc.id;
+    return (
+      <List.Item
+        key={doc.id}
+        style={{
+          cursor: 'pointer',
+          backgroundColor: isSelected ? 'rgb(230, 247, 255)' : 'transparent',
+          padding: '8px 12px',
+          borderRadius: 4,
+        }}
+        onClick={() => onSelectDocument(type, doc.id)}
+        actions={[
+          <Button
+            key='delete'
+            type='text'
+            size='small'
+            danger
+            icon={<DeleteOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteDocumentClick(type, doc.id);
+            }}
+          />,
+        ]}>
+        <List.Item.Meta
+          title={
+            <Space>
+              <Text strong>{doc.name || `文档 ${doc.id.substring(0, 6)}`}</Text>
+              <Tag color={getDocumentStatusColor(doc.status)} style={{ fontSize: 11 }}>
+                {getDocumentStatusText(doc.status)}
+              </Tag>
+            </Space>
+          }
+          description={
+            <Text type='secondary' style={{ fontSize: 12 }} ellipsis>
+              <LinkOutlined /> {doc.url}
+            </Text>
+          }
+        />
+      </List.Item>
+    );
+  };
+
+  // Construct Collapse items for Ant Design v5+/rc-collapse
+  const collapseItems = [
+    {
+      key: 'design',
+      label: (
+        <Space>
+          <FileImageOutlined style={{ color: 'rgb(24, 144, 255)' }} />
+          <span>设计</span>
+        </Space>
+      ),
+      extra: (
+        <Button
+          type='text'
+          size='small'
+          icon={<PlusOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddDocumentClick('design');
+          }}
+        />
+      ),
+      children: (
+        <>
+          {documents.design.length > 0 ? (
+            <List
+              size='small'
+              dataSource={documents.design}
+              renderItem={(doc) => renderDocumentItem(doc, 'design')}
+              style={{ marginBottom: 16 }}
+            />
+          ) : (
+            <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+              暂无设计稿
+            </Text>
+          )}
+
+          {/* 当选中设计文档时，显示标注树 */}
+          {selectedDocument?.type === 'design' && treeData.length > 0 && (
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgb(240, 240, 240)' }}>
+              <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text strong style={{ fontSize: 12 }}>
+                  标注结构
+                </Text>
+                <Space size='small'>
+                  <Button size='small' type='text' onClick={expandAll}>
+                    展开
+                  </Button>
+                  <Button size='small' type='text' onClick={collapseAll}>
+                    收起
+                  </Button>
+                </Space>
+              </Space>
+              <Tree
+                treeData={treeData}
+                selectedKeys={selectedAnnotationId ? [selectedAnnotationId] : []}
+                expandedKeys={expandedKeys}
+                onSelect={handleSelect}
+                onExpand={handleExpand}
+                showLine={{ showLeafIcon: false }}
+                showIcon
+                blockNode
+              />
+            </div>
+          )}
+        </>
+      ),
+    },
+    {
+      key: 'prd',
+      label: (
+        <Space>
+          <FileTextOutlined style={{ color: 'rgb(82, 196, 26)' }} />
+          <span>文档</span>
+        </Space>
+      ),
+      extra: (
+        <Button
+          type='text'
+          size='small'
+          icon={<PlusOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddDocumentClick('prd');
+          }}
+        />
+      ),
+      children: (
+        <>
+          {documents.prd.length > 0 ? (
+            <List size='small' dataSource={documents.prd} renderItem={(doc) => renderDocumentItem(doc, 'prd')} />
+          ) : (
+            <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+              暂无PRD文档
+            </Text>
+          )}
+        </>
+      ),
+    },
+    {
+      key: 'openapi',
+      label: (
+        <Space>
+          <ApiOutlined style={{ color: 'rgb(250, 140, 22)' }} />
+          <span>数据</span>
+        </Space>
+      ),
+      extra: (
+        <Button
+          type='text'
+          size='small'
+          icon={<PlusOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddDocumentClick('openapi');
+          }}
+        />
+      ),
+      children: (
+        <>
+          {documents.openapi.length > 0 ? (
+            <List
+              size='small'
+              dataSource={documents.openapi}
+              renderItem={(doc) => renderDocumentItem(doc, 'openapi')}
+            />
+          ) : (
+            <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+              暂无OpenAPI文档
+            </Text>
+          )}
+        </>
+      ),
+    },
+  ];
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'rgb(255, 255, 255)' }}>
       {/* Header */}
       <div style={{ padding: '16px', borderBottom: '1px solid rgb(240, 240, 240)' }}>
-        <Space direction="vertical" style={{ width: '100%' }} size="small">
-          <Title level={5} style={{ margin: 0 }}>
-            图层结构
-          </Title>
-          <Space size="small">
-            <Button size="small" icon={<DownOutlined />} onClick={expandAll}>
-              展开全部
-            </Button>
-            <Button size="small" icon={<UpOutlined />} onClick={collapseAll}>
-              收起全部
-            </Button>
-            <Button
-              size="small"
-              icon={<ApartmentOutlined />}
-              onClick={() => setIsDslDrawerOpen(true)}
-              disabled={!dslData}
-            >
-              组件树
-            </Button>
-          </Space>
-        </Space>
+        <Title level={5} style={{ margin: 0 }}>
+          文档管理
+        </Title>
       </div>
 
-      {/* Tree */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        <Tree
-          treeData={treeData}
-          selectedKeys={selectedAnnotationId ? [selectedAnnotationId] : []}
-          expandedKeys={expandedKeys}
-          onSelect={handleSelect}
-          onExpand={handleExpand}
-          onRightClick={handleRightClick}
-          draggable={{
-            icon: false,
-            nodeDraggable: (node) => node.key !== 'root',
-          }}
-          onDrop={handleDrop}
-          allowDrop={handleAllowDrop}
-          showLine={{ showLeafIcon: false }}
-          showIcon
-          blockNode
+      {/* Collapse Panels */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
+        <Collapse
+          size='small'
+          defaultActiveKey={['design']}
+          expandIconPosition='end'
+          style={{ background: 'transparent', border: 'none' }}
+          items={collapseItems}
         />
       </div>
 
       {/* Footer */}
-
       <div
         style={{
           padding: '16px',
           borderTop: '1px solid rgb(240, 240, 240)',
           background: 'rgb(255, 255, 255)',
-          borderBottom: '1px solid rgb(240, 240, 240)',
-        }}
-      >
-        <Space size="small" style={{ width: '100%', justifyContent: 'center' }}>
-          <Button type="primary" size="small" icon={<SaveOutlined />} onClick={onSave} style={{ minWidth: '80px' }}>
+        }}>
+        <Space size='small' style={{ width: '100%', justifyContent: 'center' }}>
+          <Button type='primary' size='small' icon={<SaveOutlined />} onClick={onSave} style={{ minWidth: '80px' }}>
             保存
           </Button>
-          {/* <Button size="small" icon={<FileTextOutlined />} onClick={onGenerateDoc} style={{ minWidth: '120px' }}>
-              生成需求规格文档
-            </Button> */}
-          <Button size="small" icon={<ThunderboltOutlined />} onClick={onGenerateCode} style={{ minWidth: '120px' }}>
+          <Button size='small' icon={<ThunderboltOutlined />} onClick={onGenerateCode} style={{ minWidth: '120px' }}>
             生成代码
           </Button>
         </Space>
       </div>
 
-      <Drawer
-        placement="left"
-        title="组件树"
-        width={320}
-        open={isDslDrawerOpen}
-        onClose={handleCloseDslDrawer}
-        mask={false}
-        extra={
-          <Button size="small" onClick={handleShowAllNodes} disabled={!hasHiddenNodes} icon={<EyeOutlined />}>
-            全部显示
-          </Button>
-        }
-      >
-        <div style={{ paddingRight: 8 }}>
-          <Tree
-            treeData={dslTreeData}
-            defaultExpandAll
-            selectedKeys={dslSelectedNodeId ? [dslSelectedNodeId] : []}
-            onSelect={handleDslTreeSelect}
-            onMouseEnter={handleDslTreeMouseEnter}
-            onMouseLeave={handleDslTreeMouseLeave}
-          />
-        </div>
-      </Drawer>
+      {/* 添加文档模态框 */}
+      <Modal
+        title={`添加${addDocType === 'design' ? '设计稿' : addDocType === 'prd' ? 'PRD文档' : 'OpenAPI文档'}`}
+        open={addDocModalVisible}
+        onCancel={() => {
+          setAddDocModalVisible(false);
+          addDocForm.resetFields();
+        }}
+        footer={null}>
+        <Form form={addDocForm} layout='vertical' onFinish={handleAddDocumentSubmit}>
+          <Form.Item label='文档名称' name='name'>
+            <Input placeholder='请输入文档名称（可选）' />
+          </Form.Item>
+          <Form.Item
+            label='文档地址'
+            name='url'
+            rules={[
+              { required: true, message: '请输入文档地址' },
+              { type: 'url', message: '请输入有效的URL' },
+            ]}>
+            <Input
+              placeholder={
+                addDocType === 'design'
+                  ? 'https://mastergo.com/...'
+                  : addDocType === 'prd'
+                  ? 'https://docs.company.com/...'
+                  : 'https://api.company.com/openapi.json'
+              }
+              prefix={
+                addDocType === 'design' ? (
+                  <FileImageOutlined />
+                ) : addDocType === 'prd' ? (
+                  <FileTextOutlined />
+                ) : (
+                  <ApiOutlined />
+                )
+              }
+            />
+          </Form.Item>
+          <Form.Item style={{ marginBottom: 0 }}>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button
+                onClick={() => {
+                  setAddDocModalVisible(false);
+                  addDocForm.resetFields();
+                }}>
+                取消
+              </Button>
+              <Button type='primary' htmlType='submit'>
+                添加
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

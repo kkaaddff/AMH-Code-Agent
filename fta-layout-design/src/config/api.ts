@@ -42,6 +42,7 @@ export const API_ENDPOINTS = {
       create: '/code-agent/project/page/create',
       update: '/code-agent/project/page/update',
       delete: '/code-agent/project/page/delete',
+      detail: '/code-agent/project/page/detail',
     },
     document: {
       updateStatus: '/code-agent/project/document/status',

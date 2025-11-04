@@ -236,6 +236,18 @@ export const projectMockService = {
     return deepClone(findProject(id));
   },
 
+  async getPageDetail(pageId: string) {
+    await delay();
+    // 遍历所有项目查找页面
+    for (const project of mockProjects) {
+      const page = project.pages.find((p) => p.id === pageId);
+      if (page) {
+        return deepClone(page);
+      }
+    }
+    throw new Error('页面不存在');
+  },
+
   async createPage(projectId: string, formData: CreatePageForm) {
     await delay();
     const project = findProject(projectId);

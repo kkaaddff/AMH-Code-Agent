@@ -1,26 +1,23 @@
-import { Inject, Provide } from "@midwayjs/decorator";
-import {
-  DocumentReference,
-  Page,
-  Project,
-} from "../../entity/code-agent/project";
+import { Inject, Provide } from '@midwayjs/decorator';
+import { DocumentReference, Page, Project } from '../../entity/code-agent/project';
 import {
   CreatePageRequest,
   CreateProjectRequest,
   DeletePageRequest,
   DeleteProjectRequest,
   GetDocumentContentRequest,
+  GetPageDetailRequest,
   GetProjectDetailRequest,
   ProjectListRequest,
   SyncDocumentRequest,
   UpdateDocumentStatusRequest,
   UpdatePageRequest,
   UpdateProjectRequest,
-} from "../../dto/code-agent/req";
+} from '../../dto/code-agent/req';
 
-import { InjectEntityModel } from "@midwayjs/typegoose";
-import { ReturnModelType } from "@typegoose/typegoose";
-import { MasterGoServiceV1 } from "./mastergo.service";
+import { InjectEntityModel } from '@midwayjs/typegoose';
+import { ReturnModelType } from '@typegoose/typegoose';
+import { MasterGoServiceV1 } from './mastergo.service';
 
 @Provide()
 export class ProjectService {
@@ -49,7 +46,7 @@ export class ProjectService {
   private deriveDocumentName(url: string, fallback: string): string {
     try {
       const parsed = new URL(url);
-      const pathname = parsed.pathname.split("/").filter(Boolean).pop();
+      const pathname = parsed.pathname.split('/').filter(Boolean).pop();
       return pathname || fallback;
     } catch {
       return fallback;
@@ -59,17 +56,15 @@ export class ProjectService {
   /**
    * Create document references from URLs
    */
-  private async createDocumentReferences(
-    urls: string[] = []
-  ): Promise<DocumentReference[]> {
+  private async createDocumentReferences(urls: string[] = []): Promise<DocumentReference[]> {
     const now = new Date();
     const documents = (urls || [])
       .filter((url) => Boolean(url))
       .map((url, index) => ({
-        id: this.generateId("doc"),
+        id: this.generateId('doc'),
         url,
         name: this.deriveDocumentName(url, `文档-${index + 1}`),
-        status: "pending" as const,
+        status: 'pending' as const,
         progress: 0,
         createdAt: now,
         updatedAt: now,
@@ -80,9 +75,7 @@ export class ProjectService {
       return [];
     }
 
-    const savedDocuments = await this.documentReferenceEntity.insertMany(
-      documents
-    );
+    const savedDocuments = await this.documentReferenceEntity.insertMany(documents);
     return savedDocuments;
   }
 
@@ -90,10 +83,7 @@ export class ProjectService {
    * Merge document references with existing ones
    * Returns array of document _ids for reference storage
    */
-  private async mergeDocumentReferences(
-    existingIds: any[] = [],
-    urls: string[] = []
-  ): Promise<any[]> {
+  private async mergeDocumentReferences(existingIds: any[] = [], urls: string[] = []): Promise<any[]> {
     const now = new Date();
     const result = [];
 
@@ -108,18 +98,15 @@ export class ProjectService {
       const matched = existingDocs.find((doc) => doc.url === url);
       if (matched) {
         // Update existing document
-        await this.documentReferenceEntity.updateOne(
-          { id: matched.id },
-          { updatedAt: now }
-        );
+        await this.documentReferenceEntity.updateOne({ id: matched.id }, { updatedAt: now });
         result.push(matched._id);
       } else {
         // Create new document
         const newDoc = {
-          id: this.generateId("doc"),
+          id: this.generateId('doc'),
           url,
           name: this.deriveDocumentName(url, `文档-${result.length + 1}`),
-          status: "pending" as const,
+          status: 'pending' as const,
           progress: 0,
           createdAt: now,
           updatedAt: now,
@@ -133,42 +120,58 @@ export class ProjectService {
   }
 
   private async findProject(projectId: string): Promise<Project> {
-    const project = await this.projectEntity
-      .findOne({ id: projectId })
-      .populate({
-        path: "pages",
-        populate: [
-          { path: "designDocuments" },
-          { path: "prdDocuments" },
-          { path: "openapiDocuments" },
-        ],
-      });
+    const project = await this.projectEntity.findOne({ id: projectId }).populate({
+      path: 'pages',
+      populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
+    });
 
     if (!project) {
-      throw new Error("项目不存在");
+      throw new Error('项目不存在');
     }
     return project;
   }
 
-  private async findPage(
-    projectId: string,
-    pageId: string
-  ): Promise<{ project: Project; page: Page }> {
+  private async findPageInProject(projectId: string, pageId: string): Promise<{ project: Project; page: Page }> {
     const project = await this.findProject(projectId);
     const page = project.pages.find((item) => item.id === pageId);
 
     if (!page) {
-      throw new Error("页面不存在");
+      throw new Error('页面不存在');
     }
     return { project, page };
   }
 
   /**
+   * Find page by ID with optional project ID
+   */
+  async findPage(params: GetPageDetailRequest): Promise<Page> {
+    const { pageId, projectId } = params;
+
+    let page: Page | null = null;
+
+    if (projectId) {
+      // Find page within specific project
+      const project = await this.findProject(projectId);
+      page = project.pages.find((item) => item.id === pageId) || null;
+    } else {
+      // Find page across all projects
+      page = await this.pageEntity
+        .findOne({ id: pageId })
+        .populate([{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }])
+        .exec();
+    }
+
+    if (!page) {
+      throw new Error('页面不存在');
+    }
+
+    return page;
+  }
+
+  /**
    * Get projects list
    */
-  async getProjects(
-    params: ProjectListRequest
-  ): Promise<{ projects: Project[]; total: number }> {
+  async getProjects(params: ProjectListRequest): Promise<{ projects: Project[]; total: number }> {
     const page = params.page || 1;
     const size = params.size || 10;
     const skip = (page - 1) * size;
@@ -177,12 +180,8 @@ export class ProjectService {
       this.projectEntity
         .find()
         .populate({
-          path: "pages",
-          populate: [
-            { path: "designDocuments" },
-            { path: "prdDocuments" },
-            { path: "openapiDocuments" },
-          ],
+          path: 'pages',
+          populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
         })
         .skip(skip)
         .limit(size)
@@ -199,18 +198,18 @@ export class ProjectService {
   async createProject(data: CreateProjectRequest): Promise<Project> {
     const timestamp = new Date();
     const newProject: Partial<Project> = {
-      id: this.generateId("project"),
+      id: this.generateId('project'),
       name: data.name,
       description: data.description,
       gitRepository: data.gitRepository,
       manager: data.manager,
       createdAt: timestamp,
       updatedAt: timestamp,
-      status: data.status || "active",
+      status: data.status || 'active',
       progress: data.progress ?? 0,
       members: data.members ?? 1,
       tags: data.tags || [],
-      avatar: data.avatar || "📁",
+      avatar: data.avatar || '📁',
       pages: [],
     };
 
@@ -221,27 +220,16 @@ export class ProjectService {
   /**
    * Update project
    */
-  async updateProject(
-    id: string,
-    updates: UpdateProjectRequest
-  ): Promise<Project> {
+  async updateProject(id: string, updates: UpdateProjectRequest): Promise<Project> {
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate(
-        { id },
-        { ...updates, updatedAt: new Date() },
-        { new: true, runValidators: true }
-      )
+      .findOneAndUpdate({ id }, { ...updates, updatedAt: new Date() }, { new: true, runValidators: true })
       .populate({
-        path: "pages",
-        populate: [
-          { path: "designDocuments" },
-          { path: "prdDocuments" },
-          { path: "openapiDocuments" },
-        ],
+        path: 'pages',
+        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
       });
 
     if (!updatedProject) {
-      throw new Error("项目不存在");
+      throw new Error('项目不存在');
     }
 
     return updatedProject;
@@ -254,7 +242,7 @@ export class ProjectService {
     const result = await this.projectEntity.deleteOne({ id: params.id });
 
     if (result.deletedCount === 0) {
-      throw new Error("项目不存在");
+      throw new Error('项目不存在');
     }
 
     return true;
@@ -274,16 +262,14 @@ export class ProjectService {
     const timestamp = new Date();
 
     // Create document references asynchronously
-    const [designDocuments, prdDocuments, openapiDocuments] = await Promise.all(
-      [
-        this.createDocumentReferences(data.designUrls),
-        this.createDocumentReferences(data.prdUrls),
-        this.createDocumentReferences(data.openapiUrls),
-      ]
-    );
+    const [designDocuments, prdDocuments, openapiDocuments] = await Promise.all([
+      this.createDocumentReferences(data.designUrls),
+      this.createDocumentReferences(data.prdUrls),
+      this.createDocumentReferences(data.openapiUrls),
+    ]);
 
     const newPage: Partial<Page> = {
-      id: this.generateId("page"),
+      id: this.generateId('page'),
       projectId: data.projectId,
       name: data.name,
       routePath: data.routePath,
@@ -309,16 +295,12 @@ export class ProjectService {
         { new: true, runValidators: true }
       )
       .populate({
-        path: "pages",
-        populate: [
-          { path: "designDocuments" },
-          { path: "prdDocuments" },
-          { path: "openapiDocuments" },
-        ],
+        path: 'pages',
+        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
       });
 
     if (!updatedProject) {
-      throw new Error("项目不存在");
+      throw new Error('项目不存在');
     }
 
     return updatedProject;
@@ -328,7 +310,7 @@ export class ProjectService {
    * Update page
    */
   async updatePage(data: UpdatePageRequest): Promise<Project> {
-    const { page } = await this.findPage(data.projectId, data.pageId);
+    const { page } = await this.findPageInProject(data.projectId, data.pageId);
     const timestamp = new Date();
 
     const updateData: Partial<Page> = {
@@ -337,8 +319,7 @@ export class ProjectService {
 
     if (data.name !== undefined) updateData.name = data.name;
     if (data.routePath !== undefined) updateData.routePath = data.routePath;
-    if (data.description !== undefined)
-      updateData.description = data.description;
+    if (data.description !== undefined) updateData.description = data.description;
 
     if (data.designUrls !== undefined) {
       updateData.designDocuments = (await this.mergeDocumentReferences(
@@ -347,10 +328,7 @@ export class ProjectService {
       )) as any;
     }
     if (data.prdUrls !== undefined) {
-      updateData.prdDocuments = (await this.mergeDocumentReferences(
-        page.prdDocuments as any,
-        data.prdUrls
-      )) as any;
+      updateData.prdDocuments = (await this.mergeDocumentReferences(page.prdDocuments as any, data.prdUrls)) as any;
     }
     if (data.openapiUrls !== undefined) {
       updateData.openapiDocuments = (await this.mergeDocumentReferences(
@@ -364,22 +342,14 @@ export class ProjectService {
 
     // Update project's updatedAt
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate(
-        { id: data.projectId },
-        { updatedAt: timestamp },
-        { new: true, runValidators: true }
-      )
+      .findOneAndUpdate({ id: data.projectId }, { updatedAt: timestamp }, { new: true, runValidators: true })
       .populate({
-        path: "pages",
-        populate: [
-          { path: "designDocuments" },
-          { path: "prdDocuments" },
-          { path: "openapiDocuments" },
-        ],
+        path: 'pages',
+        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
       });
 
     if (!updatedProject) {
-      throw new Error("项目不存在");
+      throw new Error('项目不存在');
     }
 
     return updatedProject;
@@ -389,7 +359,7 @@ export class ProjectService {
    * Delete page
    */
   async deletePage(data: DeletePageRequest): Promise<Project> {
-    const { page } = await this.findPage(data.projectId, data.pageId);
+    const { page } = await this.findPageInProject(data.projectId, data.pageId);
     const timestamp = new Date();
 
     // Delete page from database
@@ -403,16 +373,12 @@ export class ProjectService {
         { new: true, runValidators: true }
       )
       .populate({
-        path: "pages",
-        populate: [
-          { path: "designDocuments" },
-          { path: "prdDocuments" },
-          { path: "openapiDocuments" },
-        ],
+        path: 'pages',
+        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
       });
 
     if (!updatedProject) {
-      throw new Error("项目不存在");
+      throw new Error('项目不存在');
     }
 
     return updatedProject;
@@ -421,53 +387,33 @@ export class ProjectService {
   /**
    * Update document status
    */
-  async updateDocumentStatus(
-    data: UpdateDocumentStatusRequest
-  ): Promise<Project> {
-    await this.findPage(data.projectId, data.pageId);
+  async updateDocumentStatus(data: UpdateDocumentStatusRequest): Promise<Project> {
+    await this.findPageInProject(data.projectId, data.pageId);
     const timestamp = new Date();
 
     const updateData = {
       status: data.status,
-      progress: ["synced", "completed"].includes(data.status)
-        ? 100
-        : data.status === "syncing"
-        ? 50
-        : undefined,
-      lastSyncAt: data.status === "synced" ? timestamp : undefined,
+      progress: ['synced', 'completed'].includes(data.status) ? 100 : data.status === 'syncing' ? 50 : undefined,
+      lastSyncAt: data.status === 'synced' ? timestamp : undefined,
       updatedAt: timestamp,
     };
 
     // Update document in database
-    await this.documentReferenceEntity.updateOne(
-      { id: data.documentId },
-      updateData
-    );
+    await this.documentReferenceEntity.updateOne({ id: data.documentId }, updateData);
 
     // Update page's updatedAt
-    await this.pageEntity.updateOne(
-      { id: data.pageId },
-      { updatedAt: timestamp }
-    );
+    await this.pageEntity.updateOne({ id: data.pageId }, { updatedAt: timestamp });
 
     // Update project's updatedAt
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate(
-        { id: data.projectId },
-        { updatedAt: timestamp },
-        { new: true, runValidators: true }
-      )
+      .findOneAndUpdate({ id: data.projectId }, { updatedAt: timestamp }, { new: true, runValidators: true })
       .populate({
-        path: "pages",
-        populate: [
-          { path: "designDocuments" },
-          { path: "prdDocuments" },
-          { path: "openapiDocuments" },
-        ],
+        path: 'pages',
+        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
       });
 
     if (!updatedProject) {
-      throw new Error("项目不存在");
+      throw new Error('项目不存在');
     }
 
     return updatedProject;
@@ -483,25 +429,23 @@ export class ProjectService {
     const timestamp = new Date();
 
     // Verify page exists
-    await this.findPage(projectId, pageId);
+    await this.findPageInProject(projectId, pageId);
 
     // Get document reference to fetch the URL
     const document = await this.documentReferenceEntity.findOne({
       id: documentId,
     });
     if (!document) {
-      throw new Error("文档不存在");
+      throw new Error('文档不存在');
     }
 
     // Fetch data based on document type
     let documentData: Record<string, any> | undefined;
 
     try {
-      if (type === "design") {
+      if (type === 'design') {
         // For design documents, call MasterGo service to get DSL
-        const dslResponse = await this.masterGoServiceV1.getDslFromUrl(
-          document.url
-        );
+        const dslResponse = await this.masterGoServiceV1.getDslFromUrl(document.url);
         documentData = {
           dsl: dslResponse.dsl,
           componentDocumentLinks: dslResponse.componentDocumentLinks,
@@ -518,7 +462,7 @@ export class ProjectService {
       await this.documentReferenceEntity.updateOne(
         { id: documentId },
         {
-          status: "failed",
+          status: 'failed',
           progress: 0,
           updatedAt: timestamp,
         }
@@ -527,7 +471,7 @@ export class ProjectService {
     }
 
     const updateData: any = {
-      status: "synced",
+      status: 'synced',
       progress: 100,
       lastSyncAt: timestamp,
       updatedAt: timestamp,
@@ -537,24 +481,15 @@ export class ProjectService {
       updateData.data = documentData;
     }
 
-    await this.documentReferenceEntity.updateOne(
-      { id: documentId },
-      updateData
-    );
+    await this.documentReferenceEntity.updateOne({ id: documentId }, updateData);
 
-    const updatedProject = await this.projectEntity
-      .findOne({ id: projectId })
-      .populate({
-        path: "pages",
-        populate: [
-          { path: "designDocuments" },
-          { path: "prdDocuments" },
-          { path: "openapiDocuments" },
-        ],
-      });
+    const updatedProject = await this.projectEntity.findOne({ id: projectId }).populate({
+      path: 'pages',
+      populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
+    });
 
     if (!updatedProject) {
-      throw new Error("项目不存在");
+      throw new Error('项目不存在');
     }
 
     return updatedProject;
@@ -564,9 +499,7 @@ export class ProjectService {
    * Get document content
    * Retrieves the cached content of a synchronized document
    */
-  async getDocumentContent(
-    data: GetDocumentContentRequest
-  ): Promise<DocumentReference> {
+  async getDocumentContent(data: GetDocumentContentRequest): Promise<DocumentReference> {
     const { documentId } = data;
 
     // Get document reference
@@ -574,11 +507,11 @@ export class ProjectService {
       id: documentId,
     });
     if (!document) {
-      throw new Error("文档不存在");
+      throw new Error('文档不存在');
     }
 
     // Check if document has been synced
-    const syncedStatuses = ["synced", "completed", "editing"];
+    const syncedStatuses = ['synced', 'completed', 'editing'];
     if (!syncedStatuses.includes(document.status)) {
       throw new Error(`文档尚未同步，当前状态: ${document.status}`);
     }
@@ -596,15 +529,13 @@ export class ProjectService {
 
     const document = await this.documentReferenceEntity.findOne({ id });
     if (!document) {
-      throw new Error("文档不存在");
+      throw new Error('文档不存在');
     }
 
     // Extract updatable fields and filter out undefined values
     const { id: _, _id, createdAt, ...updateFields } = data;
     const updateData = {
-      ...Object.fromEntries(
-        Object.entries(updateFields).filter(([_, value]) => value !== undefined)
-      ),
+      ...Object.fromEntries(Object.entries(updateFields).filter(([_, value]) => value !== undefined)),
       updatedAt: timestamp,
     };
 

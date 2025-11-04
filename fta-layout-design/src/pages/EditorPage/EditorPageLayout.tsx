@@ -68,11 +68,7 @@ const EditorPageLayoutContent: React.FC<{ confirmedComponents?: ComponentMapping
     setDesignId(id);
   }, []);
 
-  const {
-    data: fetchedDSLData,
-    loading: dslLoading,
-    error: dslError,
-  } = useDSLData({ designId: designId || null });
+  const { data: fetchedDSLData, loading: dslLoading, error: dslError } = useDSLData({ designId: designId || null });
 
   const dslDataTyped = useMemo(() => {
     if (!fetchedDSLData) {
@@ -192,195 +188,195 @@ const EditorPageLayoutContent: React.FC<{ confirmedComponents?: ComponentMapping
     <>
       {dslLoading && (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-          <Spin size="large" tip="加载 DSL 数据..." />
+          <Spin size='large' />
+          <div style={{ marginTop: 16, color: '#999', fontSize: 14 }}>加载 DSL 数据...</div>
         </div>
       )}
       {!dslLoading && dslError && (
         <div style={{ padding: '24px' }}>
-          <Typography.Text type="danger">加载 DSL 数据失败：{dslError.message}</Typography.Text>
+          <Typography.Text type='danger'>加载 DSL 数据失败：{dslError.message}</Typography.Text>
         </div>
       )}
       {!dslLoading && !dslError && !dslDataTyped && designId !== null && (
         <div style={{ padding: '24px' }}>
-          <Typography.Text type="secondary">
+          <Typography.Text type='secondary'>
             {designId ? '未获取到 DSL 数据，请稍后重试。' : '请通过 URL 提供 designId 参数以加载 DSL 数据。'}
           </Typography.Text>
         </div>
       )}
       {!dslLoading && !dslError && dslDataTyped && (
-    <Layout style={{ width: '100%', height: 'calc(100vh - 64px)' }}>
-      {/* Left Panel - Component Tree */}
-      <Sider
-        width={400}
-        theme="light"
-        collapsible
-        collapsed={leftCollapsed}
-        onCollapse={(collapsed) => setLeftCollapsed(collapsed)}
-        collapsedWidth={0}
-        trigger={null}
-        style={{ borderRight: '1px solid rgb(240, 240, 240)', overflow: 'hidden' }}
-      >
-        <div
-          style={{
-            padding: '16px',
-            borderBottom: '1px solid rgb(240, 240, 240)',
-            background: 'rgb(250, 250, 250)',
-          }}
-        >
-          <Title level={5} style={{ margin: 0 }}>
-            组件树
-          </Title>
-        </div>
-        <div style={{ height: 'calc(100% - 57px)', overflow: 'auto', padding: '8px' }}>
-          <LayoutTree
-            data={layoutTreeData}
-            selectedKeys={selectedNodeId ? [selectedNodeId] : []}
-            onSelect={handleTreeSelect}
-            onHover={handleTreeHover}
-          />
-        </div>
-      </Sider>
-
-      {/* Middle Panel - Preview */}
-      <Layout>
-        <Content style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          {/* Toolbar */}
-          <div
-            style={{
-              padding: '12px 16px',
-              borderBottom: '1px solid rgb(240, 240, 240)',
-              background: 'rgb(255, 255, 255)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Title level={5} style={{ margin: 0 }}>
-              布局编辑器
-              {confirmedComponents && confirmedComponents.length > 0 && (
-                <span style={{ marginLeft: '12px', fontSize: '14px', color: 'rgb(153, 153, 153)', fontWeight: 'normal' }}>
-                  ({confirmedComponents.length} 个已确认组件)
-                </span>
-              )}
-            </Title>
-            <Space>
-              <Dropdown
-                menu={{
-                  items: [
-                    { key: '0.25', label: '25%' },
-                    { key: '0.5', label: '50%' },
-                    { key: '0.75', label: '75%' },
-                    { key: '1', label: '100%' },
-                    { key: '1.5', label: '150%' },
-                    { key: '2', label: '200%' },
-                  ],
-                  onClick: ({ key }) => handleScaleChange(parseFloat(key)),
-                }}
-                trigger={['click']}
-              >
-                <a onClick={(e) => e.preventDefault()}>
-                  {Math.round(scale * 100)}% &nbsp;
-                  <DownOutlined />
-                </a>
-              </Dropdown>
-            </Space>
-          </div>
-
-          {/* Preview Canvas */}
-          <div
-            style={{
-              flex: 1,
-              overflow: 'auto',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'flex-start',
-              position: 'relative',
-              padding: '20px',
-              background: 'rgb(250, 250, 250)',
-              backgroundSize: 'auto',
-            }}
-          >
-            {/* Left collapse button */}
-            <Button
-              type="dashed"
-              size="small"
-              onClick={() => setLeftCollapsed(!leftCollapsed)}
-              icon={<span style={{ fontSize: '14px' }}>{leftCollapsed ? '▶' : '◀'}</span>}
+        <Layout style={{ width: '100%', height: 'calc(100vh - 64px)' }}>
+          {/* Left Panel - Component Tree */}
+          <Sider
+            width={400}
+            theme='light'
+            collapsible
+            collapsed={leftCollapsed}
+            onCollapse={(collapsed) => setLeftCollapsed(collapsed)}
+            collapsedWidth={0}
+            trigger={null}
+            style={{ borderRight: '1px solid rgb(240, 240, 240)', overflow: 'hidden' }}>
+            <div
               style={{
-                position: 'absolute',
-                left: 0,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                zIndex: 100,
-                height: '60px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 8px',
-              }}
-              title={leftCollapsed ? '显示组件树' : '隐藏组件树'}
-            />
+                padding: '16px',
+                borderBottom: '1px solid rgb(240, 240, 240)',
+                background: 'rgb(250, 250, 250)',
+              }}>
+              <Title level={5} style={{ margin: 0 }}>
+                组件树
+              </Title>
+            </div>
+            <div style={{ height: 'calc(100% - 57px)', overflow: 'auto', padding: '8px' }}>
+              <LayoutTree
+                data={layoutTreeData}
+                selectedKeys={selectedNodeId ? [selectedNodeId] : []}
+                onSelect={handleTreeSelect}
+                onHover={handleTreeHover}
+              />
+            </div>
+          </Sider>
 
-            {/* Right collapse button */}
-            <Button
-              type="dashed"
-              size="small"
-              onClick={() => setRightCollapsed(!rightCollapsed)}
-              icon={<span style={{ fontSize: '14px' }}>{rightCollapsed ? '◀' : '▶'}</span>}
+          {/* Middle Panel - Preview */}
+          <Layout>
+            <Content style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              {/* Toolbar */}
+              <div
+                style={{
+                  padding: '12px 16px',
+                  borderBottom: '1px solid rgb(240, 240, 240)',
+                  background: 'rgb(255, 255, 255)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Title level={5} style={{ margin: 0 }}>
+                  布局编辑器
+                  {confirmedComponents && confirmedComponents.length > 0 && (
+                    <span
+                      style={{
+                        marginLeft: '12px',
+                        fontSize: '14px',
+                        color: 'rgb(153, 153, 153)',
+                        fontWeight: 'normal',
+                      }}>
+                      ({confirmedComponents.length} 个已确认组件)
+                    </span>
+                  )}
+                </Title>
+                <Space>
+                  <Dropdown
+                    menu={{
+                      items: [
+                        { key: '0.25', label: '25%' },
+                        { key: '0.5', label: '50%' },
+                        { key: '0.75', label: '75%' },
+                        { key: '1', label: '100%' },
+                        { key: '1.5', label: '150%' },
+                        { key: '2', label: '200%' },
+                      ],
+                      onClick: ({ key }) => handleScaleChange(parseFloat(key)),
+                    }}
+                    trigger={['click']}>
+                    <a onClick={(e) => e.preventDefault()}>
+                      {Math.round(scale * 100)}% &nbsp;
+                      <DownOutlined />
+                    </a>
+                  </Dropdown>
+                </Space>
+              </div>
+
+              {/* Preview Canvas */}
+              <div
+                style={{
+                  flex: 1,
+                  overflow: 'auto',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'flex-start',
+                  position: 'relative',
+                  padding: '20px',
+                  background: 'rgb(250, 250, 250)',
+                  backgroundSize: 'auto',
+                }}>
+                {/* Left collapse button */}
+                <Button
+                  type='dashed'
+                  size='small'
+                  onClick={() => setLeftCollapsed(!leftCollapsed)}
+                  icon={<span style={{ fontSize: '14px' }}>{leftCollapsed ? '▶' : '◀'}</span>}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 100,
+                    height: '60px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 8px',
+                  }}
+                  title={leftCollapsed ? '显示组件树' : '隐藏组件树'}
+                />
+
+                {/* Right collapse button */}
+                <Button
+                  type='dashed'
+                  size='small'
+                  onClick={() => setRightCollapsed(!rightCollapsed)}
+                  icon={<span style={{ fontSize: '14px' }}>{rightCollapsed ? '◀' : '▶'}</span>}
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 100,
+                    height: '60px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 8px',
+                  }}
+                  title={rightCollapsed ? '显示属性面板' : '隐藏属性面板'}
+                />
+
+                <LayoutPreview
+                  dslData={dslDataTyped}
+                  layoutData={layoutTreeData}
+                  scale={scale}
+                  selectedNodeId={selectedNodeId}
+                  onSelect={handleDSLSelect}
+                  onHover={handleDSLHover}
+                />
+              </div>
+            </Content>
+          </Layout>
+
+          {/* Right Panel - Property Panel */}
+          <Sider
+            width={500}
+            theme='light'
+            collapsible
+            collapsed={rightCollapsed}
+            onCollapse={(collapsed) => setRightCollapsed(collapsed)}
+            collapsedWidth={0}
+            trigger={null}
+            style={{ borderLeft: '1px solid rgb(240, 240, 240)', overflow: 'hidden' }}>
+            <div
               style={{
-                position: 'absolute',
-                right: 0,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                zIndex: 100,
-                height: '60px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 8px',
-              }}
-              title={rightCollapsed ? '显示属性面板' : '隐藏属性面板'}
-            />
-
-            <LayoutPreview
-              dslData={dslDataTyped}
-              layoutData={layoutTreeData}
-              scale={scale}
-              selectedNodeId={selectedNodeId}
-              onSelect={handleDSLSelect}
-              onHover={handleDSLHover}
-            />
-          </div>
-        </Content>
-      </Layout>
-
-      {/* Right Panel - Property Panel */}
-      <Sider
-        width={500}
-        theme="light"
-        collapsible
-        collapsed={rightCollapsed}
-        onCollapse={(collapsed) => setRightCollapsed(collapsed)}
-        collapsedWidth={0}
-        trigger={null}
-        style={{ borderLeft: '1px solid rgb(240, 240, 240)', overflow: 'hidden' }}
-      >
-        <div
-          style={{
-            padding: '16px',
-            borderBottom: '1px solid rgb(240, 240, 240)',
-            background: 'rgb(250, 250, 250)',
-          }}
-        >
-          <Title level={5} style={{ margin: 0 }}>
-            属性面板
-          </Title>
-        </div>
-        <div style={{ height: 'calc(100% - 57px)', overflow: 'auto', padding: '8px' }}>
-          <PropertyPanel selectedNode={selectedNode} onNodeUpdate={handleNodeUpdate} />
-        </div>
-      </Sider>
-    </Layout>
+                padding: '16px',
+                borderBottom: '1px solid rgb(240, 240, 240)',
+                background: 'rgb(250, 250, 250)',
+              }}>
+              <Title level={5} style={{ margin: 0 }}>
+                属性面板
+              </Title>
+            </div>
+            <div style={{ height: 'calc(100% - 57px)', overflow: 'auto', padding: '8px' }}>
+              <PropertyPanel selectedNode={selectedNode} onNodeUpdate={handleNodeUpdate} />
+            </div>
+          </Sider>
+        </Layout>
       )}
     </>
   );

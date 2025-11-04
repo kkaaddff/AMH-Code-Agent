@@ -13,6 +13,7 @@ import {
   DeletePageRequest,
   DeleteProjectRequest,
   GetDocumentContentRequest,
+  GetPageDetailRequest,
   GetProjectDetailRequest,
   ProjectListRequest,
   SyncDocumentRequest,
@@ -26,6 +27,7 @@ import {
   DeletePageResponse,
   DeleteProjectResponse,
   GetDocumentContentResponse,
+  PageDetailResponse,
   ProjectDetailResponse,
   ProjectListResponse,
   SyncDocumentResponse,
@@ -174,6 +176,22 @@ export class ProjectController {
       return new DeletePageResponse(project);
     } catch (error) {
       this.ctx.status = 400;
+      throw error;
+    }
+  }
+
+  /**
+   * 获取页面详情
+   */
+  @Get("/page/detail")
+  async getPageDetail(
+    @Query() query: GetPageDetailRequest
+  ): Promise<PageDetailResponse> {
+    try {
+      const page = await this.projectService.findPage(query);
+      return new PageDetailResponse(page);
+    } catch (error) {
+      this.ctx.status = 404;
       throw error;
     }
   }

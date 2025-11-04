@@ -565,7 +565,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
       open={open}
       onCancel={onClose}
       footer={null}
-      title="3D 检视"
+      title='3D 检视'
       width={MODAL_CONFIG.WIDTH}
       centered
       /** 隐藏时销毁组件 （必须是这个属性不能乱改）*/
@@ -578,8 +578,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
           color: COLOR_CONFIG.MODAL_HEADER_TEXT,
         },
         body: { padding: 0 },
-      }}
-    >
+      }}>
       <div style={{ height: MODAL_CONFIG.HEIGHT, position: 'relative', background: COLOR_CONFIG.MODAL_BG }}>
         <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
         {initializing && (
@@ -593,9 +592,9 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
               background: `rgba(255, 255, 255, ${LOADING_CONFIG.BACKGROUND_OPACITY})`,
               pointerEvents: 'none',
               backdropFilter: LOADING_CONFIG.BACKDROP_BLUR,
-            }}
-          >
-            <Spin tip={LOADING_CONFIG.SPIN_TIP} />
+            }}>
+            <Spin size='large' />
+            <div style={{ marginTop: 16, color: '#999', fontSize: 14 }}>{LOADING_CONFIG.SPIN_TIP}</div>
           </div>
         )}
       </div>

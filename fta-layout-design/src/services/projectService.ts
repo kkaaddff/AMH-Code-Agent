@@ -124,6 +124,20 @@ export const projectService = {
   },
 
   /**
+   * 获取页面详情
+   */
+  async getPageDetail(pageId: string): Promise<Page> {
+    return resolveRequest(
+      shouldUseMock(),
+      () => projectMockService.getPageDetail(pageId),
+      async () => {
+        const response = await api.project.page.detail(pageId);
+        return response.data;
+      }
+    );
+  },
+
+  /**
    * 创建页面
    */
   async createPage(projectId: string, data: CreatePageForm) {

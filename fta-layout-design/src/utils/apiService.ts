@@ -251,6 +251,7 @@ export const api = {
         ApiService.post(API_ENDPOINTS.project.page.update, payload),
       delete: (params: { projectId: string; pageId: string }) =>
         ApiService.post(API_ENDPOINTS.project.page.delete, params),
+      detail: (pageId: string) => ApiService.get(API_ENDPOINTS.project.page.detail, { params: { pageId } }),
     },
     document: {
       updateStatus: (payload: {
@@ -290,11 +291,11 @@ export const api = {
     list: (params: { designId: string; page?: number; size?: number }) =>
       ApiService.get(API_ENDPOINTS.requirement.list, { params }),
     generate: (payload: {
-      designId: string
-      rootAnnotation?: any
-      templateKey?: string
-      annotationVersion?: number
-      annotationSchemaVersion?: string
+      designId: string;
+      rootAnnotation?: any;
+      templateKey?: string;
+      annotationVersion?: number;
+      annotationSchemaVersion?: string;
     }) =>
       ApiService.post(API_ENDPOINTS.requirement.generate, {
         designId: payload.designId,
@@ -304,12 +305,7 @@ export const api = {
         annotationSchemaVersion: payload.annotationSchemaVersion,
       }),
     detail: (docId: string) => ApiService.get(API_ENDPOINTS.requirement.detail, { params: { docId } }),
-    update: (payload: {
-      docId: string
-      title?: string
-      content?: string
-      status?: string
-    }) =>
+    update: (payload: { docId: string; title?: string; content?: string; status?: string }) =>
       ApiService.post(API_ENDPOINTS.requirement.update, payload),
     export: (docId: string) => ApiService.post(API_ENDPOINTS.requirement.export, { docId }),
   },
