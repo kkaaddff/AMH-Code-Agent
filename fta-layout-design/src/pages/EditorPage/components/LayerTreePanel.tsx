@@ -365,7 +365,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
         footer={null}>
         <Form form={addDocForm} layout='vertical' onFinish={handleAddDocumentSubmit}>
           <Form.Item label='文档名称' name='name'>
-            <Input placeholder='请输入文档名称（可选）' />
+            <Input placeholder='请输入文档名称（可选）' autoComplete='off' />
           </Form.Item>
           <Form.Item
             label='文档地址'

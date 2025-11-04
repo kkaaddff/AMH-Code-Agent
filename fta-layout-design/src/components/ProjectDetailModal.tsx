@@ -95,7 +95,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ visible, projec
     onCancel();
     // 跳转到组件识别编辑器页面，带上 pageId 参数
     setTimeout(() => {
-      navigate(`/editor/component-detect-v2?pageId=${page.id}`);
+      navigate(`/editor/component-detect-v2?projectId=${currentProject.id}&pageId=${page.id}`);
     }, 300);
   };
 

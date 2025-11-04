@@ -40,17 +40,17 @@ export interface BaseNode {
 }
 
 export interface PathNode extends BaseNode {
-  type: "PATH";
+  type: 'PATH';
   path: PathItem[];
 }
 
 export interface GroupNode extends BaseNode {
-  type: "GROUP";
+  type: 'GROUP';
   children: DesignNode[];
 }
 
 export interface FrameNode extends BaseNode {
-  type: "FRAME";
+  type: 'FRAME';
   children?: DesignNode[];
 }
 
@@ -72,6 +72,6 @@ export interface LayerStyle {
 }
 
 export interface LayerNode extends BaseNode {
-  type: "LAYER";
+  type: 'LAYER';
   fill: string;
 }
