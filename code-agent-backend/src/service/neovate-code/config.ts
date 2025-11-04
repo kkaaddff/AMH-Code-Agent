@@ -1,38 +1,38 @@
-import fs from 'node:fs';
-import { homedir } from 'node:os';
-import defu from 'defu';
-import path from 'pathe';
-import type { Provider } from './model';
+import fs from "node:fs";
+import { homedir } from "node:os";
+import defu from "defu";
+import path from "pathe";
 
 export type McpStdioServerConfig = {
-  type: 'stdio';
+  type: "stdio";
   command: string;
   args: string[];
   env?: Record<string, string>;
   disable?: boolean;
 };
 export type McpSSEServerConfig = {
-  type: 'sse';
+  type: "sse";
   url: string;
   disable?: boolean;
   headers?: Record<string, string>;
 };
 export type McpHttpServerConfig = {
-  type: 'http';
+  type: "http";
   url: string;
   disable?: boolean;
   headers?: Record<string, string>;
 };
-export type McpServerConfig = McpStdioServerConfig | McpSSEServerConfig | McpHttpServerConfig;
+export type McpServerConfig =
+  | McpStdioServerConfig
+  | McpSSEServerConfig
+  | McpHttpServerConfig;
 
-export type ApprovalMode = 'default' | 'autoEdit' | 'yolo';
+export type ApprovalMode = "default" | "autoEdit" | "yolo";
 
 export type CommitConfig = {
   language: string;
   systemPrompt?: string;
 };
-
-export type ProviderConfig = Partial<Omit<Provider, 'createModel'>>;
 
 export type Config = {
   model: string;
@@ -43,7 +43,6 @@ export type Config = {
   approvalMode: ApprovalMode;
   plugins: string[];
   mcpServers: Record<string, McpServerConfig>;
-  provider?: Record<string, ProviderConfig>;
   systemPrompt?: string;
   todo?: boolean;
   /**
@@ -55,41 +54,45 @@ export type Config = {
   autoCompact?: boolean;
   commit?: CommitConfig;
   outputStyle?: string;
-  outputFormat?: 'text' | 'stream-json' | 'json';
+  outputFormat?: "text" | "stream-json" | "json";
   autoUpdate?: boolean;
   browser?: boolean;
 };
 
 const DEFAULT_CONFIG: Partial<Config> = {
-  language: 'English',
+  language: "English",
   quiet: false,
-  approvalMode: 'default',
+  approvalMode: "default",
   plugins: [],
   mcpServers: {},
-  provider: {},
   todo: true,
   autoCompact: true,
-  outputFormat: 'text',
+  outputFormat: "text",
   autoUpdate: true,
   browser: false,
 };
 const VALID_CONFIG_KEYS = [
   ...Object.keys(DEFAULT_CONFIG),
-  'model',
-  'planModel',
-  'smallModel',
-  'systemPrompt',
-  'todo',
-  'autoCompact',
-  'commit',
-  'outputStyle',
-  'autoUpdate',
-  'provider',
-  'browser',
+  "model",
+  "planModel",
+  "smallModel",
+  "systemPrompt",
+  "todo",
+  "autoCompact",
+  "commit",
+  "outputStyle",
+  "autoUpdate",
+  "browser",
 ];
-const ARRAY_CONFIG_KEYS = ['plugins'];
-const OBJECT_CONFIG_KEYS = ['mcpServers', 'commit', 'provider'];
-const BOOLEAN_CONFIG_KEYS = ['quiet', 'todo', 'autoCompact', 'autoUpdate', 'browser'];
+const ARRAY_CONFIG_KEYS = ["plugins"];
+const OBJECT_CONFIG_KEYS = ["mcpServers", "commit"];
+const BOOLEAN_CONFIG_KEYS = [
+  "quiet",
+  "todo",
+  "autoCompact",
+  "autoUpdate",
+  "browser",
+];
 
 export class ConfigManager {
   globalConfig: Partial<Config>;
@@ -100,18 +103,36 @@ export class ConfigManager {
 
   constructor(cwd: string, productName: string, argvConfig: Partial<Config>) {
     const lowerProductName = productName.toLowerCase();
-    const globalConfigPath = path.join(homedir(), `.${lowerProductName}`, 'config.json');
-    const projectConfigPath = path.join(cwd, `.${lowerProductName}`, 'config.json');
-    const projectLocalConfigPath = path.join(cwd, `.${lowerProductName}`, 'config.local.json');
+    const globalConfigPath = path.join(
+      homedir(),
+      `.${lowerProductName}`,
+      "config.json"
+    );
+    const projectConfigPath = path.join(
+      cwd,
+      `.${lowerProductName}`,
+      "config.json"
+    );
+    const projectLocalConfigPath = path.join(
+      cwd,
+      `.${lowerProductName}`,
+      "config.local.json"
+    );
     this.globalConfigPath = globalConfigPath;
     this.projectConfigPath = projectConfigPath;
     this.globalConfig = loadConfig(globalConfigPath);
-    this.projectConfig = defu(loadConfig(projectConfigPath), loadConfig(projectLocalConfigPath));
+    this.projectConfig = defu(
+      loadConfig(projectConfigPath),
+      loadConfig(projectLocalConfigPath)
+    );
     this.argvConfig = argvConfig;
   }
 
   get config() {
-    const config = defu(this.argvConfig, defu(this.projectConfig, defu(this.globalConfig, DEFAULT_CONFIG))) as Config;
+    const config = defu(
+      this.argvConfig,
+      defu(this.projectConfig, defu(this.globalConfig, DEFAULT_CONFIG))
+    ) as Config;
     config.planModel = config.planModel || config.model;
     config.smallModel = config.smallModel || config.model;
     return config;
@@ -121,9 +142,9 @@ export class ConfigManager {
     const config = global ? this.globalConfig : this.projectConfig;
     const configPath = global ? this.globalConfigPath : this.projectConfigPath;
 
-    if (key.includes('.')) {
+    if (key.includes(".")) {
       // Handle dot notation for nested keys
-      const keys = key.split('.');
+      const keys = key.split(".");
       const rootKey = keys[0];
 
       if (!VALID_CONFIG_KEYS.includes(rootKey)) {
@@ -131,7 +152,9 @@ export class ConfigManager {
       }
 
       if (!OBJECT_CONFIG_KEYS.includes(rootKey)) {
-        throw new Error(`Config key '${rootKey}' does not support nested properties`);
+        throw new Error(
+          `Config key '${rootKey}' does not support nested properties`
+        );
       }
 
       // Navigate to the nested property
@@ -153,7 +176,9 @@ export class ConfigManager {
       if (values) {
         // Remove specific values from array
         if (Array.isArray(current[lastKey])) {
-          current[lastKey] = current[lastKey].filter((v: string) => !values.includes(v));
+          current[lastKey] = current[lastKey].filter(
+            (v: string) => !values.includes(v)
+          );
         }
       } else {
         // Delete the property
@@ -166,9 +191,9 @@ export class ConfigManager {
       }
 
       if (values) {
-        (config[key as keyof Config] as any) = (config[key as keyof Config] as string[]).filter(
-          (v) => !values.includes(v),
-        );
+        (config[key as keyof Config] as any) = (
+          config[key as keyof Config] as string[]
+        ).filter((v) => !values.includes(v));
       } else {
         delete config[key as keyof Config];
       }
@@ -184,7 +209,10 @@ export class ConfigManager {
     const config = global ? this.globalConfig : this.projectConfig;
     const configPath = global ? this.globalConfigPath : this.projectConfigPath;
     if (ARRAY_CONFIG_KEYS.includes(key)) {
-      (config[key as keyof Config] as any) = [...((config[key as keyof Config] as string[]) || []), ...values];
+      (config[key as keyof Config] as any) = [
+        ...((config[key as keyof Config] as string[]) || []),
+        ...values,
+      ];
     } else if (OBJECT_CONFIG_KEYS.includes(key)) {
       (config[key as keyof Config] as any) = {
         ...(config[key as keyof Config] as Record<string, McpServerConfig>),
@@ -197,11 +225,11 @@ export class ConfigManager {
   getConfig(global: boolean, key: string): any {
     const config = global ? this.globalConfig : this.projectConfig;
 
-    if (!key.includes('.')) {
+    if (!key.includes(".")) {
       return config[key as keyof Config];
     }
 
-    const keys = key.split('.');
+    const keys = key.split(".");
     const rootKey = keys[0];
 
     if (!VALID_CONFIG_KEYS.includes(rootKey)) {
@@ -223,9 +251,9 @@ export class ConfigManager {
     const config = global ? this.globalConfig : this.projectConfig;
     const configPath = global ? this.globalConfigPath : this.projectConfigPath;
 
-    if (key.includes('.')) {
+    if (key.includes(".")) {
       // Handle dot notation for nested keys
-      const keys = key.split('.');
+      const keys = key.split(".");
       const rootKey = keys[0];
 
       if (!VALID_CONFIG_KEYS.includes(rootKey)) {
@@ -233,7 +261,9 @@ export class ConfigManager {
       }
 
       if (!OBJECT_CONFIG_KEYS.includes(rootKey)) {
-        throw new Error(`Config key '${rootKey}' does not support nested properties`);
+        throw new Error(
+          `Config key '${rootKey}' does not support nested properties`
+        );
       }
 
       // Initialize the root object if it doesn't exist
@@ -260,10 +290,10 @@ export class ConfigManager {
 
       let newValue: any = value;
       if (BOOLEAN_CONFIG_KEYS.includes(key)) {
-        if (typeof value === 'boolean') {
+        if (typeof value === "boolean") {
           newValue = value;
         } else {
-          newValue = value === 'true';
+          newValue = value === "true";
         }
       }
       if (ARRAY_CONFIG_KEYS.includes(key)) {
@@ -301,21 +331,27 @@ function loadConfig(file: string) {
     return {};
   }
   try {
-    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+    return JSON.parse(fs.readFileSync(file, "utf-8"));
   } catch (error) {
     throw new Error(`Unable to read config file ${file}: ${error}`);
   }
 }
 
-function saveConfig(file: string, config: Partial<Config>, defaultConfig: Partial<Config>) {
+function saveConfig(
+  file: string,
+  config: Partial<Config>,
+  defaultConfig: Partial<Config>
+) {
   const filteredConfig = Object.fromEntries(
     Object.entries(config).filter(
-      ([key, value]) => JSON.stringify(value) !== JSON.stringify(defaultConfig[key as keyof Config]),
-    ),
+      ([key, value]) =>
+        JSON.stringify(value) !==
+        JSON.stringify(defaultConfig[key as keyof Config])
+    )
   );
   const dir = path.dirname(file);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  fs.writeFileSync(file, JSON.stringify(filteredConfig, null, 2), 'utf-8');
+  fs.writeFileSync(file, JSON.stringify(filteredConfig, null, 2), "utf-8");
 }

@@ -1,12 +1,42 @@
-import { Context } from '@midwayjs/web'
 import { Body, Controller, Get, Inject, Post, Query, Redirect } from '@midwayjs/decorator'
+import type { Context } from '@midwayjs/web'
 import axios from 'axios'
 import fs from 'fs'
 import path from 'path'
+import { Context as AgentContext } from '../service/neovate-code/context'
+import { Project } from '../service/neovate-code/project'
 
 const CLAUDE_BASE_URL = 'https://qa-user.aiapi.amh-group.com/claude/v1/messages'
 const CLAUDE_API_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoicWljaGVuZy56aGFuZyIsImlkIjoiMTAyMzQxOSIsImtleSI6IkJyT1ExS3E2IiwiY29uc3VtZXIiOiJhcGlrZXktNjhmOWVlMGFlNGIwYjI2MzliNjgyNTYzIn0.0h9dqhHBQzk6oWmNqeoZix_aGg-EOefKEBj09Lxv-AI'
+
+type ProjectSendBody = {
+  message?: string | null
+  sessionId?: string
+  cwd?: string
+  productName?: string
+  productASCIIArt?: string
+  version?: string
+  model?: string
+  planModel?: string
+  smallModel?: string
+  plugins?: string[]
+  config?: Record<string, any>
+  parentUuid?: string
+  thinking?: {
+    effort: 'low' | 'medium' | 'high'
+  }
+}
+
+const omitUndefined = (input: Record<string, any>) => {
+  const result: Record<string, any> = {}
+  for (const [key, value] of Object.entries(input)) {
+    if (value !== undefined) {
+      result[key] = value
+    }
+  }
+  return result
+}
 
 // const CLAUDE_BASE_URL = 'https://open.bigmodel.cn/api/anthropic/v1/messages'
 // const CLAUDE_API_KEY = '1a502e8ee34c4953a3c25b778f094b8e.c33zr72sfzXKf5Fr'
@@ -150,6 +180,88 @@ export class HomeController {
       return {
         success: false,
         error: error.response?.data || error.message || 'Request Error',
+      }
+    }
+  }
+
+  @Post('/project/send')
+  async projectSend(@Body() body: ProjectSendBody) {
+    const {
+      message = null,
+      sessionId,
+      cwd,
+      productName,
+      productASCIIArt,
+      version,
+      model,
+      planModel,
+      smallModel,
+      plugins,
+      config,
+      parentUuid,
+      thinking,
+    } = body
+
+    const resolvedCwd = cwd ? path.resolve(cwd) : process.cwd()
+    const resolvedProductName = productName || 'CodeAgent'
+    const resolvedVersion = version || process.env.CODE_AGENT_VERSION || '0.0.0'
+
+    const baseConfig = typeof config === 'object' && config ? { ...config } : {}
+    const primaryModel = model || baseConfig.model || process.env.MODEL_NAME
+    if (!primaryModel) {
+      this.ctx.status = 400
+      return {
+        success: false,
+        error: 'model is required',
+      }
+    }
+
+    const argvConfig = omitUndefined({
+      ...baseConfig,
+      model: primaryModel,
+      planModel,
+      smallModel,
+    })
+    if (Array.isArray(plugins) && plugins.length) {
+      argvConfig.plugins = plugins
+    }
+
+    let agentContext: AgentContext | null = null
+    try {
+      agentContext = await AgentContext.create({
+        cwd: resolvedCwd,
+        productName: resolvedProductName,
+        productASCIIArt,
+        version: resolvedVersion,
+        argvConfig,
+        plugins: [],
+      })
+
+      const project = new Project({
+        context: agentContext,
+        sessionId,
+      })
+
+      const sendOptions = omitUndefined({
+        model: primaryModel,
+        parentUuid,
+        thinking,
+      })
+      const result = await project.send(message, sendOptions)
+
+      return {
+        ...result,
+        sessionId: project.session.id,
+      }
+    } catch (error: any) {
+      this.ctx.status = 500
+      return {
+        success: false,
+        error: error?.message || 'Project send failed',
+      }
+    } finally {
+      if (agentContext) {
+        await agentContext.destroy()
       }
     }
   }

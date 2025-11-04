@@ -1,18 +1,22 @@
-import type { LanguageModelV2FunctionTool } from '@ai-sdk/provider';
-import path from 'pathe';
-import * as z from 'zod';
-import type { Context } from './context';
-import type { ImagePart, TextPart } from './message';
-import { resolveModelWithContext } from './model';
-import { createBashOutputTool, createBashTool, createKillBashTool } from './tools/bash';
-import { createEditTool } from './tools/edit';
-import { createFetchTool } from './tools/fetch';
-import { createGlobTool } from './tools/glob';
-import { createGrepTool } from './tools/grep';
-import { createLSTool } from './tools/ls';
-import { createReadTool } from './tools/read';
-import { createTodoTool, type TodoItem } from './tools/todo';
-import { createWriteTool } from './tools/write';
+import type { LanguageModelV2FunctionTool } from "@ai-sdk/provider";
+import path from "pathe";
+import * as z from "zod";
+import type { Context } from "./context";
+import type { ImagePart, TextPart } from "./message";
+import { resolveModelWithContext } from "./model";
+import {
+  createBashOutputTool,
+  createBashTool,
+  createKillBashTool,
+} from "./tools/bash";
+import { createEditTool } from "./tools/edit";
+import { createFetchTool } from "./tools/fetch";
+import { createGlobTool } from "./tools/glob";
+import { createGrepTool } from "./tools/grep";
+import { createLSTool } from "./tools/ls";
+import { createReadTool } from "./tools/read";
+import { createTodoTool, type TodoItem } from "./tools/todo";
+import { createWriteTool } from "./tools/write";
 
 type ResolveToolsOpts = {
   context: Context;
@@ -24,7 +28,9 @@ type ResolveToolsOpts = {
 export async function resolveTools(opts: ResolveToolsOpts) {
   const { cwd, productName, paths } = opts.context;
   const sessionId = opts.sessionId;
-  const model = (await resolveModelWithContext(opts.context.config.model, opts.context)).model!;
+  const model = (
+    await resolveModelWithContext(opts.context.config.model, opts.context)
+  ).model!;
   const readonlyTools = [
     createReadTool({ cwd, productName }),
     createLSTool({ cwd, productName }),
@@ -46,7 +52,7 @@ export async function resolveTools(opts: ResolveToolsOpts) {
   const todoTools = (() => {
     if (!opts.todo) return [];
     const { todoWriteTool, todoReadTool } = createTodoTool({
-      filePath: path.join(paths.globalConfigDir, 'todos', `${sessionId}.json`),
+      filePath: path.join(paths.globalConfigDir, "todos", `${sessionId}.json`),
     });
     return [todoReadTool, todoWriteTool];
   })();
@@ -61,7 +67,13 @@ export async function resolveTools(opts: ResolveToolsOpts) {
       ]
     : [];
   const mcpTools = await getMcpTools(opts.context);
-  return [...readonlyTools, ...writeTools, ...todoTools, ...backgroundTools, ...mcpTools];
+  return [
+    ...readonlyTools,
+    ...writeTools,
+    ...todoTools,
+    ...backgroundTools,
+    ...mcpTools,
+  ];
 }
 
 async function getMcpTools(context: Context): Promise<Tool[]> {
@@ -70,7 +82,7 @@ async function getMcpTools(context: Context): Promise<Tool[]> {
     await mcpManager.initAsync();
     return await mcpManager.getAllTools();
   } catch (error) {
-    console.warn('Failed to load MCP tools:', error);
+    console.warn("Failed to load MCP tools:", error);
     return [];
   }
 }
@@ -78,13 +90,10 @@ async function getMcpTools(context: Context): Promise<Tool[]> {
 export class Tools {
   tools: Record<string, Tool>;
   constructor(tools: Tool[]) {
-    this.tools = tools.reduce(
-      (acc, tool) => {
-        acc[tool.name] = tool;
-        return acc;
-      },
-      {} as Record<string, Tool>,
-    );
+    this.tools = tools.reduce((acc, tool) => {
+      acc[tool.name] = tool;
+      return acc;
+    }, {} as Record<string, Tool>);
   }
 
   get(toolName: string) {
@@ -127,11 +136,11 @@ export class Tools {
     // @ts-expect-error
     return Object.entries(this.tools).map(([key, tool]) => {
       // parameters of mcp tools is not zod object
-      const isMCP = key.startsWith('mcp__');
+      const isMCP = key.startsWith("mcp__");
       const schema = isMCP ? tool.parameters : z.toJSONSchema(tool.parameters);
       schema.type;
       return {
-        type: 'function',
+        type: "function",
         name: key,
         description: tool.description,
         inputSchema: schema,
@@ -140,34 +149,6 @@ export class Tools {
     });
   }
 }
-
-// function validateToolParams(schema: z.ZodObject<any>, params: string) {
-//   try {
-//     if (isZodObject(schema)) {
-//       const parsedParams = JSON.parse(params);
-//       const result = schema.safeParse(parsedParams);
-//       if (!result.success) {
-//         return {
-//           success: false,
-//           error: `Parameter validation failed: ${result.error.message}`,
-//         };
-//       }
-//       return {
-//         success: true,
-//         message: 'Tool parameters validated successfully',
-//       };
-//     }
-//     return {
-//       success: true,
-//       message: 'Tool parameters validated successfully',
-//     };
-//   } catch (error) {
-//     return {
-//       success: false,
-//       error: error,
-//     };
-//   }
-// }
 
 export type ToolUse = {
   name: string;
@@ -184,7 +165,13 @@ export type ToolUseResult = {
 export interface Tool<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
   name: string;
   description: string;
-  getDescription?: ({ params, cwd }: { params: z.output<TSchema>; cwd: string }) => string;
+  getDescription?: ({
+    params,
+    cwd,
+  }: {
+    params: z.output<TSchema>;
+    cwd: string;
+  }) => string;
   displayName?: string;
   execute: (params: z.output<TSchema>) => Promise<ToolResult> | ToolResult;
   approval?: ToolApprovalInfo;
@@ -198,7 +185,7 @@ type ApprovalContext = {
   context: any;
 };
 
-export type ApprovalCategory = 'read' | 'write' | 'command' | 'network';
+export type ApprovalCategory = "read" | "write" | "command" | "network";
 
 type ToolApprovalInfo = {
   needsApproval?: (context: ApprovalContext) => Promise<boolean> | boolean;
@@ -206,25 +193,29 @@ type ToolApprovalInfo = {
 };
 
 type TodoReadReturnDisplay = {
-  type: 'todo_read';
+  type: "todo_read";
   todos: TodoItem[];
 };
 
 type TodoWriteReturnDisplay = {
-  type: 'todo_write';
+  type: "todo_write";
   oldTodos: TodoItem[];
   newTodos: TodoItem[];
 };
 
 type DiffViewerReturnDisplay = {
-  type: 'diff_viewer';
+  type: "diff_viewer";
   originalContent: string | { inputKey: string };
   newContent: string | { inputKey: string };
   filePath: string;
   [key: string]: any;
 };
 
-export type ReturnDisplay = string | DiffViewerReturnDisplay | TodoReadReturnDisplay | TodoWriteReturnDisplay;
+export type ReturnDisplay =
+  | string
+  | DiffViewerReturnDisplay
+  | TodoReadReturnDisplay
+  | TodoWriteReturnDisplay;
 
 export type ToolResult = {
   llmContent: string | (TextPart | ImagePart)[];
@@ -238,7 +229,13 @@ export function createTool<TSchema extends z.ZodTypeAny>(config: {
   parameters: TSchema;
   execute: (params: z.output<TSchema>) => Promise<ToolResult> | ToolResult;
   approval?: ToolApprovalInfo;
-  getDescription?: ({ params, cwd }: { params: z.output<TSchema>; cwd: string }) => string;
+  getDescription?: ({
+    params,
+    cwd,
+  }: {
+    params: z.output<TSchema>;
+    cwd: string;
+  }) => string;
 }): Tool<TSchema> {
   return {
     name: config.name,

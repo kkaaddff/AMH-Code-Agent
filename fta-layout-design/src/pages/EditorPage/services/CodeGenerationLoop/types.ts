@@ -3,7 +3,7 @@
 /**
  * TODO 状态
  */
-export type TodoStatus = 'pending' | 'in_progress' | 'completed';
+export type TodoStatus = "pending" | "in_progress" | "completed";
 
 /**
  * TODO 项
@@ -19,7 +19,7 @@ export interface TodoItem {
  * 消息内容类型
  */
 export interface MessageContent {
-  type: 'text' | 'tool_use' | 'tool_result';
+  type: "text" | "tool_use" | "tool_result";
   text?: string;
   id?: string;
   name?: string;
@@ -27,14 +27,14 @@ export interface MessageContent {
   tool_use_id?: string;
   content?: string;
   is_error?: boolean;
-  cache_control?: { type: 'ephemeral' };
+  cache_control?: { type: "ephemeral" };
 }
 
 /**
  * 消息
  */
 export interface Message {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string | MessageContent[];
 }
 

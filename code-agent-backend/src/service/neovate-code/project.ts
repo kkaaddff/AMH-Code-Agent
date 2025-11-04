@@ -1,18 +1,18 @@
-import type { Context } from './context';
-import { JsonlLogger, RequestLogger } from './jsonl';
-import { LlmsContext } from './llmsContext';
-import { runLoop, type StreamResult } from './loop';
-import type { ImagePart, NormalizedMessage, UserContent } from './message';
-import { resolveModelWithContext } from './model';
-import { OutputFormat } from './outputFormat';
-import { generatePlanSystemPrompt } from './planSystemPrompt';
-import { PluginHookType } from './plugin';
-import { Session, SessionConfigManager, type SessionId } from './session';
-import { generateSystemPrompt } from './systemPrompt';
-import type { ApprovalCategory, Tool, ToolUse } from './tool';
-import { resolveTools, Tools } from './tool';
-import type { Usage } from './usage';
-import { randomUUID } from './utils/randomUUID';
+import type { Context } from "./context";
+import { JsonlLogger, RequestLogger } from "./jsonl";
+import { LlmsContext } from "./llmsContext";
+import { runLoop, type StreamResult } from "./loop";
+import type { ImagePart, NormalizedMessage, UserContent } from "./message";
+import { resolveModelWithContext } from "./model";
+import { OutputFormat } from "./outputFormat";
+import { generatePlanSystemPrompt } from "./planSystemPrompt";
+import { PluginHookType } from "./plugin";
+import { Session, SessionConfigManager, type SessionId } from "./session";
+import { generateSystemPrompt } from "./systemPrompt";
+import type { ApprovalCategory, Tool, ToolUse } from "./tool";
+import { resolveTools, Tools } from "./tool";
+import type { Usage } from "./usage";
+import { randomUUID } from "./utils/randomUUID";
 
 export class Project {
   session: Session;
@@ -40,9 +40,9 @@ export class Project {
       attachments?: ImagePart[];
       parentUuid?: string;
       thinking?: {
-        effort: 'low' | 'medium' | 'high';
+        effort: "low" | "medium" | "high";
       };
-    } = {},
+    } = {}
   ) {
     let tools = await resolveTools({
       context: this.context,
@@ -51,7 +51,7 @@ export class Project {
       todo: true,
     });
     tools = await this.context.apply({
-      hook: 'tool',
+      hook: "tool",
       args: [{ sessionId: this.session.id }],
       memo: tools,
       type: PluginHookType.SeriesMerge,
@@ -63,7 +63,7 @@ export class Project {
       language: this.context.config.language,
     });
     systemPrompt = await this.context.apply({
-      hook: 'systemPrompt',
+      hook: "systemPrompt",
       args: [{ sessionId: this.session.id }],
       memo: systemPrompt,
       type: PluginHookType.SeriesLast,
@@ -87,9 +87,9 @@ export class Project {
       attachments?: ImagePart[];
       parentUuid?: string;
       thinking?: {
-        effort: 'low' | 'medium' | 'high';
+        effort: "low" | "medium" | "high";
       };
-    } = {},
+    } = {}
   ) {
     let tools = await resolveTools({
       context: this.context,
@@ -98,7 +98,7 @@ export class Project {
       todo: false,
     });
     tools = await this.context.apply({
-      hook: 'tool',
+      hook: "tool",
       args: [{ isPlan: true, sessionId: this.session.id }],
       memo: tools,
       type: PluginHookType.SeriesMerge,
@@ -109,7 +109,7 @@ export class Project {
       language: this.context.config.language,
     });
     systemPrompt = await this.context.apply({
-      hook: 'systemPrompt',
+      hook: "systemPrompt",
       args: [{ isPlan: true, sessionId: this.session.id }],
       memo: systemPrompt,
       type: PluginHookType.SeriesLast,
@@ -128,7 +128,10 @@ export class Project {
     opts: {
       model?: string;
       onMessage?: (opts: { message: NormalizedMessage }) => Promise<void>;
-      onToolApprove?: (opts: { toolUse: ToolUse; category?: ApprovalCategory }) => Promise<boolean>;
+      onToolApprove?: (opts: {
+        toolUse: ToolUse;
+        category?: ApprovalCategory;
+      }) => Promise<boolean>;
       onTextDelta?: (text: string) => Promise<void>;
       onChunk?: (chunk: any, requestId: string) => Promise<void>;
       onStreamResult?: (result: StreamResult) => Promise<void>;
@@ -138,9 +141,9 @@ export class Project {
       attachments?: ImagePart[];
       parentUuid?: string;
       thinking?: {
-        effort: 'low' | 'medium' | 'high';
+        effort: "low" | "medium" | "high";
       };
-    } = {},
+    } = {}
   ) {
     const startTime = new Date();
     const tools = opts.tools || [];
@@ -156,7 +159,7 @@ export class Project {
     });
     if (message !== null) {
       message = await this.context.apply({
-        hook: 'userPrompt',
+        hook: "userPrompt",
         memo: message,
         args: [
           {
@@ -166,7 +169,10 @@ export class Project {
         type: PluginHookType.SeriesLast,
       });
     }
-    const model = (await resolveModelWithContext(opts.model || null, this.context)).model!;
+
+    const model = (
+      await resolveModelWithContext(opts.model || null, this.context)
+    ).model!;
     const llmsContext = await LlmsContext.create({
       context: this.context,
       sessionId: this.session.id,
@@ -184,13 +190,15 @@ export class Project {
     let userMessage: NormalizedMessage | null = null;
     if (message !== null) {
       const lastMessageUuid =
-        opts.parentUuid || this.session.history.messages[this.session.history.messages.length - 1]?.uuid;
+        opts.parentUuid ||
+        this.session.history.messages[this.session.history.messages.length - 1]
+          ?.uuid;
 
       let content: UserContent = message;
       if (opts.attachments?.length) {
         content = [
           {
-            type: 'text' as const,
+            type: "text" as const,
             text: message,
           },
           ...opts.attachments,
@@ -200,9 +208,9 @@ export class Project {
       userMessage = {
         parentUuid: lastMessageUuid || null,
         uuid: randomUUID(),
-        role: 'user',
+        role: "user",
         content,
-        type: 'message',
+        type: "message",
         timestamp: new Date().toISOString(),
       };
       const userMessageWithSessionId = {
@@ -219,7 +227,10 @@ export class Project {
     const historyMessages = opts.parentUuid
       ? this.session.history.getMessagesToUuid(opts.parentUuid)
       : this.session.history.messages;
-    const input = historyMessages.length > 0 ? [...historyMessages, userMessage] : [userMessage];
+    const input =
+      historyMessages.length > 0
+        ? [...historyMessages, userMessage]
+        : [userMessage];
     const filteredInput = input.filter((message) => message !== null);
     const toolsManager = new Tools(tools);
     const result = await runLoop({
@@ -270,7 +281,7 @@ export class Project {
       onReasoning: async (text) => {},
       onToolUse: async (toolUse) => {
         return await this.context.apply({
-          hook: 'toolUse',
+          hook: "toolUse",
           args: [
             {
               sessionId: this.session.id,
@@ -282,7 +293,7 @@ export class Project {
       },
       onToolResult: async (toolUse, toolResult, approved) => {
         return await this.context.apply({
-          hook: 'toolResult',
+          hook: "toolResult",
           args: [
             {
               toolUse,
@@ -294,9 +305,13 @@ export class Project {
           type: PluginHookType.SeriesLast,
         });
       },
-      onTurn: async (turn: { usage: Usage; startTime: Date; endTime: Date }) => {
+      onTurn: async (turn: {
+        usage: Usage;
+        startTime: Date;
+        endTime: Date;
+      }) => {
         await this.context.apply({
-          hook: 'query',
+          hook: "query",
           args: [
             {
               startTime: turn.startTime,
@@ -312,7 +327,7 @@ export class Project {
         // TODO: if quiet return true
         // 1. if yolo return true
         const approvalMode = this.context.config.approvalMode;
-        if (approvalMode === 'yolo') {
+        if (approvalMode === "yolo") {
           return true;
         }
         // 2. if category is read return true
@@ -321,7 +336,7 @@ export class Project {
           // Let the tool invoke handle the `tool not found` error
           return true;
         }
-        if (tool.approval?.category === 'read') {
+        if (tool.approval?.category === "read") {
           return true;
         }
         // 3. run tool should approve if true return true
@@ -341,8 +356,11 @@ export class Project {
         const sessionConfigManager = new SessionConfigManager({
           logPath: this.context.paths.getSessionLogPath(this.session.id),
         });
-        if (tool.approval?.category === 'write') {
-          if (sessionConfigManager.config.approvalMode === 'autoEdit' || approvalMode === 'autoEdit') {
+        if (tool.approval?.category === "write") {
+          if (
+            sessionConfigManager.config.approvalMode === "autoEdit" ||
+            approvalMode === "autoEdit"
+          ) {
             return true;
           }
         }
@@ -361,7 +379,7 @@ export class Project {
     });
     const endTime = new Date();
     await this.context.apply({
-      hook: 'conversation',
+      hook: "conversation",
       args: [
         {
           userPrompt: message,

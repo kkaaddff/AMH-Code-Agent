@@ -142,7 +142,7 @@ function normalizePlugins(cwd: string, plugins: (string | Plugin)[]) {
       if (typeof plugin === 'string') {
         const pluginPath = resolve.sync(plugin, { basedir: cwd });
         if (!jiti) {
-          jiti = createJiti(import.meta.url);
+          jiti = createJiti(__dirname);
         }
         return (await jiti.import(pluginPath, {
           default: true,
