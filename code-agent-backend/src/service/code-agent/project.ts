@@ -517,12 +517,6 @@ export class ProjectService {
       throw new Error('文档不存在');
     }
 
-    // Check if document has been synced
-    const syncedStatuses = ['synced', 'completed', 'editing'];
-    if (!syncedStatuses.includes(document.status)) {
-      throw new Error(`文档尚未同步，当前状态: ${document.status}`);
-    }
-
     return document;
   }
 

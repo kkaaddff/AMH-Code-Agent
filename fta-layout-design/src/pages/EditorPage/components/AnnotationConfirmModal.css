@@ -1,0 +1,114 @@
+.annotation-confirm-modal .ant-modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.annotation-confirm-loading {
+  padding: 48px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.annotation-confirm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.annotation-confirm-group {
+  border: 1px solid #e5e9f2;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.annotation-confirm-group-title {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.annotation-confirm-item {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.annotation-confirm-screenshot {
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+  background: #fafafa;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.annotation-confirm-screenshot-image {
+  width: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.annotation-confirm-placeholder {
+  color: #999;
+  font-size: 12px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.annotation-confirm-json {
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  padding: 12px 16px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.annotation-confirm-json-content {
+  margin: 0;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.annotation-confirm-conflict-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.annotation-confirm-conflict-controls {
+  background: #f8faff;
+  border: 1px solid #e0e7ff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.annotation-confirm-conflict-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.annotation-confirm-conflict-item {
+  display: grid;
+  gap: 12px;
+}
+
+.annotation-confirm-note-input {
+  margin-top: 8px;
+}

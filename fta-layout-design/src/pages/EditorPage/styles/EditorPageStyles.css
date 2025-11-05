@@ -1,0 +1,98 @@
+.editor-page-loading-container,
+.editor-page-error-container {
+  width: 100%;
+  height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editor-page-main-layout {
+  width: 100%;
+  height: calc(100vh - 64px);
+}
+
+.editor-page-sider {
+  border-right: 1px solid rgb(240, 240, 240);
+  overflow: hidden;
+}
+
+.editor-page-right-sider {
+  border-left: 1px solid rgb(240, 240, 240);
+  border-right: none;
+}
+
+.editor-page-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.editor-page-content--no-padding {
+  padding: 0;
+}
+
+.editor-page-header-toolbar {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgb(240, 240, 240);
+  background: rgb(255, 255, 255);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editor-page-title {
+  margin: 0;
+}
+
+.ant-btn.editor-page-button {
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.editor-page-canvas-container {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+  padding: 0 0 20px;
+}
+
+.editor-page-detection-canvas-container {
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+}
+
+.editor-page-collapse-button {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  height: 60px;
+  padding: 0 3px;
+  display: flex;
+  align-items: center;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  background: rgb(255, 255, 255);
+  user-select: none;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.editor-page-collapse-button-left {
+  left: 0;
+}
+
+.editor-page-collapse-button-right {
+  right: 0;
+}

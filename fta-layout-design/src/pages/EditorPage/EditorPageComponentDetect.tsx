@@ -9,7 +9,7 @@ import {
   QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { App as AntApp, App, Button, Dropdown, Layout, Space, Spin, Typography } from 'antd';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio/react';
 import CodeGenerationDrawer from './components/CodeGenerationDrawer';
 import Component3DInspectModal from './components/Component3DInspectModal';
@@ -27,11 +27,12 @@ import { editorPageActions, editorPageStore } from './contexts/EditorPageContext
 import { commonUserPrompt } from './services/CodeGenerationLoop/CommonPrompt';
 import { AgentScheduler } from './services/CodeGenerationLoop/index.AgentScheduler.backup';
 import { generateUID } from './services/CodeGenerationLoop/utils';
-import { COMPONENT_STYLES } from './styles/EditorPageStyles';
+import AnnotationConfirmModal from './components/AnnotationConfirmModal';
 import { AnnotationNode } from './types/componentDetectionV2';
 import { loadAnnotationState } from './utils/componentStorage';
 import { flattenAnnotation, formatAnnotationSummary } from './utils/prompt';
 // import { SSEScheduler } from './services/CodeGenerationLoop/SSEScheduler';
+import './styles/EditorPageStyles.css';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
@@ -74,6 +75,7 @@ const EditorPageContent: React.FC = () => {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [isAnnotationConfirmOpen, setIsAnnotationConfirmOpen] = useState(false);
 
   // const schedulerRef = useRef<SSEScheduler | null>(null);
   const schedulerRef = useRef<AgentScheduler | null>(null);
@@ -365,6 +367,34 @@ const EditorPageContent: React.FC = () => {
     }
   };
 
+  const handleGenerateCodeV2 = () => {
+    if (!selectedDocument?.id) {
+      message.error('请提供设计稿 ID 参数');
+      return;
+    }
+
+    if (selectedDocument?.type !== 'design') {
+      void handleGenerateCode();
+      return;
+    }
+
+    if (!rootAnnotation) {
+      message.error('当前没有可确认的标注数据');
+      return;
+    }
+
+    setIsAnnotationConfirmOpen(true);
+  };
+
+  const handleAnnotationConfirmSubmit = async () => {
+    setIsAnnotationConfirmOpen(false);
+    await handleGenerateCode();
+  };
+
+  const handleAnnotationConfirmCancel = useCallback(() => {
+    setIsAnnotationConfirmOpen(false);
+  }, []);
+
   const handleCloseCodeDrawer = () => {
     closeCodeDrawer();
   };
@@ -421,7 +451,7 @@ const EditorPageContent: React.FC = () => {
   // 如果页面数据还在加载中
   if (pageLoading) {
     return (
-      <div style={COMPONENT_STYLES.loadingContainer}>
+      <div className='editor-page-loading-container'>
         <Spin size='large' />
         <div style={{ marginTop: 16, color: '#999', fontSize: 14 }}>加载页面数据...</div>
       </div>
@@ -431,7 +461,7 @@ const EditorPageContent: React.FC = () => {
   // 如果页面数据加载失败
   if (pageError) {
     return (
-      <div style={COMPONENT_STYLES.errorContainer}>
+      <div className='editor-page-error-container'>
         <Typography.Text type='danger'>加载页面数据失败：{pageError}</Typography.Text>
       </div>
     );
@@ -440,7 +470,7 @@ const EditorPageContent: React.FC = () => {
   // 如果 DSL 数据还在加载中（仅在选中设计文档时检查）
   if (selectedDocument?.type === 'design' && dslLoading) {
     return (
-      <div style={COMPONENT_STYLES.loadingContainer}>
+      <div className='editor-page-loading-container'>
         <Spin size='large' />
         <div style={{ marginTop: 16, color: '#999', fontSize: 14 }}>加载 DSL 数据...</div>
       </div>
@@ -450,7 +480,7 @@ const EditorPageContent: React.FC = () => {
   // 如果选中设计文档时 DSL 数据加载失败
   if (selectedDocument?.type === 'design' && dslError) {
     return (
-      <div style={COMPONENT_STYLES.errorContainer}>
+      <div className='editor-page-error-container'>
         <Typography.Text type='danger'>加载 DSL 数据失败：{dslError.message}</Typography.Text>
       </div>
     );
@@ -459,7 +489,7 @@ const EditorPageContent: React.FC = () => {
   // 如果选中设计文档但没有 DSL 数据
   if (selectedDocument?.type === 'design' && !dslData) {
     return (
-      <div style={COMPONENT_STYLES.errorContainer}>
+      <div className='editor-page-error-container'>
         <Typography.Text type='secondary'>未找到 DSL 数据</Typography.Text>
       </div>
     );
@@ -468,7 +498,7 @@ const EditorPageContent: React.FC = () => {
   // 如果选中设计文档且组件识别上下文还在加载中
   if (selectedDocument?.type === 'design' && isLoading) {
     return (
-      <div style={COMPONENT_STYLES.loadingContainer}>
+      <div className='editor-page-loading-container'>
         <Spin size='large' />
         <div style={{ marginTop: 16, color: '#999', fontSize: 14 }}>初始化中...</div>
       </div>
@@ -477,7 +507,7 @@ const EditorPageContent: React.FC = () => {
 
   return (
     <>
-      <Layout style={COMPONENT_STYLES.mainLayout}>
+      <Layout className='editor-page-main-layout'>
         {/* 左侧面板：文档管理 */}
         <Sider
           width={350}
@@ -487,12 +517,12 @@ const EditorPageContent: React.FC = () => {
           onCollapse={setLeftCollapsed}
           collapsedWidth={0}
           trigger={null}
-          style={COMPONENT_STYLES.sider}>
+          className='editor-page-sider'>
           <LayerTreePanel
             onDeleteDocument={handleDeleteDocument}
             onRefreshPage={handleRefreshPage}
             onSave={handleSave}
-            onGenerateCode={handleGenerateCode}
+            onGenerateCode={handleGenerateCodeV2}
           />
         </Sider>
 
@@ -500,9 +530,9 @@ const EditorPageContent: React.FC = () => {
         {selectedDocument?.type === 'design' && dslData && (
           <>
             <Layout>
-              <Content style={COMPONENT_STYLES.content}>
-                <div style={COMPONENT_STYLES.headerToolbar}>
-                  <Title level={5} style={COMPONENT_STYLES.title}>
+              <Content className='editor-page-content'>
+                <div className='editor-page-header-toolbar'>
+                  <Title level={5} className='editor-page-title'>
                     组件标注编辑器
                   </Title>
                   <Space>
@@ -511,7 +541,7 @@ const EditorPageContent: React.FC = () => {
                       size='small'
                       icon={showAllBorders ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                       onClick={toggleShowAllBorders}
-                      style={COMPONENT_STYLES.button}>
+                      className='editor-page-button'>
                       框线
                     </Button>
                     <Button
@@ -519,7 +549,7 @@ const EditorPageContent: React.FC = () => {
                       size='small'
                       icon={<AppstoreOutlined />}
                       onClick={() => setIs3DModalOpen(true)}
-                      style={COMPONENT_STYLES.button}>
+                      className='editor-page-button'>
                       3D 检视
                     </Button>
                     <Button
@@ -527,7 +557,7 @@ const EditorPageContent: React.FC = () => {
                       size='small'
                       icon={<QuestionCircleOutlined />}
                       onClick={() => setIsGuideOpen(true)}
-                      style={COMPONENT_STYLES.button}>
+                      className='editor-page-button'>
                       交互引导
                     </Button>
                     <Dropdown
@@ -543,26 +573,20 @@ const EditorPageContent: React.FC = () => {
                   </Space>
                 </div>
 
-                <div style={COMPONENT_STYLES.canvasContainer}>
+                <div className='editor-page-canvas-container'>
                   <div
                     onClick={() => setLeftCollapsed(!leftCollapsed)}
-                    style={{
-                      ...COMPONENT_STYLES.collapseButton,
-                      ...COMPONENT_STYLES.leftCollapseButton,
-                    }}>
+                    className='editor-page-collapse-button editor-page-collapse-button-left'>
                     {leftCollapsed ? '▶' : '◀'}
                   </div>
 
                   <div
                     onClick={() => setRightCollapsed(!rightCollapsed)}
-                    style={{
-                      ...COMPONENT_STYLES.collapseButton,
-                      ...COMPONENT_STYLES.rightCollapseButton,
-                    }}>
+                    className='editor-page-collapse-button editor-page-collapse-button-right'>
                     {rightCollapsed ? '◀' : '▶'}
                   </div>
 
-                  <div id='detection-canvas-container' style={COMPONENT_STYLES.detectionCanvasContainer}>
+                  <div id='detection-canvas-container' className='editor-page-detection-canvas-container'>
                     <DetectionCanvas
                       dslData={dslData}
                       scale={scale}
@@ -583,7 +607,7 @@ const EditorPageContent: React.FC = () => {
               onCollapse={setRightCollapsed}
               collapsedWidth={0}
               trigger={null}
-              style={COMPONENT_STYLES.rightSider}>
+              className='editor-page-sider editor-page-right-sider'>
               <ComponentPropertyPanel />
             </Sider>
           </>
@@ -592,13 +616,10 @@ const EditorPageContent: React.FC = () => {
         {/* PRD 文档编辑器 */}
         {selectedDocument?.type === 'prd' && (
           <Layout style={{ flex: 1 }}>
-            <Content style={{ ...COMPONENT_STYLES.content, padding: 0 }}>
+            <Content className='editor-page-content editor-page-content--no-padding'>
               <div
                 onClick={() => setLeftCollapsed(!leftCollapsed)}
-                style={{
-                  ...COMPONENT_STYLES.collapseButton,
-                  ...COMPONENT_STYLES.leftCollapseButton,
-                }}>
+                className='editor-page-collapse-button editor-page-collapse-button-left'>
                 {leftCollapsed ? '▶' : '◀'}
               </div>
               <PRDEditorPanel documentId={selectedDocument?.id} />
@@ -610,22 +631,16 @@ const EditorPageContent: React.FC = () => {
         {selectedDocument?.type === 'openapi' && (
           <>
             <Layout>
-              <Content style={{ ...COMPONENT_STYLES.content, padding: 0 }}>
+              <Content className='editor-page-content editor-page-content--no-padding'>
                 <div
                   onClick={() => setLeftCollapsed(!leftCollapsed)}
-                  style={{
-                    ...COMPONENT_STYLES.collapseButton,
-                    ...COMPONENT_STYLES.leftCollapseButton,
-                  }}>
+                  className='editor-page-collapse-button editor-page-collapse-button-left'>
                   {leftCollapsed ? '▶' : '◀'}
                 </div>
 
                 <div
                   onClick={() => setRightCollapsed(!rightCollapsed)}
-                  style={{
-                    ...COMPONENT_STYLES.collapseButton,
-                    ...COMPONENT_STYLES.rightCollapseButton,
-                  }}>
+                  className='editor-page-collapse-button editor-page-collapse-button-right'>
                   {rightCollapsed ? '◀' : '▶'}
                 </div>
 
@@ -641,7 +656,7 @@ const EditorPageContent: React.FC = () => {
               onCollapse={setRightCollapsed}
               collapsedWidth={0}
               trigger={null}
-              style={COMPONENT_STYLES.rightSider}>
+              className='editor-page-sider editor-page-right-sider'>
               <OpenAPIDataPanel selectedApiId={selectedDocument?.id || undefined} />
             </Sider>
           </>
@@ -659,10 +674,7 @@ const EditorPageContent: React.FC = () => {
               }}>
               <div
                 onClick={() => setLeftCollapsed(!leftCollapsed)}
-                style={{
-                  ...COMPONENT_STYLES.collapseButton,
-                  ...COMPONENT_STYLES.leftCollapseButton,
-                }}>
+                className='editor-page-collapse-button editor-page-collapse-button-left'>
                 {leftCollapsed ? '▶' : '◀'}
               </div>
               <Typography.Text type='secondary'>请从左侧选择一个文档开始编辑</Typography.Text>
@@ -670,6 +682,13 @@ const EditorPageContent: React.FC = () => {
           </Layout>
         )}
       </Layout>
+      <AnnotationConfirmModal
+        open={isAnnotationConfirmOpen}
+        rootAnnotation={rootAnnotation as AnnotationNode | null}
+        selectedDocumentId={selectedDocument?.type === 'design' ? selectedDocument.id : undefined}
+        onCancel={handleAnnotationConfirmCancel}
+        onConfirm={handleAnnotationConfirmSubmit}
+      />
       <Component3DInspectModal open={is3DModalOpen} onClose={() => setIs3DModalOpen(false)} />
       <InteractionGuideOverlay open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
       <CodeGenerationDrawer open={isCodeDrawerOpen} onClose={handleCloseCodeDrawer} />

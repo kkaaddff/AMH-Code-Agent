@@ -1,5 +1,7 @@
 import { projectService } from '@/services/projectService';
+import { DSLData } from '@/types/dsl';
 import { DocumentReference } from '@/types/project';
+import { api } from '@/utils/apiService';
 import { getDocumentStatusColor, getDocumentStatusText } from '@/utils/documentStatus';
 import {
   ApiOutlined,
@@ -13,13 +15,14 @@ import {
   FolderOutlined,
   LinkOutlined,
   PlusOutlined,
+  ReloadOutlined,
   SaveOutlined,
   SettingOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { App, Button, Collapse, Form, Input, List, Modal, Space, Tag, Tooltip, Tree, Typography } from 'antd';
 import type { DataNode } from 'antd/es/tree';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { TDocumentKeys } from '../constants';
 import { componentDetectionActions, componentDetectionStore } from '../contexts/ComponentDetectionContext';
@@ -37,8 +40,44 @@ interface LayerTreePanelProps {
 
 const showLine = { showLeafIcon: false };
 
+type DesignDocTreeStatus = 'pending' | 'loading' | 'ready' | 'error';
+
+interface DesignDocTreeState {
+  annotation: AnnotationNode | null;
+  status: DesignDocTreeStatus;
+}
+
+const createRootAnnotationFromDSL = (dslData: DSLData, docId: string, docName?: string): AnnotationNode | null => {
+  const rootNode = dslData?.dsl?.nodes?.[0];
+  if (!rootNode) {
+    return null;
+  }
+
+  const now = Date.now();
+  return {
+    id: `design-root-${docId}`,
+    dslNodeId: rootNode.id,
+    dslNode: rootNode,
+    ftaComponent: 'View',
+    name: docName || 'Page',
+    isRoot: true,
+    isContainer: true,
+    children: [],
+    absoluteX: 0,
+    absoluteY: 0,
+    width: rootNode.layoutStyle?.width || 720,
+    height: rootNode.layoutStyle?.height || 1560,
+    createdAt: now,
+    updatedAt: now,
+  };
+};
+
 // 转换AnnotationNode为Tree DataNode
-const convertToTreeData = (node: AnnotationNode, isFirstLevel = false): DataNode => {
+const convertToTreeData = (
+  node: AnnotationNode,
+  options: { isFirstLevel?: boolean; isActiveDoc?: boolean; documentName?: string } = {}
+): DataNode => {
+  const { isFirstLevel = false, isActiveDoc = false, documentName } = options;
   const isRoot = node.isRoot;
   const isContainer = node.isContainer;
 
@@ -51,12 +90,14 @@ const convertToTreeData = (node: AnnotationNode, isFirstLevel = false): DataNode
           <FileOutlined style={{ color: 'rgb(140, 140, 140)' }} />
         )}
         <span style={{ fontWeight: isRoot ? 600 : 400 }}>
-          {node.ftaComponent}
-          {node.name && ` (${node.name})`}
+          {node.name ? `${node.name} (${node.ftaComponent})` : node.ftaComponent}
+          {/* {isRoot && documentName && (
+            <span style={{ marginLeft: 8, fontSize: 12, color: 'rgba(0, 0, 0, 0.45)' }}>{documentName}</span>
+          )} */}
         </span>
         {isRoot && <span style={{ fontSize: 12, color: 'rgb(82, 196, 26)' }}>[主页面]</span>}
       </Space>
-      {isFirstLevel && (
+      {isFirstLevel && isActiveDoc && (
         <Space size={4}>
           <Tooltip title='展开全部' color='#eee'>
             <Button
@@ -99,8 +140,9 @@ const convertToTreeData = (node: AnnotationNode, isFirstLevel = false): DataNode
   return {
     key: node.id,
     title,
-    children: node.children.map((child) => convertToTreeData(child, false)),
+    children: node.children.map((child) => convertToTreeData(child, { isActiveDoc })),
     isLeaf: node.children.length === 0,
+    selectable: isActiveDoc,
   };
 };
 
@@ -113,16 +155,210 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
   const [addDocModalVisible, setAddDocModalVisible] = useState(false);
   const [addDocType, setAddDocType] = useState<keyof typeof TDocumentKeys>('design');
   const [addDocForm] = Form.useForm();
+  const [designDocStates, setDesignDocStates] = useState<Record<string, DesignDocTreeState>>({});
+  const [syncingDocIds, setSyncingDocIds] = useState<Record<string, boolean>>({});
 
-  // 生成Tree数据（仅在选中设计文档时显示）
+  useEffect(() => {
+    const designDocs = currentPage?.designDocuments ?? [];
+
+    if (designDocs.length === 0) {
+      setDesignDocStates({});
+      return;
+    }
+
+    let cancelled = false;
+
+    setDesignDocStates((prev) => {
+      const next: Record<string, DesignDocTreeState> = {};
+      designDocs.forEach((doc) => {
+        next[doc.id] = prev[doc.id] ?? { annotation: null, status: 'loading' };
+      });
+      return next;
+    });
+
+    const fetchDesignDocDSL = async (doc: DocumentReference) => {
+      try {
+        const response = await api.project.document.getContent({ documentId: doc.id });
+        const dslData: DSLData | undefined = response?.data?.data;
+        if (!dslData) {
+          throw new Error('没有获取到DSL数据');
+        }
+
+        const rootNode = createRootAnnotationFromDSL(dslData, doc.id, doc.name);
+        if (cancelled) {
+          return;
+        }
+
+        setDesignDocStates((prev) => {
+          const next = { ...prev };
+          next[doc.id] = {
+            annotation: rootNode,
+            status: rootNode ? 'ready' : 'error',
+          };
+          return next;
+        });
+      } catch (error) {
+        console.error(`获取设计文档DSL失败: ${doc.id}`, error);
+        if (cancelled) {
+          return;
+        }
+        setDesignDocStates((prev) => {
+          const next = { ...prev };
+          next[doc.id] = {
+            annotation: null,
+            status: 'pending',
+          };
+          return next;
+        });
+      }
+    };
+
+    designDocs.forEach((doc) => {
+      fetchDesignDocDSL(doc as DocumentReference);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentPage?.designDocuments]);
+
+  const handleSyncDesignDocument = async (doc: DocumentReference) => {
+    if (!projectId || !pageId) {
+      message.error('缺少项目或页面信息');
+      return;
+    }
+
+    setSyncingDocIds((prev) => ({ ...prev, [doc.id]: true }));
+
+    setDesignDocStates((prev) => {
+      const next = { ...prev };
+      const current = next[doc.id];
+      next[doc.id] = {
+        annotation: current?.annotation ?? null,
+        status: 'loading',
+      };
+      return next;
+    });
+
+    try {
+      await projectService.syncDocument(projectId, pageId, 'design', doc.id);
+
+      const response = await api.project.document.getContent({ documentId: doc.id });
+      const dslData: DSLData | undefined = response?.data?.data;
+      if (!dslData) {
+        throw new Error('没有获取到DSL数据');
+      }
+
+      const rootNode = createRootAnnotationFromDSL(dslData, doc.id, doc.name);
+      if (!rootNode) {
+        throw new Error('DSL数据中缺少根节点');
+      }
+
+      setDesignDocStates((prev) => {
+        const next = { ...prev };
+        next[doc.id] = {
+          annotation: rootNode,
+          status: 'ready',
+        };
+        return next;
+      });
+
+      message.success('设计文档同步成功');
+      if (onRefreshPage) {
+        onRefreshPage();
+      }
+    } catch (error: any) {
+      console.error(`设计文档同步失败: ${doc.id}`, error);
+      const errorMessage = error?.message ?? '';
+      if (errorMessage.includes('DSL')) {
+        message.warning('设计文档同步已触发，DSL 数据暂未生成');
+      } else {
+        message.error(errorMessage || '设计文档同步失败');
+      }
+      setDesignDocStates((prev) => {
+        const next = { ...prev };
+        const current = next[doc.id];
+        next[doc.id] = {
+          annotation: current?.annotation ?? null,
+          status: 'pending',
+        };
+        return next;
+      });
+    } finally {
+      setSyncingDocIds((prev) => {
+        const next = { ...prev };
+        delete next[doc.id];
+        return next;
+      });
+    }
+  };
+
+  // 生成Tree数据：合并所有设计文档
   const designTreeData: DataNode[] = useMemo(() => {
-    if (!rootAnnotation || selectedDocument?.type !== 'design') return [];
-    return [
-      convertToTreeData(rootAnnotation as AnnotationNode, true),
-      // 测试用
-      // convertToTreeData(rootAnnotation as AnnotationNode, true),
-    ];
-  }, [rootAnnotation, selectedDocument]);
+    const designDocs = currentPage?.designDocuments ?? [];
+    if (designDocs.length === 0) {
+      return [];
+    }
+
+    return designDocs
+      .map((doc) => {
+        const docState = designDocStates[doc.id];
+        const isDesignSelected = selectedDocument?.type === 'design' && selectedDocument?.id === doc.id;
+        const hasStoreAnnotation = isDesignSelected && rootAnnotation;
+        const resolvedAnnotation = hasStoreAnnotation
+          ? (rootAnnotation as AnnotationNode)
+          : docState?.annotation ?? null;
+
+        if (resolvedAnnotation) {
+          return convertToTreeData(resolvedAnnotation, {
+            isFirstLevel: true,
+            isActiveDoc: Boolean(hasStoreAnnotation),
+            documentName: doc.name || doc.id.substring(0, 6),
+          });
+        }
+
+        const statusText =
+          docState?.status === 'error' ? '加载失败' : docState?.status === 'pending' ? '待加载' : '加载中...';
+        const iconColor = docState?.status === 'error' ? 'rgb(245, 34, 45)' : 'rgb(24, 144, 255)';
+
+        const isPending = docState?.status === 'pending';
+
+        const title = (
+          <Space size={4} style={{ width: '100%', justifyContent: 'space-between' }}>
+            <Space size={4}>
+              <FileImageOutlined style={{ color: iconColor }} />
+              <span style={{ fontWeight: 500 }}>{doc.name || `文档 ${doc.id.substring(0, 6)}`}</span>
+            </Space>
+            {isPending ? (
+              <Button
+                type='link'
+                size='small'
+                icon={<ReloadOutlined />}
+                loading={Boolean(syncingDocIds[doc.id])}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSyncDesignDocument(doc as DocumentReference);
+                }}
+                style={{ padding: 0, fontSize: 12 }}>
+                同步
+              </Button>
+            ) : (
+              <Text type='secondary' style={{ fontSize: 12 }}>
+                {statusText}
+              </Text>
+            )}
+          </Space>
+        );
+
+        return {
+          key: `design-doc-${doc.id}`,
+          title,
+          isLeaf: true,
+          selectable: false,
+        };
+      })
+      .filter(Boolean) as DataNode[];
+  }, [currentPage?.designDocuments, designDocStates, selectedDocument, rootAnnotation, syncingDocIds]);
 
   // 处理节点选择
   const handleSelect = (selectedKeys: React.Key[]) => {
@@ -273,7 +509,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
         designTreeData.length > 0 ? (
           <Tree
             treeData={designTreeData}
-            selectedKeys={selectedAnnotationId ? [selectedAnnotationId] : []}
+            selectedKeys={selectedDocument?.type === 'design' && selectedAnnotationId ? [selectedAnnotationId] : []}
             expandedKeys={expandedKeys as string[]}
             onSelect={handleSelect}
             onExpand={handleExpand}
