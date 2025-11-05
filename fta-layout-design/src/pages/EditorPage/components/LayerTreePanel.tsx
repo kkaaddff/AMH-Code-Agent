@@ -22,7 +22,7 @@ import type { DataNode } from 'antd/es/tree';
 import React, { useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { TDocumentKeys } from '../constants';
-import { componentDetectionActions, componentDetectionStore } from '../contexts/ComponentDetectionContextV2';
+import { componentDetectionActions, componentDetectionStore } from '../contexts/ComponentDetectionContext';
 import { editorPageActions, editorPageStore } from '../contexts/EditorPageContext';
 import { AnnotationNode } from '../types/componentDetectionV2';
 
@@ -203,7 +203,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
   };
 
   // 渲染文档列表项
-  const renderDocumentItem = (doc: DocumentReference, type: 'design' | 'prd' | 'openapi') => {
+  const renderDocumentItem = (doc: DocumentReference, type: keyof typeof TDocumentKeys) => {
     const isSelected = selectedDocument?.type === type && selectedDocument?.id === doc.id;
     return (
       <List.Item
@@ -365,7 +365,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
       {/* Header */}
       <div style={{ padding: '16px', borderBottom: '1px solid rgb(240, 240, 240)' }}>
         <Title level={5} style={{ margin: 0 }}>
-          文档管理
+          页面管理 - {currentPage?.name}
         </Title>
       </div>
 

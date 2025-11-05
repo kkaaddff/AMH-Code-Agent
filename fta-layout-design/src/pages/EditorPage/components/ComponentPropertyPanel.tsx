@@ -26,7 +26,7 @@ import {
   findAnnotationByDSLNodeId,
   findAnnotationById,
   findDSLNodeById,
-} from '../contexts/ComponentDetectionContextV2';
+} from '../contexts/ComponentDetectionContext';
 import { NodeType } from '../types/componentDetectionV2';
 
 const { Title, Text } = Typography;

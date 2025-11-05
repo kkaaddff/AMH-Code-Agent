@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import html2canvas from 'html2canvas';
 import { useSnapshot } from 'valtio';
 
-import { calculateDSLNodeAbsolutePosition, componentDetectionStore } from '../contexts/ComponentDetectionContextV2';
+import { calculateDSLNodeAbsolutePosition, componentDetectionStore } from '../contexts/ComponentDetectionContext';
 import type { AnnotationNode } from '../types/componentDetectionV2';
 import {
   MODAL_CONFIG,

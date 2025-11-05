@@ -1,11 +1,3 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Button, Dropdown, Layout, Space, Typography, App, Spin } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
-import { ComponentMapping } from './types/componentDetectionV2';
-import LayoutTree from './components/LayoutTree';
-import LayoutPreview from './components/LayoutPreview';
-import PropertyPanel from './components/PropertyPanel';
 import { EditProvider } from '@/contexts/EditContext';
 import { useSelection } from '@/contexts/SelectionContext';
 import layoutData from '@/demo/LayoutTree.json';
@@ -14,7 +6,15 @@ import type { LayoutTreeNode } from '@/types/layout';
 import { throttle } from '@/utils/debounce';
 import { createNodeMapping, getLayoutNodeId, NodeMapping } from '@/utils/nodeMapping';
 import { ensureNodeIds, findNodeById } from '@/utils/nodeUtils';
-import { useDSLData } from '@/hooks/useDSLData';
+import { DownOutlined } from '@ant-design/icons';
+import { App, Button, Dropdown, Layout, Space, Spin, Typography } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import LayoutPreview from './components/LayoutPreview';
+import LayoutTree from './components/LayoutTree';
+import PropertyPanel from './components/PropertyPanel';
+import { useDSLData } from './hooks/useDSLData';
+import { ComponentMapping } from './types/componentDetectionV2';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;

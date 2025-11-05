@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DSLData, DSLNode } from '../types/dsl';
+import { DSLData, DSLNode } from '../../../types/dsl';
 import { api } from '@/utils/apiService';
 
 interface UseDSLDataOptions {

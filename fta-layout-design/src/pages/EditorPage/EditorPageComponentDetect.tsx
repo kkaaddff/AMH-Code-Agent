@@ -1,4 +1,4 @@
-import { useDSLData } from '@/hooks/useDSLData';
+import { useDSLData } from './hooks/useDSLData';
 import { projectService } from '@/services/projectService';
 import type { DocumentReference } from '@/types/project';
 import {
@@ -13,8 +13,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio/react';
 import CodeGenerationDrawer from './components/CodeGenerationDrawer';
 import Component3DInspectModal from './components/Component3DInspectModal';
-import ComponentPropertyPanelV2 from './components/ComponentPropertyPanelV2';
-import DetectionCanvasV2 from './components/DetectionCanvasV2';
+import ComponentPropertyPanel from './components/ComponentPropertyPanel';
+import DetectionCanvas from './components/DetectionCanvas';
 import InteractionGuideOverlay from './components/InteractionGuideOverlay';
 import LayerTreePanel from './components/LayerTreePanel';
 import OpenAPIDataPanel from './components/OpenAPIDataPanel';
@@ -22,7 +22,7 @@ import OpenAPIUrlPanel from './components/OpenAPIUrlPanel';
 import PRDEditorPanel from './components/PRDEditorPanel';
 import { TDocumentKeys } from './constants';
 import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGenerationContext';
-import { componentDetectionActions, componentDetectionStore } from './contexts/ComponentDetectionContextV2';
+import { componentDetectionActions, componentDetectionStore } from './contexts/ComponentDetectionContext';
 import { editorPageActions, editorPageStore } from './contexts/EditorPageContext';
 import { commonUserPrompt } from './services/CodeGenerationLoop/CommonPrompt';
 import { AgentScheduler } from './services/CodeGenerationLoop/index.AgentScheduler.backup';
@@ -127,7 +127,6 @@ const EditorPageContent: React.FC = () => {
   } = useDSLData({
     designId: selectedDocument?.type === 'design' && selectedDocument?.id ? selectedDocument.id : null,
   });
-  const initializedDesignRef = useRef<string | null>(null);
 
   // 初始化 DSL 数据和加载已保存的标注信息
   useEffect(() => {
@@ -138,13 +137,7 @@ const EditorPageContent: React.FC = () => {
     const rootNode = dslData.dsl.nodes?.[0] || null;
     updateDslRootNode(rootNode);
 
-    if (initializedDesignRef.current === selectedDocument?.id) {
-      return;
-    }
-
     initializeFromDSL(dslData);
-
-    initializedDesignRef.current = selectedDocument?.id;
 
     const loadSavedAnnotations = async () => {
       try {
@@ -159,7 +152,7 @@ const EditorPageContent: React.FC = () => {
     };
 
     loadSavedAnnotations();
-  }, [selectedDocument?.id, dslData, selectedDocument?.type]);
+  }, [dslData]);
 
   useEffect(() => {
     return () => {
@@ -376,11 +369,6 @@ const EditorPageContent: React.FC = () => {
     closeCodeDrawer();
   };
 
-  // 处理文档选择
-  const handleSelectDocument = (type: keyof typeof TDocumentKeys, id: string) => {
-    setSelectedDocument({ type, id });
-  };
-
   // 处理删除文档
   const handleDeleteDocument = async (type: keyof typeof TDocumentKeys, docId: string) => {
     if (!currentPage) {
@@ -575,7 +563,7 @@ const EditorPageContent: React.FC = () => {
                   </div>
 
                   <div id='detection-canvas-container' style={COMPONENT_STYLES.detectionCanvasContainer}>
-                    <DetectionCanvasV2
+                    <DetectionCanvas
                       dslData={dslData}
                       scale={scale}
                       onScaleChange={handleScaleChange}
@@ -596,7 +584,7 @@ const EditorPageContent: React.FC = () => {
               collapsedWidth={0}
               trigger={null}
               style={COMPONENT_STYLES.rightSider}>
-              <ComponentPropertyPanelV2 />
+              <ComponentPropertyPanel />
             </Sider>
           </>
         )}
