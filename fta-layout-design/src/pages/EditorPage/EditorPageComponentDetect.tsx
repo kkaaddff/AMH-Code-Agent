@@ -1,5 +1,5 @@
-import { useDSLData } from './hooks/useDSLData';
 import { projectService } from '@/services/projectService';
+import { DSLData, DSLNode } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import {
   AppstoreOutlined,
@@ -11,6 +11,7 @@ import {
 import { App as AntApp, App, Button, Dropdown, Layout, Space, Spin, Typography } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio/react';
+import AnnotationConfirmModal from './components/AnnotationConfirmModal';
 import CodeGenerationDrawer from './components/CodeGenerationDrawer';
 import Component3DInspectModal from './components/Component3DInspectModal';
 import ComponentPropertyPanel from './components/ComponentPropertyPanel';
@@ -23,17 +24,17 @@ import PRDEditorPanel from './components/PRDEditorPanel';
 import { TDocumentKeys } from './constants';
 import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGenerationContext';
 import { componentDetectionActions, componentDetectionStore } from './contexts/ComponentDetectionContext';
+import { dslDataActions, dslDataStore } from './contexts/DSLDataContext';
 import { editorPageActions, editorPageStore } from './contexts/EditorPageContext';
 import { commonUserPrompt } from './services/CodeGenerationLoop/CommonPrompt';
 import { AgentScheduler } from './services/CodeGenerationLoop/index.AgentScheduler.backup';
 import { generateUID } from './services/CodeGenerationLoop/utils';
-import AnnotationConfirmModal from './components/AnnotationConfirmModal';
+import './styles/EditorPageStyles.css';
 import { AnnotationNode } from './types/componentDetectionV2';
 import { loadAnnotationState } from './utils/componentStorage';
 import { flattenAnnotation, formatAnnotationSummary } from './utils/prompt';
-// import { SSEScheduler } from './services/CodeGenerationLoop/SSEScheduler';
-import './styles/EditorPageStyles.css';
 
+// import { SSEScheduler } from './services/CodeGenerationLoop/SSEScheduler';
 const { Sider, Content } = Layout;
 const { Title } = Typography;
 
@@ -96,6 +97,7 @@ const EditorPageContent: React.FC = () => {
         setCurrentPage(pageData);
         // 初始化：默认选中第一个设计文档
         setSelectedDocument({ type: 'design', id: pageData.designDocuments[0].id });
+        await dslDataActions.loadDesign(pageData.designDocuments[0].id);
       } catch (error: any) {
         console.error('获取页面数据失败:', error);
         setPageError(error.message || '获取页面数据失败');
@@ -122,13 +124,7 @@ const EditorPageContent: React.FC = () => {
   };
 
   // 使用 designId 获取 DSL 数据（仅在选中设计文档时）
-  const {
-    data: dslData,
-    loading: dslLoading,
-    error: dslError,
-  } = useDSLData({
-    designId: selectedDocument?.type === 'design' && selectedDocument?.id ? selectedDocument.id : null,
-  });
+  const { data: dslData, loading: dslLoading, error: dslError } = useSnapshot(dslDataStore);
 
   // 初始化 DSL 数据和加载已保存的标注信息
   useEffect(() => {
@@ -136,10 +132,10 @@ const EditorPageContent: React.FC = () => {
       return;
     }
 
-    const rootNode = dslData.dsl.nodes?.[0] || null;
+    const rootNode = (dslData.dsl.nodes?.[0] as DSLNode) || null;
     updateDslRootNode(rootNode);
 
-    initializeFromDSL(dslData);
+    initializeFromDSL(dslData as DSLData);
 
     const loadSavedAnnotations = async () => {
       try {
@@ -588,7 +584,7 @@ const EditorPageContent: React.FC = () => {
 
                   <div id='detection-canvas-container' className='editor-page-detection-canvas-container'>
                     <DetectionCanvas
-                      dslData={dslData}
+                      dslData={dslData as DSLData}
                       scale={scale}
                       onScaleChange={handleScaleChange}
                       highlightedNodeId={null}

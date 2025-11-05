@@ -513,7 +513,7 @@ const AnnotationConfirmModal: React.FC<AnnotationConfirmModalProps> = ({
       width={960}
       centered
       maskClosable={!loading && !submitting}
-      destroyOnClose={false}
+      destroyOnHidden={false}
       onCancel={handleCancel}
       onOk={handleSubmit}
       okText='继续生成代码'

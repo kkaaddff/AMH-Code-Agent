@@ -148,14 +148,17 @@ const ProjectManagement: React.FC = () => {
       <div className='project-filters'>
         <Row gutter={16} align='middle'>
           <Col flex='auto'>
-            <Search
-              placeholder='搜索项目名称或描述...'
-              allowClear
-              size='large'
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
+            <Space.Compact style={{ width: '100%' }}>
+              <Search
+                placeholder='搜索项目名称或描述...'
+                allowClear
+                size='large'
+                prefix={<SearchOutlined />}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                style={{ width: '100%' }}
+              />
+            </Space.Compact>
           </Col>
           <Col>
             <Select
@@ -183,25 +186,25 @@ const ProjectManagement: React.FC = () => {
                 <Card
                   className='project-card'
                   hoverable
-                  onClick={() => handleViewProject(project)}
+                  onClick={() => handleViewProject(project as Project)}
                   actions={[
                     <Button
                       type='text'
                       icon={<EyeOutlined />}
                       title='查看详情'
-                      onClick={() => handleViewProject(project)}
+                      onClick={() => handleViewProject(project as Project)}
                     />,
                     <Button
                       type='text'
                       icon={<EditOutlined />}
                       title='编辑项目'
-                      onClick={() => handleEditProject(project)}
+                      onClick={() => handleEditProject(project as Project)}
                     />,
                     <Button
                       type='text'
                       icon={<ShareAltOutlined />}
                       title='分享项目'
-                      onClick={() => handleShareProject(project)}
+                      onClick={() => handleShareProject(project as Project)}
                     />,
                     <Button
                       type='text'
@@ -282,7 +285,7 @@ const ProjectManagement: React.FC = () => {
         onCancel={() => setCreateModalVisible(false)}
         onSuccess={() => {
           setCreateModalVisible(false);
-          loadProjects();
+          loadProjects({ page: 1, size: 10 }, message).catch(() => undefined);
         }}
       />
 

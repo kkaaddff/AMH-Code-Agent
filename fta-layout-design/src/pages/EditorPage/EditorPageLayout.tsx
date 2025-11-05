@@ -10,10 +10,11 @@ import { DownOutlined } from '@ant-design/icons';
 import { App, Button, Dropdown, Layout, Space, Spin, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useSnapshot } from 'valtio/react';
 import LayoutPreview from './components/LayoutPreview';
 import LayoutTree from './components/LayoutTree';
 import PropertyPanel from './components/PropertyPanel';
-import { useDSLData } from './hooks/useDSLData';
+import { dslDataStore } from './contexts/DSLDataContext';
 import { ComponentMapping } from './types/componentDetectionV2';
 
 const { Sider, Content } = Layout;
@@ -68,7 +69,7 @@ const EditorPageLayoutContent: React.FC<{ confirmedComponents?: ComponentMapping
     setDesignId(id);
   }, []);
 
-  const { data: fetchedDSLData, loading: dslLoading, error: dslError } = useDSLData({ designId: designId || null });
+  const { data: fetchedDSLData, loading: dslLoading, error: dslError } = useSnapshot(dslDataStore);
 
   const dslDataTyped = useMemo(() => {
     if (!fetchedDSLData) {

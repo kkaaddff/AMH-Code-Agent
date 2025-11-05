@@ -47,7 +47,7 @@ interface DesignDocTreeState {
   status: DesignDocTreeStatus;
 }
 
-const createRootAnnotationFromDSL = (dslData: DSLData, docId: string, docName?: string): AnnotationNode | null => {
+const createRootAnnotationFromDSL = (dslData: DSLData, docId: string): AnnotationNode | null => {
   const rootNode = dslData?.dsl?.nodes?.[0];
   if (!rootNode) {
     return null;
@@ -59,7 +59,7 @@ const createRootAnnotationFromDSL = (dslData: DSLData, docId: string, docName?: 
     dslNodeId: rootNode.id,
     dslNode: rootNode,
     ftaComponent: 'View',
-    name: docName || 'Page',
+    name: 'Component',
     isRoot: true,
     isContainer: true,
     children: [],
@@ -95,7 +95,9 @@ const convertToTreeData = (
             <span style={{ marginLeft: 8, fontSize: 12, color: 'rgba(0, 0, 0, 0.45)' }}>{documentName}</span>
           )} */}
         </span>
-        {isRoot && <span style={{ fontSize: 12, color: 'rgb(82, 196, 26)' }}>[主页面]</span>}
+        {isRoot && (
+          <span style={{ fontSize: 12, color: 'rgb(82, 196, 26)' }}>{isActiveDoc ? '[主页面]' : '[组件]'}</span>
+        )}
       </Space>
       {isFirstLevel && isActiveDoc && (
         <Space size={4}>
@@ -184,7 +186,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
           throw new Error('没有获取到DSL数据');
         }
 
-        const rootNode = createRootAnnotationFromDSL(dslData, doc.id, doc.name);
+        const rootNode = createRootAnnotationFromDSL(dslData, doc.id);
         if (cancelled) {
           return;
         }
@@ -249,7 +251,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
         throw new Error('没有获取到DSL数据');
       }
 
-      const rootNode = createRootAnnotationFromDSL(dslData, doc.id, doc.name);
+      const rootNode = createRootAnnotationFromDSL(dslData, doc.id);
       if (!rootNode) {
         throw new Error('DSL数据中缺少根节点');
       }
