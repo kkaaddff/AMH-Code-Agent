@@ -2,7 +2,7 @@ import type { RouteConfig } from '@/types/router';
 import { Navigate } from 'react-router-dom';
 
 import Layout from '@/components/Layout';
-import EditorPageComponentDetectV2 from '@/pages/EditorPage/EditorPageComponentDetectV2';
+import EditorPageComponentDetect from '@/pages/EditorPage/EditorPageComponentDetect';
 import EditorPageLayout from '@/pages/EditorPage/EditorPageLayout';
 import HomePage from '@/pages/HomePage';
 import RequirementPage from '@/pages/RequirementPage';
@@ -30,13 +30,13 @@ export const routes: RouteConfig[] = [
   },
   {
     path: '/editor',
-    element: <Navigate to="/editor/component-detect-v2" replace />,
+    element: <Navigate to='/editor/component-detect-v2' replace />,
     withLayout: false, // 重定向路由不需要 Layout
     children: [
       {
         path: 'component-detect-v2',
         withLayout: true,
-        element: <EditorPageComponentDetectV2 />,
+        element: <EditorPageComponentDetect />,
       },
       {
         path: 'layout',

@@ -1,6 +1,6 @@
 import { useDSLData } from '@/hooks/useDSLData';
 import { projectService } from '@/services/projectService';
-import type { Page } from '@/types/project';
+import type { DocumentReference } from '@/types/project';
 import {
   AppstoreOutlined,
   DownOutlined,
@@ -20,8 +20,10 @@ import LayerTreePanel from './components/LayerTreePanel';
 import OpenAPIDataPanel from './components/OpenAPIDataPanel';
 import OpenAPIUrlPanel from './components/OpenAPIUrlPanel';
 import PRDEditorPanel from './components/PRDEditorPanel';
+import { TDocumentKeys } from './constants';
 import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGenerationContext';
 import { componentDetectionActions, componentDetectionStore } from './contexts/ComponentDetectionContextV2';
+import { editorPageActions, editorPageStore } from './contexts/EditorPageContext';
 import { commonUserPrompt } from './services/CodeGenerationLoop/CommonPrompt';
 import { AgentScheduler } from './services/CodeGenerationLoop/index.AgentScheduler.backup';
 import { generateUID } from './services/CodeGenerationLoop/utils';
@@ -41,12 +43,14 @@ const SCALE_OPTIONS = [
   { key: '1', label: '100%' },
 ];
 
-// Inner component that uses the context
 const EditorPageContent: React.FC = () => {
   const { message } = App.useApp();
+
+  const { pageId, currentPage, selectedDocument } = useSnapshot(editorPageStore);
+  const { setPageId, setProjectId, setCurrentPage, setSelectedDocument } = editorPageActions;
+
   const { initializeFromDSL, toggleShowAllBorders, saveAnnotations, loadAnnotations, updateDslRootNode } =
     componentDetectionActions;
-
   const { rootAnnotation, isLoading, showAllBorders } = useSnapshot(componentDetectionStore);
 
   const { isDrawerOpen: isCodeDrawerOpen, isGenerating: isGeneratingCode } = useSnapshot(codeGenerationStore);
@@ -68,28 +72,28 @@ const EditorPageContent: React.FC = () => {
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [is3DModalOpen, setIs3DModalOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const [designId, setDesignId] = useState<string>('');
-  const [selectedDocType, setSelectedDocType] = useState<'design' | 'prd' | 'openapi' | null>(null);
-  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
-  const [selectedOpenApiId, setSelectedOpenApiId] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<Page | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
 
   // const schedulerRef = useRef<SSEScheduler | null>(null);
   const schedulerRef = useRef<AgentScheduler | null>(null);
 
-  // 从 URL 读取 pageId 或 designId（兼容旧版）
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const pageId = params.get('pageId');
+    const _pageId = params.get('pageId');
+    const _projectId = params.get('projectId');
+
+    setPageId(_pageId || '');
+    setProjectId(_projectId || '');
 
     const fetchPageData = async () => {
       setPageLoading(true);
       setPageError(null);
       try {
-        const pageData = await projectService.getPageDetail(pageId!);
+        const pageData = await projectService.getPageDetail(_pageId!);
         setCurrentPage(pageData);
+        // 初始化：默认选中第一个设计文档
+        setSelectedDocument({ type: 'design', id: pageData.designDocuments[0].id });
       } catch (error: any) {
         console.error('获取页面数据失败:', error);
         setPageError(error.message || '获取页面数据失败');
@@ -102,25 +106,18 @@ const EditorPageContent: React.FC = () => {
     fetchPageData();
   }, []);
 
-  // 准备文档数据
-  const documents = {
-    design: currentPage?.designDocuments || [],
-    prd: currentPage?.prdDocuments || [],
-    openapi: currentPage?.openapiDocuments || [],
-  };
-
-  // 初始化：默认选中第一个设计文档
-  useEffect(() => {
-    if (documents.design.length > 0 && !selectedDocType) {
-      const firstDesignDoc = documents.design[0];
-      setSelectedDocType('design');
-      setSelectedDocId(firstDesignDoc.id);
-      // 使用第一个设计文档的 ID 作为 designId
-      if (firstDesignDoc.id) {
-        setDesignId(firstDesignDoc.id);
-      }
+  // 刷新页面数据的函数
+  const handleRefreshPage = async () => {
+    if (!pageId) return;
+    try {
+      const pageData = await projectService.getPageDetail(pageId);
+      setCurrentPage(pageData);
+      message.success('页面数据已刷新');
+    } catch (error: any) {
+      console.error('刷新页面数据失败:', error);
+      message.error(error.message || '刷新页面数据失败');
     }
-  }, [documents.design, selectedDocType]);
+  };
 
   // 使用 designId 获取 DSL 数据（仅在选中设计文档时）
   const {
@@ -128,30 +125,30 @@ const EditorPageContent: React.FC = () => {
     loading: dslLoading,
     error: dslError,
   } = useDSLData({
-    designId: selectedDocType === 'design' && designId ? designId : null,
+    designId: selectedDocument?.type === 'design' && selectedDocument?.id ? selectedDocument.id : null,
   });
   const initializedDesignRef = useRef<string | null>(null);
 
   // 初始化 DSL 数据和加载已保存的标注信息
   useEffect(() => {
-    if (!dslData || !designId || selectedDocType !== 'design') {
+    if (!dslData || !selectedDocument?.id || selectedDocument?.type !== 'design') {
       return;
     }
 
     const rootNode = dslData.dsl.nodes?.[0] || null;
     updateDslRootNode(rootNode);
 
-    if (initializedDesignRef.current === designId) {
+    if (initializedDesignRef.current === selectedDocument?.id) {
       return;
     }
 
     initializeFromDSL(dslData);
 
-    initializedDesignRef.current = designId;
+    initializedDesignRef.current = selectedDocument?.id;
 
     const loadSavedAnnotations = async () => {
       try {
-        const savedState = await loadAnnotationState(designId);
+        const savedState = await loadAnnotationState(selectedDocument?.id);
         if (savedState && savedState.rootAnnotation) {
           loadAnnotations(savedState.rootAnnotation);
           message.success('已加载保存的标注信息');
@@ -162,7 +159,7 @@ const EditorPageContent: React.FC = () => {
     };
 
     loadSavedAnnotations();
-  }, [designId, dslData, initializeFromDSL, loadAnnotations, message, updateDslRootNode, selectedDocType]);
+  }, [selectedDocument?.id, dslData, selectedDocument?.type]);
 
   useEffect(() => {
     return () => {
@@ -175,13 +172,13 @@ const EditorPageContent: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!designId) {
+    if (!selectedDocument?.id) {
       message.error('请提供设计稿 ID 参数');
       return;
     }
 
     try {
-      await saveAnnotations(designId);
+      await saveAnnotations(selectedDocument?.id);
       message.success('保存成功');
     } catch (error) {
       message.error('保存失败');
@@ -190,7 +187,7 @@ const EditorPageContent: React.FC = () => {
   };
 
   const handleGenerateCode = async () => {
-    if (!designId) {
+    if (!selectedDocument?.id) {
       message.error('请提供设计稿 ID 参数');
       return;
     }
@@ -380,29 +377,57 @@ const EditorPageContent: React.FC = () => {
   };
 
   // 处理文档选择
-  const handleSelectDocument = (type: 'design' | 'prd' | 'openapi', id: string) => {
-    setSelectedDocType(type);
-    setSelectedDocId(id);
-
-    // 如果选中设计文档，更新 designId
-    if (type === 'design') {
-      setDesignId(id);
-    }
-
-    // 重置 OpenAPI 选择
-    if (type !== 'openapi') {
-      setSelectedOpenApiId(null);
-    }
+  const handleSelectDocument = (type: keyof typeof TDocumentKeys, id: string) => {
+    setSelectedDocument({ type, id });
   };
 
   // 处理删除文档
-  const handleDeleteDocument = (type: 'design' | 'prd' | 'openapi', _id: string) => {
-    message.info(`删除${type === 'design' ? '设计稿' : type === 'prd' ? 'PRD文档' : 'OpenAPI文档'}功能待实现`);
+  const handleDeleteDocument = async (type: keyof typeof TDocumentKeys, docId: string) => {
+    if (!currentPage) {
+      message.error('页面数据未加载');
+      return;
+    }
+
+    try {
+      // 获取当前该类型的所有文档 URL（过滤掉要删除的文档）
+      let currentDocs: DocumentReference[] | undefined = [];
+      currentDocs = currentPage[TDocumentKeys[type]] as DocumentReference[];
+
+      const updatedUrls = currentDocs
+        .filter((doc: { id: string; url: string }) => doc.id !== docId)
+        .map((doc: { id: string; url: string }) => doc.url);
+
+      // 构建更新数据
+      const updateData: { designUrls?: string[]; prdUrls?: string[]; openapiUrls?: string[] } = {};
+      if (type === 'design') {
+        updateData.designUrls = updatedUrls;
+      } else if (type === 'prd') {
+        updateData.prdUrls = updatedUrls;
+      } else if (type === 'openapi') {
+        updateData.openapiUrls = updatedUrls;
+      }
+
+      // 调用 API 更新页面
+      await projectService.updatePage(currentPage.projectId, currentPage.id, updateData);
+
+      message.success('文档删除成功');
+
+      // 刷新页面数据
+      await handleRefreshPage();
+
+      // 如果删除的是当前选中的文档，清空选择
+      if (selectedDocument?.type === type && selectedDocument?.id === docId) {
+        setSelectedDocument(null);
+      }
+    } catch (error: any) {
+      console.error('删除文档失败:', error);
+      message.error(error.message || '删除文档失败');
+    }
   };
 
   // 处理 OpenAPI 接口选择
-  const handleSelectOpenApi = (apiId: string) => {
-    setSelectedOpenApiId(apiId);
+  const handleSelectOpenApi = (id: string) => {
+    setSelectedDocument({ type: 'openapi', id });
   };
 
   // 如果页面数据还在加载中
@@ -425,7 +450,7 @@ const EditorPageContent: React.FC = () => {
   }
 
   // 如果 DSL 数据还在加载中（仅在选中设计文档时检查）
-  if (selectedDocType === 'design' && dslLoading) {
+  if (selectedDocument?.type === 'design' && dslLoading) {
     return (
       <div style={COMPONENT_STYLES.loadingContainer}>
         <Spin size='large' />
@@ -435,7 +460,7 @@ const EditorPageContent: React.FC = () => {
   }
 
   // 如果选中设计文档时 DSL 数据加载失败
-  if (selectedDocType === 'design' && dslError) {
+  if (selectedDocument?.type === 'design' && dslError) {
     return (
       <div style={COMPONENT_STYLES.errorContainer}>
         <Typography.Text type='danger'>加载 DSL 数据失败：{dslError.message}</Typography.Text>
@@ -444,7 +469,7 @@ const EditorPageContent: React.FC = () => {
   }
 
   // 如果选中设计文档但没有 DSL 数据
-  if (selectedDocType === 'design' && !dslData) {
+  if (selectedDocument?.type === 'design' && !dslData) {
     return (
       <div style={COMPONENT_STYLES.errorContainer}>
         <Typography.Text type='secondary'>未找到 DSL 数据</Typography.Text>
@@ -453,7 +478,7 @@ const EditorPageContent: React.FC = () => {
   }
 
   // 如果选中设计文档且组件识别上下文还在加载中
-  if (selectedDocType === 'design' && isLoading) {
+  if (selectedDocument?.type === 'design' && isLoading) {
     return (
       <div style={COMPONENT_STYLES.loadingContainer}>
         <Spin size='large' />
@@ -476,17 +501,15 @@ const EditorPageContent: React.FC = () => {
           trigger={null}
           style={COMPONENT_STYLES.sider}>
           <LayerTreePanel
-            documents={documents}
-            selectedDocument={selectedDocType && selectedDocId ? { type: selectedDocType, id: selectedDocId } : null}
-            onSelectDocument={handleSelectDocument}
             onDeleteDocument={handleDeleteDocument}
+            onRefreshPage={handleRefreshPage}
             onSave={handleSave}
             onGenerateCode={handleGenerateCode}
           />
         </Sider>
 
         {/* 中间和右侧内容：根据文档类型切换 */}
-        {selectedDocType === 'design' && dslData && (
+        {selectedDocument?.type === 'design' && dslData && (
           <>
             <Layout>
               <Content style={COMPONENT_STYLES.content}>
@@ -579,7 +602,7 @@ const EditorPageContent: React.FC = () => {
         )}
 
         {/* PRD 文档编辑器 */}
-        {selectedDocType === 'prd' && (
+        {selectedDocument?.type === 'prd' && (
           <Layout style={{ flex: 1 }}>
             <Content style={{ ...COMPONENT_STYLES.content, padding: 0 }}>
               <div
@@ -590,13 +613,13 @@ const EditorPageContent: React.FC = () => {
                 }}>
                 {leftCollapsed ? '▶' : '◀'}
               </div>
-              <PRDEditorPanel documentId={selectedDocId || undefined} />
+              <PRDEditorPanel documentId={selectedDocument?.id} />
             </Content>
           </Layout>
         )}
 
         {/* OpenAPI 数据面板 */}
-        {selectedDocType === 'openapi' && (
+        {selectedDocument?.type === 'openapi' && (
           <>
             <Layout>
               <Content style={{ ...COMPONENT_STYLES.content, padding: 0 }}>
@@ -618,7 +641,7 @@ const EditorPageContent: React.FC = () => {
                   {rightCollapsed ? '◀' : '▶'}
                 </div>
 
-                <OpenAPIUrlPanel selectedApiId={selectedOpenApiId || undefined} onSelectApi={handleSelectOpenApi} />
+                <OpenAPIUrlPanel selectedApiId={selectedDocument?.id || undefined} onSelectApi={handleSelectOpenApi} />
               </Content>
             </Layout>
 
@@ -631,13 +654,13 @@ const EditorPageContent: React.FC = () => {
               collapsedWidth={0}
               trigger={null}
               style={COMPONENT_STYLES.rightSider}>
-              <OpenAPIDataPanel selectedApiId={selectedOpenApiId || undefined} />
+              <OpenAPIDataPanel selectedApiId={selectedDocument?.id || undefined} />
             </Sider>
           </>
         )}
 
         {/* 没有选中任何文档时的提示 */}
-        {!selectedDocType && (
+        {!selectedDocument && (
           <Layout style={{ flex: 1 }}>
             <Content
               style={{

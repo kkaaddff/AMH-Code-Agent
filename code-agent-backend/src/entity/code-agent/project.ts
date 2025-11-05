@@ -1,18 +1,12 @@
-import { modelOptions, prop, Severity } from "@typegoose/typegoose";
-import { EntityModel } from "@midwayjs/typegoose";
+import { modelOptions, prop, Severity } from '@typegoose/typegoose';
+import { EntityModel } from '@midwayjs/typegoose';
 
-export type SyncStatus =
-  | "pending"
-  | "syncing"
-  | "synced"
-  | "failed"
-  | "completed"
-  | "editing";
+export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'completed' | 'editing';
 
 @EntityModel()
 @modelOptions({
   schemaOptions: {
-    collection: "code_agent_document_reference",
+    collection: 'code_agent_document_reference',
     timestamps: true,
   },
   options: { allowMixed: Severity.ALLOW },
@@ -30,8 +24,8 @@ export class DocumentReference {
   name: string;
 
   @prop({
-    enum: ["pending", "syncing", "synced", "failed", "completed", "editing"],
-    default: "pending",
+    enum: ['pending', 'syncing', 'synced', 'failed', 'completed', 'editing'],
+    default: 'pending',
   })
   status: SyncStatus;
 
@@ -52,12 +46,15 @@ export class DocumentReference {
 
   @prop({ required: true })
   updatedAt: Date;
+
+  @prop({ required: true })
+  pageId: string;
 }
 
 @EntityModel()
 @modelOptions({
   schemaOptions: {
-    collection: "code_agent_page",
+    collection: 'code_agent_page',
     timestamps: true,
   },
   options: { allowMixed: Severity.ALLOW },
@@ -109,7 +106,7 @@ export class Page {
 @EntityModel()
 @modelOptions({
   schemaOptions: {
-    collection: "code_agent_project",
+    collection: 'code_agent_project',
     timestamps: true,
   },
   options: { allowMixed: Severity.ALLOW },
@@ -131,8 +128,8 @@ export class Project {
   manager: string;
 
   @prop({
-    enum: ["active", "paused", "completed", "archived"],
-    default: "active",
+    enum: ['active', 'paused', 'completed', 'archived'],
+    default: 'active',
   })
   status: string;
 
@@ -145,7 +142,7 @@ export class Project {
   @prop({ default: () => [] })
   tags: string[];
 
-  @prop({ default: "📁" })
+  @prop({ default: '📁' })
   avatar: string;
 
   @prop({ ref: () => Page, default: () => [] })

@@ -15,31 +15,7 @@ import { App } from 'antd';
 
 const VIRTUAL_ANNOTATION_PREFIX = 'virtual-annotation-';
 
-// ==================== Valtio 状态存储 ====================
-
-interface ComponentDetectionState extends AnnotationState {
-  dslRootNode: DSLNode | null;
-  selectedDSLNodeRef: DSLNode | null;
-  showAllBorders: boolean;
-  selectedNodeIds: SelectedNodeItem[];
-}
-
-export const componentDetectionStore = proxy<ComponentDetectionState>({
-  rootAnnotation: null,
-  annotations: [],
-  selectedAnnotationId: null,
-  hoveredAnnotationId: null,
-  selectedDSLNodeId: null,
-  hoveredDSLNodeId: null,
-  expandedKeys: [],
-  isLoading: false,
-  dslRootNode: null,
-  selectedDSLNodeRef: null,
-  showAllBorders: false,
-  selectedNodeIds: [],
-});
-
-// ==================== 工具函数 ====================
+//#region ==================== 工具函数 ====================
 
 // 排序 AnnotationNode 的 children，按照坐标顺序：从上到下，从左到右
 const sortAnnotationChildren = (node: AnnotationNode): AnnotationNode => {
@@ -297,6 +273,32 @@ const findContainingDSLNode = (selectedAnnotations: AnnotationNode[], selectedDS
   search(componentDetectionStore.dslRootNode);
   return bestNode;
 };
+
+//#endregion ==================== 工具函数 ====================
+
+// ==================== Valtio 状态存储 ====================
+
+interface ComponentDetectionState extends AnnotationState {
+  dslRootNode: DSLNode | null;
+  selectedDSLNodeRef: DSLNode | null;
+  showAllBorders: boolean;
+  selectedNodeIds: SelectedNodeItem[];
+}
+
+export const componentDetectionStore = proxy<ComponentDetectionState>({
+  rootAnnotation: null,
+  annotations: [],
+  selectedAnnotationId: null,
+  hoveredAnnotationId: null,
+  selectedDSLNodeId: null,
+  hoveredDSLNodeId: null,
+  expandedKeys: [],
+  isLoading: false,
+  dslRootNode: null,
+  selectedDSLNodeRef: null,
+  showAllBorders: false,
+  selectedNodeIds: [],
+});
 
 // ==================== Actions ====================
 

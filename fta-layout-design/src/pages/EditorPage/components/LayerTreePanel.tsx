@@ -1,39 +1,36 @@
-import React, { useMemo, useState } from 'react';
-import { Tree, Button, Space, Typography, App, Collapse, List, Tag, Modal, Input, Form, Tooltip } from 'antd';
-import type { DataNode } from 'antd/es/tree';
-import {
-  FolderOutlined,
-  FileOutlined,
-  SaveOutlined,
-  ThunderboltOutlined,
-  PlusOutlined,
-  FileImageOutlined,
-  FileTextOutlined,
-  ApiOutlined,
-  DeleteOutlined,
-  LinkOutlined,
-  DownOutlined,
-  ExpandOutlined,
-  CompressOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
-import { componentDetectionActions, componentDetectionStore } from '../contexts/ComponentDetectionContextV2';
-import { AnnotationNode } from '../types/componentDetectionV2';
+import { projectService } from '@/services/projectService';
 import { DocumentReference } from '@/types/project';
 import { getDocumentStatusColor, getDocumentStatusText } from '@/utils/documentStatus';
+import {
+  ApiOutlined,
+  CompressOutlined,
+  DeleteOutlined,
+  DownOutlined,
+  ExpandOutlined,
+  FileImageOutlined,
+  FileOutlined,
+  FileTextOutlined,
+  FolderOutlined,
+  LinkOutlined,
+  PlusOutlined,
+  SaveOutlined,
+  SettingOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons';
+import { App, Button, Collapse, Form, Input, List, Modal, Space, Tag, Tooltip, Tree, Typography } from 'antd';
+import type { DataNode } from 'antd/es/tree';
+import React, { useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio';
+import { TDocumentKeys } from '../constants';
+import { componentDetectionActions, componentDetectionStore } from '../contexts/ComponentDetectionContextV2';
+import { editorPageActions, editorPageStore } from '../contexts/EditorPageContext';
+import { AnnotationNode } from '../types/componentDetectionV2';
 
 const { Title, Text } = Typography;
 
 interface LayerTreePanelProps {
-  documents: {
-    design: DocumentReference[];
-    prd: DocumentReference[];
-    openapi: DocumentReference[];
-  };
-  selectedDocument: { type: 'design' | 'prd' | 'openapi'; id: string } | null;
-  onSelectDocument: (type: 'design' | 'prd' | 'openapi', id: string) => void;
-  onDeleteDocument: (type: 'design' | 'prd' | 'openapi', id: string) => void;
+  onDeleteDocument: (type: keyof typeof TDocumentKeys, id: string) => void;
+  onRefreshPage?: () => void;
   onSave?: () => void;
   onGenerateCode?: () => void;
 }
@@ -107,19 +104,14 @@ const convertToTreeData = (node: AnnotationNode, isFirstLevel = false): DataNode
   };
 };
 
-const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
-  documents,
-  selectedDocument,
-  onSelectDocument,
-  onDeleteDocument,
-  onSave,
-  onGenerateCode,
-}) => {
+const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRefreshPage, onSave, onGenerateCode }) => {
+  const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
+  const { pageId, projectId } = useSnapshot(editorPageStore);
   const { modal, message } = App.useApp();
   const { rootAnnotation, selectedAnnotationId, expandedKeys } = useSnapshot(componentDetectionStore);
 
   const [addDocModalVisible, setAddDocModalVisible] = useState(false);
-  const [addDocType, setAddDocType] = useState<'design' | 'prd' | 'openapi'>('design');
+  const [addDocType, setAddDocType] = useState<keyof typeof TDocumentKeys>('design');
   const [addDocForm] = Form.useForm();
 
   // 生成Tree数据（仅在选中设计文档时显示）
@@ -128,7 +120,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
     return [
       convertToTreeData(rootAnnotation as AnnotationNode, true),
       // 测试用
-      convertToTreeData(rootAnnotation as AnnotationNode, true),
+      // convertToTreeData(rootAnnotation as AnnotationNode, true),
     ];
   }, [rootAnnotation, selectedDocument]);
 
@@ -147,21 +139,52 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
   };
 
   // 处理添加文档
-  const handleAddDocumentClick = (type: 'design' | 'prd' | 'openapi') => {
+  const handleAddDocumentClick = (type: keyof typeof TDocumentKeys) => {
     setAddDocType(type);
     setAddDocModalVisible(true);
   };
 
-  const handleAddDocumentSubmit = async (_values: { url: string; name?: string }) => {
+  const handleAddDocumentSubmit = async (values: { url: string; name?: string }) => {
+    if (!projectId || !pageId) {
+      message.error('缺少项目或页面信息');
+      return;
+    }
+
     try {
-      // 这里应该调用 API 添加文档
-      // 暂时只是关闭模态框
-      debugger;
-      message.success('文档添加功能待实现');
+      // 根据文档类型，获取当前的所有文档 URL
+      const currentDocs = currentPage?.[TDocumentKeys[addDocType]];
+      if (!currentDocs) {
+        message.error('获取当前文档失败');
+        return;
+      }
+      const currentUrls = currentDocs.map((doc) => doc.url);
+      // 添加新的 URL
+      const updatedUrls = [...currentUrls, values.url];
+
+      // 构建更新数据
+      const updateData: { designUrls?: string[]; prdUrls?: string[]; openapiUrls?: string[] } = {};
+      if (addDocType === 'design') {
+        updateData.designUrls = updatedUrls;
+      } else if (addDocType === 'prd') {
+        updateData.prdUrls = updatedUrls;
+      } else if (addDocType === 'openapi') {
+        updateData.openapiUrls = updatedUrls;
+      }
+
+      // 调用 API 更新页面
+      await projectService.updatePage(projectId, pageId, updateData);
+
+      message.success('文档添加成功');
       setAddDocModalVisible(false);
       addDocForm.resetFields();
-    } catch (error) {
-      message.error('添加文档失败');
+
+      // 刷新页面数据
+      if (onRefreshPage) {
+        onRefreshPage();
+      }
+    } catch (error: any) {
+      console.error('添加文档失败:', error);
+      message.error(error.message || '添加文档失败');
     }
   };
 
@@ -191,7 +214,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
           padding: '8px 12px',
           borderRadius: 4,
         }}
-        onClick={() => onSelectDocument(type, doc.id)}
+        onClick={() => editorPageActions.setSelectedDocument({ type, id: doc.id })}
         actions={[
           <Button
             key='delete'
@@ -286,8 +309,12 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
       ),
       children: (
         <>
-          {documents.prd.length > 0 ? (
-            <List size='small' dataSource={documents.prd} renderItem={(doc) => renderDocumentItem(doc, 'prd')} />
+          {currentPage?.prdDocuments && currentPage.prdDocuments.length > 0 ? (
+            <List
+              size='small'
+              dataSource={currentPage.prdDocuments as DocumentReference[]}
+              renderItem={(doc) => renderDocumentItem(doc, 'prd')}
+            />
           ) : (
             <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
               暂无PRD文档
@@ -317,10 +344,10 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({
       ),
       children: (
         <>
-          {documents.openapi.length > 0 ? (
+          {currentPage?.openapiDocuments && currentPage.openapiDocuments.length > 0 ? (
             <List
               size='small'
-              dataSource={documents.openapi}
+              dataSource={currentPage.openapiDocuments as DocumentReference[]}
               renderItem={(doc) => renderDocumentItem(doc, 'openapi')}
             />
           ) : (

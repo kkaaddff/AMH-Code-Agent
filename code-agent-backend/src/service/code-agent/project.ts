@@ -83,9 +83,13 @@ export class ProjectService {
    * Merge document references with existing ones
    * Returns array of document _ids for reference storage
    */
-  private async mergeDocumentReferences(existingIds: any[] = [], urls: string[] = []): Promise<any[]> {
+  private async mergeDocumentReferences(
+    existingIds: any[] = [],
+    urls: string[] = [],
+    pageId: string
+  ): Promise<DocumentReference[]> {
     const now = new Date();
-    const result = [];
+    const result: DocumentReference[] = [];
 
     // Fetch existing documents by their _ids
     const existingDocs = await this.documentReferenceEntity.find({
@@ -102,7 +106,7 @@ export class ProjectService {
         result.push(matched._id);
       } else {
         // Create new document
-        const newDoc = {
+        const newDoc: Omit<DocumentReference, '_id'> = {
           id: this.generateId('doc'),
           url,
           name: this.deriveDocumentName(url, `文档-${result.length + 1}`),
@@ -110,6 +114,7 @@ export class ProjectService {
           progress: 0,
           createdAt: now,
           updatedAt: now,
+          pageId,
         };
         const savedDoc = await this.documentReferenceEntity.create(newDoc);
         result.push(savedDoc._id);
@@ -322,19 +327,21 @@ export class ProjectService {
     if (data.description !== undefined) updateData.description = data.description;
 
     if (data.designUrls !== undefined) {
-      updateData.designDocuments = (await this.mergeDocumentReferences(
-        page.designDocuments as any,
-        data.designUrls
-      )) as any;
+      updateData.designDocuments = await this.mergeDocumentReferences(
+        page.designDocuments,
+        data.designUrls,
+        data.pageId
+      );
     }
     if (data.prdUrls !== undefined) {
-      updateData.prdDocuments = (await this.mergeDocumentReferences(page.prdDocuments as any, data.prdUrls)) as any;
+      updateData.prdDocuments = await this.mergeDocumentReferences(page.prdDocuments, data.prdUrls, data.pageId);
     }
     if (data.openapiUrls !== undefined) {
-      updateData.openapiDocuments = (await this.mergeDocumentReferences(
-        page.openapiDocuments as any,
-        data.openapiUrls
-      )) as any;
+      updateData.openapiDocuments = await this.mergeDocumentReferences(
+        page.openapiDocuments,
+        data.openapiUrls,
+        data.pageId
+      );
     }
 
     // Update page in database
