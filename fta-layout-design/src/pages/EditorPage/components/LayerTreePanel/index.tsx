@@ -35,18 +35,17 @@ const { Title, Text } = Typography;
 
 interface LayerTreePanelProps {
   onDeleteDocument: (type: keyof typeof TDocumentKeys, id: string) => void;
-  onRefreshPage?: () => void;
   onSave?: () => void;
   onGenerateCode?: () => void;
 }
 
 const showLine = { showLeafIcon: false };
 
-const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRefreshPage, onSave, onGenerateCode }) => {
+const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSave, onGenerateCode }) => {
   const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
   const { pageId, projectId } = useSnapshot(editorPageStore);
   const { modal, message } = App.useApp();
-  const { rootAnnotation, selectedAnnotationId, expandedKeys } = useSnapshot(componentDetectionStore);
+  const { rootAnnotation, selectedAnnotation, expandedKeys } = useSnapshot(componentDetectionStore);
 
   const [addDocModalVisible, setAddDocModalVisible] = useState(false);
   const [addDocType, setAddDocType] = useState<keyof typeof TDocumentKeys>('design');
@@ -114,7 +113,6 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
       }
 
       message.success('设计文档同步成功');
-      void onRefreshPage?.();
     } catch (error: any) {
       console.error(`设计文档同步失败: ${doc.id}`, error);
       const errorMessage = error?.message ?? '';
@@ -201,7 +199,10 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
     const nextTopLevelKey = findTopLevelKey(designTreeData, nextSelectedKey);
     const prevTopLevelKey = selectedDocument?.id ? findTopLevelKey(designTreeData, selectedDocument.id) : null;
     if (nextTopLevelKey && nextTopLevelKey !== prevTopLevelKey) {
-      editorPageActions.setSelectedDocument({ type: 'design', id: nextTopLevelKey.replace('design-root-', '') });
+      editorPageActions.setSelectedDocument({
+        type: 'design',
+        id: nextTopLevelKey.replace('design-root-', '').replace('design-doc-', ''),
+      });
       const designId = extractDesignIdFromTopLevelKey(nextTopLevelKey);
       if (designId) {
         void (async () => {
@@ -262,11 +263,6 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
       message.success('文档添加成功');
       setAddDocModalVisible(false);
       addDocForm.resetFields();
-
-      // 刷新页面数据
-      if (onRefreshPage) {
-        onRefreshPage();
-      }
     } catch (error: any) {
       console.error('添加文档失败:', error);
       message.error(error.message || '添加文档失败');
@@ -358,7 +354,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
         designTreeData.length > 0 ? (
           <Tree
             treeData={designTreeData}
-            selectedKeys={selectedDocument?.type === 'design' && selectedAnnotationId ? [selectedAnnotationId] : []}
+            selectedKeys={selectedDocument?.type === 'design' && selectedAnnotation?.id ? [selectedAnnotation.id] : []}
             expandedKeys={expandedKeys as string[]}
             onSelect={handleDesignSelect}
             onExpand={handleDesignExpand}

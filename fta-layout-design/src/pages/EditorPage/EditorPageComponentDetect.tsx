@@ -113,19 +113,6 @@ const EditorPageContent: React.FC = () => {
     fetchPageData();
   }, []);
 
-  // 刷新页面数据的函数
-  const handleRefreshPage = async () => {
-    if (!pageId) return;
-    try {
-      const pageData = await projectService.getPageDetail(pageId);
-      setCurrentPage(pageData);
-      message.success('页面数据已刷新');
-    } catch (error: any) {
-      console.error('刷新页面数据失败:', error);
-      message.error(error.message || '刷新页面数据失败');
-    }
-  };
-
   // 初始化 DSL 数据和加载已保存的标注信息
   useEffect(() => {
     if (!dslData || !selectedDocument?.id || selectedDocument?.type !== 'design') {
@@ -424,9 +411,6 @@ const EditorPageContent: React.FC = () => {
 
       message.success('文档删除成功');
 
-      // 刷新页面数据
-      await handleRefreshPage();
-
       // 如果删除的是当前选中的文档，清空选择
       if (selectedDocument?.type === type && selectedDocument?.id === docId) {
         setSelectedDocument(null);
@@ -514,7 +498,6 @@ const EditorPageContent: React.FC = () => {
           className='editor-page-sider'>
           <LayerTreePanel
             onDeleteDocument={handleDeleteDocument}
-            onRefreshPage={handleRefreshPage}
             onSave={handleSave}
             onGenerateCode={handleGenerateCodeV2}
           />

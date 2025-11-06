@@ -78,23 +78,11 @@ const customFilterOption = (input: string, option: any) => {
 
 const ComponentPropertyPanelV2: React.FC = () => {
   const { message, modal } = App.useApp();
-  const { selectedAnnotationId, selectedDSLNodeId, selectedNodeIds } = useSnapshot(componentDetectionStore);
+  const { selectedAnnotation, selectedDSLNode, selectedNodeIds } = useSnapshot(componentDetectionStore);
   const { selectedDocument } = useSnapshot(editorPageStore);
   const [form] = Form.useForm();
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedFTAComponent, setSelectedFTAComponent] = useState<string>('');
-
-  // 获取选中的标注
-  const selectedAnnotation = useMemo(() => {
-    if (!selectedAnnotationId) return null;
-    return findAnnotationById(selectedAnnotationId);
-  }, [selectedAnnotationId]);
-
-  // 获取选中的DSL节点（用于创建新标注）
-  const selectedDSLNode = useMemo(() => {
-    if (!selectedDSLNodeId || selectedAnnotation) return null;
-    return componentDetectionActions.getSelectedDSLNode();
-  }, [selectedDSLNodeId, selectedAnnotation]);
 
   // 初始化表单值
   useEffect(() => {
@@ -332,7 +320,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
         }
       } else if (selectedDSLNode) {
         const { ftaComponent: _, name, comment, ...componentProps } = values;
-        const created = await componentDetectionActions.createAnnotation(selectedDSLNode, ftaComponent, {
+        const created = await componentDetectionActions.createAnnotation(selectedDSLNode as DSLNode, ftaComponent, {
           name,
           comment,
           props: componentProps,
@@ -435,7 +423,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
           return;
         }
 
-        if (!isMultiSelection && !selectedDSLNodeId) {
+        if (!isMultiSelection && !selectedDSLNode) {
           message.warning('请先选择一个节点');
           return;
         }
@@ -467,7 +455,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedAnnotation, selectedAnnotationId, selectedDSLNodeId, isMultiSelection, message]);
+  }, [selectedAnnotation, selectedAnnotation, selectedDSLNode, isMultiSelection, message]);
 
   // 渲染动态属性字段
   const renderDynamicPropertyFields = (componentName: string) => {
@@ -538,7 +526,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
   };
 
   // 渲染空状态
-  if (!selectedAnnotation && !selectedDSLNodeId && !isMultiSelection) {
+  if (!selectedAnnotation && !selectedDSLNode && !isMultiSelection) {
     return (
       <div
         style={{
@@ -557,7 +545,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
   }
 
   // 渲染DSL节点选择状态（创建标注）
-  if (isMultiSelection || (selectedDSLNodeId && !selectedAnnotation)) {
+  if (isMultiSelection || (selectedDSLNode && !selectedAnnotation)) {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'rgb(255, 255, 255)' }}>
         <div style={{ padding: '16px', borderBottom: '1px solid rgb(240, 240, 240)' }}>
@@ -594,7 +582,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
             <Card size='small' style={{ marginBottom: 16 }}>
               <Space direction='vertical' size={0} style={{ width: '100%' }}>
                 <Text type='secondary'>DSL节点ID:</Text>
-                <Text code>{selectedDSLNodeId}</Text>
+                <Text code>{selectedDSLNode?.id}</Text>
               </Space>
             </Card>
           )}

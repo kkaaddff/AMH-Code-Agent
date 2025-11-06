@@ -280,22 +280,22 @@ const findContainingDSLNode = (selectedAnnotations: AnnotationNode[], selectedDS
 
 interface ComponentDetectionState extends AnnotationState {
   dslRootNode: DSLNode | null;
-  selectedDSLNodeRef: DSLNode | null;
   showAllBorders: boolean;
   selectedNodeIds: SelectedNodeItem[];
 }
 
 export const componentDetectionStore = proxy<ComponentDetectionState>({
   rootAnnotation: null,
-  annotations: [],
-  selectedAnnotationId: null,
-  hoveredAnnotationId: null,
-  selectedDSLNodeId: null,
-  hoveredDSLNodeId: null,
+  get annotations() {
+    return this.rootAnnotation ? flattenAnnotationTree(this.rootAnnotation) : [];
+  },
+  selectedAnnotation: null,
+  hoveredAnnotation: null,
+  selectedDSLNode: null,
+  hoveredDSLNode: null,
   expandedKeys: [],
   isLoading: false,
   dslRootNode: null,
-  selectedDSLNodeRef: null,
   showAllBorders: false,
   selectedNodeIds: [],
 });
@@ -343,11 +343,10 @@ export const componentDetectionActions = {
       };
 
       componentDetectionStore.rootAnnotation = rootAnnotation;
-      componentDetectionStore.annotations = flattenAnnotationTree(rootAnnotation);
-      componentDetectionStore.selectedAnnotationId = null;
-      componentDetectionStore.hoveredAnnotationId = null;
-      componentDetectionStore.selectedDSLNodeId = null;
-      componentDetectionStore.hoveredDSLNodeId = null;
+      componentDetectionStore.selectedAnnotation = null;
+      componentDetectionStore.hoveredAnnotation = null;
+      componentDetectionStore.selectedDSLNode = null;
+      componentDetectionStore.hoveredDSLNode = null;
       componentDetectionStore.expandedKeys = [rootAnnotationId];
       componentDetectionStore.isLoading = false;
     } catch (error) {
@@ -535,9 +534,9 @@ export const componentDetectionActions = {
     }
 
     componentDetectionStore.rootAnnotation = sortedRootAnnotation;
-    componentDetectionStore.annotations = flattenedAnnotations;
-    componentDetectionStore.selectedAnnotationId = newAnnotation.id;
-    componentDetectionStore.selectedDSLNodeId = null;
+
+    componentDetectionStore.selectedAnnotation = newAnnotation;
+    componentDetectionStore.selectedDSLNode = null;
     componentDetectionStore.expandedKeys = Array.from(expandedKeysSet);
 
     componentDetectionDebugLog('createAnnotation:completed', {
@@ -613,16 +612,14 @@ export const componentDetectionActions = {
 
     const newRootAnnotation = rebuildTree(componentDetectionStore.rootAnnotation);
     const sortedRootAnnotation = sortAnnotationChildren(newRootAnnotation);
-    const flattenedAnnotations = flattenAnnotationTree(sortedRootAnnotation);
 
-    let nextSelectedId = componentDetectionStore.selectedAnnotationId;
-    if (nextSelectedId && idsToDelete.includes(nextSelectedId)) {
-      nextSelectedId = parent ? parent.id : null;
+    let nextSelected = componentDetectionStore.selectedAnnotation;
+    if (nextSelected && idsToDelete.includes(nextSelected.id)) {
+      nextSelected = parent ? parent : null;
     }
 
     componentDetectionStore.rootAnnotation = sortedRootAnnotation;
-    componentDetectionStore.annotations = flattenedAnnotations;
-    componentDetectionStore.selectedAnnotationId = nextSelectedId;
+    componentDetectionStore.selectedAnnotation = nextSelected;
     componentDetectionStore.expandedKeys = componentDetectionStore.expandedKeys.filter(
       (key) => !idsToDelete.includes(key)
     );
@@ -716,11 +713,10 @@ export const componentDetectionActions = {
 
     const newRootAnnotation = updateTree(componentDetectionStore.rootAnnotation);
     const sortedRootAnnotation = sortAnnotationChildren(newRootAnnotation);
-    const flattenedAnnotations = flattenAnnotationTree(sortedRootAnnotation);
 
-    let nextSelectedId = componentDetectionStore.selectedAnnotationId;
-    if (nextSelectedId && removedChildIds.includes(nextSelectedId)) {
-      nextSelectedId = annotationId;
+    let nextSelected = componentDetectionStore.selectedAnnotation;
+    if (nextSelected && removedChildIds.includes(nextSelected.id)) {
+      nextSelected = findAnnotationById(annotationId);
     }
 
     const nextExpandedKeys = componentDetectionStore.expandedKeys
@@ -730,8 +726,7 @@ export const componentDetectionActions = {
       );
 
     componentDetectionStore.rootAnnotation = sortedRootAnnotation;
-    componentDetectionStore.annotations = flattenedAnnotations;
-    componentDetectionStore.selectedAnnotationId = nextSelectedId;
+    componentDetectionStore.selectedAnnotation = nextSelected;
     componentDetectionStore.expandedKeys = Array.from(new Set(nextExpandedKeys));
 
     componentDetectionDebugLog('updateAnnotation:completed', {
@@ -746,8 +741,8 @@ export const componentDetectionActions = {
   selectAnnotation: (annotationId: string | null, multiSelect: boolean = false) => {
     if (annotationId === null) {
       componentDetectionStore.selectedNodeIds = [];
-      componentDetectionStore.selectedAnnotationId = null;
-      componentDetectionStore.selectedDSLNodeId = null;
+      componentDetectionStore.selectedAnnotation = null;
+      componentDetectionStore.selectedDSLNode = null;
       return;
     }
 
@@ -761,23 +756,23 @@ export const componentDetectionActions = {
           (_, index) => index !== existingIndex
         );
         const newIds = componentDetectionStore.selectedNodeIds;
-        componentDetectionStore.selectedAnnotationId =
+        componentDetectionStore.selectedAnnotation =
           newIds.length > 0 && newIds[newIds.length - 1].type === NodeType.ANNOTATION
-            ? newIds[newIds.length - 1].id
+            ? findAnnotationById(newIds[newIds.length - 1].id)
             : null;
-        componentDetectionStore.selectedDSLNodeId = null;
+        componentDetectionStore.selectedDSLNode = null;
       } else {
         componentDetectionStore.selectedNodeIds = [
           ...componentDetectionStore.selectedNodeIds,
           { id: annotationId, type: NodeType.ANNOTATION },
         ];
-        componentDetectionStore.selectedAnnotationId = annotationId;
-        componentDetectionStore.selectedDSLNodeId = null;
+        componentDetectionStore.selectedAnnotation = findAnnotationById(annotationId);
+        componentDetectionStore.selectedDSLNode = null;
       }
     } else {
       componentDetectionStore.selectedNodeIds = [{ id: annotationId, type: NodeType.ANNOTATION }];
-      componentDetectionStore.selectedAnnotationId = annotationId;
-      componentDetectionStore.selectedDSLNodeId = null;
+      componentDetectionStore.selectedAnnotation = findAnnotationById(annotationId);
+      componentDetectionStore.selectedDSLNode = null;
     }
   },
 
@@ -785,9 +780,8 @@ export const componentDetectionActions = {
   selectDSLNode: (dslNode: DSLNode | null, multiSelect: boolean = false) => {
     if (dslNode === null) {
       componentDetectionStore.selectedNodeIds = [];
-      componentDetectionStore.selectedDSLNodeRef = null;
-      componentDetectionStore.selectedDSLNodeId = null;
-      componentDetectionStore.selectedAnnotationId = null;
+      componentDetectionStore.selectedDSLNode = null;
+      componentDetectionStore.selectedAnnotation = null;
       return;
     }
 
@@ -804,33 +798,30 @@ export const componentDetectionActions = {
       const lastNode = lastDSLNodeId ? findDSLNodeById(lastDSLNodeId) : null;
 
       componentDetectionStore.selectedNodeIds = newIds;
-      componentDetectionStore.selectedDSLNodeRef = lastNode;
-      componentDetectionStore.selectedDSLNodeId = lastDSLNodeId || null;
-      componentDetectionStore.selectedAnnotationId = null;
+      componentDetectionStore.selectedDSLNode = lastNode;
+      componentDetectionStore.selectedAnnotation = null;
     } else {
       componentDetectionStore.selectedNodeIds = [{ id: dslNode.id, type: NodeType.DSL }];
-      componentDetectionStore.selectedDSLNodeRef = dslNode;
-      componentDetectionStore.selectedDSLNodeId = dslNode.id;
-      componentDetectionStore.selectedAnnotationId = null;
+      componentDetectionStore.selectedDSLNode = dslNode;
+      componentDetectionStore.selectedAnnotation = null;
     }
   },
 
   // Hover标注
   hoverAnnotation: (annotationId: string | null) => {
-    componentDetectionStore.hoveredAnnotationId = annotationId;
+    componentDetectionStore.hoveredAnnotation = annotationId ? findAnnotationById(annotationId) : null;
   },
 
   // Hover DSL节点
   hoverDSLNode: (dslNodeId: string | null) => {
-    componentDetectionStore.hoveredDSLNodeId = dslNodeId;
+    componentDetectionStore.hoveredDSLNode = dslNodeId ? findDSLNodeById(dslNodeId) : null;
   },
 
   // 清空选择
   clearSelection: () => {
     componentDetectionStore.selectedNodeIds = [];
-    componentDetectionStore.selectedDSLNodeRef = null;
-    componentDetectionStore.selectedAnnotationId = null;
-    componentDetectionStore.selectedDSLNodeId = null;
+    componentDetectionStore.selectedDSLNode = null;
+    componentDetectionStore.selectedAnnotation = null;
   },
 
   // 设置展开的keys
@@ -876,13 +867,11 @@ export const componentDetectionActions = {
   // 加载标注
   loadAnnotations: (rootAnnotation: AnnotationNode | null) => {
     try {
-      const flattenedAnnotations = rootAnnotation ? flattenAnnotationTree(rootAnnotation) : [];
       componentDetectionStore.rootAnnotation = rootAnnotation;
-      componentDetectionStore.annotations = flattenedAnnotations;
-      componentDetectionStore.selectedAnnotationId = null;
-      componentDetectionStore.selectedDSLNodeId = null;
+      componentDetectionStore.selectedAnnotation = null;
+      componentDetectionStore.selectedDSLNode = null;
       componentDetectionDebugLog('loadAnnotations:success', {
-        annotationCount: flattenedAnnotations.length,
+        annotationCount: componentDetectionStore.annotations.length,
       });
     } catch (error) {
       componentDetectionDebugLog('loadAnnotations:failed', { error });
@@ -1156,7 +1145,6 @@ export const componentDetectionActions = {
 
     const rootWithInsertion = insertAnnotation(rootAfterRemoval);
     const sortedRootAnnotation = sortAnnotationChildren(rootWithInsertion);
-    const flattenedAnnotations = flattenAnnotationTree(sortedRootAnnotation);
 
     const expandedKeysSet = new Set(componentDetectionStore.expandedKeys);
     permanentlyRemovedIds.forEach((id) => expandedKeysSet.delete(id));
@@ -1164,12 +1152,10 @@ export const componentDetectionActions = {
     expandedKeysSet.add(newAnnotation.id);
 
     componentDetectionStore.rootAnnotation = sortedRootAnnotation;
-    componentDetectionStore.annotations = flattenedAnnotations;
-    componentDetectionStore.selectedAnnotationId = newAnnotation.id;
-    componentDetectionStore.selectedDSLNodeId = null;
+    componentDetectionStore.selectedAnnotation = newAnnotation;
     componentDetectionStore.expandedKeys = Array.from(expandedKeysSet);
     componentDetectionStore.selectedNodeIds = [];
-    componentDetectionStore.selectedDSLNodeRef = null;
+    componentDetectionStore.selectedDSLNode = null;
 
     componentDetectionDebugLog('combineSelectedDSLNodes:completed', { success: true });
 
@@ -1374,18 +1360,16 @@ export const componentDetectionActions = {
     newRoot = cleanEmptyVirtualContainers(newRoot);
 
     const sortedRoot = sortAnnotationChildren(newRoot);
-    const flattenedAnnotations = flattenAnnotationTree(sortedRoot);
 
     componentDetectionStore.rootAnnotation = sortedRoot;
-    componentDetectionStore.annotations = flattenedAnnotations;
-    componentDetectionStore.selectedAnnotationId = sourceId;
+    componentDetectionStore.selectedAnnotation = findAnnotationById(sourceId);
 
     return { success: true };
   },
 
   // 获取选中的DSL节点
   getSelectedDSLNode: () => {
-    return componentDetectionStore.selectedDSLNodeRef;
+    return componentDetectionStore.selectedDSLNode;
   },
 };
 

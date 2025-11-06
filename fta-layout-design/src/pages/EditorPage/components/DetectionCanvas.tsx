@@ -33,7 +33,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
   highlightedNodeId,
   hoveredNodeId,
 }) => {
-  const { annotations, selectedNodeIds, hoveredAnnotationId, hoveredDSLNodeId, showAllBorders } =
+  const { annotations, selectedNodeIds, hoveredAnnotation, hoveredDSLNode, showAllBorders } =
     useSnapshot(componentDetectionStore);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -236,42 +236,39 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
   }, [isSpacePressed]);
 
   // 统一的交互目标检测
-  const getInteractionTarget = useCallback(
-    (x: number, y: number) => {
-      // 从后往前查找，优先选择上层组件
-      const hoveredAnnotation = [...annotations].reverse().find((annotation) => {
-        if (annotation.isRoot) return false;
-        return (
-          x >= annotation.absoluteX &&
-          x <= annotation.absoluteX + annotation.width &&
-          y >= annotation.absoluteY &&
-          y <= annotation.absoluteY + annotation.height
-        );
-      });
+  const getInteractionTarget = (x: number, y: number) => {
+    // 从后往前查找，优先选择上层组件
+    const hoveredAnnotation = [...annotations].reverse().find((annotation) => {
+      if (annotation.isRoot) return false;
+      return (
+        x >= annotation.absoluteX &&
+        x <= annotation.absoluteX + annotation.width &&
+        y >= annotation.absoluteY &&
+        y <= annotation.absoluteY + annotation.height
+      );
+    });
 
-      const hoveredDSLNode = findNodeAtPositionMemo(x, y);
+    const hoveredDSLNode = findNodeAtPositionMemo(x, y);
 
-      // 判断优先级
-      if (hoveredAnnotation && hoveredDSLNode) {
-        if (hoveredAnnotation.isContainer && hoveredDSLNode.id !== hoveredAnnotation.dslNodeId) {
-          return { type: 'dsl', target: hoveredDSLNode, annotation: null };
-        } else {
-          return { type: 'annotation', target: hoveredAnnotation, dslNode: null };
-        }
-      }
-
-      if (hoveredAnnotation) {
+    // 判断优先级
+    if (hoveredAnnotation && hoveredDSLNode) {
+      if (hoveredAnnotation.isContainer && hoveredDSLNode.id !== hoveredAnnotation.dslNodeId) {
+        return { type: 'dsl', target: hoveredDSLNode, annotation: null };
+      } else {
         return { type: 'annotation', target: hoveredAnnotation, dslNode: null };
       }
+    }
 
-      if (hoveredDSLNode) {
-        return { type: 'dsl', target: hoveredDSLNode, annotation: null };
-      }
+    if (hoveredAnnotation) {
+      return { type: 'annotation', target: hoveredAnnotation, dslNode: null };
+    }
 
-      return null;
-    },
-    [annotations]
-  );
+    if (hoveredDSLNode) {
+      return { type: 'dsl', target: hoveredDSLNode, annotation: null };
+    }
+
+    return null;
+  };
 
   // 绘制DSL节点边框
   const drawDSLNodeBorders = (ctx: CanvasRenderingContext2D, node: DSLNode, parentX = 0, parentY = 0) => {
@@ -325,12 +322,11 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
     }
 
     // 2. 绘制hover的DSL节点
-    if (hoveredDSLNodeId) {
-      const hoveredNode = findNodeByIdMemo(hoveredDSLNodeId);
-      if (hoveredNode) {
-        const bounds = getNodeAbsolutePositionMemo(hoveredNode);
-        const nodeWidth = hoveredNode.layoutStyle?.width || 0;
-        const nodeHeight = hoveredNode.layoutStyle?.height || 0;
+    if (hoveredDSLNode) {
+      if (hoveredDSLNode) {
+        const bounds = getNodeAbsolutePositionMemo(hoveredDSLNode as DSLNode);
+        const nodeWidth = hoveredDSLNode.layoutStyle?.width || 0;
+        const nodeHeight = hoveredDSLNode.layoutStyle?.height || 0;
         drawBorder(ctx, bounds.x, bounds.y, nodeWidth, nodeHeight, {
           color: COLORS.HOVER_DSL_NODE,
           width: DRAW_STYLES.HOVER_DSL_NODE_WIDTH,
@@ -368,7 +364,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       if (annotation.isRoot) return;
 
       const isSelected = selectedAnnotationIdsList.includes(annotation.id);
-      const isHovered = hoveredAnnotationId === annotation.id;
+      const isHovered = hoveredAnnotation?.id === annotation.id;
 
       let strokeColor: string = COLORS.ANNOTATED_DEFAULT;
       let lineWidth: number = DRAW_STYLES.ANNOTATED_DEFAULT_WIDTH;
@@ -446,8 +442,8 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
   }, [
     annotations,
     selectedNodeIds,
-    hoveredAnnotationId,
-    hoveredDSLNodeId,
+    hoveredAnnotation,
+    hoveredDSLNode,
     width,
     height,
     findAnnotationByDSLNodeId,

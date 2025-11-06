@@ -56,10 +56,10 @@ export interface AnnotationNode {
 export interface AnnotationState {
   rootAnnotation: AnnotationNode | null; // 页面根节点
   annotations: AnnotationNode[]; // 所有标注（扁平化列表，方便查找）
-  selectedAnnotationId: string | null; // 选中的标注ID
-  hoveredAnnotationId: string | null; // hover的标注ID
-  selectedDSLNodeId: string | null; // 选中的DSL节点ID（未标注的）
-  hoveredDSLNodeId: string | null; // hover的DSL节点ID
+  selectedAnnotation: AnnotationNode | null; // 选中的标注
+  hoveredAnnotation: AnnotationNode | null; // hover的标注
+  selectedDSLNode: DSLNode | null; // 选中的DSL节点（未标注的）
+  hoveredDSLNode: DSLNode | null; // hover的DSL节点
   expandedKeys: string[]; // Tree展开的节点keys
   isLoading: boolean;
 }
