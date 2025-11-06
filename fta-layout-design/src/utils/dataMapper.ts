@@ -162,11 +162,22 @@ const convertLayoutNodeToDSL = (node: LayoutTreeNode, index = 0): DSLNode => {
   }
 };
 
+/**
+ * 将布局树数据转换为 DSL 结构，补全默认样式信息。
+ * @param layoutData 布局树根节点
+ * @returns 包含 DSL 节点与样式的结构体
+ */
 export const convertLayoutTreeToDSL = (layoutData: LayoutTreeNode): DSLData => {
   const dslNode = convertLayoutNodeToDSL(layoutData);
   return { dsl: { styles: createDefaultStyles(), nodes: [dslNode] } };
 };
 
+/**
+ * 查找指定 DSL 节点的路径。
+ * @param dslData DSL 数据集合
+ * @param nodeId 目标节点 ID
+ * @returns 从根节点到目标节点的 ID 路径
+ */
 export const findDSLNodePath = (dslData: DSLData, nodeId: string): string[] => {
   const findNode = (node: DSLNode, path: string[]): string[] | null => {
     if (node.id === nodeId) return [...path, node.id];

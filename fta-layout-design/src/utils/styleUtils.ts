@@ -1,5 +1,11 @@
 import { DSLStyles } from '../types/dsl';
 
+/**
+ * 解析 DSL 中的颜色标识，转换为实际颜色值。
+ * @param color 颜色字段或 paint 标识
+ * @param styles DSL 样式字典
+ * @returns 可直接使用的颜色字符串
+ */
 export const parseColor = (color: string | undefined, styles: DSLStyles): string => {
   if (!color || !color.startsWith('paint_')) return color || 'rgba(0, 0, 0, 0)';
 
@@ -24,6 +30,11 @@ export const parseColor = (color: string | undefined, styles: DSLStyles): string
   return color;
 };
 
+/**
+ * 将 DSL 布局描述转换为 React 可用的布局样式。
+ * @param layoutStyle DSL 布局对象
+ * @returns React 风格的样式对象
+ */
 export const parseLayoutStyle = (layoutStyle: any): React.CSSProperties => {
   if (!layoutStyle) return {};
 
@@ -45,6 +56,11 @@ export const parseLayoutStyle = (layoutStyle: any): React.CSSProperties => {
   return style;
 };
 
+/**
+ * 解析 DSL 中的 flex 布局描述。
+ * @param flexContainerInfo DSL flex 容器信息
+ * @returns React 风格的 flex 样式对象
+ */
 export const parseFlexContainerStyle = (flexContainerInfo: any): React.CSSProperties => {
   if (!flexContainerInfo) return { display: 'flex' };
 
@@ -72,11 +88,22 @@ export const parseFlexContainerStyle = (flexContainerInfo: any): React.CSSProper
   return style;
 };
 
+/**
+ * 解析边角圆角字符串，转换为 CSS 样式。
+ * @param borderRadius DSL 中的圆角描述
+ * @returns 包含圆角的样式对象
+ */
 export const parseBorderRadius = (borderRadius: string | undefined): React.CSSProperties => {
   if (!borderRadius) return {};
   return { borderRadius: `${borderRadius.replace('px', '')}px` };
 };
 
+/**
+ * 根据字体标识解析文本样式。
+ * @param fontId 字体样式标识
+ * @param styles DSL 样式字典
+ * @returns React 风格的文本样式对象
+ */
 export const parseTextStyle = (fontId: string, styles: DSLStyles): React.CSSProperties => {
   const fontInfo = styles[fontId]?.value || {};
   const textStyle: React.CSSProperties = {};

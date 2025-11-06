@@ -2,7 +2,9 @@ import { DSLNode } from '@/types/dsl';
 import { LeafNodeInfo } from '../types/componentDetection';
 
 /**
- * Check if a node is a leaf node (no children or empty children)
+ * 判断 DSL 节点是否为叶子节点（不存在子节点）。
+ * @param node 待判断的 DSL 节点
+ * @returns 是否为叶子节点
  */
 export function isLeafNode(node: DSLNode): boolean {
   return !node.children || node.children.length === 0;
@@ -30,7 +32,9 @@ function calculateAbsolutePosition(
 }
 
 /**
- * Extract all leaf nodes from DSL tree with calculated absolute positions
+ * 提取 DSL 树中的所有叶子节点，并计算绝对位置。
+ * @param rootNode DSL 根节点
+ * @returns 叶子节点信息列表
  */
 export function extractLeafNodes(rootNode: DSLNode): LeafNodeInfo[] {
   const leafNodes: LeafNodeInfo[] = [];
@@ -73,7 +77,9 @@ export function extractLeafNodes(rootNode: DSLNode): LeafNodeInfo[] {
 }
 
 /**
- * Calculate bounding box that encompasses multiple leaf nodes
+ * 计算可包围多个叶子节点的最小外接矩形。
+ * @param nodes 叶子节点集合
+ * @returns 外接矩形的位置信息
  */
 export function calculateBoundingBox(nodes: LeafNodeInfo[]): {
   x: number;
@@ -117,7 +123,10 @@ export function calculateBoundingBox(nodes: LeafNodeInfo[]): {
 }
 
 /**
- * Find a leaf node by its ID
+ * 按 ID 在叶子节点列表中查找节点。
+ * @param leafNodes 叶子节点集合
+ * @param nodeId 目标节点 ID
+ * @returns 匹配的叶子节点信息，未找到时返回 undefined
  */
 export function findLeafNodeById(leafNodes: LeafNodeInfo[], nodeId: string): LeafNodeInfo | undefined {
   return leafNodes.find((node) => node.id === nodeId);

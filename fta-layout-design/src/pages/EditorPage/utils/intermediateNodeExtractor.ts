@@ -21,7 +21,9 @@ export interface IntermediateNodeInfo {
 }
 
 /**
- * 提取所有中间层级节点（非叶子、非根节点）
+ * 提取 DSL 树中的中间层级节点（非根节点且存在子节点）。
+ * @param rootNode DSL 根节点
+ * @returns 中间层级节点的详情列表
  */
 export function extractIntermediateNodes(rootNode: DSLNode): IntermediateNodeInfo[] {
   const intermediateNodes: IntermediateNodeInfo[] = [];
@@ -75,7 +77,10 @@ export function extractIntermediateNodes(rootNode: DSLNode): IntermediateNodeInf
 }
 
 /**
- * 根据ID查找中间节点
+ * 根据节点 ID 在中间层级节点列表中查找目标。
+ * @param intermediateNodes 已提取的中间节点集合
+ * @param nodeId 目标节点 ID
+ * @returns 匹配的节点信息，未找到时返回 undefined
  */
 export function findIntermediateNodeById(
   intermediateNodes: IntermediateNodeInfo[],
@@ -85,7 +90,9 @@ export function findIntermediateNodeById(
 }
 
 /**
- * 获取指定节点下的所有叶子节点IDs
+ * 获取指定节点下所有叶子节点的 ID。
+ * @param node 需要遍历的 DSL 节点
+ * @returns 叶子节点 ID 列表
  */
 export function getLeafNodeIdsUnderNode(node: DSLNode): string[] {
   const leafIds: string[] = [];
@@ -105,6 +112,12 @@ export function getLeafNodeIdsUnderNode(node: DSLNode): string[] {
 }
 
 // 辅助函数：查找父节点
+/**
+ * 在标注树中查找指定子节点的父节点。
+ * @param root 根标注节点
+ * @param childId 目标子节点 ID
+ * @returns 父节点对象，未找到时返回 null
+ */
 export function findParent(root: AnnotationNode, childId: string): AnnotationNode | null {
   for (const child of root.children) {
     if (child.id === childId) {

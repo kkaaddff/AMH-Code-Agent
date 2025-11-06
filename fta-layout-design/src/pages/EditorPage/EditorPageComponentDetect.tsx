@@ -48,14 +48,14 @@ const SCALE_OPTIONS = [
 const EditorPageContent: React.FC = () => {
   const { message } = App.useApp();
 
-  const { pageId, currentPage, selectedDocument } = useSnapshot(editorPageStore);
+  const editorPageStoreSnapshot = useSnapshot(editorPageStore);
   const { setPageId, setProjectId, setCurrentPage, setSelectedDocument } = editorPageActions;
 
   const { initializeFromDSL, toggleShowAllBorders, saveAnnotations, loadAnnotations, updateDslRootNode } =
     componentDetectionActions;
-  const { rootAnnotation, isLoading, showAllBorders } = useSnapshot(componentDetectionStore);
+  const componentDetectionStoreSnapshot = useSnapshot(componentDetectionStore);
 
-  const { isDrawerOpen: isCodeDrawerOpen, isGenerating: isGeneratingCode } = useSnapshot(codeGenerationStore);
+  const codeGenerationStoreSnapshot = useSnapshot(codeGenerationStore);
   const {
     openDrawer: openCodeDrawer,
     closeDrawer: closeCodeDrawer,
@@ -70,7 +70,7 @@ const EditorPageContent: React.FC = () => {
   } = codeGenerationActions;
 
   // 使用 designId 获取 DSL 数据（仅在选中设计文档时）
-  const { data: dslData, loading: dslLoading, error: dslError } = useSnapshot(dslDataStore);
+  const dslDataStoreSnapshot = useSnapshot(dslDataStore);
 
   const [scale, setScale] = useState(0.5);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -115,6 +115,9 @@ const EditorPageContent: React.FC = () => {
 
   // 初始化 DSL 数据和加载已保存的标注信息
   useEffect(() => {
+    const { selectedDocument } = editorPageStoreSnapshot;
+    const { data: dslData } = dslDataStoreSnapshot;
+
     if (!dslData || !selectedDocument?.id || selectedDocument?.type !== 'design') {
       return;
     }
@@ -122,11 +125,11 @@ const EditorPageContent: React.FC = () => {
     const rootNode = (dslData.dsl.nodes?.[0] as DSLNode) || null;
     updateDslRootNode(rootNode);
 
-    initializeFromDSL(dslData as DSLData, selectedDocument?.id);
+    initializeFromDSL(dslData as DSLData, selectedDocument.id);
 
     const loadSavedAnnotations = async () => {
       try {
-        const savedState = await loadAnnotationState(selectedDocument?.id);
+        const savedState = await loadAnnotationState(selectedDocument.id);
         loadAnnotations(savedState.rootAnnotation);
         message.success('已加载保存的标注信息');
       } catch (error) {
@@ -135,7 +138,7 @@ const EditorPageContent: React.FC = () => {
     };
 
     loadSavedAnnotations();
-  }, [dslData]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -148,6 +151,7 @@ const EditorPageContent: React.FC = () => {
   };
 
   const handleSave = async () => {
+    const { selectedDocument } = editorPageStoreSnapshot;
     if (!selectedDocument?.id) {
       message.error('请提供设计稿 ID 参数');
       return;
@@ -163,12 +167,13 @@ const EditorPageContent: React.FC = () => {
   };
 
   const handleGenerateCode = async () => {
+    const { selectedDocument } = editorPageStoreSnapshot;
     if (!selectedDocument?.id) {
       message.error('请提供设计稿 ID 参数');
       return;
     }
 
-    if (isGeneratingCode) {
+    if (codeGenerationStoreSnapshot.isGenerating) {
       message.info('代码生成进行中，请稍候');
       openCodeDrawer();
       return;
@@ -198,10 +203,12 @@ const EditorPageContent: React.FC = () => {
 
       // 构建初始提示词
       let initialPrompt = commonUserPrompt.mainPrompt;
+      const { rootAnnotation } = componentDetectionStoreSnapshot;
       if (rootAnnotation) {
         const annotationSummary = formatAnnotationSummary(flattenAnnotation(rootAnnotation as AnnotationNode));
         initialPrompt += `\n\n当前设计标注数据：\n${annotationSummary}`;
       }
+      const { data: dslData } = dslDataStoreSnapshot;
       const dslJsonStr = JSON.stringify(dslData?.dsl ?? {});
       // 创建会话
       scheduler.createSession(sessionId, initialPrompt, dslJsonStr);
@@ -349,6 +356,8 @@ const EditorPageContent: React.FC = () => {
   };
 
   const handleGenerateCodeV2 = () => {
+    const { selectedDocument } = editorPageStoreSnapshot;
+    const { rootAnnotation } = componentDetectionStoreSnapshot;
     if (!selectedDocument?.id) {
       message.error('请提供设计稿 ID 参数');
       return;
@@ -382,6 +391,7 @@ const EditorPageContent: React.FC = () => {
 
   // 处理删除文档
   const handleDeleteDocument = async (type: keyof typeof TDocumentKeys, docId: string) => {
+    const { selectedDocument, currentPage } = editorPageStoreSnapshot;
     if (!currentPage) {
       message.error('页面数据未加载');
       return;
@@ -446,7 +456,7 @@ const EditorPageContent: React.FC = () => {
   }
 
   // 如果 DSL 数据还在加载中（仅在选中设计文档时检查）
-  if (selectedDocument?.type === 'design' && dslLoading) {
+  if (editorPageStoreSnapshot.selectedDocument?.type === 'design' && dslDataStoreSnapshot.loading) {
     return (
       <div className='editor-page-loading-container'>
         <Spin size='large' />
@@ -456,16 +466,16 @@ const EditorPageContent: React.FC = () => {
   }
 
   // 如果选中设计文档时 DSL 数据加载失败
-  if (selectedDocument?.type === 'design' && dslError) {
+  if (editorPageStoreSnapshot.selectedDocument?.type === 'design' && dslDataStoreSnapshot.error) {
     return (
       <div className='editor-page-error-container'>
-        <Typography.Text type='danger'>加载 DSL 数据失败：{dslError.message}</Typography.Text>
+        <Typography.Text type='danger'>加载 DSL 数据失败：{dslDataStoreSnapshot.error.message}</Typography.Text>
       </div>
     );
   }
 
   // 如果选中设计文档但没有 DSL 数据
-  if (selectedDocument?.type === 'design' && !dslData) {
+  if (editorPageStoreSnapshot.selectedDocument?.type === 'design' && !dslDataStoreSnapshot.data) {
     return (
       <div className='editor-page-error-container'>
         <Typography.Text type='secondary'>未找到 DSL 数据</Typography.Text>
@@ -474,7 +484,7 @@ const EditorPageContent: React.FC = () => {
   }
 
   // 如果选中设计文档且组件识别上下文还在加载中
-  if (selectedDocument?.type === 'design' && isLoading) {
+  if (editorPageStoreSnapshot.selectedDocument?.type === 'design' && componentDetectionStoreSnapshot.isLoading) {
     return (
       <div className='editor-page-loading-container'>
         <Spin size='large' />
@@ -504,7 +514,7 @@ const EditorPageContent: React.FC = () => {
         </Sider>
 
         {/* 中间和右侧内容：根据文档类型切换 */}
-        {selectedDocument?.type === 'design' && dslData && (
+        {editorPageStoreSnapshot.selectedDocument?.type === 'design' && dslDataStoreSnapshot.data && (
           <>
             <Layout>
               <Content className='editor-page-content'>
@@ -514,9 +524,9 @@ const EditorPageContent: React.FC = () => {
                   </Title>
                   <Space>
                     <Button
-                      type={showAllBorders ? 'primary' : 'default'}
                       size='small'
-                      icon={showAllBorders ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                      type={componentDetectionStoreSnapshot.showAllBorders ? 'primary' : 'default'}
+                      icon={componentDetectionStoreSnapshot.showAllBorders ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                       onClick={toggleShowAllBorders}
                       className='editor-page-button'>
                       框线
@@ -565,7 +575,7 @@ const EditorPageContent: React.FC = () => {
 
                   <div id='detection-canvas-container' className='editor-page-detection-canvas-container'>
                     <DetectionCanvas
-                      dslData={dslData as DSLData}
+                      dslData={dslDataStoreSnapshot.data as DSLData}
                       scale={scale}
                       onScaleChange={handleScaleChange}
                       highlightedNodeId={null}
@@ -591,7 +601,7 @@ const EditorPageContent: React.FC = () => {
         )}
 
         {/* PRD 文档编辑器 */}
-        {selectedDocument?.type === 'prd' && (
+        {editorPageStoreSnapshot.selectedDocument?.type === 'prd' && (
           <Layout style={{ flex: 1 }}>
             <Content className='editor-page-content editor-page-content--no-padding'>
               <div
@@ -599,13 +609,13 @@ const EditorPageContent: React.FC = () => {
                 className='editor-page-collapse-button editor-page-collapse-button-left'>
                 {leftCollapsed ? '▶' : '◀'}
               </div>
-              <PRDEditorPanel documentId={selectedDocument?.id} />
+              <PRDEditorPanel documentId={editorPageStoreSnapshot.selectedDocument?.id} />
             </Content>
           </Layout>
         )}
 
         {/* OpenAPI 数据面板 */}
-        {selectedDocument?.type === 'openapi' && (
+        {editorPageStoreSnapshot.selectedDocument?.type === 'openapi' && (
           <>
             <Layout>
               <Content className='editor-page-content editor-page-content--no-padding'>
@@ -621,7 +631,10 @@ const EditorPageContent: React.FC = () => {
                   {rightCollapsed ? '◀' : '▶'}
                 </div>
 
-                <OpenAPIUrlPanel selectedApiId={selectedDocument?.id || undefined} onSelectApi={handleSelectOpenApi} />
+                <OpenAPIUrlPanel
+                  selectedApiId={editorPageStoreSnapshot.selectedDocument?.id || undefined}
+                  onSelectApi={handleSelectOpenApi}
+                />
               </Content>
             </Layout>
 
@@ -634,13 +647,13 @@ const EditorPageContent: React.FC = () => {
               collapsedWidth={0}
               trigger={null}
               className='editor-page-sider editor-page-right-sider'>
-              <OpenAPIDataPanel selectedApiId={selectedDocument?.id || undefined} />
+              <OpenAPIDataPanel selectedApiId={editorPageStoreSnapshot.selectedDocument?.id || undefined} />
             </Sider>
           </>
         )}
 
         {/* 没有选中任何文档时的提示 */}
-        {!selectedDocument && (
+        {!editorPageStoreSnapshot.selectedDocument && (
           <Layout style={{ flex: 1 }}>
             <Content
               style={{
@@ -661,14 +674,18 @@ const EditorPageContent: React.FC = () => {
       </Layout>
       <AnnotationConfirmModal
         open={isAnnotationConfirmOpen}
-        rootAnnotation={rootAnnotation as AnnotationNode | null}
-        selectedDocumentId={selectedDocument?.type === 'design' ? selectedDocument.id : undefined}
+        rootAnnotation={componentDetectionStoreSnapshot.rootAnnotation as AnnotationNode | null}
+        selectedDocumentId={
+          editorPageStoreSnapshot.selectedDocument?.type === 'design'
+            ? editorPageStoreSnapshot.selectedDocument.id
+            : undefined
+        }
         onCancel={handleAnnotationConfirmCancel}
         onConfirm={handleAnnotationConfirmSubmit}
       />
       <Component3DInspectModal open={is3DModalOpen} onClose={() => setIs3DModalOpen(false)} />
       <InteractionGuideOverlay open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
-      <CodeGenerationDrawer open={isCodeDrawerOpen} onClose={handleCloseCodeDrawer} />
+      <CodeGenerationDrawer open={codeGenerationStoreSnapshot.isDrawerOpen} onClose={handleCloseCodeDrawer} />
     </>
   );
 };

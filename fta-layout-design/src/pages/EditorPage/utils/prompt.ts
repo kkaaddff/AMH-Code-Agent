@@ -11,6 +11,11 @@ interface AnnotationNodeSummary {
   height?: number;
 }
 
+/**
+ * 将标注节点概要信息格式化为易读的多行文本。
+ * @param nodes 标注节点概要列表
+ * @returns 适合传给模型的文本摘要
+ */
 export function formatAnnotationSummary(nodes: AnnotationNodeSummary[]): string {
   if (!nodes.length) {
     return '当前标注树为空，模型需要自行根据设计描述补充组件结构。';
@@ -34,6 +39,11 @@ export function formatAnnotationSummary(nodes: AnnotationNodeSummary[]): string 
   return lines.join('\n');
 }
 
+/**
+ * 将标注树拍平为节点概要列表，保留层级信息。
+ * @param root 根标注节点
+ * @returns 拍平后的节点概要数组
+ */
 export function flattenAnnotation(root?: AnnotationNode): AnnotationNodeSummary[] {
   if (!root || typeof root !== 'object') {
     return [];

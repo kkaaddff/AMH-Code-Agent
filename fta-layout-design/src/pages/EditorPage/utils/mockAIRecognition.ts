@@ -11,8 +11,9 @@ const TYPE_TO_COMPONENT_MAP: Record<string, string[]> = {
 };
 
 /**
- * Generate mock AI recognition results for leaf nodes
- * Some nodes will be "recognized" with confidence scores, others will be unrecognized
+ * 为叶子节点生成模拟的 AI 识别结果，包含置信度与组件建议。
+ * @param leafNodes 需要识别的叶子节点列表
+ * @returns 节点 ID 到识别结果的映射表
  */
 export function generateMockRecognition(leafNodes: LeafNodeInfo[]): Map<string, AIRecognitionResult> {
   const recognitions = new Map<string, AIRecognitionResult>();
@@ -83,7 +84,12 @@ function generateSuggestedProperties(ftaComponent: string, leafNode: LeafNodeInf
 }
 
 /**
- * Manually assign or update AI recognition for a node
+ * 手动指定或更新节点的 AI 识别结果。
+ * @param recognitions 当前的识别结果映射
+ * @param nodeId 目标节点 ID
+ * @param ftaComponent 指定的组件类型
+ * @param confidence 可选的置信度，不传时默认为 1
+ * @returns 更新后的识别结果映射
  */
 export function updateRecognition(
   recognitions: Map<string, AIRecognitionResult>,
@@ -104,7 +110,10 @@ export function updateRecognition(
 }
 
 /**
- * Clear AI recognition for a node (mark as unrecognized)
+ * 清除指定节点的 AI 识别结果，将其标记为未识别。
+ * @param recognitions 当前的识别结果映射
+ * @param nodeId 目标节点 ID
+ * @returns 更新后的识别结果映射
  */
 export function clearRecognition(
   recognitions: Map<string, AIRecognitionResult>,

@@ -3,7 +3,6 @@ import { Navigate } from 'react-router-dom';
 
 import Layout from '@/components/Layout';
 import EditorPageComponentDetect from '@/pages/EditorPage/EditorPageComponentDetect';
-import EditorPageLayout from '@/pages/EditorPage/EditorPageLayout';
 import HomePage from '@/pages/HomePage';
 import RequirementPage from '@/pages/RequirementPage';
 import TechnicalPage from '@/pages/TechnicalPage';
@@ -37,11 +36,6 @@ export const routes: RouteConfig[] = [
         path: 'component-detect-v2',
         withLayout: true,
         element: <EditorPageComponentDetect />,
-      },
-      {
-        path: 'layout',
-        withLayout: true,
-        element: <EditorPageLayout />,
       },
     ],
   },

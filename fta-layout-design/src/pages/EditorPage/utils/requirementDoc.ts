@@ -136,7 +136,11 @@ async function streamRequirementDoc(
 }
 
 /**
- * 生成需求规格文档
+ * 请求生成需求规格文档，可选择使用流式回调收集内容。
+ * @param designId 设计稿标识
+ * @param rootAnnotation 根标注节点数据
+ * @param options 生成配置（模板、版本、流式回调等）
+ * @returns 完整的需求规格文档字符串
  */
 export async function generateRequirementDoc(
   designId: string,
@@ -174,7 +178,10 @@ export async function generateRequirementDoc(
 }
 
 /**
- * TODO: 替换为真实的代码生成接口
+ * （占位实现）触发代码生成任务。
+ * @param designId 设计稿标识
+ * @param mdContent 需求文档内容
+ * @returns 任务提交结果
  */
 export async function executeCodeGeneration(
   designId: string,
@@ -192,7 +199,9 @@ export async function executeCodeGeneration(
 }
 
 /**
- * Save requirement document to localStorage
+ * 将需求文档内容保存到 localStorage。
+ * @param designId 设计稿标识
+ * @param content 需求文档内容
  */
 export function saveRequirementDoc(designId: string, content: string): void {
   const key = `fta-requirement-doc-${designId}`;
@@ -204,7 +213,9 @@ export function saveRequirementDoc(designId: string, content: string): void {
 }
 
 /**
- * Load requirement document from localStorage
+ * 从 localStorage 读取需求文档内容。
+ * @param designId 设计稿标识
+ * @returns 需求文档内容，未命中时返回 null
  */
 export function loadRequirementDoc(designId: string): string | null {
   const key = `fta-requirement-doc-${designId}`;

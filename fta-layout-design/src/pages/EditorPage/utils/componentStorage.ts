@@ -13,7 +13,11 @@ function getStorageKey(projectId: string = 'default'): string {
 }
 
 /**
- * Save component mappings to localStorage
+ * 将组件映射结果保存到 localStorage。
+ * @param confirmedMappings 已确认的组件映射列表
+ * @param unconfirmedMappings 待确认的组件映射列表
+ * @param projectId 项目标识，默认使用 `default`
+ * @param ignoredMappings 已忽略的组件映射列表
  */
 export function saveComponentMappings(
   confirmedMappings: ComponentMapping[],
@@ -37,7 +41,9 @@ export function saveComponentMappings(
 }
 
 /**
- * Load component mappings from localStorage
+ * 从 localStorage 读取组件映射结果。
+ * @param projectId 项目标识，默认使用 `default`
+ * @returns 组件映射数据对象，读取失败时返回 null
  */
 export function loadComponentMappings(projectId: string = 'default'): {
   confirmedMappings: ComponentMapping[];
@@ -71,7 +77,8 @@ export function loadComponentMappings(projectId: string = 'default'): {
 }
 
 /**
- * Clear component mappings from localStorage
+ * 清除指定项目在 localStorage 中的组件映射缓存。
+ * @param projectId 项目标识，默认使用 `default`
  */
 export function clearComponentMappings(projectId: string = 'default'): void {
   try {
@@ -82,7 +89,11 @@ export function clearComponentMappings(projectId: string = 'default'): void {
 }
 
 /**
- * Export component mappings as JSON file
+ * 将组件映射结果导出为 JSON 文件。
+ * @param confirmedMappings 已确认的组件映射列表
+ * @param unconfirmedMappings 待确认的组件映射列表
+ * @param filename 导出的文件名，默认 `component-mappings.json`
+ * @param ignoredMappings 已忽略的组件映射列表
  */
 export function exportMappingsToJSON(
   confirmedMappings: ComponentMapping[],
@@ -110,7 +121,9 @@ export function exportMappingsToJSON(
 }
 
 /**
- * Import component mappings from JSON file
+ * 从 JSON 文件中导入组件映射结果。
+ * @param file 用户选择的 JSON 文件
+ * @returns 解析出的组件映射数据 Promise
  */
 export function importMappingsFromJSON(file: File): Promise<{
   confirmedMappings: ComponentMapping[];
@@ -201,7 +214,9 @@ function safelyParseJSON(content: string): unknown {
 }
 
 /**
- * Save annotation state via API (with local cache backup)
+ * 将标注树状态保存到后端服务（本地缓存兜底）。
+ * @param designId 设计稿标识
+ * @param rootAnnotation 根标注节点
  */
 export async function saveAnnotationState(designId: string, rootAnnotation: AnnotationNode | null): Promise<void> {
   try {
@@ -224,7 +239,9 @@ export async function saveAnnotationState(designId: string, rootAnnotation: Anno
 }
 
 /**
- * Load annotation state from API (fallback to local cache)
+ * 从后端加载标注树状态，如失败则回退到本地缓存。
+ * @param designId 设计稿标识
+ * @returns 包含根标注节点的对象
  */
 export async function loadAnnotationState(designId: string): Promise<{ rootAnnotation: AnnotationNode | null }> {
   try {
@@ -251,7 +268,8 @@ export async function loadAnnotationState(designId: string): Promise<{ rootAnnot
 }
 
 /**
- * Clear annotation state from localStorage
+ * 清除指定设计稿在 localStorage 中的标注缓存。
+ * @param designId 设计稿标识
  */
 export function clearAnnotationState(designId: string): void {
   try {
