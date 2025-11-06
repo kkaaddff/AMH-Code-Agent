@@ -6,7 +6,7 @@ import html2canvas from 'html2canvas';
 import { useSnapshot } from 'valtio';
 
 import { calculateDSLNodeAbsolutePosition, componentDetectionStore } from '../contexts/ComponentDetectionContext';
-import type { AnnotationNode } from '../types/componentDetectionV2';
+import type { AnnotationNode } from '../types/componentDetection';
 import {
   MODAL_CONFIG,
   SCENE_LAYOUT,

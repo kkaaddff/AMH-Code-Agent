@@ -8,7 +8,7 @@ import {
   componentDetectionStore,
   findAnnotationByDSLNodeId,
 } from '../contexts/ComponentDetectionContext';
-import { AnnotationNode, LabelInstruction, NodeType } from '../types/componentDetectionV2';
+import { AnnotationNode, LabelInstruction, NodeType } from '../types/componentDetection';
 import {
   DetectionCanvasV2Props,
   drawBorder,

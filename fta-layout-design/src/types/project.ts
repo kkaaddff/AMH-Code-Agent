@@ -1,4 +1,4 @@
-import { AnnotationNode } from '@/pages/EditorPage/types/componentDetectionV2';
+import { AnnotationNode } from '@/pages/EditorPage/types/componentDetection';
 import { DSLData } from './dsl';
 
 export interface Project {

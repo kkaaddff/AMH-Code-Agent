@@ -36,10 +36,11 @@ export interface AnnotationNode {
   dslNodeId: string; // 对应的DSL节点ID
   dslNode: DSLNode | null; // DSL节点引用
   ftaComponent: string; // FTA组件类型
+  isRoot: boolean; // 是否为根节点
+  isMainPage: boolean; // 是否为主页面
+  isContainer: boolean; // 是否为容器组件
   name?: string; // 组件实例名称
   comment?: string; // 组件说明
-  isRoot: boolean; // 是否为主页面
-  isContainer: boolean; // 是否为容器组件
   children: AnnotationNode[]; // 子组件
   absoluteX: number;
   absoluteY: number;

@@ -1,4 +1,4 @@
-import type { AnnotationNode } from '@/pages/EditorPage/types/componentDetectionV2';
+import type { AnnotationNode } from '@/pages/EditorPage/types/componentDetection';
 
 const delay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms));
 

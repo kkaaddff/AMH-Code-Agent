@@ -5,7 +5,6 @@ import {
   EyeOutlined,
   FilterOutlined,
   PlusOutlined,
-  SearchOutlined,
   ShareAltOutlined,
   UserOutlined,
 } from '@ant-design/icons';

@@ -1,5 +1,5 @@
 import { DSLNode } from '@/types/dsl';
-import { AnnotationNode } from '../types/componentDetectionV2';
+import { AnnotationNode } from '../types/componentDetection';
 
 // 中间层级节点信息（既不是根节点，也不是叶子节点）
 export interface IntermediateNodeInfo {

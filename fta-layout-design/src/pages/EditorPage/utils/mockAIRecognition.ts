@@ -1,4 +1,4 @@
-import { LeafNodeInfo, AIRecognitionResult } from '../types/componentDetectionV2';
+import { LeafNodeInfo, AIRecognitionResult } from '../types/componentDetection';
 import ftaComponents from '@/demo/FTAComponents.json';
 
 // Common component mappings based on node types

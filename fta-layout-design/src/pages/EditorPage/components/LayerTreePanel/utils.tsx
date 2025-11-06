@@ -3,7 +3,7 @@ import { CompressOutlined, ExpandOutlined, FileOutlined, FolderOutlined, Setting
 import { Button, Space, Tooltip } from 'antd';
 import { DataNode } from 'antd/es/tree';
 import { componentDetectionActions } from '../../contexts/ComponentDetectionContext';
-import { AnnotationNode } from '../../types/componentDetectionV2';
+import { AnnotationNode } from '../../types/componentDetection';
 
 export const createRootAnnotationFromDSL = (dslData: DSLData, docId: string): AnnotationNode | null => {
   const rootNode = dslData?.dsl?.nodes?.[0];
@@ -17,8 +17,9 @@ export const createRootAnnotationFromDSL = (dslData: DSLData, docId: string): An
     dslNodeId: rootNode.id,
     dslNode: rootNode,
     ftaComponent: 'View',
-    name: 'Component',
+    name: rootNode.isMainPage ? 'Page' : 'Component',
     isRoot: true,
+    isMainPage: !!rootNode.isMainPage,
     isContainer: true,
     children: [],
     absoluteX: 0,
@@ -38,10 +39,16 @@ export const convertToTreeData = (
   const { isFirstLevel = false, isActiveDoc = false, documentName } = options;
   const isRoot = node.isRoot;
   const isContainer = node.isContainer;
+  const isMainPage = node.isMainPage;
 
   const title = (
     <Space size={4} style={{ width: '100%', justifyContent: 'space-between' }}>
       <Space size={4}>
+        {isMainPage ? (
+          <span role='img' aria-label='main-page-flag'>
+            🚩
+          </span>
+        ) : null}
         {isContainer ? (
           <FolderOutlined style={{ color: isRoot ? 'rgb(82, 196, 26)' : 'rgb(24, 144, 255)' }} />
         ) : (
@@ -54,7 +61,7 @@ export const convertToTreeData = (
             )} */}
         </span>
         {isRoot && (
-          <span style={{ fontSize: 12, color: 'rgb(82, 196, 26)' }}>{isActiveDoc ? '[主页面]' : '[组件]'}</span>
+          <span style={{ fontSize: 12, color: 'rgb(82, 196, 26)' }}>{isMainPage ? '[主页面]' : '[组件]'}</span>
         )}
       </Space>
       {isFirstLevel && isActiveDoc && (

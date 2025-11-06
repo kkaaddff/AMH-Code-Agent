@@ -88,6 +88,7 @@ export class AgentScheduler {
    * 创建新会话
    */
   createSession(uid: string, initialUserPrompt: string, dslJsonStr: string): SessionState {
+    console.log('dslJsonStr', dslJsonStr);
     const session: SessionState = {
       uid,
       messages: [

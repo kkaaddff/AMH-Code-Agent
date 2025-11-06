@@ -9,7 +9,7 @@ import {
   NodeType,
   ComponentCategory,
   getComponentCategory,
-} from '../types/componentDetectionV2';
+} from '../types/componentDetection';
 import { saveAnnotationState } from '../utils/componentStorage';
 import { App } from 'antd';
 
@@ -329,8 +329,9 @@ export const componentDetectionActions = {
         dslNodeId: rootNode.id,
         dslNode: rootNode,
         ftaComponent: 'View',
-        name: 'Page',
+        name: rootNode.isMainPage ? 'Page' : 'Component',
         isRoot: true,
+        isMainPage: !!rootNode.isMainPage,
         isContainer: true,
         children: [],
         absoluteX: 0,
@@ -488,6 +489,7 @@ export const componentDetectionActions = {
       name: additionalProps?.name,
       comment: additionalProps?.comment,
       isRoot: false,
+      isMainPage: false,
       isContainer: isContainerComponent(ftaComponent),
       children: hasAnnotatedChildren && isContainerLike ? detachedChildren : [],
       absoluteX: dslAbsolutePos.x,
@@ -1060,6 +1062,7 @@ export const componentDetectionActions = {
       name: undefined,
       comment,
       isRoot: false,
+      isMainPage: false,
       isContainer: isContainerComponent(ftaComponent),
       children,
       absoluteX,

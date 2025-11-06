@@ -30,7 +30,7 @@ import { commonUserPrompt } from './services/CodeGenerationLoop/CommonPrompt';
 import { AgentScheduler } from './services/CodeGenerationLoop/index.AgentScheduler.backup';
 import { generateUID } from './services/CodeGenerationLoop/utils';
 import './styles/EditorPageStyles.css';
-import { AnnotationNode } from './types/componentDetectionV2';
+import { AnnotationNode } from './types/componentDetection';
 import { loadAnnotationState } from './utils/componentStorage';
 import { flattenAnnotation, formatAnnotationSummary } from './utils/prompt';
 

@@ -3,7 +3,7 @@ import { App, Input, Modal, Radio, Spin, Typography } from 'antd';
 import html2canvas from 'html2canvas';
 
 import './AnnotationConfirmModal.css';
-import { AnnotationNode } from '../types/componentDetectionV2';
+import { AnnotationNode } from '../types/componentDetection';
 
 type ConflictChoice = 'left' | 'right' | 'both';
 

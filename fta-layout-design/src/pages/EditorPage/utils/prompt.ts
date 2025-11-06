@@ -1,4 +1,4 @@
-import { AnnotationNode } from '../types/componentDetectionV2';
+import { AnnotationNode } from '../types/componentDetection';
 
 interface AnnotationNodeSummary {
   id: string;
@@ -48,10 +48,7 @@ export function flattenAnnotation(root?: AnnotationNode): AnnotationNodeSummary[
     summaries.push({
       id: String(node.id ?? node.dslNodeId ?? `node-${summaries.length}`),
       name: typeof node.name === 'string' && node.name.length ? node.name : undefined,
-      component:
-        typeof node.ftaComponent === 'string' && node.ftaComponent.length
-          ? node.ftaComponent
-          : undefined,
+      component: typeof node.ftaComponent === 'string' && node.ftaComponent.length ? node.ftaComponent : undefined,
       isContainer: Boolean(node.isContainer),
       depth,
       childCount: children.length,

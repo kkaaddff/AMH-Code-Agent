@@ -11,6 +11,7 @@ export interface DSLStyles {
 export type DSLNodeType = 'FRAME' | 'INSTANCE' | 'TEXT' | 'PATH' | 'GROUP' | 'LAYER';
 
 export interface DSLBaseNode {
+  isMainPage?: boolean;
   type: DSLNodeType;
   id: string;
   name?: string;

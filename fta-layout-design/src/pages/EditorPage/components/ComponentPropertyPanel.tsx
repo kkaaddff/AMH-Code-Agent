@@ -28,7 +28,7 @@ import {
   findDSLNodeById,
 } from '../contexts/ComponentDetectionContext';
 import { editorPageStore } from '../contexts/EditorPageContext';
-import { NodeType } from '../types/componentDetectionV2';
+import { NodeType } from '../types/componentDetection';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;

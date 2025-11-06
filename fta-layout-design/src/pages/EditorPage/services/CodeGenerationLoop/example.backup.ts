@@ -1,5 +1,5 @@
 import { commonUserPrompt } from './CommonPrompt';
-import { AgentScheduler } from './index';
+import { AgentScheduler } from './index.AgentScheduler.backup';
 import { formatTodos, generateUID } from './utils';
 
 /**
@@ -12,7 +12,7 @@ export async function runMultipleSessionsExample(): Promise<void> {
 
   const sessions = prompts.map((prompt) => {
     const uid = generateUID();
-    scheduler.createSession(uid, prompt);
+    scheduler.createSession(uid, prompt, '');
     return uid;
   });
 
@@ -39,7 +39,7 @@ export async function runCodeGenerationExample(): Promise<void> {
   const uid = generateUID();
   const initialPrompt = commonUserPrompt.mainPrompt;
 
-  scheduler.createSession(uid, initialPrompt);
+  scheduler.createSession(uid, initialPrompt, '');
 
   console.log(`创建会话: ${uid}`);
   console.log('初始提示:', initialPrompt);

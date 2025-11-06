@@ -1,6 +1,6 @@
 import { apiServices } from '@/services';
 import type { AnnotationSnapshot, DocumentReference } from '@/types/project';
-import { ComponentMapping, AnnotationNode } from '../types/componentDetectionV2';
+import { ComponentMapping, AnnotationNode } from '../types/componentDetection';
 
 const STORAGE_KEY_PREFIX = 'fta-component-mappings';
 const ANNOTATION_STORAGE_KEY_PREFIX = 'fta-annotations';

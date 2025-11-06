@@ -23,7 +23,7 @@ import { TDocumentKeys } from '../../constants';
 import { componentDetectionActions, componentDetectionStore } from '../../contexts/ComponentDetectionContext';
 import { dslDataActions } from '../../contexts/DSLDataContext';
 import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
-import { AnnotationNode } from '../../types/componentDetectionV2';
+import { AnnotationNode } from '../../types/componentDetection';
 import {
   convertToTreeData,
   createRootAnnotationFromDSL,
@@ -42,13 +42,6 @@ interface LayerTreePanelProps {
 
 const showLine = { showLeafIcon: false };
 
-type DesignDocTreeStatus = 'pending' | 'loading' | 'ready' | 'error';
-
-interface DesignDocTreeState {
-  annotation: AnnotationNode | null;
-  status: DesignDocTreeStatus;
-}
-
 const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRefreshPage, onSave, onGenerateCode }) => {
   const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
   const { pageId, projectId } = useSnapshot(editorPageStore);
@@ -58,26 +51,16 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
   const [addDocModalVisible, setAddDocModalVisible] = useState(false);
   const [addDocType, setAddDocType] = useState<keyof typeof TDocumentKeys>('design');
   const [addDocForm] = Form.useForm();
-  const [designDocStates, setDesignDocStates] = useState<Record<string, DesignDocTreeState>>({});
-  const [syncingDocIds, setSyncingDocIds] = useState<Record<string, boolean>>({});
+  const [syncingStatus, setSyncingStatus] = useState<boolean>(false);
 
   useEffect(() => {
     const designDocs = currentPage?.designDocuments ?? [];
 
     if (designDocs.length === 0) {
-      setDesignDocStates({});
       return;
     }
 
     let cancelled = false;
-
-    setDesignDocStates((prev) => {
-      const next: Record<string, DesignDocTreeState> = {};
-      designDocs.forEach((doc) => {
-        next[doc.id] = prev[doc.id] ?? { annotation: null, status: 'loading' };
-      });
-      return next;
-    });
 
     const fetchDesignDocDSL = async (doc: DocumentReference) => {
       try {
@@ -91,28 +74,11 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
         if (cancelled) {
           return;
         }
-
-        setDesignDocStates((prev) => {
-          const next = { ...prev };
-          next[doc.id] = {
-            annotation: rootNode,
-            status: rootNode ? 'ready' : 'error',
-          };
-          return next;
-        });
       } catch (error) {
         console.error(`获取设计文档DSL失败: ${doc.id}`, error);
         if (cancelled) {
           return;
         }
-        setDesignDocStates((prev) => {
-          const next = { ...prev };
-          next[doc.id] = {
-            annotation: null,
-            status: 'pending',
-          };
-          return next;
-        });
       }
     };
 
@@ -131,17 +97,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
       return;
     }
 
-    setSyncingDocIds((prev) => ({ ...prev, [doc.id]: true }));
-
-    setDesignDocStates((prev) => {
-      const next = { ...prev };
-      const current = next[doc.id];
-      next[doc.id] = {
-        annotation: current?.annotation ?? null,
-        status: 'loading',
-      };
-      return next;
-    });
+    setSyncingStatus(true);
 
     try {
       await projectService.syncDocument(projectId, pageId, 'design', doc.id);
@@ -157,19 +113,8 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
         throw new Error('DSL数据中缺少根节点');
       }
 
-      setDesignDocStates((prev) => {
-        const next = { ...prev };
-        next[doc.id] = {
-          annotation: rootNode,
-          status: 'ready',
-        };
-        return next;
-      });
-
       message.success('设计文档同步成功');
-      if (onRefreshPage) {
-        onRefreshPage();
-      }
+      void onRefreshPage?.();
     } catch (error: any) {
       console.error(`设计文档同步失败: ${doc.id}`, error);
       const errorMessage = error?.message ?? '';
@@ -178,21 +123,8 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
       } else {
         message.error(errorMessage || '设计文档同步失败');
       }
-      setDesignDocStates((prev) => {
-        const next = { ...prev };
-        const current = next[doc.id];
-        next[doc.id] = {
-          annotation: current?.annotation ?? null,
-          status: 'pending',
-        };
-        return next;
-      });
     } finally {
-      setSyncingDocIds((prev) => {
-        const next = { ...prev };
-        delete next[doc.id];
-        return next;
-      });
+      setSyncingStatus(false);
     }
   };
 
@@ -205,12 +137,9 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
 
     return designDocs
       .map((doc) => {
-        const docState = designDocStates[doc.id];
         const isDesignSelected = selectedDocument?.type === 'design' && selectedDocument?.id === doc.id;
         const hasStoreAnnotation = isDesignSelected && rootAnnotation;
-        const resolvedAnnotation = hasStoreAnnotation
-          ? (rootAnnotation as AnnotationNode)
-          : docState?.annotation ?? null;
+        const resolvedAnnotation = hasStoreAnnotation ? (rootAnnotation as AnnotationNode) : null;
 
         if (resolvedAnnotation) {
           return convertToTreeData(resolvedAnnotation, {
@@ -220,11 +149,9 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
           });
         }
 
-        const statusText =
-          docState?.status === 'error' ? '加载失败' : docState?.status === 'pending' ? '待加载' : '加载中...';
-        const iconColor = docState?.status === 'error' ? 'rgb(245, 34, 45)' : 'rgb(24, 144, 255)';
-
-        const isPending = docState?.status === 'pending';
+        const statusText = doc?.status === 'failed' ? '加载失败' : doc?.status === 'pending' ? '待加载' : '加载中...';
+        const iconColor = doc?.status === 'failed' ? 'rgb(245, 34, 45)' : 'rgb(24, 144, 255)';
+        const isPending = doc?.status === 'pending';
 
         const title = (
           <Space size={4} style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -237,7 +164,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
                 type='link'
                 size='small'
                 icon={<ReloadOutlined />}
-                loading={Boolean(syncingDocIds[doc.id])}
+                loading={syncingStatus}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSyncDesignDocument(doc as DocumentReference);
@@ -261,7 +188,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
         };
       })
       .filter(Boolean) as DataNode[];
-  }, [currentPage?.designDocuments, designDocStates, selectedDocument, rootAnnotation, syncingDocIds]);
+  }, [currentPage?.designDocuments, selectedDocument]);
 
   // 处理节点选择
   const handleDesignSelect = (selectedKeys: React.Key[]) => {

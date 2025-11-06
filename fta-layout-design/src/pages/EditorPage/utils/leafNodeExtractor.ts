@@ -1,5 +1,5 @@
 import { DSLNode } from '@/types/dsl';
-import { LeafNodeInfo } from '../types/componentDetectionV2';
+import { LeafNodeInfo } from '../types/componentDetection';
 
 /**
  * Check if a node is a leaf node (no children or empty children)
@@ -61,13 +61,7 @@ export function extractLeafNodes(rootNode: DSLNode): LeafNodeInfo[] {
     } else {
       // Recursively process children
       node.children?.forEach((child) => {
-        traverse(
-          child,
-          position.x,
-          position.y,
-          [...parentPath, node.id],
-          node.id
-        );
+        traverse(child, position.x, position.y, [...parentPath, node.id], node.id);
       });
     }
   }
@@ -125,10 +119,6 @@ export function calculateBoundingBox(nodes: LeafNodeInfo[]): {
 /**
  * Find a leaf node by its ID
  */
-export function findLeafNodeById(
-  leafNodes: LeafNodeInfo[],
-  nodeId: string
-): LeafNodeInfo | undefined {
+export function findLeafNodeById(leafNodes: LeafNodeInfo[], nodeId: string): LeafNodeInfo | undefined {
   return leafNodes.find((node) => node.id === nodeId);
 }
-

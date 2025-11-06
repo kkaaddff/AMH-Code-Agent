@@ -5,7 +5,7 @@ import './styles/globals.css';
 import '@ant-design/v5-patch-for-react-19';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  // <React.StrictMode>
+  <App />
+  // </React.StrictMode>
 );

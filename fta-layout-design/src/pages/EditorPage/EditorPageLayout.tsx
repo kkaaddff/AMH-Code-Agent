@@ -15,7 +15,7 @@ import LayoutPreview from './components/LayoutPreview';
 import LayoutTree from './components/LayoutTree';
 import PropertyPanel from './components/PropertyPanel';
 import { dslDataStore } from './contexts/DSLDataContext';
-import { ComponentMapping } from './types/componentDetectionV2';
+import { ComponentMapping } from './types/componentDetection';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
