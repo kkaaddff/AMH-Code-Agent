@@ -148,17 +148,7 @@ const ProjectManagement: React.FC = () => {
       <div className='project-filters'>
         <Row gutter={16} align='middle'>
           <Col flex='auto'>
-            <Space.Compact style={{ width: '100%' }}>
-              <Search
-                placeholder='搜索项目名称或描述...'
-                allowClear
-                size='large'
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: '100%' }}
-              />
-            </Space.Compact>
+            <Search placeholder='搜索项目名称或描述...' allowClear onSearch={setSearchText} style={{ width: '100%' }} />
           </Col>
           <Col>
             <Select

@@ -514,7 +514,8 @@ export class ProjectService {
       id: documentId,
     });
     if (!document) {
-      throw new Error('文档不存在');
+      // throw new Error('文档不存在');
+      return null;
     }
 
     return document;

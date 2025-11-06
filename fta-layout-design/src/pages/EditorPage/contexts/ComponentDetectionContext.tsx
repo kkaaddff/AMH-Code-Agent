@@ -311,7 +311,7 @@ export const setModalInstance = (modal: ReturnType<typeof App.useApp>['modal']) 
 
 export const componentDetectionActions = {
   // 初始化
-  initializeFromDSL: (dslData: DSLData) => {
+  initializeFromDSL: (dslData: DSLData, docId: string) => {
     componentDetectionStore.isLoading = true;
 
     try {
@@ -323,8 +323,9 @@ export const componentDetectionActions = {
       componentDetectionStore.dslRootNode = rootNode;
 
       const now = Date.now();
+      const rootAnnotationId = `design-root-${docId}`;
       const rootAnnotation: AnnotationNode = {
-        id: 'root',
+        id: rootAnnotationId,
         dslNodeId: rootNode.id,
         dslNode: rootNode,
         ftaComponent: 'View',
@@ -346,7 +347,7 @@ export const componentDetectionActions = {
       componentDetectionStore.hoveredAnnotationId = null;
       componentDetectionStore.selectedDSLNodeId = null;
       componentDetectionStore.hoveredDSLNodeId = null;
-      componentDetectionStore.expandedKeys = ['root'];
+      componentDetectionStore.expandedKeys = [rootAnnotationId];
       componentDetectionStore.isLoading = false;
     } catch (error) {
       console.error('Failed to initialize from DSL:', error);
@@ -546,12 +547,12 @@ export const componentDetectionActions = {
   },
 
   // 删除标注
-  deleteAnnotation: (annotationId: string, options?: { deleteChildren?: boolean }) => {
-    if (!componentDetectionStore.rootAnnotation || annotationId === 'root') {
+  deleteAnnotation: (annotationId: string, options: { docId: string; deleteChildren?: boolean }) => {
+    const { docId, deleteChildren = false } = options;
+
+    if (!componentDetectionStore.rootAnnotation || annotationId === `design-root-${docId}`) {
       return;
     }
-
-    const { deleteChildren = false } = options ?? {};
 
     const findNodeWithParent = (
       node: AnnotationNode,
@@ -871,9 +872,9 @@ export const componentDetectionActions = {
   },
 
   // 加载标注
-  loadAnnotations: (rootAnnotation: AnnotationNode) => {
+  loadAnnotations: (rootAnnotation: AnnotationNode | null) => {
     try {
-      const flattenedAnnotations = flattenAnnotationTree(rootAnnotation);
+      const flattenedAnnotations = rootAnnotation ? flattenAnnotationTree(rootAnnotation) : [];
       componentDetectionStore.rootAnnotation = rootAnnotation;
       componentDetectionStore.annotations = flattenedAnnotations;
       componentDetectionStore.selectedAnnotationId = null;

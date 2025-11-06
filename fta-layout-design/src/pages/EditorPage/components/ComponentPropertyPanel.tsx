@@ -27,6 +27,7 @@ import {
   findAnnotationById,
   findDSLNodeById,
 } from '../contexts/ComponentDetectionContext';
+import { editorPageStore } from '../contexts/EditorPageContext';
 import { NodeType } from '../types/componentDetectionV2';
 
 const { Title, Text } = Typography;
@@ -78,6 +79,7 @@ const customFilterOption = (input: string, option: any) => {
 const ComponentPropertyPanelV2: React.FC = () => {
   const { message, modal } = App.useApp();
   const { selectedAnnotationId, selectedDSLNodeId, selectedNodeIds } = useSnapshot(componentDetectionStore);
+  const { selectedDocument } = useSnapshot(editorPageStore);
   const [form] = Form.useForm();
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedFTAComponent, setSelectedFTAComponent] = useState<string>('');
@@ -208,7 +210,10 @@ const ComponentPropertyPanelV2: React.FC = () => {
       okType: 'danger',
       cancelText: '取消',
       onOk: () => {
-        componentDetectionActions.deleteAnnotation(selectedAnnotation.id, { deleteChildren });
+        componentDetectionActions.deleteAnnotation(selectedAnnotation.id, {
+          docId: selectedDocument!.id,
+          deleteChildren,
+        });
         message.success('已删除标注');
       },
     });

@@ -5,29 +5,31 @@ import { api } from '@/utils/apiService';
 import { getDocumentStatusColor, getDocumentStatusText } from '@/utils/documentStatus';
 import {
   ApiOutlined,
-  CompressOutlined,
   DeleteOutlined,
   DownOutlined,
-  ExpandOutlined,
   FileImageOutlined,
-  FileOutlined,
   FileTextOutlined,
-  FolderOutlined,
   LinkOutlined,
   PlusOutlined,
   ReloadOutlined,
   SaveOutlined,
-  SettingOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { App, Button, Collapse, Form, Input, List, Modal, Space, Tag, Tooltip, Tree, Typography } from 'antd';
+import { App, Button, Collapse, Form, Input, List, Modal, Space, Tag, Tree, Typography } from 'antd';
 import type { DataNode } from 'antd/es/tree';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio';
-import { TDocumentKeys } from '../constants';
-import { componentDetectionActions, componentDetectionStore } from '../contexts/ComponentDetectionContext';
-import { editorPageActions, editorPageStore } from '../contexts/EditorPageContext';
-import { AnnotationNode } from '../types/componentDetectionV2';
+import { TDocumentKeys } from '../../constants';
+import { componentDetectionActions, componentDetectionStore } from '../../contexts/ComponentDetectionContext';
+import { dslDataActions } from '../../contexts/DSLDataContext';
+import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
+import { AnnotationNode } from '../../types/componentDetectionV2';
+import {
+  convertToTreeData,
+  createRootAnnotationFromDSL,
+  extractDesignIdFromTopLevelKey,
+  findTopLevelKey,
+} from './utils';
 
 const { Title, Text } = Typography;
 
@@ -46,107 +48,6 @@ interface DesignDocTreeState {
   annotation: AnnotationNode | null;
   status: DesignDocTreeStatus;
 }
-
-const createRootAnnotationFromDSL = (dslData: DSLData, docId: string): AnnotationNode | null => {
-  const rootNode = dslData?.dsl?.nodes?.[0];
-  if (!rootNode) {
-    return null;
-  }
-
-  const now = Date.now();
-  return {
-    id: `design-root-${docId}`,
-    dslNodeId: rootNode.id,
-    dslNode: rootNode,
-    ftaComponent: 'View',
-    name: 'Component',
-    isRoot: true,
-    isContainer: true,
-    children: [],
-    absoluteX: 0,
-    absoluteY: 0,
-    width: rootNode.layoutStyle?.width || 720,
-    height: rootNode.layoutStyle?.height || 1560,
-    createdAt: now,
-    updatedAt: now,
-  };
-};
-
-// 转换AnnotationNode为Tree DataNode
-const convertToTreeData = (
-  node: AnnotationNode,
-  options: { isFirstLevel?: boolean; isActiveDoc?: boolean; documentName?: string } = {}
-): DataNode => {
-  const { isFirstLevel = false, isActiveDoc = false, documentName } = options;
-  const isRoot = node.isRoot;
-  const isContainer = node.isContainer;
-
-  const title = (
-    <Space size={4} style={{ width: '100%', justifyContent: 'space-between' }}>
-      <Space size={4}>
-        {isContainer ? (
-          <FolderOutlined style={{ color: isRoot ? 'rgb(82, 196, 26)' : 'rgb(24, 144, 255)' }} />
-        ) : (
-          <FileOutlined style={{ color: 'rgb(140, 140, 140)' }} />
-        )}
-        <span style={{ fontWeight: isRoot ? 600 : 400 }}>
-          {node.name ? `${node.name} (${node.ftaComponent})` : node.ftaComponent}
-          {/* {isRoot && documentName && (
-            <span style={{ marginLeft: 8, fontSize: 12, color: 'rgba(0, 0, 0, 0.45)' }}>{documentName}</span>
-          )} */}
-        </span>
-        {isRoot && (
-          <span style={{ fontSize: 12, color: 'rgb(82, 196, 26)' }}>{isActiveDoc ? '[主页面]' : '[组件]'}</span>
-        )}
-      </Space>
-      {isFirstLevel && isActiveDoc && (
-        <Space size={4}>
-          <Tooltip title='展开全部' color='#eee'>
-            <Button
-              type='text'
-              size='small'
-              icon={<ExpandOutlined />}
-              onClick={(e) => {
-                e.stopPropagation();
-                componentDetectionActions.expandAll();
-              }}
-            />
-          </Tooltip>
-          <Tooltip title='收起全部' color='#eee'>
-            <Button
-              type='text'
-              size='small'
-              icon={<CompressOutlined />}
-              onClick={(e) => {
-                e.stopPropagation();
-                componentDetectionActions.collapseAll();
-              }}
-            />
-          </Tooltip>
-          <Tooltip title='设置' color='#eee'>
-            <Button
-              type='text'
-              size='small'
-              icon={<SettingOutlined />}
-              onClick={(e) => {
-                e.stopPropagation();
-                // TODO: 添加设置功能
-              }}
-            />
-          </Tooltip>
-        </Space>
-      )}
-    </Space>
-  );
-
-  return {
-    key: node.id,
-    title,
-    children: node.children.map((child) => convertToTreeData(child, { isActiveDoc })),
-    isLeaf: node.children.length === 0,
-    selectable: isActiveDoc,
-  };
-};
 
 const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRefreshPage, onSave, onGenerateCode }) => {
   const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
@@ -356,23 +257,42 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
           key: `design-doc-${doc.id}`,
           title,
           isLeaf: true,
-          selectable: false,
+          selectable: true,
         };
       })
       .filter(Boolean) as DataNode[];
   }, [currentPage?.designDocuments, designDocStates, selectedDocument, rootAnnotation, syncingDocIds]);
 
   // 处理节点选择
-  const handleSelect = (selectedKeys: React.Key[]) => {
-    if (selectedKeys.length > 0) {
-      componentDetectionActions.selectAnnotation(selectedKeys[0] as string, false);
-    } else {
+  const handleDesignSelect = (selectedKeys: React.Key[]) => {
+    if (selectedKeys.length === 0) {
       componentDetectionActions.selectAnnotation(null);
+      return;
     }
+
+    const nextSelectedKey = selectedKeys[0] as string;
+    const nextTopLevelKey = findTopLevelKey(designTreeData, nextSelectedKey);
+    const prevTopLevelKey = selectedDocument?.id ? findTopLevelKey(designTreeData, selectedDocument.id) : null;
+    if (nextTopLevelKey && nextTopLevelKey !== prevTopLevelKey) {
+      editorPageActions.setSelectedDocument({ type: 'design', id: nextTopLevelKey.replace('design-root-', '') });
+      const designId = extractDesignIdFromTopLevelKey(nextTopLevelKey);
+      if (designId) {
+        void (async () => {
+          try {
+            await dslDataActions.loadDesign(designId);
+          } finally {
+            componentDetectionActions.selectAnnotation(nextSelectedKey, false);
+          }
+        })();
+        return;
+      }
+    }
+
+    componentDetectionActions.selectAnnotation(nextSelectedKey, false);
   };
 
   // 处理展开/收起
-  const handleExpand = (expandedKeysValue: React.Key[]) => {
+  const handleDesignExpand = (expandedKeysValue: React.Key[]) => {
     componentDetectionActions.setExpandedKeys(expandedKeysValue as string[]);
   };
 
@@ -513,8 +433,8 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
             treeData={designTreeData}
             selectedKeys={selectedDocument?.type === 'design' && selectedAnnotationId ? [selectedAnnotationId] : []}
             expandedKeys={expandedKeys as string[]}
-            onSelect={handleSelect}
-            onExpand={handleExpand}
+            onSelect={handleDesignSelect}
+            onExpand={handleDesignExpand}
             switcherIcon={<DownOutlined />}
             showLine={showLine}
             showIcon
@@ -545,21 +465,18 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
           }}
         />
       ),
-      children: (
-        <>
-          {currentPage?.prdDocuments && currentPage.prdDocuments.length > 0 ? (
-            <List
-              size='small'
-              dataSource={currentPage.prdDocuments as DocumentReference[]}
-              renderItem={(doc) => renderDocumentItem(doc, 'prd')}
-            />
-          ) : (
-            <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
-              暂无PRD文档
-            </Text>
-          )}
-        </>
-      ),
+      children:
+        currentPage?.prdDocuments && currentPage.prdDocuments.length > 0 ? (
+          <List
+            size='small'
+            dataSource={currentPage.prdDocuments as DocumentReference[]}
+            renderItem={(doc) => renderDocumentItem(doc, 'prd')}
+          />
+        ) : (
+          <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+            暂无PRD文档
+          </Text>
+        ),
     },
     {
       key: 'openapi',
@@ -580,21 +497,18 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onRef
           }}
         />
       ),
-      children: (
-        <>
-          {currentPage?.openapiDocuments && currentPage.openapiDocuments.length > 0 ? (
-            <List
-              size='small'
-              dataSource={currentPage.openapiDocuments as DocumentReference[]}
-              renderItem={(doc) => renderDocumentItem(doc, 'openapi')}
-            />
-          ) : (
-            <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
-              暂无OpenAPI文档
-            </Text>
-          )}
-        </>
-      ),
+      children:
+        currentPage?.openapiDocuments && currentPage.openapiDocuments.length > 0 ? (
+          <List
+            size='small'
+            dataSource={currentPage.openapiDocuments as DocumentReference[]}
+            renderItem={(doc) => renderDocumentItem(doc, 'openapi')}
+          />
+        ) : (
+          <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+            暂无OpenAPI文档
+          </Text>
+        ),
     },
   ];
 

@@ -226,9 +226,7 @@ export async function saveAnnotationState(designId: string, rootAnnotation: Anno
 /**
  * Load annotation state from API (fallback to local cache)
  */
-export async function loadAnnotationState(designId: string): Promise<{
-  rootAnnotation: AnnotationNode | null;
-} | null> {
+export async function loadAnnotationState(designId: string): Promise<{ rootAnnotation: AnnotationNode | null }> {
   try {
     const documentContent = await apiServices.project.getDocumentContent({ documentId: designId });
     const snapshot = normalizeSnapshot(documentContent?.annotationData ?? documentContent);
@@ -249,7 +247,7 @@ export async function loadAnnotationState(designId: string): Promise<{
     };
   }
 
-  return null;
+  return { rootAnnotation: null };
 }
 
 /**

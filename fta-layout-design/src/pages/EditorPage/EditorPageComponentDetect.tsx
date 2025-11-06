@@ -69,6 +69,9 @@ const EditorPageContent: React.FC = () => {
     clearThoughtChain,
   } = codeGenerationActions;
 
+  // 使用 designId 获取 DSL 数据（仅在选中设计文档时）
+  const { data: dslData, loading: dslLoading, error: dslError } = useSnapshot(dslDataStore);
+
   const [scale, setScale] = useState(0.5);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -123,9 +126,6 @@ const EditorPageContent: React.FC = () => {
     }
   };
 
-  // 使用 designId 获取 DSL 数据（仅在选中设计文档时）
-  const { data: dslData, loading: dslLoading, error: dslError } = useSnapshot(dslDataStore);
-
   // 初始化 DSL 数据和加载已保存的标注信息
   useEffect(() => {
     if (!dslData || !selectedDocument?.id || selectedDocument?.type !== 'design') {
@@ -135,15 +135,13 @@ const EditorPageContent: React.FC = () => {
     const rootNode = (dslData.dsl.nodes?.[0] as DSLNode) || null;
     updateDslRootNode(rootNode);
 
-    initializeFromDSL(dslData as DSLData);
+    initializeFromDSL(dslData as DSLData, selectedDocument?.id);
 
     const loadSavedAnnotations = async () => {
       try {
         const savedState = await loadAnnotationState(selectedDocument?.id);
-        if (savedState && savedState.rootAnnotation) {
-          loadAnnotations(savedState.rootAnnotation);
-          message.success('已加载保存的标注信息');
-        }
+        loadAnnotations(savedState.rootAnnotation);
+        message.success('已加载保存的标注信息');
       } catch (error) {
         console.error('加载标注信息失败:', error);
       }
