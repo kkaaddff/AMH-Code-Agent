@@ -1,534 +1,233 @@
-# CLAUDE.md
+# CLAUDE.md — Operator Guide for Claude Code
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> Workspace: `/Users/admin/Documents/ai/vibe-coding/amh_code_agent`
+> Packages: `code-agent-backend/`, `fta-layout-design/`, `messages-replayer/`
 
-## 项目概述
+This document tells Claude Code exactly how to work inside this monorepo. Follow it before writing any code or running any task.
 
-这是一个企业级的设计稿到代码转换平台（FTA - MasterGo-to-App），包含两个核心项目：
+---
 
-1. **fta-layout-design** - React 18 + TypeScript 前端应用
-2. **code-agent-backend** - Midway.js + TypeScript 后端服务
+## 1. High-Level Overview
 
-平台提供从设计稿上传、需求分析、组件识别到代码生成的完整工作流，支持3D组件检视、智能组件识别、需求文档自动生成等高级功能。
+| Area | Purpose | Stack | Default Port |
+| --- | --- | --- | --- |
+| `code-agent-backend/` | Midway 3 (Egg.js) API that ingests MasterGo designs, versions DSL/annotations, streams requirement docs through a model gateway, manages Bull-driven code generation tasks, exposes project CRUD utilities, and powers the `/neo/send` agent SSE endpoint. | Node 20.19.5, Midway, MongoDB 5.13, Redis 4.28, Bull | 7001 |
+| `fta-layout-design/` | React + Vite UI with Ant Design & Valtio stores. Hosts dashboard/requirement/technical pages and the component-detection editor with 3D inspector, PRD/OpenAPI side panels, and code-generation drawer. | Node 20.19.5, React 19, AntD 5, Vite 5 | 5173 |
+| `messages-replayer/` | CLI that replays `messages.log` sessions exactly or re-sends them to any OpenAI-compatible endpoint. | Node 18+ | N/A |
 
-## 项目结构
+Generated artifacts (`dist/`, `logs/`, `run/`, `files-cache/`, `messages-replayer/output/`) stay out of git.
+
+---
+
+## 2. Repository Layout
 
 ```
 amh_code_agent/
-├── fta-layout-design/          # React 前端应用
+├── AGENTS.md (shared quick guide)
+├── CLAUDE.md (this file)
+├── README.md (product overview)
+├── code-agent-backend/
+│   ├── bootstrap.js / start.sh
 │   ├── src/
-│   │   ├── components/         # 核心组件
-│   │   ├── pages/             # 页面组件
-│   │   ├── contexts/          # Context 状态管理
-│   │   ├── types/             # TypeScript 类型定义
-│   │   ├── utils/             # 工具函数
-│   │   ├── hooks/             # 自定义 Hook
-│   │   ├── services/          # API 服务层
-│   │   ├── config/            # 配置文件
-│   │   └── demo/              # 示例数据
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── tsconfig.json
-├── code-agent-backend/         # Midway.js 后端服务
+│   │   ├── controller/        (design, code-agent, neovate)
+│   │   ├── service/
+│   │   │   ├── design/        (design docs, annotations, req docs, codegen)
+│   │   │   ├── code-agent/    (DSL utilities, project hub)
+│   │   │   ├── neovate-code/  (agent runtime)
+│   │   │   └── common/oss/
+│   │   ├── entity/, dto/, queue/, utils/, types/
+│   │   └── config/            (Midway + env wiring)
+│   └── test/ (Jest + @midwayjs/mock)
+├── fta-layout-design/
 │   ├── src/
-│   │   ├── controller/        # 控制器
-│   │   ├── service/           # 业务服务
-│   │   ├── entity/            # 数据实体
-│   │   ├── dto/               # 数据传输对象
-│   │   ├── middleware/        # 中间件
-│   │   └── config/            # 配置文件
-│   ├── test/                  # 测试文件
-│   ├── package.json
-│   └── bootstrap.js
-├── .cursorrules               # 开发规范和指导原则
-└── CLAUDE.md                  # 本文件
+│   │   ├── pages/             (Home, Requirement, Technical, Editor)
+│   │   ├── components/, contexts/, services/, utils/
+│   │   └── docs/              (function inventory, refactor notes)
+│   └── vite.config.ts, tailwind.config.js
+└── messages-replayer/
+    ├── src/ (parser/replayer/llmClient)
+    └── messages.log (input)
 ```
 
-## 开发环境命令
+---
 
-### 前端开发 (fta-layout-design)
+## 3. Backend (code-agent-backend)
 
+### 3.1 Prerequisites
+- Node `20.19.5` (clamped via `package.json` engines)
+- MongoDB 5.13+ with credentials configured in `src/config/config.default.ts`
+- Redis 4.28+ (cluster aware; `DesignDSLService` follows MOVED/ASK redirects)
+- MasterGo token & base URL for DSL pulls (`config.mastergo`)
+- Model gateway endpoint (`MODEL_ENDPOINT`, `MODEL_API_KEY`, etc.) for requirement document streaming and the `/neo` agent
+
+### 3.2 Common Commands
 ```bash
-# 进入前端目录
-cd fta-layout-design
-
-# 安装依赖
-npm install
-
-# 启动开发服务器（热重载）
-npm run dev
-
-# 构建生产版本
-npm run build
-
-# 预览生产构建
-npm run preview
-
-# 类型检查
-npx tsc --noEmit
-```
-
-### 后端开发 (code-agent-backend)
-
-```bash
-# 进入后端目录
 cd code-agent-backend
-
-# 安装依赖
 npm install
-
-# 启动开发服务器
-npm run dev
-
-# 构建项目
-npm run build
-
-# 启动生产服务器
-npm start
-
-# 构建并启动
-npm run start_build
-
-# 代码质量检查
-npm run lint
+npm run dev              # Midway dev server on 7001
+npm run build && npm start
+npm run lint             # mwts check
 npm run lint:fix
-
-# 代码格式化
 npm run prettier
-
-# 运行测试
-npm test
+npm run test
 npm run cov
 ```
-
-## 技术栈详解
-
-### 前端技术栈
-
-**核心框架：**
-- React 18.2.0 + TypeScript 5.5.3
-- Vite 5.4.0 (构建工具)
-- React Router DOM v7.9.1 (路由)
-- Ant Design 5.12.0 (UI组件库)
-
-**状态管理：**
-- Valtio 1.13.0 (跨模块代理状态)
-- React Context (组件级状态)
-- use-context-selector (性能优化)
-
-**核心功能库：**
-- @dagrejs/dagre (图形布局)
-- React Flow 11.11.4 (流程图)
-- Three.js 0.180.0 (3D渲染)
-- Lexical 0.35.0 (文本编辑)
-
-**开发工具：**
-- ESLint 9.8.0 (代码检查)
-- PostCSS 8.4.41 (CSS处理)
-
-### 后端技术栈
-
-**核心框架：**
-- Midway.js v3.11.15 (IoC容器框架)
-- TypeScript 4.9.4
-- Egg.js v2.37.0 (底层Web框架)
-
-**数据存储：**
-- MongoDB v5.13.0 (主数据库)
-- Mongoose + Typegoose (ODM)
-- Redis v4.28.5 (缓存)
-- 阿里云 OSS (文件存储)
-
-**任务队列：**
-- Bull v4.10.0 (任务队列)
-- @midwayjs/bull (队列集成)
-
-**测试和监控：**
-- Jest v29.1.2 (测试框架)
-- OpenTelemetry (链路追踪)
-
-## 核心功能模块
-
-### 前端页面功能
-
-#### 1. **HomePage** - 项目管理首页
-- 项目统计面板（项目数、组件数、团队数）
-- 快速操作入口（创建项目、上传组件、查看统计）
-- 项目列表和资产管理标签页
-
-#### 2. **RequirementPage** - 需求理解页面
-- 需求理解能力展示
-- 技术选型说明
-- 业务逻辑和交互流程分析
-
-#### 3. **TechnicalPage** - 技术架构页面
-- 系统架构组件详解
-- 技术栈展示和说明
-- 实现方案和最佳实践
-
-#### 4. **EditorPage** - 编辑器核心页面
-
-**EditorPageComponentDetectV2** - 组件识别编辑器：
-- 三栏布局：组件树、画布预览、属性面板
-- Three.js 3D组件检视功能
-- 智能组件识别和多选操作
-- 交互引导覆盖层
-- 需求文档自动生成
-
-**EditorPageLayout** - 布局编辑器：
-- DSL数据到组件树映射
-- 实时预览和编辑功能
-- 节点选择和悬停同步
-- 缩放和布局调整
-
-### 核心组件架构
-
-#### 1. **DSLElement** (`src/components/DSLElement.tsx`)
-- 支持6种DSL节点类型：FRAME、TEXT、PATH、LAYER、INSTANCE、GROUP
-- React.memo性能优化，自定义比较函数
-- 样式解析和实时渲染
-- 选择和悬停交互支持
-
-#### 2. **LayoutTree** (`src/components/LayoutTree.tsx`)
-- 可展开/收缩树形结构
-- 节点选择和悬停高亮
-- 动态节点宽度调整
-- 虚拟滚动支持
-
-#### 3. **LayoutPreview** (`src/components/LayoutPreview.tsx`)
-- DSL数据可视化预览
-- 缩放和交互功能
-- 与组件树实时同步
-
-#### 4. **Component3DInspectModal** - 3D检视组件
-- Three.js集成的3D可视化
-- 组件层级深度展示
-- 交互式3D操作
-
-### 后端API模块
-
-#### 1. **设计稿管理** (`/design`)
-- 创建、查询、更新设计稿文档
-- DSL数据存储和版本管理
-- 设计稿缓存机制
-
-#### 2. **需求文档生成** (`/design/:designId/requirement-docs`)
-- 基于设计稿生成需求规格文档
-- 支持Markdown、PDF等导出格式
-- 文档状态管理（draft/published/archived）
-
-#### 3. **组件标注** (`/design/:designId/annotations`)
-- 保存和获取组件标注信息
-- 版本控制和对比功能
-- 标注树结构存储
-
-#### 4. **代码生成任务** (`/design/:designId/code-generation`)
-- 异步代码生成任务提交
-- 任务状态跟踪
-- 结果文件打包下载
-
-#### 5. **项目管理** (`/code-agent/project`)
-- 项目和页面CRUD操作
-- 文档状态同步
-- 内容管理
-
-### 状态管理架构
-
-#### 前端Context层级
-
-1. **ProjectContext** - 项目级状态管理
-   - 项目列表和当前项目状态
-   - 页面管理和文档上传
-   - 设计稿同步和处理
-
-2. **SelectionContext** - 选择状态管理
-   - 选中和悬停节点ID管理
-   - 全局选择状态同步
-
-3. **EditContext** - 编辑状态管理
-   - 编辑模式（none、resize、move、draw）
-   - 新建框和节点操作
-   - 布局变化监听
-
-4. **ComponentDetectionContextV2** - 组件识别上下文
-   - 高级组件识别状态管理
-   - 多选支持和标注管理
-   - Valtio + use-context-selector优化
-
-#### 后端数据模型
-
-1. **DesignDocumentEntity** - 设计稿文档实体
-2. **DesignRequirementDocumentEntity** - 需求文档实体
-3. **DesignComponentAnnotationEntity** - 组件标注实体
-4. **DesignCodeGenerationTaskEntity** - 代码生成任务实体
-
-## API集成架构
-
-### 前后端API映射
-
-| 前端调用 | 后端端点 | 功能 |
-|---------|----------|------|
-| `api.project.list` | `GET /code-agent/project/list` | 获取项目列表 |
-| `api.project.create` | `POST /code-agent/project/create` | 创建项目 |
-| `api.project.page.create` | `POST /code-agent/project/page/create` | 创建页面 |
-| `api.project.document.sync` | `POST /code-agent/project/document/sync` | 同步文档 |
-
-### 认证和权限
-
-**Token传递：**
-- 支持 `FTAToken` 和 `SonicToken` 两种认证方式
-- 跨域配置支持认证传递
-- 用户身份识别：jobNum、jobId、id、x-operator-id、x-user-id
-
-**CORS配置：**
-```typescript
-config.cors = {
-  credentials: true,
-  allowHeaders: ['Content-Type', 'SonicToken', 'FTAToken', 'x-page-url', 'Yu1'],
-  origin: 动态来源控制
-}
-```
-
-## 开发规范
-
-### 代码风格
-
-**前端：**
-- TypeScript严格模式
-- React函数组件(.tsx)
-- Prettier格式化（2空格缩进，120字符行宽）
-- 组件命名：PascalCase
-- 变量/函数命名：camelCase
-- 优先使用路径别名
-
-**后端：**
-- TypeScript装饰器风格
-- MWTS（Midway TypeScript Style）规范
-- 控制器、服务、实体分层架构
-- DTO类型验证
-
-### 提交信息规范
-
-遵循Angular Commit格式，使用中文描述：
-
-```
-<type>(<scope>): <subject>
-
-<body>
-```
-
-**类型：**
-- `feat` - 新功能
-- `fix` - 修复bug
-- `docs` - 文档更新
-- `refactor` - 代码重构
-- `style` - 代码格式调整
-- `test` - 测试相关
-- `chore` - 构建/工具配置
-
-**示例：**
-```
-feat(组件检测): 新增3D检视功能与相关依赖
-
-- 新增 Component3DInspectModal 组件,提供 Three.js 3D层级可视化
-- 集成 html2canvas 用于组件纹理生成和Three.js材质映射
-- 在 ComponentDetectionContextV2 中添加 3D 检视状态管理
-```
-
-## 重要开发注意事项
-
-### 前端开发要点
-
-1. **消息API使用：** 必须使用 `App.useApp()` hook获取antd消息函数
-   ```typescript
-   // ✅ 正确
-   const { message } = App.useApp();
-   message.success('Success');
-
-   // ❌ 错误
-   import { message } from 'antd';
-   message.success('Success');
-   ```
-
-2. **性能优化：**
-   - DSLElement使用React.memo + 自定义比较函数
-   - 悬停事件50ms节流处理
-   - 样式计算使用useMemo缓存
-   - 事件处理函数使用useCallback缓存
-
-3. **Bundle优化：** 当前主包1.3MB+，考虑代码分割
-
-### 后端开发要点
-
-1. **环境要求：** Node.js 16.18
-2. **数据库：** MongoDB + Redis
-3. **配置管理：** 环境变量 + Lion配置中心
-4. **异步任务：** 使用Bull队列处理耗时操作
-
-### 测试策略
-
-**前端：** 当前未配置测试框架（建议Vitest + React Testing Library）
-
-**后端：**
-- Jest + ts-jest测试框架
-- @midwayjs/mock集成测试支持
-- 覆盖率报告：`npm run cov`
-
-## 部署和运维
-
-### 环境配置
-
-**开发环境：**
-- 前端：Vite开发服务器（HMR）
-- 后端：本地开发服务器（端口7001）
-- 数据库：本地MongoDB + Redis
-
-**生产环境：**
-- 前端：静态文件部署（CDN/Nginx）
-- 后端：Node.js集群部署
-- 数据库：MongoDB集群 + Redis集群
-- 文件存储：阿里云OSS
-
-### 监控和日志
-
-- **日志管理：** 统一日志格式，分级记录
-- **链路追踪：** OpenTelemetry + Jaeger
-- **性能监控：** 响应时间、错误率、吞吐量
-
-## 特色技术亮点
-
-### 1. **3D组件检视**
-- Three.js集成的交互式3D可视化
-- 组件层级深度关系展示
-- 材质和纹理实时渲染
-
-### 2. **智能组件识别**
-- AI驱动的组件边界识别
-- 置信度评估和人工确认
-- 多选和批量操作支持
-
-### 3. **需求文档自动生成**
-- 设计稿到PRD的智能转换
-- 模板化文档结构
-- 版本控制和变更追踪
-
-### 4. **实时协作标注**
-- 多人实时标注支持
-- 标注版本管理
-- 冲突检测和合并
-
-### 5. **异步任务处理**
-- Bull队列系统
-- 任务状态实时跟踪
-- 失败重试和错误恢复
-
-## 性能优化策略
-
-### 前端优化
-
-1. **组件级优化：**
-   - React.memo + 自定义比较函数
-   - useMemo缓存计算结果
-   - useCallback缓存事件处理
-
-2. **渲染优化：**
-   - 虚拟滚动大列表
-   - 条件渲染和懒加载
-   - 批量状态更新
-
-3. **数据管理优化：**
-   - 增量更新DSL数据
-   - Valtio状态管理优化
-   - 资源按需加载
-
-### 后端优化
-
-1. **缓存策略：**
-   - Redis多层缓存
-   - 缓存键版本控制
-   - TTL自动过期管理
-
-2. **数据库优化：**
-   - 索引优化
-   - 查询性能调优
-   - 连接池管理
-
-3. **任务优化：**
-   - 异步队列处理
-   - 任务优先级管理
-   - 失败重试机制
-
-## 故障排查指南
-
-### 常见问题
-
-1. **前端构建失败**
-   - 检查TypeScript类型错误
-   - 确认依赖版本兼容性
-   - 清理node_modules重新安装
-
-2. **后端启动失败**
-   - 检查Node.js版本（需16.18）
-   - 确认MongoDB和Redis连接
-   - 检查环境变量配置
-
-3. **API调用失败**
-   - 检查CORS配置
-   - 确认认证Token传递
-   - 查看后端日志错误信息
-
-4. **组件渲染异常**
-   - 检查DSL数据格式
-   - 确认Context状态正确
-   - 查看控制台错误信息
-
-### 调试技巧
-
-1. **前端调试：**
-   - React DevTools组件状态检查
-   - Redux DevTools状态追踪
-   - Network面板API调用监控
-
-2. **后端调试：**
-   - Midway调试模式启动
-   - MongoDB查询日志分析
-   - Redis缓存状态检查
-
-## 快速开始指南
-
-### 1. 环境准备
+Use `./start.sh <port>` for production-style boots.
+
+### 3.3 Domain Services & Flows
+
+| Service | Highlights |
+| --- | --- |
+| `DesignDocumentService` | Creates versions from MasterGo URLs, stores DSL JSON + digest, caches serialized DSL in Redis (`design:dsl:<id>`), handles revision conflicts, and exposes DSL retrieval per revision. |
+| `DesignComponentAnnotationService` | Manages tree-shaped annotations with monotonic versions, caches them via Redis (`design:annotations:*`), and computes diffs between versions. |
+| `DesignRequirementDocumentService` + `RequirementSpecModelService` | Streams Markdown via SSE by invoking `ModelGatewayService`; falls back to buffered generation and can export `.md` into `files-cache/design/requirement-docs/<docId>.md`. |
+| `DesignCodeGenerationTaskService` | Creates Bull tasks, tracks logs/progress, retries, and persists ZIP metadata. Paired with `src/queue/design/code-generation.processor.ts` which currently produces a README + optional requirement doc and writes `/files-cache/design/codegen/<taskId>.zip`. |
+| `DesignDSLService` | Reads `DesignDSL.json`, converts PATH nodes to PNG-backed LAYER nodes with `sharp`, caches assets in Redis + Mongo, and exposes Redis helper endpoints. |
+| `ProjectService` | CRUD projects/pages/document references, syncs MasterGo DSLs, updates reference status, and stores doc content. Exposed under `/code-agent/project/*`. |
+| `NeovateController` + `service/neovate-code/*` | SSE agent endpoint `/neo/send` that spins up `AgentContext`, streams `text_delta`, `todo_update`, `iteration_start/end`, and cleans contexts on completion. |
+
+### 3.4 Paths & Storage
+- `files-cache/design/requirement-docs/` – exported Markdown docs
+- `files-cache/design/codegen/` – zipped code-generation artifacts
+- `/filesCache/<key>` – static serving URL Midway exposes for cached assets
+
+### 3.5 Testing Notes
+- Tests live under `test/` and rely on `@midwayjs/mock`
+- Use `npm run cov` for coverage (mandated before merge)
+- Provide manual verification notes for flows without automated coverage
+
+### 3.6 Coding Conventions
+- `mwts` formatting: 2 spaces, single quotes, no dangling semicolons
+- Decorators each on their own line, exported class names match file purpose
+- Use `@Provide()`, `@Inject()`, `@InjectEntityModel()`, `@InjectQueue()` consistently
+- Never commit secrets; rely on env variables or Lion config center values
+
+---
+
+## 4. Frontend (fta-layout-design)
+
+### 4.1 Stack & Conventions
+- Node `20.19.5`
+- React 19, Vite 5, TypeScript 5.5, Ant Design 5 (compact theme)
+- Tailwind only via `@tailwindcss/vite` (no Tailwind configs in components yet)
+- Component/style rules: 2-space indentation, PascalCase components/contexts, camelCase hooks/utilities, constants in `UPPER_SNAKE_CASE`
+- State orchestration via Valtio stores (Project, EditorPage, DesignDetection, DSLData, CodeGeneration)
+- Respect path aliases declared in `vite.config.ts`
+
+### 4.2 Commands
 ```bash
-# 确保Node.js版本
-node --version  # 前端推荐18+，后端需16.18
-
-# 确保数据库服务运行
-# MongoDB: 10.13.67.90:27017 (开发环境)
-# Redis: 本地Redis服务
-```
-
-### 2. 启动开发环境
-```bash
-# 启动后端服务
-cd code-agent-backend
-npm install
-npm run dev
-
-# 启动前端服务（新终端）
 cd fta-layout-design
 npm install
 npm run dev
+npm run build
+npm run preview
 ```
+(No automated tests today; add Vitest + RTL when modifying core logic and document manual checks.)
 
-### 3. 访问应用
-- 前端应用：http://localhost:5173
-- 后端API：http://localhost:7001
-- API文档：http://localhost:7001/swagger-ui/index.html (开发环境)
+### 4.3 Application Structure
+- `src/App.tsx` uses ConfigProvider + React Router to render config-based routes (`src/config/routes.tsx`)
+- Pages
+  - `HomePage/` – dashboard with ProjectManagement (CRUD via `useProject`) and AssetManagement placeholder
+  - `RequirementPage.tsx` & `TechnicalPage.tsx` – marketing/overview content
+  - `EditorPage/EditorPageComponentDetect.tsx` – orchestrates detection canvas, layer tree, annotation save, DSL visibility, PRD/OpenAPI editors, 3D inspector, and the code-generation drawer that talks to `CodeGenerationLoop/AgentScheduler`
+- Contexts & Stores
+  - `ProjectContext` – wraps API calls (`apiServices.project`) and exposes `loadProjects`, `createProject`, etc.
+  - `EditorPageContext` – selected project/page/document state
+  - `DesignDetectionContext` – DSL/annotation state, selection, persistence
+  - `DSLDataContext` – node visibility toggles
+  - `CodeGenerationContext` – UI state for drawer, thought chains, todo updates, SSE streaming hooks
+- Services (`src/services/*.ts`)
+  - `projectService` / `requirementService` / `componentService` etc. use `apiService` and optional mock providers controlled by `VITE_ENABLE_MOCK`
+- Utilities
+  - `src/utils/apiService.ts` centralizes fetch logic, timeouts, and error handling; configure `VITE_API_BASE_URL` & `VITE_REQUEST_TIMEOUT`
+  - `src/pages/EditorPage/services/CodeGenerationLoop` contains AgentScheduler + prompts + tool definitions mirroring backend `/neo` behaviour
 
-### 4. 验证功能
-1. 访问首页，查看项目统计
-2. 创建新项目并上传设计稿
-3. 进入编辑器，体验组件识别
-4. 使用3D检视功能
-5. 生成需求文档
+### 4.4 Manual Verification Expectations
+Whenever you touch UI logic:
+1. Document the route(s) exercised (`/`, `/editor`, `/requirements`, `/technical`)
+2. Mention which APIs were mocked or hit live
+3. Record key flows (e.g., create/delete project, sync document, start code generation) and any regressions spotted
 
-这个平台展现了现代全栈开发的最佳实践，集成了React、TypeScript、Three.js、Midway.js等先进技术，提供了完整的设计稿到代码转换解决方案。
+---
+
+## 5. Messages Replayer CLI
+
+- Location: `messages-replayer/`
+- Purpose: replay `messages.log` verbatim or forward each recorded request to a live endpoint (OpenAI-compatible)
+- Commands:
+  ```bash
+  cd messages-replayer
+  npm install
+  npm run parse               # summary only
+  npm run replay              # reproduce log exactly
+  npm run replay:live         # send to live endpoint (requires env below)
+  ```
+- Environment options: `MODEL_ENDPOINT`, `MODEL_API_KEY`, `MODEL_NAME`, `MODEL_TEMPERATURE`, `MODEL_TIMEOUT`, plus CLI flags (`--api-url`, `--api-key`, …)
+- Outputs stored in `messages-replayer/output/`
+
+---
+
+## 6. Workflow Expectations for Claude Code
+
+1. **Read AGENTS.md first** for a speedy reminder of conventions; this CLAUDE.md is the deep dive.
+2. **Stay in package directories** (`code-agent-backend`, `fta-layout-design`, `messages-replayer`) when running commands. Always set `workdir` on shell calls.
+3. **Follow the plan tool rules** (no single-step plans, update statuses as you progress).
+4. **Use `rg`/`rg --files`** for searches. Prefer `npm` scripts over raw binaries (e.g., run `npm run lint` instead of `mwts check`).
+5. **Never undo user changes** you didn't author (dirty worktree awareness). No destructive git commands like `reset --hard`.
+6. **Add concise comments only when necessary** (e.g., complex logic). Default to clean TypeScript/JavaScript.
+7. **Testing**: run relevant `npm run test` / `npm run cov` / manual steps when feasible. If you skip due to time or environment, state the reason and suggest follow-up.
+8. **Environment variables**: document any new required keys in README/CLAUDE/AGENTS comments instead of hardcoding them.
+9. **Before submitting**: summarize changes, mention tests executed (or not), and highlight next steps (e.g., “run `npm run cov` before merge”).
+
+---
+
+## 7. Quick Reference Tables
+
+### 7.1 Key Scripts
+
+| Location | Script | Description |
+| --- | --- | --- |
+| Backend | `npm run dev` | Midway dev server (ts-node, port 7001) |
+| Backend | `npm run build` | Compiles to `dist/` |
+| Backend | `npm run start` | Runs compiled output via `bootstrap.js` |
+| Backend | `npm run lint` / `lint:fix` | mwts linting |
+| Backend | `npm run prettier` | Repo-wide formatting |
+| Backend | `npm run test` / `npm run cov` | Jest/Midway tests & coverage |
+| Frontend | `npm run dev` | Vite dev server (5173) |
+| Frontend | `npm run build` | Production bundle |
+| Frontend | `npm run preview` | Preview production build |
+| CLI | `npm run replay` | Reproduce log verbatim |
+| CLI | `npm run replay:live` | Replay against live endpoint |
+
+### 7.2 Important Paths
+
+| Path | Use |
+| --- | --- |
+| `code-agent-backend/src/controller/design/` | REST endpoints for design docs, annotations, requirement docs, code-generation tasks |
+| `code-agent-backend/src/service/design/` | Core business logic for design domain |
+| `code-agent-backend/src/service/code-agent/design-dsl.ts` | DSL parsing, Redis helpers, PATH→PNG conversion |
+| `code-agent-backend/src/service/neovate-code/` | SSE agent runtime implementation |
+| `fta-layout-design/src/pages/EditorPage/` | Component detection UI and contexts |
+| `fta-layout-design/src/contexts/ProjectContext.tsx` | Frontend state for projects/pages/docs |
+| `messages-replayer/src/parser.js` | Log parsing logic |
+
+---
+
+## 8. Troubleshooting Checklist
+
+- **Backend fails to boot**: verify Node version (must satisfy `20.19.5`), ensure Mongo/Redis endpoints reachable, and populate `MODEL_*` envs if requirement generation or `/neo` endpoint is hit.
+- **MasterGo DSL import issues**: check `mastergo.baseUrl` & `token` in config, and confirm the design link resolves to `fileId` + `layerId` via `MasterGoService.extractIdsFromUrl`.
+- **Bull queue not processing**: confirm Redis connection, ensure `files-cache` directory exists (Midway processor writes ZIPs there), and inspect `DesignCodeGenerationTaskService` logs.
+- **Frontend hitting 4xx/5xx**: confirm `VITE_API_BASE_URL` in `.env` matches backend port, and whether `VITE_ENABLE_MOCK` needs toggling for offline work.
+- **messages-replayer live mode fails**: double-check `MODEL_ENDPOINT`, `MODEL_API_KEY`, `MODEL_TIMEOUT`, and ensure endpoint speaks OpenAI-compatible JSON.
+
+---
+
+## 9. Contribution & Release Notes
+
+- Follow repo commit practices (short imperative subjects, often Chinese, <72 chars). Keep backend/frontend changes in separate commits when possible.
+- Document manual verification for UI work and `npm run cov` results for backend work.
+- Clean up `files-cache/` and `run/*.json` before pushing branches (avoid leaking DSL or credential traces).
+- When decorators or entity definitions change, regenerate Midway typings with `npx midway-bin dev --ts` if needed.
+
+Happy shipping!
