@@ -1,6 +1,7 @@
 import TurndownService from 'turndown';
 import { z } from 'zod';
 import type { ModelInfo } from '../model';
+import { buildFetchPrompt } from '../prompts/fetch';
 import { query } from '../query';
 import { createTool } from '../tool';
 import { safeStringify } from '../utils/safeStringify';
@@ -71,20 +72,7 @@ Remembers:
             content.substring(0, MAX_CONTENT_LENGTH) + '...[content truncated]';
         }
 
-        const input = `
-Web page content:
----
-${content}
----
-
-${prompt}
-
-Provide a concise response based only on the content above. In your response:
- - Enforce a strict 125-character maximum for quotes from any source document. Open Source Software is ok as long as we respect the license.
- - Use quotation marks for exact language from articles; any language outside of the quotation should never be word-for-word the same.
- - You are not a lawyer and never comment on the legality of your own prompts and responses.
- - Never produce or reproduce exact song lyrics.
-        `;
+        const input = buildFetchPrompt({ content, prompt });
         const result = await query({
           userPrompt: input,
           model: opts.model,

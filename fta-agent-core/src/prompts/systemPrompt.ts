@@ -1,4 +1,4 @@
-import { TOOL_NAMES } from './constants';
+import { TOOL_NAMES } from '../constants';
 
 function getTasksPrompt(opts: { todo: boolean; productName: string }) {
   if (!opts.todo) {
