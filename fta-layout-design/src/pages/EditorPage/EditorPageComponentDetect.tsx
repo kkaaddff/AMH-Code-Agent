@@ -23,7 +23,7 @@ import OpenAPIUrlPanel from './components/OpenAPIUrlPanel';
 import PRDEditorPanel from './components/PRDEditorPanel';
 import { TDocumentKeys } from './constants';
 import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGenerationContext';
-import { componentDetectionActions, componentDetectionStore } from './contexts/ComponentDetectionContext';
+import { designDetectionActions, designDetectionStore } from './contexts/DesignDetectionContext';
 import { dslDataActions, dslDataStore } from './contexts/DSLDataContext';
 import { editorPageActions, editorPageStore } from './contexts/EditorPageContext';
 import { commonUserPrompt } from './services/CodeGenerationLoop/CommonPrompt';
@@ -31,7 +31,6 @@ import { AgentScheduler } from './services/CodeGenerationLoop/index.AgentSchedul
 import { generateUID } from './services/CodeGenerationLoop/utils';
 import './styles/EditorPageStyles.css';
 import { AnnotationNode } from './types/componentDetection';
-import { loadAnnotationState } from './utils/componentStorage';
 import { flattenAnnotation, formatAnnotationSummary } from './utils/prompt';
 
 // import { SSEScheduler } from './services/CodeGenerationLoop/SSEScheduler';
@@ -51,9 +50,8 @@ const EditorPageContent: React.FC = () => {
   const editorPageStoreSnapshot = useSnapshot(editorPageStore);
   const { setPageId, setProjectId, setCurrentPage, setSelectedDocument } = editorPageActions;
 
-  const { initializeFromDSL, toggleShowAllBorders, saveAnnotations, loadAnnotations, updateDslRootNode } =
-    componentDetectionActions;
-  const componentDetectionStoreSnapshot = useSnapshot(componentDetectionStore);
+  const { toggleShowAllBorders, saveAnnotations, setActiveDesignDocument } = designDetectionActions;
+  const componentDetectionStoreSnapshot = useSnapshot(designDetectionStore);
 
   const codeGenerationStoreSnapshot = useSnapshot(codeGenerationStore);
   const {
@@ -114,30 +112,13 @@ const EditorPageContent: React.FC = () => {
   }, []);
 
   // 初始化 DSL 数据和加载已保存的标注信息
-  useEffect(() => {
-    const { selectedDocument } = editorPageStoreSnapshot;
-    const { data: dslData } = dslDataStoreSnapshot;
+  const selectedDocument = editorPageStoreSnapshot.selectedDocument;
 
-    if (!dslData || !selectedDocument?.id || selectedDocument?.type !== 'design') {
+  useEffect(() => {
+    if (!selectedDocument || selectedDocument.type !== 'design' || !selectedDocument.id) {
       return;
     }
-
-    const rootNode = (dslData.dsl.nodes?.[0] as DSLNode) || null;
-    updateDslRootNode(rootNode);
-
-    initializeFromDSL(dslData as DSLData, selectedDocument.id);
-
-    const loadSavedAnnotations = async () => {
-      try {
-        const savedState = await loadAnnotationState(selectedDocument.id);
-        loadAnnotations(savedState.rootAnnotation);
-        message.success('已加载保存的标注信息');
-      } catch (error) {
-        console.error('加载标注信息失败:', error);
-      }
-    };
-
-    loadSavedAnnotations();
+    setActiveDesignDocument();
   }, []);
 
   useEffect(() => {
@@ -436,16 +417,6 @@ const EditorPageContent: React.FC = () => {
     setSelectedDocument({ type: 'openapi', id });
   };
 
-  // 如果页面数据还在加载中
-  if (pageLoading) {
-    return (
-      <div className='editor-page-loading-container'>
-        <Spin size='large' />
-        <div style={{ marginTop: 16, color: '#999', fontSize: 14 }}>加载页面数据...</div>
-      </div>
-    );
-  }
-
   // 如果页面数据加载失败
   if (pageError) {
     return (
@@ -455,112 +426,135 @@ const EditorPageContent: React.FC = () => {
     );
   }
 
-  // 如果 DSL 数据还在加载中（仅在选中设计文档时检查）
-  if (editorPageStoreSnapshot.selectedDocument?.type === 'design' && dslDataStoreSnapshot.loading) {
-    return (
-      <div className='editor-page-loading-container'>
-        <Spin size='large' />
-        <div style={{ marginTop: 16, color: '#999', fontSize: 14 }}>加载 DSL 数据...</div>
-      </div>
-    );
-  }
-
-  // 如果选中设计文档时 DSL 数据加载失败
-  if (editorPageStoreSnapshot.selectedDocument?.type === 'design' && dslDataStoreSnapshot.error) {
-    return (
-      <div className='editor-page-error-container'>
-        <Typography.Text type='danger'>加载 DSL 数据失败：{dslDataStoreSnapshot.error.message}</Typography.Text>
-      </div>
-    );
-  }
-
-  // 如果选中设计文档但没有 DSL 数据
-  if (editorPageStoreSnapshot.selectedDocument?.type === 'design' && !dslDataStoreSnapshot.data) {
-    return (
-      <div className='editor-page-error-container'>
-        <Typography.Text type='secondary'>未找到 DSL 数据</Typography.Text>
-      </div>
-    );
-  }
-
-  // 如果选中设计文档且组件识别上下文还在加载中
-  if (editorPageStoreSnapshot.selectedDocument?.type === 'design' && componentDetectionStoreSnapshot.isLoading) {
-    return (
-      <div className='editor-page-loading-container'>
-        <Spin size='large' />
-        <div style={{ marginTop: 16, color: '#999', fontSize: 14 }}>初始化中...</div>
-      </div>
-    );
-  }
-
   return (
     <>
-      <Layout className='editor-page-main-layout'>
-        {/* 左侧面板：文档管理 */}
-        <Sider
-          width={350}
-          theme='light'
-          collapsible
-          collapsed={leftCollapsed}
-          onCollapse={setLeftCollapsed}
-          collapsedWidth={0}
-          trigger={null}
-          className='editor-page-sider'>
-          <LayerTreePanel
-            onDeleteDocument={handleDeleteDocument}
-            onSave={handleSave}
-            onGenerateCode={handleGenerateCodeV2}
-          />
-        </Sider>
+      <Spin spinning={pageLoading} size='large' tip='加载页面数据...'>
+        <Layout className='editor-page-main-layout'>
+          {/* 左侧面板：文档管理 */}
+          <Sider
+            width={350}
+            theme='light'
+            collapsible
+            collapsed={leftCollapsed}
+            onCollapse={setLeftCollapsed}
+            collapsedWidth={0}
+            trigger={null}
+            className='editor-page-sider'>
+            <LayerTreePanel
+              onDeleteDocument={handleDeleteDocument}
+              onSave={handleSave}
+              onGenerateCode={handleGenerateCodeV2}
+            />
+          </Sider>
 
-        {/* 中间和右侧内容：根据文档类型切换 */}
-        {editorPageStoreSnapshot.selectedDocument?.type === 'design' && dslDataStoreSnapshot.data && (
-          <>
-            <Layout>
-              <Content className='editor-page-content'>
-                <div className='editor-page-header-toolbar'>
-                  <Title level={5} className='editor-page-title'>
-                    组件标注编辑器
-                  </Title>
-                  <Space>
-                    <Button
-                      size='small'
-                      type={componentDetectionStoreSnapshot.showAllBorders ? 'primary' : 'default'}
-                      icon={componentDetectionStoreSnapshot.showAllBorders ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                      onClick={toggleShowAllBorders}
-                      className='editor-page-button'>
-                      框线
-                    </Button>
-                    <Button
-                      type={is3DModalOpen ? 'primary' : 'default'}
-                      size='small'
-                      icon={<AppstoreOutlined />}
-                      onClick={() => setIs3DModalOpen(true)}
-                      className='editor-page-button'>
-                      3D 检视
-                    </Button>
-                    <Button
-                      type={isGuideOpen ? 'primary' : 'default'}
-                      size='small'
-                      icon={<QuestionCircleOutlined />}
-                      onClick={() => setIsGuideOpen(true)}
-                      className='editor-page-button'>
-                      交互引导
-                    </Button>
-                    <Dropdown
-                      menu={{
-                        items: SCALE_OPTIONS,
-                        onClick: ({ key }) => handleScaleChange(parseFloat(key)),
-                      }}
-                      trigger={['click']}>
-                      <a onClick={(e) => e.preventDefault()}>
-                        {Math.round(scale * 100)}% <DownOutlined />
-                      </a>
-                    </Dropdown>
-                  </Space>
+          {/* 中间和右侧内容：根据文档类型切换 */}
+          {editorPageStoreSnapshot.selectedDocument?.type === 'design' && dslDataStoreSnapshot.data && (
+            <>
+              <Layout>
+                <Content className='editor-page-content'>
+                  <div className='editor-page-header-toolbar'>
+                    <Title level={5} className='editor-page-title'>
+                      组件标注编辑器
+                    </Title>
+                    <Space>
+                      <Button
+                        size='small'
+                        type={componentDetectionStoreSnapshot.showAllBorders ? 'primary' : 'default'}
+                        icon={
+                          componentDetectionStoreSnapshot.showAllBorders ? <EyeOutlined /> : <EyeInvisibleOutlined />
+                        }
+                        onClick={toggleShowAllBorders}
+                        className='editor-page-button'>
+                        框线
+                      </Button>
+                      <Button
+                        type={is3DModalOpen ? 'primary' : 'default'}
+                        size='small'
+                        icon={<AppstoreOutlined />}
+                        onClick={() => setIs3DModalOpen(true)}
+                        className='editor-page-button'>
+                        3D 检视
+                      </Button>
+                      <Button
+                        type={isGuideOpen ? 'primary' : 'default'}
+                        size='small'
+                        icon={<QuestionCircleOutlined />}
+                        onClick={() => setIsGuideOpen(true)}
+                        className='editor-page-button'>
+                        交互引导
+                      </Button>
+                      <Dropdown
+                        menu={{
+                          items: SCALE_OPTIONS,
+                          onClick: ({ key }) => handleScaleChange(parseFloat(key)),
+                        }}
+                        trigger={['click']}>
+                        <a onClick={(e) => e.preventDefault()}>
+                          {Math.round(scale * 100)}% <DownOutlined />
+                        </a>
+                      </Dropdown>
+                    </Space>
+                  </div>
+
+                  <div className='editor-page-canvas-container'>
+                    <div
+                      onClick={() => setLeftCollapsed(!leftCollapsed)}
+                      className='editor-page-collapse-button editor-page-collapse-button-left'>
+                      {leftCollapsed ? '▶' : '◀'}
+                    </div>
+
+                    <div
+                      onClick={() => setRightCollapsed(!rightCollapsed)}
+                      className='editor-page-collapse-button editor-page-collapse-button-right'>
+                      {rightCollapsed ? '◀' : '▶'}
+                    </div>
+
+                    <div id='detection-canvas-container' className='editor-page-detection-canvas-container'>
+                      <DetectionCanvas
+                        dslData={dslDataStoreSnapshot.data as DSLData}
+                        scale={scale}
+                        onScaleChange={handleScaleChange}
+                        highlightedNodeId={null}
+                        hoveredNodeId={null}
+                      />
+                    </div>
+                  </div>
+                </Content>
+              </Layout>
+
+              <Sider
+                width={350}
+                theme='light'
+                collapsible
+                collapsed={rightCollapsed}
+                onCollapse={setRightCollapsed}
+                collapsedWidth={0}
+                trigger={null}
+                className='editor-page-sider editor-page-right-sider'>
+                <ComponentPropertyPanel />
+              </Sider>
+            </>
+          )}
+
+          {/* PRD 文档编辑器 */}
+          {editorPageStoreSnapshot.selectedDocument?.type === 'prd' && (
+            <Layout style={{ flex: 1 }}>
+              <Content className='editor-page-content editor-page-content--no-padding'>
+                <div
+                  onClick={() => setLeftCollapsed(!leftCollapsed)}
+                  className='editor-page-collapse-button editor-page-collapse-button-left'>
+                  {leftCollapsed ? '▶' : '◀'}
                 </div>
+                <PRDEditorPanel documentId={editorPageStoreSnapshot.selectedDocument?.id} />
+              </Content>
+            </Layout>
+          )}
 
-                <div className='editor-page-canvas-container'>
+          {/* OpenAPI 数据面板 */}
+          {editorPageStoreSnapshot.selectedDocument?.type === 'openapi' && (
+            <>
+              <Layout>
+                <Content className='editor-page-content editor-page-content--no-padding'>
                   <div
                     onClick={() => setLeftCollapsed(!leftCollapsed)}
                     className='editor-page-collapse-button editor-page-collapse-button-left'>
@@ -573,105 +567,48 @@ const EditorPageContent: React.FC = () => {
                     {rightCollapsed ? '◀' : '▶'}
                   </div>
 
-                  <div id='detection-canvas-container' className='editor-page-detection-canvas-container'>
-                    <DetectionCanvas
-                      dslData={dslDataStoreSnapshot.data as DSLData}
-                      scale={scale}
-                      onScaleChange={handleScaleChange}
-                      highlightedNodeId={null}
-                      hoveredNodeId={null}
-                    />
-                  </div>
-                </div>
-              </Content>
-            </Layout>
+                  <OpenAPIUrlPanel
+                    selectedApiId={editorPageStoreSnapshot.selectedDocument?.id || undefined}
+                    onSelectApi={handleSelectOpenApi}
+                  />
+                </Content>
+              </Layout>
 
-            <Sider
-              width={350}
-              theme='light'
-              collapsible
-              collapsed={rightCollapsed}
-              onCollapse={setRightCollapsed}
-              collapsedWidth={0}
-              trigger={null}
-              className='editor-page-sider editor-page-right-sider'>
-              <ComponentPropertyPanel />
-            </Sider>
-          </>
-        )}
+              <Sider
+                width={350}
+                theme='light'
+                collapsible
+                collapsed={rightCollapsed}
+                onCollapse={setRightCollapsed}
+                collapsedWidth={0}
+                trigger={null}
+                className='editor-page-sider editor-page-right-sider'>
+                <OpenAPIDataPanel selectedApiId={editorPageStoreSnapshot.selectedDocument?.id || undefined} />
+              </Sider>
+            </>
+          )}
 
-        {/* PRD 文档编辑器 */}
-        {editorPageStoreSnapshot.selectedDocument?.type === 'prd' && (
-          <Layout style={{ flex: 1 }}>
-            <Content className='editor-page-content editor-page-content--no-padding'>
-              <div
-                onClick={() => setLeftCollapsed(!leftCollapsed)}
-                className='editor-page-collapse-button editor-page-collapse-button-left'>
-                {leftCollapsed ? '▶' : '◀'}
-              </div>
-              <PRDEditorPanel documentId={editorPageStoreSnapshot.selectedDocument?.id} />
-            </Content>
-          </Layout>
-        )}
-
-        {/* OpenAPI 数据面板 */}
-        {editorPageStoreSnapshot.selectedDocument?.type === 'openapi' && (
-          <>
-            <Layout>
-              <Content className='editor-page-content editor-page-content--no-padding'>
+          {/* 没有选中任何文档时的提示 */}
+          {!editorPageStoreSnapshot.selectedDocument && (
+            <Layout style={{ flex: 1 }}>
+              <Content
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'rgb(255, 255, 255)',
+                }}>
                 <div
                   onClick={() => setLeftCollapsed(!leftCollapsed)}
                   className='editor-page-collapse-button editor-page-collapse-button-left'>
                   {leftCollapsed ? '▶' : '◀'}
                 </div>
-
-                <div
-                  onClick={() => setRightCollapsed(!rightCollapsed)}
-                  className='editor-page-collapse-button editor-page-collapse-button-right'>
-                  {rightCollapsed ? '◀' : '▶'}
-                </div>
-
-                <OpenAPIUrlPanel
-                  selectedApiId={editorPageStoreSnapshot.selectedDocument?.id || undefined}
-                  onSelectApi={handleSelectOpenApi}
-                />
+                <Typography.Text type='secondary'>请从左侧选择一个文档开始编辑</Typography.Text>
               </Content>
             </Layout>
-
-            <Sider
-              width={350}
-              theme='light'
-              collapsible
-              collapsed={rightCollapsed}
-              onCollapse={setRightCollapsed}
-              collapsedWidth={0}
-              trigger={null}
-              className='editor-page-sider editor-page-right-sider'>
-              <OpenAPIDataPanel selectedApiId={editorPageStoreSnapshot.selectedDocument?.id || undefined} />
-            </Sider>
-          </>
-        )}
-
-        {/* 没有选中任何文档时的提示 */}
-        {!editorPageStoreSnapshot.selectedDocument && (
-          <Layout style={{ flex: 1 }}>
-            <Content
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgb(255, 255, 255)',
-              }}>
-              <div
-                onClick={() => setLeftCollapsed(!leftCollapsed)}
-                className='editor-page-collapse-button editor-page-collapse-button-left'>
-                {leftCollapsed ? '▶' : '◀'}
-              </div>
-              <Typography.Text type='secondary'>请从左侧选择一个文档开始编辑</Typography.Text>
-            </Content>
-          </Layout>
-        )}
-      </Layout>
+          )}
+        </Layout>
+      </Spin>
       <AnnotationConfirmModal
         open={isAnnotationConfirmOpen}
         rootAnnotation={componentDetectionStoreSnapshot.rootAnnotation as AnnotationNode | null}

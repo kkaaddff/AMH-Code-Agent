@@ -21,12 +21,12 @@ import { FTA_COMPONENTS } from '../constants/FTAComponents';
 import { getComponentSchema, PropertySchema } from '../constants/FTAComponentSchemas';
 import {
   calculateDSLNodeAbsolutePosition,
-  componentDetectionActions,
-  componentDetectionStore,
+  designDetectionActions,
+  designDetectionStore,
   findAnnotationByDSLNodeId,
   findAnnotationById,
   findDSLNodeById,
-} from '../contexts/ComponentDetectionContext';
+} from '../contexts/DesignDetectionContext';
 import { editorPageStore } from '../contexts/EditorPageContext';
 import { NodeType } from '../types/componentDetection';
 
@@ -78,7 +78,7 @@ const customFilterOption = (input: string, option: any) => {
 
 const ComponentPropertyPanelV2: React.FC = () => {
   const { message, modal } = App.useApp();
-  const { selectedAnnotation, selectedDSLNode, selectedNodeIds } = useSnapshot(componentDetectionStore);
+  const { selectedAnnotation, selectedDSLNode, selectedNodeIds } = useSnapshot(designDetectionStore);
   const { selectedDocument } = useSnapshot(editorPageStore);
   const [form] = Form.useForm();
   const [hasChanges, setHasChanges] = useState(false);
@@ -138,7 +138,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
       }
 
       // Update annotation
-      const updated = await componentDetectionActions.updateAnnotation(selectedAnnotation.id, {
+      const updated = await designDetectionActions.updateAnnotation(selectedAnnotation.id, {
         ftaComponent: values.ftaComponent,
         name: values.name,
         comment: values.comment,
@@ -198,7 +198,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
       okType: 'danger',
       cancelText: '取消',
       onOk: () => {
-        componentDetectionActions.deleteAnnotation(selectedAnnotation.id, {
+        designDetectionActions.deleteAnnotation(selectedAnnotation.id, {
           docId: selectedDocument!.id,
           deleteChildren,
         });
@@ -311,7 +311,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
       let shouldResetForm = false;
 
       if (isMultiSelection) {
-        const combined = componentDetectionActions.combineSelectedDSLNodes(ftaComponent);
+        const combined = designDetectionActions.combineSelectedDSLNodes(ftaComponent);
         if (combined) {
           message.success('已创建组合标注');
           shouldResetForm = true;
@@ -320,7 +320,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
         }
       } else if (selectedDSLNode) {
         const { ftaComponent: _, name, comment, ...componentProps } = values;
-        const created = await componentDetectionActions.createAnnotation(selectedDSLNode as DSLNode, ftaComponent, {
+        const created = await designDetectionActions.createAnnotation(selectedDSLNode as DSLNode, ftaComponent, {
           name,
           comment,
           props: componentProps,
@@ -353,7 +353,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
 
       let createdCount = 0;
       for (const dslNode of batchTargetDSLNodes) {
-        const created = await componentDetectionActions.createAnnotation(dslNode, ftaComponent, {
+        const created = await designDetectionActions.createAnnotation(dslNode, ftaComponent, {
           name,
           comment,
           props: componentProps,

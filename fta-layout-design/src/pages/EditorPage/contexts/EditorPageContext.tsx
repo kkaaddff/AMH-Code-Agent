@@ -1,6 +1,8 @@
 import { Page } from '@/types/project';
 import { proxy } from 'valtio';
 import { TDocumentKeys } from '../constants';
+import { designDetectionActions } from './DesignDetectionContext';
+import { createRootAnnotationFromDesignDoc } from '../components/LayerTreePanel/utils';
 
 export interface SelectedDocument {
   type: keyof typeof TDocumentKeys;
@@ -30,6 +32,16 @@ export const editorPageActions = {
   },
   setCurrentPage: (value: Page | null | ((prev: Page | null) => Page | null)) => {
     editorPageStore.currentPage = typeof value === 'function' ? value(editorPageStore.currentPage || null) : value;
+    editorPageStore.currentPage?.designDocuments.map((doc) => {
+      const rootNode = doc.data?.dsl?.nodes?.[0] ?? null;
+      if (!rootNode) {
+        return;
+      }
+      designDetectionActions.hydrateDesignDocument(doc.id, {
+        rootAnnotation: createRootAnnotationFromDesignDoc(doc),
+        dslRootNode: rootNode,
+      });
+    });
   },
   setSelectedDocument: (
     value: SelectedDocument | null | ((prev: SelectedDocument | null) => SelectedDocument | null)

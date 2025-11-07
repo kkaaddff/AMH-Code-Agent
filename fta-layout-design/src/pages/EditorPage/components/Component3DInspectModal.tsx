@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import html2canvas from 'html2canvas';
 import { useSnapshot } from 'valtio';
 
-import { calculateDSLNodeAbsolutePosition, componentDetectionStore } from '../contexts/ComponentDetectionContext';
+import { calculateDSLNodeAbsolutePosition, designDetectionStore } from '../contexts/DesignDetectionContext';
 import type { AnnotationNode } from '../types/componentDetection';
 import {
   MODAL_CONFIG,
@@ -72,7 +72,7 @@ const drawRoundedRect = (
 };
 
 const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open, onClose }) => {
-  const { rootAnnotation } = useSnapshot(componentDetectionStore);
+  const { rootAnnotation } = useSnapshot(designDetectionStore);
   const containerRef = useRef<HTMLDivElement>(null);
   const textureCacheRef = useRef<Map<string, THREE.Texture>>(new Map());
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);

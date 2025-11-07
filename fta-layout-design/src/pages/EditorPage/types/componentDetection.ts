@@ -55,7 +55,7 @@ export interface AnnotationNode {
 // Context状态
 export interface AnnotationState {
   rootAnnotation: AnnotationNode | null; // 页面根节点
-  annotations: AnnotationNode[]; // 所有标注（扁平化列表，方便查找）
+  readonly annotations: AnnotationNode[]; // 所有标注（扁平化列表，方便查找）
   selectedAnnotation: AnnotationNode | null; // 选中的标注
   hoveredAnnotation: AnnotationNode | null; // hover的标注
   selectedDSLNode: DSLNode | null; // 选中的DSL节点（未标注的）

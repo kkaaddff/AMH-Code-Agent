@@ -4,10 +4,10 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSnapshot } from 'valtio';
 import { COLORS, DASH_PATTERNS, DRAW_STYLES, LABEL_STYLES, SCALE_CONFIG } from '../constants/CanvasConstant';
 import {
-  componentDetectionActions,
-  componentDetectionStore,
+  designDetectionActions,
+  designDetectionStore,
   findAnnotationByDSLNodeId,
-} from '../contexts/ComponentDetectionContext';
+} from '../contexts/DesignDetectionContext';
 import { AnnotationNode, LabelInstruction, NodeType } from '../types/componentDetection';
 import {
   DetectionCanvasV2Props,
@@ -34,7 +34,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
   hoveredNodeId,
 }) => {
   const { annotations, selectedNodeIds, hoveredAnnotation, hoveredDSLNode, showAllBorders } =
-    useSnapshot(componentDetectionStore);
+    useSnapshot(designDetectionStore);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -128,7 +128,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       }
 
       if (e.key === 'Escape') {
-        componentDetectionActions.clearSelection();
+        designDetectionActions.clearSelection();
       }
     };
 
@@ -230,8 +230,8 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
   useEffect(() => {
     if (isSpacePressed) {
-      componentDetectionActions.hoverAnnotation(null);
-      componentDetectionActions.hoverDSLNode(null);
+      designDetectionActions.hoverAnnotation(null);
+      designDetectionActions.hoverDSLNode(null);
     }
   }, [isSpacePressed]);
 
@@ -559,8 +559,8 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
       if (isSpacePressed && e.button === 0) {
         e.preventDefault();
-        componentDetectionActions.hoverAnnotation(null);
-        componentDetectionActions.hoverDSLNode(null);
+        designDetectionActions.hoverAnnotation(null);
+        designDetectionActions.hoverDSLNode(null);
         setIsSelecting(false);
         setSelectionBox(null);
 
@@ -697,11 +697,11 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
             itemsToRemove.forEach((id) => {
               const annotation = annotations.find((a) => a.id === id);
               if (annotation) {
-                componentDetectionActions.selectAnnotation(id, true); // 取消选中
+                designDetectionActions.selectAnnotation(id, true); // 取消选中
               } else {
                 const node = findNodeByIdMemo(id);
                 if (node) {
-                  componentDetectionActions.selectDSLNode(node, true); // 取消选中
+                  designDetectionActions.selectDSLNode(node, true); // 取消选中
                 }
               }
             });
@@ -712,23 +712,23 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       // 3. 根据交互目标执行相应操作
       if (interactionTarget) {
         if (interactionTarget.type === 'annotation') {
-          componentDetectionActions.selectAnnotation(interactionTarget.target.id, multiSelect);
+          designDetectionActions.selectAnnotation(interactionTarget.target.id, multiSelect);
         } else if (interactionTarget.type === 'dsl') {
           // 检查该DSL节点是否已被标注
           const existingAnnotation = findAnnotationByDSLNodeId(interactionTarget.target.id);
           if (existingAnnotation) {
             // 如果已被标注，选择对应的annotation
-            componentDetectionActions.selectAnnotation(existingAnnotation.id, multiSelect);
+            designDetectionActions.selectAnnotation(existingAnnotation.id, multiSelect);
           } else {
             // 如果未标注，选择DSL节点
-            componentDetectionActions.selectDSLNode(interactionTarget.target as DSLNode, multiSelect);
+            designDetectionActions.selectDSLNode(interactionTarget.target as DSLNode, multiSelect);
           }
         }
         return;
       }
 
       // 4. 点击空白区域，取消选择
-      componentDetectionActions.clearSelection();
+      designDetectionActions.clearSelection();
     },
     [
       annotations,
@@ -784,18 +784,18 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       // 根据交互目标执行相应的hover操作
       if (interactionTarget) {
         if (interactionTarget.type === 'annotation') {
-          componentDetectionActions.hoverAnnotation(interactionTarget.target.id);
-          componentDetectionActions.hoverDSLNode(null);
+          designDetectionActions.hoverAnnotation(interactionTarget.target.id);
+          designDetectionActions.hoverDSLNode(null);
           canvas.style.cursor = 'pointer';
         } else if (interactionTarget.type === 'dsl') {
-          componentDetectionActions.hoverAnnotation(null);
-          componentDetectionActions.hoverDSLNode(interactionTarget.target.id);
+          designDetectionActions.hoverAnnotation(null);
+          designDetectionActions.hoverDSLNode(interactionTarget.target.id);
           canvas.style.cursor = 'pointer';
         }
       } else {
         // 没有hover任何内容
-        componentDetectionActions.hoverAnnotation(null);
-        componentDetectionActions.hoverDSLNode(null);
+        designDetectionActions.hoverAnnotation(null);
+        designDetectionActions.hoverDSLNode(null);
         canvas.style.cursor = 'default';
       }
     },
@@ -815,8 +815,8 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
   const handleCanvasMouseLeave = useCallback(() => {
     // 只清除 hover 状态，不影响框选或拖拽
     if (!isSelecting && !isPanning) {
-      componentDetectionActions.hoverAnnotation(null);
-      componentDetectionActions.hoverDSLNode(null);
+      designDetectionActions.hoverAnnotation(null);
+      designDetectionActions.hoverDSLNode(null);
     }
   }, [isSelecting, isPanning]);
 
@@ -862,17 +862,17 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
       // 选中所有符合条件的项目
       if (outermostItems.length > 0) {
-        componentDetectionActions.clearSelection();
+        designDetectionActions.clearSelection();
         outermostItems.forEach((item, index) => {
           const isFirst = index === 0;
           if (item.type === 'annotation') {
-            componentDetectionActions.selectAnnotation(item.id, !isFirst);
+            designDetectionActions.selectAnnotation(item.id, !isFirst);
           } else if (item.type === 'dsl' && item.node) {
-            componentDetectionActions.selectDSLNode(item.node, !isFirst);
+            designDetectionActions.selectDSLNode(item.node, !isFirst);
           }
         });
       } else {
-        componentDetectionActions.clearSelection();
+        designDetectionActions.clearSelection();
       }
 
       setSelectionBox(null);

@@ -1,25 +1,26 @@
-import { DSLData } from '@/types/dsl';
 import { CompressOutlined, ExpandOutlined, FileOutlined, FolderOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Space, Tooltip } from 'antd';
 import { DataNode } from 'antd/es/tree';
-import { componentDetectionActions } from '../../contexts/ComponentDetectionContext';
 import { AnnotationNode } from '../../types/componentDetection';
+import { designDetectionActions } from '../../contexts/DesignDetectionContext';
+import { DocumentReference } from '@/types/project';
 
-export const createRootAnnotationFromDSL = (dslData: DSLData, docId: string): AnnotationNode | null => {
-  const rootNode = dslData?.dsl?.nodes?.[0];
+export const createRootAnnotationFromDesignDoc = (doc: DocumentReference): AnnotationNode | null => {
+  const now = Date.now();
+  const rootNode = doc.data?.dsl?.nodes?.[0] ?? null;
+
   if (!rootNode) {
     return null;
   }
-
-  const now = Date.now();
-  return {
-    id: `design-root-${docId}`,
+  const rootAnnotationId = `design-root-${doc.id}`;
+  const rootAnnotation: AnnotationNode = doc.annotationData?.rootAnnotation ?? {
+    id: rootAnnotationId,
     dslNodeId: rootNode.id,
     dslNode: rootNode,
     ftaComponent: 'View',
-    name: rootNode.isMainPage ? 'Page' : 'Component',
+    name: 'Component',
     isRoot: true,
-    isMainPage: !!rootNode.isMainPage,
+    isMainPage: false,
     isContainer: true,
     children: [],
     absoluteX: 0,
@@ -29,14 +30,21 @@ export const createRootAnnotationFromDSL = (dslData: DSLData, docId: string): An
     createdAt: now,
     updatedAt: now,
   };
+  return rootAnnotation;
 };
 
+interface ConvertOptions {
+  isFirstLevel?: boolean;
+  isActiveDoc?: boolean;
+  documentName?: string;
+  onExpandAll?: () => void;
+  onCollapseAll?: () => void;
+  onSettingsClick?: () => void;
+}
+
 // 转换AnnotationNode为Tree DataNode
-export const convertToTreeData = (
-  node: AnnotationNode,
-  options: { isFirstLevel?: boolean; isActiveDoc?: boolean; documentName?: string } = {}
-): DataNode => {
-  const { isFirstLevel = false, isActiveDoc = false, documentName } = options;
+export const convertToTreeData = (node: AnnotationNode, options: ConvertOptions = {}): DataNode => {
+  const { isFirstLevel = false, isActiveDoc = false, documentName, onSettingsClick } = options;
   const isRoot = node.isRoot;
   const isContainer = node.isContainer;
   const isMainPage = node.isMainPage;
@@ -73,7 +81,7 @@ export const convertToTreeData = (
               icon={<ExpandOutlined />}
               onClick={(e) => {
                 e.stopPropagation();
-                componentDetectionActions.expandAll();
+                designDetectionActions.expandAll();
               }}
             />
           </Tooltip>
@@ -84,7 +92,7 @@ export const convertToTreeData = (
               icon={<CompressOutlined />}
               onClick={(e) => {
                 e.stopPropagation();
-                componentDetectionActions.collapseAll();
+                designDetectionActions.collapseAll();
               }}
             />
           </Tooltip>
@@ -95,7 +103,7 @@ export const convertToTreeData = (
               icon={<SettingOutlined />}
               onClick={(e) => {
                 e.stopPropagation();
-                // TODO: 添加设置功能
+                onSettingsClick?.();
               }}
             />
           </Tooltip>
