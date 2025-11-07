@@ -98,7 +98,6 @@ const EditorPageContent: React.FC = () => {
         setCurrentPage(pageData);
         // 初始化：默认选中第一个设计文档
         setSelectedDocument({ type: 'design', id: pageData.designDocuments[0].id });
-        await dslDataActions.loadDesign(pageData.designDocuments[0].id);
       } catch (error: any) {
         console.error('获取页面数据失败:', error);
         setPageError(error.message || '获取页面数据失败');
@@ -189,8 +188,7 @@ const EditorPageContent: React.FC = () => {
         const annotationSummary = formatAnnotationSummary(flattenAnnotation(rootAnnotation as AnnotationNode));
         initialPrompt += `\n\n当前设计标注数据：\n${annotationSummary}`;
       }
-      const { data: dslData } = dslDataStoreSnapshot;
-      const dslJsonStr = JSON.stringify(dslData?.dsl ?? {});
+      const dslJsonStr = JSON.stringify(designDetectionStore.dslData?.dsl ?? {});
       // 创建会话
       scheduler.createSession(sessionId, initialPrompt, dslJsonStr);
       startGeneration(sessionId);
@@ -448,7 +446,7 @@ const EditorPageContent: React.FC = () => {
           </Sider>
 
           {/* 中间和右侧内容：根据文档类型切换 */}
-          {editorPageStoreSnapshot.selectedDocument?.type === 'design' && dslDataStoreSnapshot.data && (
+          {editorPageStoreSnapshot.selectedDocument?.type === 'design' && (
             <>
               <Layout>
                 <Content className='editor-page-content'>
@@ -511,7 +509,7 @@ const EditorPageContent: React.FC = () => {
 
                     <div id='detection-canvas-container' className='editor-page-detection-canvas-container'>
                       <DetectionCanvas
-                        dslData={dslDataStoreSnapshot.data as DSLData}
+                        dslData={designDetectionStore.dslData as DSLData}
                         scale={scale}
                         onScaleChange={handleScaleChange}
                         highlightedNodeId={null}

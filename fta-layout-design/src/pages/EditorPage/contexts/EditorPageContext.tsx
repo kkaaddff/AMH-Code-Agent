@@ -33,13 +33,12 @@ export const editorPageActions = {
   setCurrentPage: (value: Page | null | ((prev: Page | null) => Page | null)) => {
     editorPageStore.currentPage = typeof value === 'function' ? value(editorPageStore.currentPage || null) : value;
     editorPageStore.currentPage?.designDocuments.map((doc) => {
-      const rootNode = doc.data?.dsl?.nodes?.[0] ?? null;
-      if (!rootNode) {
+      if (!doc.data) {
         return;
       }
       designDetectionActions.hydrateDesignDocument(doc.id, {
         rootAnnotation: createRootAnnotationFromDesignDoc(doc),
-        dslRootNode: rootNode,
+        dslData: doc.data,
       });
     });
   },

@@ -17,7 +17,6 @@ import React, { useCallback, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { TDocumentKeys } from '../../constants';
 import { designDetectionActions, designDetectionStore, useDesignTreeData } from '../../contexts/DesignDetectionContext';
-import { dslDataActions } from '../../contexts/DSLDataContext';
 import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
 import { extractDesignIdFromTopLevelKey, findTopLevelKey } from './utils';
 
@@ -84,27 +83,14 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
 
     const nextSelectedKey = selectedKeys[0] as string;
     const nextTopLevelKey = findTopLevelKey(designTreeData, nextSelectedKey);
-    const prevTopLevelKey = selectedDocument?.id ? findTopLevelKey(designTreeData, selectedDocument.id) : null;
     const designId = extractDesignIdFromTopLevelKey(nextTopLevelKey);
-    if (designId !== designDetectionStore.currentDesignId) {
-      designDetectionActions.setActiveDesignDocument();
-    }
 
-    if (nextTopLevelKey && nextTopLevelKey !== prevTopLevelKey) {
+    if (designId && designId !== designDetectionStore.currentDesignId) {
+      designDetectionActions.setActiveDesignDocument();
       editorPageActions.setSelectedDocument({
         type: 'design',
-        id: nextTopLevelKey.replace('design-root-', '').replace('design-doc-', ''),
+        id: designId,
       });
-      if (designId) {
-        void (async () => {
-          try {
-            await dslDataActions.loadDesign(designId);
-          } finally {
-            designDetectionActions.selectAnnotation(nextSelectedKey, false);
-          }
-        })();
-        return;
-      }
     }
 
     designDetectionActions.selectAnnotation(nextSelectedKey, false);

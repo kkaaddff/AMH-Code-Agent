@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { proxy, useSnapshot } from 'valtio';
 import type { DataNode } from 'antd/es/tree';
 import { FileImageOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -89,9 +89,10 @@ const findAnnotationByDSLNodeId = (dslNodeId: string): AnnotationNode | null => 
 
 // 统一的DSL节点查找函数
 const findDSLNodeById = (id: string): DSLNode | null => {
-  if (!designDetectionStore.dslRootNode) return null;
+  if (!designDetectionStore.dslData) return null;
 
-  const search = (node: DSLNode): DSLNode | null => {
+  const search = (node: DSLNode | null): DSLNode | null => {
+    if (!node) return null;
     if (node.id === id) return node;
     if (node.children) {
       for (const child of node.children) {
@@ -290,7 +291,8 @@ const findContainingDSLNode = (selectedAnnotations: AnnotationNode[], selectedDS
 interface DesignDocumentDetectionState {
   rootAnnotation: AnnotationNode | null;
   annotations: AnnotationNode[];
-  dslRootNode: DSLNode | null;
+  dslData: DSLData | null;
+  readonly dslRootNode: DSLNode | null;
   isLoading: boolean;
   error: string | null;
   versionToken: string | null;
@@ -300,18 +302,27 @@ interface DesignDetectionState extends AnnotationState {
   showAllBorders: boolean;
   selectedNodeIds: SelectedNodeItem[];
   designStoreMap: Record<string, DesignDocumentDetectionState>;
-  dslRootNode: DSLNode | null;
+  dslData: DSLData | null;
+  readonly dslRootNode: DSLNode | null;
   readonly currentDesignId: string | null;
 }
 
-const createEmptyDesignDocumentState = (): DesignDocumentDetectionState => ({
-  rootAnnotation: null,
-  annotations: [],
-  dslRootNode: null,
-  isLoading: false,
-  error: null,
-  versionToken: null,
-});
+const createEmptyDesignDocumentState = (): DesignDocumentDetectionState => {
+  const state = {
+    rootAnnotation: null,
+    annotations: [],
+    dslData: null as DSLData | null,
+    isLoading: false,
+    error: null,
+    versionToken: null,
+  };
+  return {
+    ...state,
+    get dslRootNode() {
+      return state.dslData?.dsl.nodes?.[0] ?? null;
+    },
+  };
+};
 
 export const designDetectionStore = proxy<DesignDetectionState>({
   designStoreMap: {},
@@ -345,21 +356,27 @@ export const designDetectionStore = proxy<DesignDetectionState>({
   hoveredDSLNode: null,
   expandedKeys: [],
   isLoading: false,
-  get dslRootNode() {
+  get dslData() {
     if (!this.currentDesignId) {
       return null;
     }
-    return this.designStoreMap[this.currentDesignId]?.dslRootNode ?? null;
+    return this.designStoreMap[this.currentDesignId]?.dslData ?? null;
   },
-  set dslRootNode(value: DSLNode | null) {
+  set dslData(value: DSLData | null) {
     if (!this.currentDesignId) return;
     if (!this.designStoreMap[this.currentDesignId]) {
       this.designStoreMap[this.currentDesignId] = createEmptyDesignDocumentState();
     }
-    this.designStoreMap[this.currentDesignId].dslRootNode = value;
+    this.designStoreMap[this.currentDesignId].dslData = value;
   },
   showAllBorders: false,
   selectedNodeIds: [],
+  get dslRootNode() {
+    if (!this.currentDesignId) {
+      return null;
+    }
+    return this.designStoreMap[this.currentDesignId]?.dslData?.dsl.nodes?.[0] ?? null;
+  },
 });
 
 const ensureDesignDocumentState = (designId: string): DesignDocumentDetectionState => {
@@ -375,9 +392,9 @@ const setDesignRootAnnotation = (designId: string, root: AnnotationNode | null) 
   target.annotations = root ? flattenAnnotationTree(root) : [];
 };
 
-const setDesignDslRootNode = (designId: string, node: DSLNode | null) => {
+const setDesignDslData = (designId: string, data: DSLData | null) => {
   const target = ensureDesignDocumentState(designId);
-  target.dslRootNode = node;
+  target.dslData = data;
 };
 
 const getDocumentVersionToken = (doc: DocumentReference) => doc.updatedAt || doc.lastSyncAt || doc.createdAt || '';
@@ -390,7 +407,7 @@ const shouldFetchDesignDocument = (doc: DocumentReference, force?: boolean): boo
   if (!target) {
     return true;
   }
-  if (!target.dslRootNode || !target.rootAnnotation) {
+  if (!target.dslData || !target.rootAnnotation) {
     return true;
   }
   const nextVersion = getDocumentVersionToken(doc);
@@ -409,12 +426,12 @@ const fetchDesignDocumentDSLInternal = async (doc: DocumentReference): Promise<v
     if (!dslData) {
       throw new Error('没有获取到DSL数据');
     }
-    const dslRootNode = (dslData?.dsl?.nodes?.[0] ?? null) as DSLNode | null;
+
     const rootAnnotation = createRootAnnotationFromDesignDoc(doc);
-    if (!dslRootNode || !rootAnnotation) {
+    if (!rootAnnotation) {
       throw new Error('DSL数据中缺少根节点');
     }
-    setDesignDslRootNode(doc.id, dslRootNode);
+    setDesignDslData(doc.id, dslData);
     setDesignRootAnnotation(doc.id, rootAnnotation);
     target.versionToken = versionToken;
   } catch (error) {
@@ -443,30 +460,27 @@ export const designDetectionActions = {
       designDetectionStore.selectedDSLNode = null;
       designDetectionStore.hoveredDSLNode = null;
       designDetectionStore.selectedNodeIds = [];
-      designDetectionStore.expandedKeys = [];
       return;
     }
 
-    const target = ensureDesignDocumentState(designDetectionStore.currentDesignId);
     designDetectionStore.selectedAnnotation = null;
     designDetectionStore.hoveredAnnotation = null;
     designDetectionStore.selectedDSLNode = null;
     designDetectionStore.hoveredDSLNode = null;
     designDetectionStore.selectedNodeIds = [];
-    designDetectionStore.expandedKeys = target.rootAnnotation ? [target.rootAnnotation.id] : [];
   },
 
   // 直接写入设计文档的DSL/标注数据（不切换当前激活文档）
   hydrateDesignDocument: (
     designId: string,
     payload: {
-      dslRootNode?: DSLNode | null;
       rootAnnotation?: AnnotationNode | null;
+      dslData?: DSLData | null;
     }
   ) => {
     if (!designId) return;
-    if ('dslRootNode' in payload) {
-      setDesignDslRootNode(designId, payload.dslRootNode ?? null);
+    if ('dslData' in payload) {
+      setDesignDslData(designId, payload.dslData ?? null);
     }
     if ('rootAnnotation' in payload) {
       setDesignRootAnnotation(designId, payload.rootAnnotation ?? null);
@@ -856,7 +870,6 @@ export const designDetectionActions = {
 
     designDetectionStore.rootAnnotation = sortedRootAnnotation;
     designDetectionStore.selectedAnnotation = nextSelected;
-    designDetectionStore.expandedKeys = Array.from(new Set(nextExpandedKeys));
 
     componentDetectionDebugLog('updateAnnotation:completed', {
       annotationId,
@@ -966,7 +979,7 @@ export const designDetectionActions = {
 
   // 收起全部
   collapseAll: () => {
-    designDetectionStore.expandedKeys = ['root'];
+    designDetectionStore.expandedKeys = [];
   },
 
   // 切换显示所有框线
@@ -975,11 +988,8 @@ export const designDetectionActions = {
   },
 
   // 更新DSL根节点
-  updateDslRootNode: (designId: string, node: DSLNode | null) => {
-    setDesignDslRootNode(designId, node);
-    if (designDetectionStore.currentDesignId === designId) {
-      designDetectionStore.dslRootNode = node;
-    }
+  updateDslRootNode: (designId: string, data: DSLData | null) => {
+    setDesignDslData(designId, data);
   },
 
   // 保存标注
