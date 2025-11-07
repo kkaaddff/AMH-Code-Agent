@@ -1,0 +1,43 @@
+{
+  "name": "fta-agent-core",
+  "homepage": "https://neovateai.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neovateai/neovate-code/"
+  },
+  "bugs": {
+    "url": "https://github.com/neovateai/neovate-code/issues"
+  },
+  "license": "MIT",
+  "version": "0.16.0",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "source": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@ai-sdk/anthropic": "^2.0.41",
+    "@ai-sdk/deepseek": "^1.0.27",
+    "@ai-sdk/google": "^2.0.28",
+    "@ai-sdk/mcp": "^0.0.7",
+    "@ai-sdk/openai": "^2.0.62",
+    "@ai-sdk/provider": "^2.0.0",
+    "@ai-sdk/xai": "^2.0.31",
+    "@types/debug": "^4.1.12",
+    "@types/node": "^20",
+    "chardet": "^2.1.1",
+    "debug": "^4.4.3",
+    "defu": "^6.1.4",
+    "diff": "^8.0.2",
+    "dotenv": "^17.2.3",
+    "glob": "^11.0.3",
+    "spawn-rx": "^5.1.2",
+    "turndown": "^7.2.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.7",
+    "zod-to-json-schema": "^3.24.6",
+    "zod": "^4.1.12"
+  }
+}
