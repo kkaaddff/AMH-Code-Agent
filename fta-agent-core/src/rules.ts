@@ -43,3 +43,30 @@ export function getLlmsRules(opts: { cwd: string; productName: string; globalCon
     ${reversedRules.join('\n\n')}`,
   };
 }
+
+export function resolveLlmsRules(opts: {
+  cwd: string;
+  productName: string;
+  globalConfigDir: string;
+  rulesFilePath?: string;
+}): { llmsDescription: string } | null {
+  if (opts.rulesFilePath) {
+    // 如果指定了 rules 文件路径，直接读取
+    if (fs.existsSync(opts.rulesFilePath)) {
+      const rulesContent = fs.readFileSync(opts.rulesFilePath, 'utf-8');
+      return {
+        llmsDescription: `
+    The codebase follows strict style guidelines shown below. All code changes must strictly adhere to these guidelines to maintain consistency and quality.
+
+    ${rulesContent}`,
+      };
+    }
+    return null;
+  }
+  // 否则使用默认的 getLlmsRules 逻辑
+  return getLlmsRules({
+    cwd: opts.cwd,
+    productName: opts.productName,
+    globalConfigDir: opts.globalConfigDir,
+  });
+}

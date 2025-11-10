@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'pathe';
 import { platform } from 'process';
 import type { Context } from './context';
-import { getLlmsRules } from './rules';
+import { resolveLlmsRules } from './rules';
 import { createLSTool } from './tools/ls';
 import { getGitStatus, getLlmGitStatus } from './utils/git';
 import { isProjectDirectory } from './utils/project';
@@ -11,6 +11,7 @@ export type LlmsContextCreateOpts = {
   context: Context;
   sessionId: string;
   userPrompt: string | null;
+  rulesFilePath?: string;
 };
 
 export class LlmsContext {
@@ -46,10 +47,11 @@ ${result.llmContent}
       }
     }
     // 3. rules
-    const rules = getLlmsRules({
+    const rules = resolveLlmsRules({
       cwd: opts.context.cwd,
       productName: opts.context.productName,
       globalConfigDir: opts.context.paths.globalConfigDir,
+      rulesFilePath: opts.rulesFilePath,
     });
     if (rules) {
       llmsContext.rules = rules.llmsDescription;

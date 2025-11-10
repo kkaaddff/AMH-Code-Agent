@@ -16,7 +16,18 @@ const PACKAGE_ROOT = path.resolve(__dirname, '..');
 
 const rootAnnotation = fs.readFileSync(path.join(__dirname, 'tests/fixtures/rootAnnotation.json'), 'utf-8');
 const designDsl = fs.readFileSync(path.join(__dirname, 'tests/fixtures/designDsl.json'), 'utf-8');
+const rulesFilePath = path.join(__dirname, 'tests/fixtures/fta-project-spec-4agent.md');
+
 const rootAnnotationSummary = formatAnnotationSummary(flattenAnnotation(JSON.parse(rootAnnotation) as AnnotationNode));
+
+const mockSpecDir = path.join(PACKAGE_ROOT, 'mock-temp');
+// 判断 mockSpecDir 是否存在，如果不存在则创建，无论如何都清空目录内容
+if (!fs.existsSync(mockSpecDir)) {
+  fs.mkdirSync(mockSpecDir, { recursive: true });
+} else {
+  fs.rmSync(mockSpecDir, { recursive: true, force: true });
+  fs.mkdirSync(mockSpecDir, { recursive: true });
+}
 
 describe('FrontendProjectWorkflow integration (no mocks)', () => {
   let projectDir: string;
@@ -25,8 +36,8 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
   let addSpy: any;
 
   beforeEach(() => {
-    projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'frontend-project-repo-'));
-    homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'frontend-project-home-'));
+    projectDir = fs.mkdtempSync(path.join(mockSpecDir, 'frontend-project-repo-'));
+    homeDir = fs.mkdtempSync(path.join(mockSpecDir, 'frontend-project-home-'));
     originalHome = process.env.HOME;
     process.env.HOME = homeDir;
 
@@ -34,15 +45,6 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
 
     // Spy FileDraftStore.add 方法，在测试缓存文件夹中写入文件
     const originalAdd = FileDraftStore.prototype.add;
-    const mockSpecDir = path.join(PACKAGE_ROOT, 'mock-temp');
-    // 判断 mockSpecDir 是否存在，如果不存在则创建；无论如何都清空目录内容
-    if (!fs.existsSync(mockSpecDir)) {
-      fs.mkdirSync(mockSpecDir, { recursive: true });
-    } else {
-      // 用一个函数清空目录
-      // fs.rmSync(mockSpecDir, { recursive: true, force: true });
-      // fs.mkdirSync(mockSpecDir, { recursive: true });
-    }
 
     addSpy = vi.spyOn(FileDraftStore.prototype, 'add').mockImplementation(function (this: FileDraftStore, draft) {
       // 调用原始方法以保持原有行为
@@ -92,10 +94,7 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
           role: message.role,
           uuid: message.uuid,
           parentUuid: message.parentUuid,
-          content:
-            typeof message.content === 'string'
-              ? message.content.substring(0, 100)
-              : JSON.stringify(message.content).substring(0, 100),
+          content: typeof message.content === 'string' ? message.content : JSON.stringify(message.content),
           timestamp: message.timestamp,
         });
       }),
@@ -110,7 +109,7 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
         return true;
       }),
       onText: vi.fn(async (text: string) => {
-        console.log('[onText]', text.substring(0, 200));
+        console.log('[onText]', text.substring(0, 500));
       }),
       onTurn: vi.fn(async (turn: { usage: Usage; startTime: Date; endTime: Date }) => {
         console.log('[onTurn]', {
@@ -125,7 +124,7 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
           model: result.model?.modelId || JSON.stringify(result.model),
           hasError: !!result.error,
           statusCode: result.response?.statusCode,
-          error: result.error ? JSON.stringify(result.error).substring(0, 300) : undefined,
+          error: result.error ? JSON.stringify(result.error).substring(0, 500) : undefined,
         });
       }),
     };
@@ -134,17 +133,15 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
       cwd: projectDir,
       productName: 'NEOVATE',
       version: '0.0.0-test',
-      requirementDoc: `## Feature
-- Render dashboard
-- Load data from API`,
       specFiles: {},
       configOverrides: {
         model: 'glm-4.6',
         planModel: 'glm-4.6',
       },
       callbacks,
-      rootAnnotation: rootAnnotationSummary,
+      pageAnnotation: rootAnnotationSummary,
       designDsl: designDsl,
+      rulesFilePath: rulesFilePath,
     });
 
     expect(result.success).toBe(true);

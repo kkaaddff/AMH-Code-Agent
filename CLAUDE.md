@@ -1,13 +1,12 @@
-# CLAUDE.md — Operator Guide for Claude Code
+# CLAUDE.md
 
-> Workspace: `/Users/admin/Documents/ai/vibe-coding/amh_code_agent`
-> Packages: `code-agent-backend/`, `fta-layout-design/`, `messages-replayer/`
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-This document tells Claude Code exactly how to work inside this monorepo. Follow it before writing any code or running any task.
+## Project Overview
 
----
+This is the **FTA MasterGo-to-App Platform** - an enterprise-level "Design-to-Code" platform that converts MasterGo design mockups into DSL (Domain Specific Language), component annotations, requirement documents, and generated code assets.
 
-## 1. High-Level Overview
+## High-Level Architecture
 
 | Area | Purpose | Stack | Default Port |
 | --- | --- | --- | --- |
@@ -51,30 +50,50 @@ amh_code_agent/
 
 ---
 
-## 3. Backend (code-agent-backend)
+## Development Commands
 
-### 3.1 Prerequisites
+### Backend (code-agent-backend)
+```bash
+cd code-agent-backend
+npm install
+npm run dev              # Midway dev server on 7001 (hot reload)
+npm run build && npm start
+npm run lint             # mwts check
+npm run lint:fix
+npm run prettier         # format all files
+npm run test             # Jest tests
+npm run cov              # coverage report (required before merge)
+```
+Use `./start.sh <port>` for production-style boots.
+
+### Frontend (fta-layout-design)
+```bash
+cd fta-layout-design
+npm install
+npm run dev              # Vite dev server on 5173
+npm run build            # TypeScript compilation + build
+npm run preview          # preview production build
+```
+
+### Messages Replayer CLI
+```bash
+cd messages-replayer
+npm install
+npm run parse            # summary of messages.log
+npm run replay           # reproduce log exactly
+npm run replay:live      # send to live endpoint (requires MODEL_* env)
+```
+
+## Backend Architecture (code-agent-backend)
+
+### Prerequisites
 - Node `20.19.5` (clamped via `package.json` engines)
 - MongoDB 5.13+ with credentials configured in `src/config/config.default.ts`
 - Redis 4.28+ (cluster aware; `DesignDSLService` follows MOVED/ASK redirects)
 - MasterGo token & base URL for DSL pulls (`config.mastergo`)
 - Model gateway endpoint (`MODEL_ENDPOINT`, `MODEL_API_KEY`, etc.) for requirement document streaming and the `/neo` agent
 
-### 3.2 Common Commands
-```bash
-cd code-agent-backend
-npm install
-npm run dev              # Midway dev server on 7001
-npm run build && npm start
-npm run lint             # mwts check
-npm run lint:fix
-npm run prettier
-npm run test
-npm run cov
-```
-Use `./start.sh <port>` for production-style boots.
-
-### 3.3 Domain Services & Flows
+### Domain Services & Flows
 
 | Service | Highlights |
 | --- | --- |
@@ -86,27 +105,25 @@ Use `./start.sh <port>` for production-style boots.
 | `ProjectService` | CRUD projects/pages/document references, syncs MasterGo DSLs, updates reference status, and stores doc content. Exposed under `/code-agent/project/*`. |
 | `NeovateController` + `service/neovate-code/*` | SSE agent endpoint `/neo/send` that spins up `AgentContext`, streams `text_delta`, `todo_update`, `iteration_start/end`, and cleans contexts on completion. |
 
-### 3.4 Paths & Storage
+### Paths & Storage
 - `files-cache/design/requirement-docs/` – exported Markdown docs
 - `files-cache/design/codegen/` – zipped code-generation artifacts
 - `/filesCache/<key>` – static serving URL Midway exposes for cached assets
 
-### 3.5 Testing Notes
+### Testing Notes
 - Tests live under `test/` and rely on `@midwayjs/mock`
 - Use `npm run cov` for coverage (mandated before merge)
 - Provide manual verification notes for flows without automated coverage
 
-### 3.6 Coding Conventions
+### Coding Conventions
 - `mwts` formatting: 2 spaces, single quotes, no dangling semicolons
 - Decorators each on their own line, exported class names match file purpose
 - Use `@Provide()`, `@Inject()`, `@InjectEntityModel()`, `@InjectQueue()` consistently
 - Never commit secrets; rely on env variables or Lion config center values
 
----
+## Frontend Architecture (fta-layout-design)
 
-## 4. Frontend (fta-layout-design)
-
-### 4.1 Stack & Conventions
+### Stack & Conventions
 - Node `20.19.5`
 - React 19, Vite 5, TypeScript 5.5, Ant Design 5 (compact theme)
 - Tailwind only via `@tailwindcss/vite` (no Tailwind configs in components yet)
@@ -114,17 +131,7 @@ Use `./start.sh <port>` for production-style boots.
 - State orchestration via Valtio stores (Project, EditorPage, DesignDetection, DSLData, CodeGeneration)
 - Respect path aliases declared in `vite.config.ts`
 
-### 4.2 Commands
-```bash
-cd fta-layout-design
-npm install
-npm run dev
-npm run build
-npm run preview
-```
-(No automated tests today; add Vitest + RTL when modifying core logic and document manual checks.)
-
-### 4.3 Application Structure
+### Application Structure
 - `src/App.tsx` uses ConfigProvider + React Router to render config-based routes (`src/config/routes.tsx`)
 - Pages
   - `HomePage/` – dashboard with ProjectManagement (CRUD via `useProject`) and AssetManagement placeholder
@@ -142,32 +149,22 @@ npm run preview
   - `src/utils/apiService.ts` centralizes fetch logic, timeouts, and error handling; configure `VITE_API_BASE_URL` & `VITE_REQUEST_TIMEOUT`
   - `src/pages/EditorPage/services/CodeGenerationLoop` contains AgentScheduler + prompts + tool definitions mirroring backend `/neo` behaviour
 
-### 4.4 Manual Verification Expectations
+### Manual Verification Expectations
 Whenever you touch UI logic:
 1. Document the route(s) exercised (`/`, `/editor`, `/requirements`, `/technical`)
 2. Mention which APIs were mocked or hit live
 3. Record key flows (e.g., create/delete project, sync document, start code generation) and any regressions spotted
 
----
-
-## 5. Messages Replayer CLI
+## Messages Replayer CLI
 
 - Location: `messages-replayer/`
 - Purpose: replay `messages.log` verbatim or forward each recorded request to a live endpoint (OpenAI-compatible)
-- Commands:
-  ```bash
-  cd messages-replayer
-  npm install
-  npm run parse               # summary only
-  npm run replay              # reproduce log exactly
-  npm run replay:live         # send to live endpoint (requires env below)
-  ```
 - Environment options: `MODEL_ENDPOINT`, `MODEL_API_KEY`, `MODEL_NAME`, `MODEL_TEMPERATURE`, `MODEL_TIMEOUT`, plus CLI flags (`--api-url`, `--api-key`, …)
 - Outputs stored in `messages-replayer/output/`
 
 ---
 
-## 6. Workflow Expectations for Claude Code
+## Workflow Expectations for Claude Code
 
 1. **Read AGENTS.md first** for a speedy reminder of conventions; this CLAUDE.md is the deep dive.
 2. **Stay in package directories** (`code-agent-backend`, `fta-layout-design`, `messages-replayer`) when running commands. Always set `workdir` on shell calls.
@@ -177,29 +174,11 @@ Whenever you touch UI logic:
 6. **Add concise comments only when necessary** (e.g., complex logic). Default to clean TypeScript/JavaScript.
 7. **Testing**: run relevant `npm run test` / `npm run cov` / manual steps when feasible. If you skip due to time or environment, state the reason and suggest follow-up.
 8. **Environment variables**: document any new required keys in README/CLAUDE/AGENTS comments instead of hardcoding them.
-9. **Before submitting**: summarize changes, mention tests executed (or not), and highlight next steps (e.g., “run `npm run cov` before merge”).
+9. **Before submitting**: summarize changes, mention tests executed (or not), and highlight next steps (e.g., "run `npm run cov` before merge").
 
----
+## Key Reference Tables
 
-## 7. Quick Reference Tables
-
-### 7.1 Key Scripts
-
-| Location | Script | Description |
-| --- | --- | --- |
-| Backend | `npm run dev` | Midway dev server (ts-node, port 7001) |
-| Backend | `npm run build` | Compiles to `dist/` |
-| Backend | `npm run start` | Runs compiled output via `bootstrap.js` |
-| Backend | `npm run lint` / `lint:fix` | mwts linting |
-| Backend | `npm run prettier` | Repo-wide formatting |
-| Backend | `npm run test` / `npm run cov` | Jest/Midway tests & coverage |
-| Frontend | `npm run dev` | Vite dev server (5173) |
-| Frontend | `npm run build` | Production bundle |
-| Frontend | `npm run preview` | Preview production build |
-| CLI | `npm run replay` | Reproduce log verbatim |
-| CLI | `npm run replay:live` | Replay against live endpoint |
-
-### 7.2 Important Paths
+### Important Paths
 
 | Path | Use |
 | --- | --- |
@@ -211,9 +190,7 @@ Whenever you touch UI logic:
 | `fta-layout-design/src/contexts/ProjectContext.tsx` | Frontend state for projects/pages/docs |
 | `messages-replayer/src/parser.js` | Log parsing logic |
 
----
-
-## 8. Troubleshooting Checklist
+## Troubleshooting Checklist
 
 - **Backend fails to boot**: verify Node version (must satisfy `20.19.5`), ensure Mongo/Redis endpoints reachable, and populate `MODEL_*` envs if requirement generation or `/neo` endpoint is hit.
 - **MasterGo DSL import issues**: check `mastergo.baseUrl` & `token` in config, and confirm the design link resolves to `fileId` + `layerId` via `MasterGoService.extractIdsFromUrl`.
@@ -221,13 +198,9 @@ Whenever you touch UI logic:
 - **Frontend hitting 4xx/5xx**: confirm `VITE_API_BASE_URL` in `.env` matches backend port, and whether `VITE_ENABLE_MOCK` needs toggling for offline work.
 - **messages-replayer live mode fails**: double-check `MODEL_ENDPOINT`, `MODEL_API_KEY`, `MODEL_TIMEOUT`, and ensure endpoint speaks OpenAI-compatible JSON.
 
----
-
-## 9. Contribution & Release Notes
+## Contribution & Release Notes
 
 - Follow repo commit practices (short imperative subjects, often Chinese, <72 chars). Keep backend/frontend changes in separate commits when possible.
 - Document manual verification for UI work and `npm run cov` results for backend work.
 - Clean up `files-cache/` and `run/*.json` before pushing branches (avoid leaking DSL or credential traces).
 - When decorators or entity definitions change, regenerate Midway typings with `npx midway-bin dev --ts` if needed.
-
-Happy shipping!
