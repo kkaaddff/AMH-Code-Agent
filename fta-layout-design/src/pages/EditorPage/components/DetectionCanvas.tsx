@@ -909,12 +909,69 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
       e.stopPropagation();
 
+      // 1. 找到鼠标现在指向canvas的哪个点
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      if (!containerRect) return;
+
+      // 鼠标在容器中的位置
+      const mouseInContainerX = mouseX - containerRect.left;
+      const mouseInContainerY = mouseY - containerRect.top;
+
+      // 计算当前鼠标指向的canvas坐标
+      const canvasX = (mouseInContainerX - contentOffset.x - panOffset.x) / effectiveScale;
+      const canvasY = (mouseInContainerY - contentOffset.y - panOffset.y) / effectiveScale;
+
+      // 检查鼠标是否在canvas范围内（包括padding区域）
+      const isInCanvas = canvasX >= -horizontalPadding && canvasX <= width + horizontalPadding &&
+                       canvasY >= -verticalPadding && canvasY <= height + verticalPadding;
+
+      // 调试信息（可以删除，先保留看看）
+      console.log('缩放调试:', {
+        mouseInContainerX, mouseInContainerY,
+        canvasX, canvasY,
+        width, height,
+        horizontalPadding, verticalPadding,
+        isInCanvas
+      });
+
+      // 2. 缩放
       const delta = e.deltaY > 0 ? -SCALE_CONFIG.WHEEL_SCALE_STEP : SCALE_CONFIG.WHEEL_SCALE_STEP;
       const newScale = Math.max(SCALE_CONFIG.MIN_SCALE, Math.min(SCALE_CONFIG.MAX_SCALE, scale + delta));
 
-      onScaleChange(newScale);
+      if (newScale === scale) return;
+
+      const newEffectiveScale = newScale === 0 ? 1 : newScale;
+
+      // 3. 根据鼠标位置选择缩放方式
+      if (isInCanvas) {
+        // 鼠标在canvas内：以鼠标位置为中心缩放（指哪打哪）
+        // 先计算下一帧的contentOffset（基于新缩放比例）
+        const newScaledWidth = (width + horizontalPadding * 2) * newEffectiveScale;
+        const newScaledHeight = (height + verticalPadding * 2) * newEffectiveScale;
+        const nextContentOffsetX = containerSize.width ? (containerSize.width - newScaledWidth) / 2 : 0;
+        const nextContentOffsetY = containerSize.height ? (containerSize.height - newScaledHeight) / 2 : 0;
+
+        // 精确计算新的panOffset，确保canvas坐标完全保持在鼠标位置
+        // 公式：新偏移 = 鼠标位置 - 下一帧偏移 - (canvas坐标 * 新缩放比例)
+        const newPanOffsetX = mouseInContainerX - nextContentOffsetX - canvasX * newEffectiveScale;
+        const newPanOffsetY = mouseInContainerY - nextContentOffsetY - canvasY * newEffectiveScale;
+
+        // 确保偏移精确性：四舍五入到整数像素，避免亚像素偏移
+        const precisePanOffsetX = Math.round(newPanOffsetX);
+        const precisePanOffsetY = Math.round(newPanOffsetY);
+
+        onScaleChange(newScale);
+        commitPanOffset({ x: precisePanOffsetX, y: precisePanOffsetY });
+      } else {
+        // 鼠标在canvas外：以canvas中心点缩放（固定逻辑）
+        onScaleChange(newScale);
+      }
     },
-    [scale, onScaleChange]
+    [scale, onScaleChange, width, height, horizontalPadding, verticalPadding,
+       containerSize, panOffset, effectiveScale, commitPanOffset]
   );
 
   const styles = useMemo(() => {
