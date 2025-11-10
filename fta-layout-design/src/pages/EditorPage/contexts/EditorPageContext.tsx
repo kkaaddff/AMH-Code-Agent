@@ -32,7 +32,7 @@ export const editorPageActions = {
   },
   setCurrentPage: (value: Page | null | ((prev: Page | null) => Page | null)) => {
     editorPageStore.currentPage = typeof value === 'function' ? value(editorPageStore.currentPage || null) : value;
-    editorPageStore.currentPage?.designDocuments.map((doc) => {
+    editorPageStore.currentPage?.designDocuments.forEach((doc) => {
       if (!doc.data) {
         return;
       }

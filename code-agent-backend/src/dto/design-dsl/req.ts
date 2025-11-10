@@ -1,12 +1,13 @@
 import { ApiProperty } from '@midwayjs/swagger';
+import { DSLData } from '../../types/design-dsl';
 
-export class ProcessDesignDSLRequest {
+export class ProcessDSLDataRequest {
   @ApiProperty({
-    example: 'search-result',
-    description: 'DSL文件的名称或标识',
-    required: false,
+    example: {},
+    description: '原始 DSLData JSON 数据',
+    required: true,
   })
-  public name?: string;
+  public dsl: DSLData;
 
   @ApiProperty({
     example: true,

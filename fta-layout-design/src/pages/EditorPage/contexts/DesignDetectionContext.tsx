@@ -3,10 +3,11 @@ import { proxy, useSnapshot } from 'valtio';
 import type { DataNode } from 'antd/es/tree';
 import { FileImageOutlined, ReloadOutlined } from '@ant-design/icons';
 import { App, Button, Space, Typography } from 'antd';
-import { DSLData, DSLNode } from '@/types/dsl';
+import { DesignDSL, DSLNode } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import { api } from '@/utils/apiService';
 import { componentDetectionDebugLog } from '@/utils/componentDetectionDebug';
+import { dslService } from '@/services/dslService';
 import {
   AnnotationState,
   AnnotationNode,
@@ -291,7 +292,7 @@ const findContainingDSLNode = (selectedAnnotations: AnnotationNode[], selectedDS
 interface DesignDocumentDetectionState {
   rootAnnotation: AnnotationNode | null;
   annotations: AnnotationNode[];
-  dslData: DSLData | null;
+  dslData: DesignDSL | null;
   readonly dslRootNode: DSLNode | null;
   isLoading: boolean;
   error: string | null;
@@ -302,7 +303,7 @@ interface DesignDetectionState extends AnnotationState {
   showAllBorders: boolean;
   selectedNodeIds: SelectedNodeItem[];
   designStoreMap: Record<string, DesignDocumentDetectionState>;
-  dslData: DSLData | null;
+  dslData: DesignDSL | null;
   readonly dslRootNode: DSLNode | null;
   readonly currentDesignId: string | null;
 }
@@ -311,7 +312,7 @@ const createEmptyDesignDocumentState = (): DesignDocumentDetectionState => {
   const state = {
     rootAnnotation: null,
     annotations: [],
-    dslData: null as DSLData | null,
+    dslData: null as DesignDSL | null,
     isLoading: false,
     error: null,
     versionToken: null,
@@ -362,7 +363,7 @@ export const designDetectionStore = proxy<DesignDetectionState>({
     }
     return this.designStoreMap[this.currentDesignId]?.dslData ?? null;
   },
-  set dslData(value: DSLData | null) {
+  set dslData(value: DesignDSL | null) {
     if (!this.currentDesignId) return;
     if (!this.designStoreMap[this.currentDesignId]) {
       this.designStoreMap[this.currentDesignId] = createEmptyDesignDocumentState();
@@ -392,7 +393,7 @@ const setDesignRootAnnotation = (designId: string, root: AnnotationNode | null) 
   target.annotations = root ? flattenAnnotationTree(root) : [];
 };
 
-const setDesignDslData = (designId: string, data: DSLData | null) => {
+const setDesignDslData = (designId: string, data: DesignDSL | null) => {
   const target = ensureDesignDocumentState(designId);
   target.dslData = data;
 };
@@ -422,16 +423,24 @@ const fetchDesignDocumentDSLInternal = async (doc: DocumentReference): Promise<v
 
   try {
     const response = await api.project.document.getContent({ documentId: doc.id });
-    const dslData: DSLData | undefined = response?.data?.data;
-    if (!dslData) {
+    const rawDslData: DesignDSL | undefined = response?.data?.data;
+    if (!rawDslData) {
       throw new Error('没有获取到DSL数据');
     }
+
+    // 通过后端接口处理 DSL 数据（转换 PATH 为 LAYER 等）
+    const processedDesignDSL = await dslService.processDSL({
+      dsl: rawDslData.dsl,
+      convertPaths: true,
+    });
 
     const rootAnnotation = createRootAnnotationFromDesignDoc(doc);
     if (!rootAnnotation) {
       throw new Error('DSL数据中缺少根节点');
     }
-    setDesignDslData(doc.id, dslData);
+    setDesignDslData(doc.id, {
+      dsl: processedDesignDSL.dsl,
+    });
     setDesignRootAnnotation(doc.id, rootAnnotation);
     target.versionToken = versionToken;
   } catch (error) {
@@ -471,16 +480,26 @@ export const designDetectionActions = {
   },
 
   // 直接写入设计文档的DSL/标注数据（不切换当前激活文档）
-  hydrateDesignDocument: (
+  hydrateDesignDocument: async (
     designId: string,
     payload: {
       rootAnnotation?: AnnotationNode | null;
-      dslData?: DSLData | null;
+      dslData?: DesignDSL | null;
     }
   ) => {
     if (!designId) return;
-    if ('dslData' in payload) {
-      setDesignDslData(designId, payload.dslData ?? null);
+    if ('dslData' in payload && payload.dslData) {
+      // 通过后端接口处理 DSL 数据（转换 PATH 为 LAYER 等）
+      const processedDesignDSL = await dslService.processDSL({
+        dsl: payload.dslData.dsl,
+        convertPaths: true,
+      });
+
+      setDesignDslData(designId, {
+        dsl: processedDesignDSL.dsl,
+      });
+    } else if ('dslData' in payload) {
+      setDesignDslData(designId, null);
     }
     if ('rootAnnotation' in payload) {
       setDesignRootAnnotation(designId, payload.rootAnnotation ?? null);
@@ -668,7 +687,7 @@ export const designDetectionActions = {
 
     const rootWithInsertion = insertAnnotation(updatedRoot);
     const sortedRootAnnotation = sortAnnotationChildren(rootWithInsertion);
-    const flattenedAnnotations = flattenAnnotationTree(sortedRootAnnotation);
+    // const flattenedAnnotations = flattenAnnotationTree(sortedRootAnnotation);
 
     const expandedKeysSet = new Set(designDetectionStore.expandedKeys);
     expandedKeysSet.add(parent.id);
@@ -862,11 +881,11 @@ export const designDetectionActions = {
       nextSelected = findAnnotationById(annotationId);
     }
 
-    const nextExpandedKeys = designDetectionStore.expandedKeys
-      .filter((key) => !removedChildIds.includes(key))
-      .concat(
-        removedChildIds.length > 0 && !designDetectionStore.expandedKeys.includes(annotationId) ? [annotationId] : []
-      );
+    // const nextExpandedKeys = designDetectionStore.expandedKeys
+    //   .filter((key) => !removedChildIds.includes(key))
+    //   .concat(
+    //     removedChildIds.length > 0 && !designDetectionStore.expandedKeys.includes(annotationId) ? [annotationId] : []
+    //   );
 
     designDetectionStore.rootAnnotation = sortedRootAnnotation;
     designDetectionStore.selectedAnnotation = nextSelected;
@@ -985,11 +1004,6 @@ export const designDetectionActions = {
   // 切换显示所有框线
   toggleShowAllBorders: () => {
     designDetectionStore.showAllBorders = !designDetectionStore.showAllBorders;
-  },
-
-  // 更新DSL根节点
-  updateDslRootNode: (designId: string, data: DSLData | null) => {
-    setDesignDslData(designId, data);
   },
 
   // 保存标注

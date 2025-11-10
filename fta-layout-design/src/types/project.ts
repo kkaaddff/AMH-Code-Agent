@@ -1,5 +1,5 @@
 import { AnnotationNode } from '@/pages/EditorPage/types/componentDetection';
-import { DSLData } from './dsl';
+import { DesignDSL, DSLData } from './dsl';
 
 export interface Project {
   id: string;
@@ -134,7 +134,7 @@ export interface DocumentReference {
   createdAt: string;
   updatedAt: string;
   annotationData?: AnnotationSnapshot;
-  data?: DSLData;
+  data?: DesignDSL;
 }
 
 export interface SyncHistoryItem {

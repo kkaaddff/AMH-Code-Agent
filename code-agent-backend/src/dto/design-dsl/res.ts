@@ -1,19 +1,19 @@
 import { ApiProperty } from '@midwayjs/swagger';
 import { AsyncResponse } from '../../types';
-import { DesignDSL } from '../../types/design-dsl';
+import { DesignDSL, DSLData } from '../../types/design-dsl';
 
-export class GetDesignDSLResponse extends AsyncResponse {
-  @ApiProperty({ description: 'DesignDSL数据' })
-  public data: DesignDSL;
+export class GetDSLDataResponse extends AsyncResponse {
+  @ApiProperty({ description: 'DSLData数据' })
+  public data: DSLData;
 
-  constructor(data: DesignDSL) {
+  constructor(data: DSLData) {
     super();
     this.data = data;
   }
 }
 
-export class ProcessDesignDSLResponse extends AsyncResponse {
-  @ApiProperty({ description: '处理后的DesignDSL数据' })
+export class ProcessDSLDataResponse extends AsyncResponse {
+  @ApiProperty({ description: '处理后的DSLData数据' })
   public data: DesignDSL;
 
   @ApiProperty({ description: '处理统计信息' })

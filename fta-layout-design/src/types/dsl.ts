@@ -95,9 +95,10 @@ export interface DSLPathNode extends DSLBaseNode {
 
 export type DSLNode = DSLFrameNode | DSLInstanceNode | DSLTextNode | DSLLayerNode | DSLPathNode | DSLBaseNode;
 
+export interface DesignDSL {
+  dsl: DSLData;
+}
 export interface DSLData {
-  dsl: {
-    styles: DSLStyles;
-    nodes: DSLNode[];
-  };
+  styles: DSLStyles;
+  nodes: DSLNode[];
 }
