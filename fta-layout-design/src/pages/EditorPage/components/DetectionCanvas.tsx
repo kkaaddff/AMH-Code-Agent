@@ -921,6 +921,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       const mouseInContainerY = mouseY - containerRect.top;
 
       // 计算当前鼠标指向的canvas坐标
+      // 回到最初的正确逻辑
       const canvasX = (mouseInContainerX - contentOffset.x - panOffset.x) / effectiveScale;
       const canvasY = (mouseInContainerY - contentOffset.y - panOffset.y) / effectiveScale;
 
@@ -931,6 +932,11 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       // 调试信息（可以删除，先保留看看）
       console.log('缩放调试:', {
         mouseInContainerX, mouseInContainerY,
+        contentOffsetX: contentOffset.x,
+        contentOffsetY: contentOffset.y,
+        panOffsetX: panOffset.x,
+        panOffsetY: panOffset.y,
+        effectiveScale,
         canvasX, canvasY,
         width, height,
         horizontalPadding, verticalPadding,
@@ -955,7 +961,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
         const nextContentOffsetY = containerSize.height ? (containerSize.height - newScaledHeight) / 2 : 0;
 
         // 精确计算新的panOffset，确保canvas坐标完全保持在鼠标位置
-        // 公式：新偏移 = 鼠标位置 - 下一帧偏移 - (canvas坐标 * 新缩放比例)
+        // 回到最初的正确逻辑
         const newPanOffsetX = mouseInContainerX - nextContentOffsetX - canvasX * newEffectiveScale;
         const newPanOffsetY = mouseInContainerY - nextContentOffsetY - canvasY * newEffectiveScale;
 
