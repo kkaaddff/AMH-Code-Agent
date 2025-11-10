@@ -18,6 +18,8 @@ import { createFileDraftTool, FileDraftStore } from './tools/fileDraft';
 export type FrontendProjectWorkflowCallbacks = ProjectTaskCallbacks;
 
 export type FrontendProjectWorkflowOptions = {
+  rootAnnotation: string;
+  designDsl: string;
   cwd: string;
   productName: string;
   version: string;
@@ -74,6 +76,8 @@ export async function runFrontendProjectWorkflow(
 
     const systemPrompt = generateFrontendProjectPrompt({
       specs: Object.keys(opts.specFiles),
+      designDsl: opts.designDsl,
+      componentAnnotation: opts.rootAnnotation,
     });
 
     const model = (await resolveModelWithContext(context.config.model, context)).model!;

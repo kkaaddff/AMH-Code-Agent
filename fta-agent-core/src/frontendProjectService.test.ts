@@ -8,10 +8,15 @@ import { runFrontendProjectWorkflow } from './frontendProjectService';
 import { createSpecReaderTool } from './tools/specReader';
 import { FileDraftStore } from './tools/fileDraft';
 import type { Usage } from './usage';
+import { flattenAnnotation, formatAnnotationSummary, type AnnotationNode } from './utils/annotation';
 loadEnv({ path: path.join(process.cwd(), '.env') });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
+
+const rootAnnotation = fs.readFileSync(path.join(__dirname, 'tests/fixtures/rootAnnotation.json'), 'utf-8');
+const designDsl = fs.readFileSync(path.join(__dirname, 'tests/fixtures/designDsl.json'), 'utf-8');
+const rootAnnotationSummary = formatAnnotationSummary(flattenAnnotation(JSON.parse(rootAnnotation) as AnnotationNode));
 
 describe('FrontendProjectWorkflow integration (no mocks)', () => {
   let projectDir: string;
@@ -138,6 +143,8 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
         planModel: 'glm-4.6',
       },
       callbacks,
+      rootAnnotation: rootAnnotationSummary,
+      designDsl: designDsl,
     });
 
     expect(result.success).toBe(true);
