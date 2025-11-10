@@ -87,10 +87,9 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       canvas.style.cursor = isSpacePressedRef.current ? 'grab' : 'default';
     }
   }, []);
-
   // Get root node dimensions
   const { rootNode, width, height } = useMemo(() => {
-    const node = dslData.dsl.nodes[0];
+    const node = dslData?.dsl.nodes[0] ?? null;
     return {
       rootNode: node,
       width: node?.layoutStyle?.width || 720,

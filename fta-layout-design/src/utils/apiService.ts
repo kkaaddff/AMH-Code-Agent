@@ -5,6 +5,7 @@
 
 import { buildApiUrl, currentApiConfig, API_ENDPOINTS } from '@/config/api';
 import type { DocumentReference } from '@/types/project';
+import { DSLData } from '@/types/dsl';
 
 // 请求配置接口
 export interface RequestConfig {
@@ -357,6 +358,13 @@ export const api = {
      * @returns 导出结果响应 Promise
      */
     export: (params: { projectId: string; format?: string }) => ApiService.get(API_ENDPOINTS.dsl.export, { params }),
+    /**
+     * 处理 DSL 数据（转换 PATH 为 LAYER 等）。
+     * @param data 包含 DSL 数据的请求体
+     * @returns 处理后的 DSL 数据响应 Promise
+     */
+    process: (data: { dsl: DSLData; convertPaths?: boolean; keepOriginalPaths?: boolean }) =>
+      ApiService.post(API_ENDPOINTS.dsl.process, data),
   },
 
   // 组件识别相关

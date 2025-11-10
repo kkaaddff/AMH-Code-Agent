@@ -56,6 +56,7 @@ export const API_ENDPOINTS = {
     upload: '/code-agent/dsl/upload',
     parse: '/code-agent/dsl/parse',
     export: '/code-agent/dsl/export',
+    process: '/code-agent/dsl/process',
   },
   // 组件识别相关
   component: {

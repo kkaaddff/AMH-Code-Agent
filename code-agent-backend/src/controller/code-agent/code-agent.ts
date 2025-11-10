@@ -4,14 +4,15 @@ import * as path from 'path';
 import {
   ConvertPathRequest,
   ConvertPathResponse,
-  GetDesignDSLResponse,
-  ProcessDesignDSLRequest,
-  ProcessDesignDSLResponse,
+  GetDSLDataResponse,
+  ProcessDSLDataRequest,
+  ProcessDSLDataResponse,
   RedisGetResponse,
   RedisSetRequest,
   RedisSetResponse,
 } from '../../dto/design-dsl';
 import { DesignDSLService } from '../../service/code-agent/design-dsl';
+import { DesignDSL } from '../../types/design-dsl';
 
 @Controller('/code-agent')
 export class CodeAgentController {
@@ -22,28 +23,31 @@ export class CodeAgentController {
   private designDSLService: DesignDSLService;
 
   /**
-   * 获取DesignDSL原始数据
+   * 获取DSLData原始数据
    */
   @Get('/dsl')
-  async getDesignDSL(): Promise<GetDesignDSLResponse> {
+  async getDSLData(): Promise<GetDSLDataResponse> {
     const dslPath = path.join(process.cwd(), 'DesignDSL.json');
     const dslData = await this.designDSLService.readDesignDSLFile(dslPath);
-    return new GetDesignDSLResponse(dslData);
+    return new GetDSLDataResponse(dslData);
   }
 
   /**
    * 处理DesignDSL数据
    */
   @Post('/dsl/process')
-  async processDesignDSL(@Body() body: ProcessDesignDSLRequest): Promise<ProcessDesignDSLResponse> {
-    const dslPath = path.join(process.cwd(), 'DesignDSL.json');
-    const originalDSL = await this.designDSLService.readDesignDSLFile(dslPath);
+  async processDSLData(@Body() body: ProcessDSLDataRequest): Promise<ProcessDSLDataResponse> {
+    if (!body.dsl) {
+      this.ctx.status = 400;
+      throw new Error('DSL data is required');
+    }
 
+    const originalDSL = body as unknown as DesignDSL;
     const processedDSL =
       body.convertPaths === false ? originalDSL : await this.designDSLService.processDesignDSL(originalDSL);
     const stats = await this.designDSLService.getDSLStats(processedDSL);
 
-    return new ProcessDesignDSLResponse(processedDSL, stats);
+    return new ProcessDSLDataResponse(processedDSL, stats);
   }
 
   /**

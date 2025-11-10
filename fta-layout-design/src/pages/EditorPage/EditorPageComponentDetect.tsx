@@ -1,5 +1,5 @@
 import { projectService } from '@/services/projectService';
-import { DSLData, DSLNode } from '@/types/dsl';
+import { DesignDSL, DSLData, DSLNode } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import {
   AppstoreOutlined,
@@ -509,7 +509,7 @@ const EditorPageContent: React.FC = () => {
 
                     <div id='detection-canvas-container' className='editor-page-detection-canvas-container'>
                       <DetectionCanvas
-                        dslData={designDetectionStore.dslData as DSLData}
+                        dslData={designDetectionStore.dslData as DesignDSL}
                         scale={scale}
                         onScaleChange={handleScaleChange}
                         highlightedNodeId={null}

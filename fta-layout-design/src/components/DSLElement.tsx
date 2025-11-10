@@ -8,6 +8,7 @@ import {
   DSLInstanceNode,
   DSLData,
   DSLStyles,
+  DesignDSL,
 } from '../types/dsl';
 import {
   parseColor,
@@ -21,7 +22,7 @@ import { parseBorderStyle, parseEffectStyle } from '../utils/layoutUtils';
 
 interface DSLElementProps {
   node?: DSLNode;
-  dslData?: DSLData | null;
+  dslData?: DesignDSL | null;
   onSelect?: (nodeId: string | null) => void;
   onHover?: (nodeId: string | null) => void;
   selectedNodeId?: string | null;
@@ -227,14 +228,12 @@ const DSLElement: React.FC<DSLElementProps> = ({ node, dslData, onSelect, onHove
             position: 'relative',
             ...parseLayoutStyle(pathNode.layoutStyle),
           }}
-          {...elementProps}
-        >
+          {...elementProps}>
           <svg
             width={width}
             height={height}
             viewBox={`0 0 ${width} ${height}`}
-            style={{ position: 'absolute', top: 0, left: 0 }}
-          >
+            style={{ position: 'absolute', top: 0, left: 0 }}>
             <path
               d={pathData.data}
               fill={fillColor}
