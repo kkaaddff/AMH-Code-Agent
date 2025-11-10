@@ -45,11 +45,7 @@ export const GlobalContext = createContext<GlobalContextType | null>(null);
 
 ```typescript
 // types/actions.ts
-export type GlobalAction =
-  | UserAction
-  | AppAction
-  | AuthAction
-  | ThemeAction;
+export type GlobalAction = UserAction | AppAction | AuthAction | ThemeAction;
 
 // 用户相关 actions
 export type UserAction =
@@ -70,10 +66,7 @@ export type AppAction =
 
 ```typescript
 // reducers/globalReducer.ts
-export const globalReducer = (
-  state: GlobalState,
-  action: GlobalAction
-): GlobalState => {
+export const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {
   switch (action.type) {
     case 'SET_USER':
       return { ...state, user: { ...state.user, ...action.payload } };
@@ -121,17 +114,20 @@ export const useGlobalState = () => {
 export const useAuth = () => {
   const { state, dispatch, actions } = useGlobalState();
 
-  const login = useCallback(async (credentials: LoginCredentials) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    try {
-      const user = await authService.login(credentials);
-      dispatch({ type: 'SET_USER', payload: user });
-      dispatch({ type: 'SET_LOADING', payload: false });
-    } catch (error) {
-      dispatch({ type: 'SET_LOADING', payload: false });
-      throw error;
-    }
-  }, [dispatch]);
+  const login = useCallback(
+    async (credentials: LoginCredentials) => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      try {
+        const user = await authService.login(credentials);
+        dispatch({ type: 'SET_USER', payload: user });
+        dispatch({ type: 'SET_LOADING', payload: false });
+      } catch (error) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        throw error;
+      }
+    },
+    [dispatch]
+  );
 
   return {
     user: state.user,
@@ -180,10 +176,7 @@ const [formState, formDispatch] = useReducer(formReducer, initialFormState);
 
 ```typescript
 // hooks/usePersistedState.ts
-export const usePersistedState = <T>(
-  key: string,
-  initialValue: T
-): [T, Dispatch<SetStateAction<T>>] => {
+export const usePersistedState = <T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] => {
   const [state, setState] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
@@ -212,10 +205,7 @@ export const usePersistedState = <T>(
 
 ```typescript
 // hooks/useAsyncData.ts
-export const useAsyncData = <T>(
-  fetcher: () => Promise<T>,
-  dependencies: any[] = []
-) => {
+export const useAsyncData = <T>(fetcher: () => Promise<T>, dependencies: any[] = []) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -238,7 +228,9 @@ export const useAsyncData = <T>(
 
     fetchData();
 
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, dependencies);
 
   return { data, loading, error, refetch: () => fetchData() };
@@ -261,12 +253,15 @@ export const useAsyncData = <T>(
 export const useErrorHandler = () => {
   const dispatch = useGlobalDispatch();
 
-  return useCallback((error: Error) => {
-    dispatch({
-      type: 'SET_NOTIFICATION',
-      payload: { type: 'error', message: error.message }
-    });
-  }, [dispatch]);
+  return useCallback(
+    (error: Error) => {
+      dispatch({
+        type: 'SET_NOTIFICATION',
+        payload: { type: 'error', message: error.message },
+      });
+    },
+    [dispatch]
+  );
 };
 ```
 
@@ -278,7 +273,7 @@ type StateShape = {
   [K in keyof GlobalState]: {
     current: GlobalState[K];
     previous?: GlobalState[K];
-  }
+  };
 };
 ```
 

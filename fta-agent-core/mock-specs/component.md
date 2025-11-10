@@ -3,24 +3,29 @@
 ## 组件设计原则
 
 ### 1. 单一职责原则 (SRP)
+
 每个组件只负责一个明确的功能，保持组件的专注和可维护性。
 
 ### 2. 开放封闭原则 (OCP)
+
 组件对扩展开放，对修改封闭。通过 props 和 children 实现功能扩展。
 
 ### 3. 依赖倒置原则 (DIP)
+
 高层组件不依赖低层组件，都依赖于抽象（接口）。
 
 ### 4. 组合优于继承
+
 使用组件组合而不是继承来复用代码。
 
 ## 组件分类
 
 ### 1. 基础 UI 组件 (Base Components)
-位于 `src/components/ui/`，提供最基础的 UI 元素。
+
+`@fta/components`组件库提供最基础的 UI 元素。
 
 ```typescript
-// Button.tsx
+// Button
 interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'text';
   size?: 'sm' | 'md' | 'lg';
@@ -30,23 +35,11 @@ interface ButtonProps {
   children: ReactNode;
   onClick?: () => void;
 }
-
-export const Button: FC<ButtonProps> = ({
-  variant = 'primary',
-  size = 'md',
-  disabled = false,
-  loading = false,
-  icon,
-  children,
-  onClick,
-  ...props
-}) => {
-  // 组件实现
-};
 ```
 
 ### 2. 业务组件 (Business Components)
-位于 `src/components/business/`，包含特定业务逻辑的复合组件。
+
+位于 `src/components/`，包含特定业务逻辑的复合组件。
 
 ```typescript
 // UserProfileCard.tsx
@@ -56,20 +49,14 @@ interface UserProfileCardProps {
   showActions?: boolean;
 }
 
-export const UserProfileCard: FC<UserProfileCardProps> = ({
-  user,
-  onEdit,
-  showActions = true,
-}) => {
+export const UserProfileCard: FC<UserProfileCardProps> = ({ user, onEdit, showActions = true }) => {
   // 业务逻辑实现
 };
 ```
 
 ### 3. 页面组件 (Page Components)
-位于 `src/pages/`，代表应用中的完整页面。
 
-### 4. 布局组件 (Layout Components)
-位于 `src/layouts/`，负责页面整体布局结构。
+位于 `src/pages/`，代表应用中的完整页面。
 
 ## 组件接口设计
 
@@ -120,24 +107,18 @@ const Card: FC<CardProps> & {
   Body: typeof CardBody;
   Footer: typeof CardFooter;
 } = ({ children, className, bordered = true }) => {
-  return (
-    <div className={`card ${bordered ? 'card-bordered' : ''} ${className || ''}`}>
-      {children}
-    </div>
-  );
+  return <View className={`card ${bordered ? 'card-bordered' : ''} ${className || ''}`}>{children}</View>;
 };
 
 // 子组件
-const CardHeader: FC<{ children: ReactNode }> = ({ children }) => (
-  <div className="card-header">{children}</div>
-);
+const CardHeader: FC<{ children: ReactNode }> = ({ children }) => <View className='card-header'>{children}</View>;
 
 // 使用方式
 <Card>
   <Card.Header>标题</Card.Header>
   <Card.Body>内容</Card.Body>
   <Card.Footer>底部</Card.Footer>
-</Card>
+</Card>;
 ```
 
 ## 组件实现模式
@@ -152,12 +133,7 @@ interface DataTableProps {
   onRowClick?: (row: Record<string, any>) => void;
 }
 
-export const DataTable: FC<DataTableProps> = ({
-  data,
-  columns,
-  loading,
-  onRowClick,
-}) => {
+export const DataTable: FC<DataTableProps> = ({ data, columns, loading, onRowClick }) => {
   // 状态管理
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [filters, setFilters] = useState<FilterState>({});
@@ -175,7 +151,7 @@ export const DataTable: FC<DataTableProps> = ({
 
   // 事件处理
   const handleSort = useCallback((key: string) => {
-    setSortConfig(prev => ({
+    setSortConfig((prev) => ({
       key,
       direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
     }));
@@ -184,11 +160,7 @@ export const DataTable: FC<DataTableProps> = ({
   // 渲染
   if (loading) return <Spinner />;
 
-  return (
-    <div className="data-table">
-      {/* 表格实现 */}
-    </div>
-  );
+  return <View className='data-table'>{/* 表格实现 */}</View>;
 };
 ```
 
@@ -203,28 +175,20 @@ interface InputFieldProps {
   placeholder?: string;
 }
 
-export const InputField: FC<InputFieldProps> = ({
-  value,
-  onChange,
-  error,
-  label,
-  placeholder,
-}) => {
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-  }, [onChange]);
+export const InputField: FC<InputFieldProps> = ({ value, onChange, error, label, placeholder }) => {
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      onChange(e.target.value);
+    },
+    [onChange]
+  );
 
   return (
-    <div className="input-field">
+    <View className='input-field'>
       {label && <label>{label}</label>}
-      <input
-        value={value}
-        onChange={handleChange}
-        placeholder={placeholder}
-        className={error ? 'error' : ''}
-      />
-      {error && <span className="error-message">{error}</span>}
-    </div>
+      <input value={value} onChange={handleChange} placeholder={placeholder} className={error ? 'error' : ''} />
+      {error && <Text className='error-message'>{error}</Text>}
+    </View>
   );
 };
 ```
@@ -237,16 +201,16 @@ const ParentComponent: FC = () => {
   const [activeTab, setActiveTab] = useState('home');
 
   return (
-    <div>
+    <View>
       <Tabs activeTab={activeTab} onTabChange={setActiveTab}>
-        <Tab id="home" label="首页">
+        <Tab id='home' label='首页'>
           <HomeContent />
         </Tab>
-        <Tab id="profile" label="个人资料">
+        <Tab id='profile' label='个人资料'>
           <ProfileContent />
         </Tab>
       </Tabs>
-    </div>
+    </View>
   );
 };
 
@@ -308,11 +272,8 @@ const StyledButton = styled.button<{ variant: 'primary' | 'secondary' }>`
   cursor: pointer;
   transition: all 0.2s ease;
 
-  background-color: ${props =>
-    props.variant === 'primary'
-      ? props.theme.colors.primary
-      : props.theme.colors.secondary
-  };
+  background-color: ${(props) =>
+    props.variant === 'primary' ? props.theme.colors.primary : props.theme.colors.secondary};
 
   &:hover {
     opacity: 0.8;
@@ -349,7 +310,7 @@ describe('Button', () => {
   });
 
   it('applies correct variant styles', () => {
-    render(<Button variant="secondary">Button</Button>);
+    render(<Button variant='secondary'>Button</Button>);
     expect(screen.getByRole('button')).toHaveClass('buttonSecondary');
   });
 });
@@ -382,7 +343,7 @@ describe('UserProfileCard', () => {
 
 ### 1. JSDoc 注释
 
-```typescript
+````typescript
 /**
  * 用户资料卡片组件
  *
@@ -403,7 +364,7 @@ interface UserProfileCardProps {
   /** 是否显示操作按钮 */
   showActions?: boolean;
 }
-```
+````
 
 ### 2. Storybook 故事
 
@@ -444,12 +405,15 @@ export const Secondary: Story = {
 ### 1. React.memo 优化
 
 ```typescript
-export const ExpensiveComponent = React.memo<Props>(({ data, onUpdate }) => {
-  return <div>{/* 复杂渲染逻辑 */}</div>;
-}, (prevProps, nextProps) => {
-  // 自定义比较函数
-  return prevProps.data.id === nextProps.data.id;
-});
+export const ExpensiveComponent = React.memo<Props>(
+  ({ data, onUpdate }) => {
+    return <View>{/* 复杂渲染逻辑 */}</View>;
+  },
+  (prevProps, nextProps) => {
+    // 自定义比较函数
+    return prevProps.data.id === nextProps.data.id;
+  }
+);
 ```
 
 ### 2. useMemo 和 useCallback
@@ -460,11 +424,14 @@ const Component: FC<Props> = ({ items, onSelect }) => {
     return items.reduce((sum, item) => sum + item.value, 0);
   }, [items]);
 
-  const handleClick = useCallback((id: string) => {
-    onSelect(id);
-  }, [onSelect]);
+  const handleClick = useCallback(
+    (id: string) => {
+      onSelect(id);
+    },
+    [onSelect]
+  );
 
-  return <div>{/* 组件内容 */}</div>;
+  return <View>{/* 组件内容 */}</View>;
 };
 ```
 
@@ -481,7 +448,7 @@ interface ModalProps {
 }
 
 export const Modal: FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-  const modalRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLViewElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -492,22 +459,21 @@ export const Modal: FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal"
+    <View className='modal-overlay' onClick={onClose}>
+      <View
+        className='modal'
         ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-        onClick={e => e.stopPropagation()}
-      >
-        <h2 id="modal-title">{title}</h2>
-        <button className="modal-close" onClick={onClose} aria-label="关闭">
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby='modal-title'
+        onClick={(e) => e.stopPropagation()}>
+        <h2 id='modal-title'>{title}</h2>
+        <button className='modal-close' onClick={onClose} aria-label='关闭'>
           ×
         </button>
-        <div className="modal-content">{children}</div>
-      </div>
-    </div>
+        <View className='modal-content'>{children}</View>
+      </View>
+    </View>
   );
 };
 ```
@@ -523,11 +489,11 @@ const useKeyboardNavigation = (items: string[], onSelect: (item: string) => void
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          setSelectedIndex(prev => (prev + 1) % items.length);
+          setSelectedIndex((prev) => (prev + 1) % items.length);
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setSelectedIndex(prev => (prev - 1 + items.length) % items.length);
+          setSelectedIndex((prev) => (prev - 1 + items.length) % items.length);
           break;
         case 'Enter':
           e.preventDefault();

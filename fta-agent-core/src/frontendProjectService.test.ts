@@ -1,7 +1,6 @@
 import { config as loadEnv } from 'dotenv';
 import fs from 'fs';
 import { fileURLToPath } from 'node:url';
-import os from 'os';
 import path from 'pathe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runFrontendProjectWorkflow } from './frontendProjectService';
@@ -14,8 +13,13 @@ loadEnv({ path: path.join(process.cwd(), '.env') });
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
 
-const rootAnnotation = fs.readFileSync(path.join(__dirname, 'tests/fixtures/rootAnnotation.json'), 'utf-8');
-const designDsl = fs.readFileSync(path.join(__dirname, 'tests/fixtures/designDsl.json'), 'utf-8');
+// 推荐：输入给 LLM 的 JSON 一律压缩
+const rootAnnotation = JSON.stringify(
+  JSON.parse(fs.readFileSync(path.join(__dirname, 'tests/fixtures/rootAnnotation.json'), 'utf-8'))
+);
+const designDsl = JSON.stringify(
+  JSON.parse(fs.readFileSync(path.join(__dirname, 'tests/fixtures/designDsl.json'), 'utf-8'))
+);
 const rulesFilePath = path.join(__dirname, 'tests/fixtures/fta-project-spec-4agent.md');
 
 const rootAnnotationSummary = formatAnnotationSummary(flattenAnnotation(JSON.parse(rootAnnotation) as AnnotationNode));
@@ -30,18 +34,14 @@ if (!fs.existsSync(mockSpecDir)) {
 }
 
 describe('FrontendProjectWorkflow integration (no mocks)', () => {
-  let projectDir: string;
   let homeDir: string;
   let originalHome: string | undefined;
   let addSpy: any;
 
   beforeEach(() => {
-    projectDir = fs.mkdtempSync(path.join(mockSpecDir, 'frontend-project-repo-'));
     homeDir = fs.mkdtempSync(path.join(mockSpecDir, 'frontend-project-home-'));
     originalHome = process.env.HOME;
     process.env.HOME = homeDir;
-
-    fs.writeFileSync(path.join(projectDir, 'README.md'), '# Temp Repo', 'utf-8');
 
     // Spy FileDraftStore.add 方法，在测试缓存文件夹中写入文件
     const originalAdd = FileDraftStore.prototype.add;
@@ -76,13 +76,6 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
 
     if (originalHome !== undefined) {
       process.env.HOME = originalHome;
-    }
-
-    if (projectDir && fs.existsSync(projectDir)) {
-      fs.rmSync(projectDir, { recursive: true, force: true });
-    }
-    if (homeDir && fs.existsSync(homeDir)) {
-      fs.rmSync(homeDir, { recursive: true, force: true });
     }
   });
 
@@ -130,7 +123,7 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
     };
 
     const result = await runFrontendProjectWorkflow({
-      cwd: projectDir,
+      cwd: homeDir,
       productName: 'frontendProjectTest',
       version: '0.0.0-test',
       specFiles: {},

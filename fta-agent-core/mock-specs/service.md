@@ -748,11 +748,7 @@ export const API_CONFIG = {
 
 ```typescript
 // utils/retry.ts
-export const withRetry = async <T>(
-  fn: () => Promise<T>,
-  maxAttempts = 3,
-  delay = 1000
-): Promise<T> => {
+export const withRetry = async <T>(fn: () => Promise<T>, maxAttempts = 3, delay = 1000): Promise<T> => {
   let lastError: Error;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -766,7 +762,7 @@ export const withRetry = async <T>(
       }
 
       // 指数退避
-      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, attempt - 1)));
+      await new Promise((resolve) => setTimeout(resolve, delay * Math.pow(2, attempt - 1)));
     }
   }
 
@@ -780,10 +776,7 @@ export const withRetry = async <T>(
 // hooks/useApiRequest.ts
 import { useState, useEffect, useRef } from 'react';
 
-export const useApiRequest = <T>(
-  requestFn: () => Promise<T>,
-  dependencies: any[] = []
-) => {
+export const useApiRequest = <T>(requestFn: () => Promise<T>, dependencies: any[] = []) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
