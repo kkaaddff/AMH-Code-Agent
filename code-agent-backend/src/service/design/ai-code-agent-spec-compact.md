@@ -50,10 +50,10 @@ export interface BaseResponse<T> {
   data: T;
 }
 export const Status = {
-  PENDING: "pending",
-  PROCESSING: "processing",
-  COMPLETED: "completed",
-  FAILED: "failed",
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
 } as const;
 export interface BizData {
   id: string;
@@ -73,18 +73,15 @@ export interface BizData {
 export interface PageState {
   pageData?: PageData;
 }
-const { usePageStore, withStore } = createStore<PageState, PageAction>(
-  initialState,
-  reducer
-);
+const { usePageStore, withStore } = createStore<PageState, PageAction>(initialState, reducer);
 export async function fetchPageData(p: Req): Promise<CommonResponse<Res>> {
-  return request("/api", { data: p, needLoading: false });
+  return request('/api', { data: p, needLoading: false });
 }
 const useFetch = () => {
   const { dispatch } = usePageStore();
   const fetchData = useCallback(async () => {
     const r = await fetchPageData();
-    if (r.data) dispatch({ type: "UpdatePageData", payload: r.data });
+    if (r.data) dispatch({ type: 'UpdatePageData', payload: r.data });
   }, [dispatch]);
   return { fetchData };
 };

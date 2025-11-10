@@ -1,13 +1,13 @@
-import { glob } from "glob";
-import { z } from "zod";
-import { createTool } from "../tool";
-import { safeStringify } from "../utils/safeStringify";
+import { glob } from 'glob';
+import { z } from 'zod';
+import { createTool } from '../tool';
+import { safeStringify } from '../utils/safeStringify';
 
 const LIMIT = 100;
 
 export function createGlobTool(opts: { cwd: string }) {
   return createTool({
-    name: "glob",
+    name: 'glob',
     description: `
 Glob
 - Fast file pattern matching tool that works with any codebase size
@@ -16,16 +16,12 @@ Glob
 - Use this tool when you need to find files by name patterns
 `.trim(),
     parameters: z.object({
-      pattern: z.string().describe("The glob pattern to match files against"),
-      path: z
-        .string()
-        .optional()
-        .nullable()
-        .describe("The directory to search in"),
+      pattern: z.string().describe('The glob pattern to match files against'),
+      path: z.string().optional().nullable().describe('The directory to search in'),
     }),
     getDescription: ({ params }) => {
-      if (!params.pattern || typeof params.pattern !== "string") {
-        return "No pattern provided";
+      if (!params.pattern || typeof params.pattern !== 'string') {
+        return 'No pattern provided';
       }
       return params.pattern;
     },
@@ -39,17 +35,11 @@ Glob
           stat: true,
           withFileTypes: true,
         });
-        const sortedPaths = paths.sort(
-          (a, b) => (a.mtimeMs ?? 0) - (b.mtimeMs ?? 0)
-        );
+        const sortedPaths = paths.sort((a, b) => (a.mtimeMs ?? 0) - (b.mtimeMs ?? 0));
         const truncated = sortedPaths.length > LIMIT;
-        const filenames = sortedPaths
-          .slice(0, LIMIT)
-          .map((path) => path.fullpath());
+        const filenames = sortedPaths.slice(0, LIMIT).map((path) => path.fullpath());
         const message = truncated
-          ? `Found ${filenames.length} files in ${
-              Date.now() - start
-            }ms, truncating to ${LIMIT}.`
+          ? `Found ${filenames.length} files in ${Date.now() - start}ms, truncating to ${LIMIT}.`
           : `Found ${filenames.length} files in ${Date.now() - start}ms.`;
         return {
           returnDisplay: message,
@@ -63,12 +53,12 @@ Glob
       } catch (e) {
         return {
           isError: true,
-          llmContent: e instanceof Error ? e.message : "Unknown error",
+          llmContent: e instanceof Error ? e.message : 'Unknown error',
         };
       }
     },
     approval: {
-      category: "read",
+      category: 'read',
     },
   });
 }

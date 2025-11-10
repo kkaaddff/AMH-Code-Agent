@@ -1,10 +1,10 @@
-import fs from "node:fs";
-import path from "pathe";
-import type { ApprovalMode } from "./config";
-import { History } from "./history";
-import type { NormalizedMessage } from "./message";
-import { Usage } from "./usage";
-import { randomUUID } from "./utils/randomUUID";
+import fs from 'node:fs';
+import path from 'pathe';
+import type { ApprovalMode } from './config';
+import { History } from './history';
+import type { NormalizedMessage } from './message';
+import { Usage } from './usage';
+import { randomUUID } from './utils/randomUUID';
 
 export type SessionId = string;
 
@@ -53,7 +53,7 @@ export type SessionConfig = {
 };
 
 const DEFAULT_SESSION_CONFIG: SessionConfig = {
-  approvalMode: "default",
+  approvalMode: 'default',
   approvalTools: [],
   pastedTextMap: {},
   pastedImageMap: {},
@@ -72,12 +72,12 @@ export class SessionConfigManager {
       return DEFAULT_SESSION_CONFIG;
     }
     try {
-      const content = fs.readFileSync(logPath, "utf-8");
-      const lines = content.split("\n").filter(Boolean);
+      const content = fs.readFileSync(logPath, 'utf-8');
+      const lines = content.split('\n').filter(Boolean);
       for (const line of lines) {
         try {
           const parsed = JSON.parse(line);
-          if (parsed.type === "config") {
+          if (parsed.type === 'config') {
             return parsed.config;
           }
         } catch {}
@@ -89,40 +89,36 @@ export class SessionConfigManager {
   }
   write() {
     // TODO: add write lock
-    const configLine = JSON.stringify({ type: "config", config: this.config });
+    const configLine = JSON.stringify({ type: 'config', config: this.config });
     if (!fs.existsSync(this.logPath)) {
       fs.mkdirSync(path.dirname(this.logPath), { recursive: true });
-      fs.writeFileSync(this.logPath, configLine + "\n", "utf-8");
+      fs.writeFileSync(this.logPath, configLine + '\n', 'utf-8');
       return;
     }
     try {
-      const content = fs.readFileSync(this.logPath, "utf-8");
-      const lines = content.split("\n");
+      const content = fs.readFileSync(this.logPath, 'utf-8');
+      const lines = content.split('\n');
       const filteredLines = lines.filter((line) => {
         if (!line) return false;
         try {
           const parsed = JSON.parse(line);
-          return parsed.type !== "config";
+          return parsed.type !== 'config';
         } catch {
           return true;
         }
       });
-      const newContent = [configLine, ...filteredLines].join("\n");
-      fs.writeFileSync(this.logPath, newContent + "\n", "utf-8");
+      const newContent = [configLine, ...filteredLines].join('\n');
+      fs.writeFileSync(this.logPath, newContent + '\n', 'utf-8');
     } catch (e: any) {
-      throw new Error(
-        `Failed to write config to log file: ${this.logPath}: ${e.message}`
-      );
+      throw new Error(`Failed to write config to log file: ${this.logPath}: ${e.message}`);
     }
   }
 }
 
-export function filterMessages(
-  messages: NormalizedMessage[]
-): NormalizedMessage[] {
+export function filterMessages(messages: NormalizedMessage[]): NormalizedMessage[] {
   // Filter to message types only
   const messageTypeOnly = messages.filter((message) => {
-    const isMessage = message.type === "message";
+    const isMessage = message.type === 'message';
     return isMessage;
   });
 
@@ -159,25 +155,19 @@ export function filterMessages(
   return messageTypeOnly.filter((message) => activePath.has(message.uuid));
 }
 
-export function loadSessionMessages(opts: {
-  logPath: string;
-}): NormalizedMessage[] {
+export function loadSessionMessages(opts: { logPath: string }): NormalizedMessage[] {
   if (!fs.existsSync(opts.logPath)) {
     return [];
   }
-  const content = fs.readFileSync(opts.logPath, "utf-8");
+  const content = fs.readFileSync(opts.logPath, 'utf-8');
   const messages = content
-    .split("\n")
+    .split('\n')
     .filter(Boolean)
     .map((line, index) => {
       try {
         return JSON.parse(line);
       } catch (e: any) {
-        throw new Error(
-          `Failed to parse line ${index + 1} of log file: ${opts.logPath}: ${
-            e.message
-          }`
-        );
+        throw new Error(`Failed to parse line ${index + 1} of log file: ${opts.logPath}: ${e.message}`);
       }
     });
   return filterMessages(messages);

@@ -1,37 +1,25 @@
-import path from "pathe";
-import { z } from "zod";
-import { createTool } from "../tool";
-import {
-  createFileTree,
-  listDirectory,
-  MAX_FILES,
-  printTree,
-  TRUNCATED_MESSAGE,
-} from "../utils/list";
+import path from 'pathe';
+import { z } from 'zod';
+import { createTool } from '../tool';
+import { createFileTree, listDirectory, MAX_FILES, printTree, TRUNCATED_MESSAGE } from '../utils/list';
 
 export function createLSTool(opts: { cwd: string; productName: string }) {
   return createTool({
-    name: "ls",
-    description: "Lists files and directories in a given path.",
+    name: 'ls',
+    description: 'Lists files and directories in a given path.',
     parameters: z.object({
-      dir_path: z.string().describe("The path to the directory to list."),
+      dir_path: z.string().describe('The path to the directory to list.'),
     }),
     getDescription: ({ params }) => {
-      if (!params.dir_path || typeof params.dir_path !== "string") {
-        return ".";
+      if (!params.dir_path || typeof params.dir_path !== 'string') {
+        return '.';
       }
       return path.relative(opts.cwd, params.dir_path);
     },
     execute: async (params) => {
       const { dir_path } = params;
-      const fullFilePath = path.isAbsolute(dir_path)
-        ? dir_path
-        : path.resolve(opts.cwd, dir_path);
-      const result = listDirectory(
-        fullFilePath,
-        opts.cwd,
-        opts.productName
-      ).sort();
+      const fullFilePath = path.isAbsolute(dir_path) ? dir_path : path.resolve(opts.cwd, dir_path);
+      const result = listDirectory(fullFilePath, opts.cwd, opts.productName).sort();
       const tree = createFileTree(result);
       const userTree = printTree(opts.cwd, tree);
       if (result.length < MAX_FILES) {
@@ -48,7 +36,7 @@ export function createLSTool(opts: { cwd: string; productName: string }) {
       }
     },
     approval: {
-      category: "read",
+      category: 'read',
     },
   });
 }

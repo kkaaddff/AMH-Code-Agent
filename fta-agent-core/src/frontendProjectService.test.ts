@@ -131,7 +131,7 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
 
     const result = await runFrontendProjectWorkflow({
       cwd: projectDir,
-      productName: 'NEOVATE',
+      productName: 'frontendProjectTest',
       version: '0.0.0-test',
       specFiles: {},
       configOverrides: {

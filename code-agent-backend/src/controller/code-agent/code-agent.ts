@@ -1,13 +1,6 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Inject,
-  Post,
-  Query,
-} from "@midwayjs/decorator";
-import { Context } from "@midwayjs/web";
-import * as path from "path";
+import { Body, Controller, Get, Inject, Post, Query } from '@midwayjs/decorator';
+import { Context } from '@midwayjs/web';
+import * as path from 'path';
 import {
   ConvertPathRequest,
   ConvertPathResponse,
@@ -17,10 +10,10 @@ import {
   RedisGetResponse,
   RedisSetRequest,
   RedisSetResponse,
-} from "../../dto/design-dsl";
-import { DesignDSLService } from "../../service/code-agent/design-dsl";
+} from '../../dto/design-dsl';
+import { DesignDSLService } from '../../service/code-agent/design-dsl';
 
-@Controller("/code-agent")
+@Controller('/code-agent')
 export class CodeAgentController {
   @Inject()
   private ctx: Context;
@@ -31,9 +24,9 @@ export class CodeAgentController {
   /**
    * 获取DesignDSL原始数据
    */
-  @Get("/dsl")
+  @Get('/dsl')
   async getDesignDSL(): Promise<GetDesignDSLResponse> {
-    const dslPath = path.join(process.cwd(), "DesignDSL.json");
+    const dslPath = path.join(process.cwd(), 'DesignDSL.json');
     const dslData = await this.designDSLService.readDesignDSLFile(dslPath);
     return new GetDesignDSLResponse(dslData);
   }
@@ -41,17 +34,13 @@ export class CodeAgentController {
   /**
    * 处理DesignDSL数据
    */
-  @Post("/dsl/process")
-  async processDesignDSL(
-    @Body() body: ProcessDesignDSLRequest
-  ): Promise<ProcessDesignDSLResponse> {
-    const dslPath = path.join(process.cwd(), "DesignDSL.json");
+  @Post('/dsl/process')
+  async processDesignDSL(@Body() body: ProcessDesignDSLRequest): Promise<ProcessDesignDSLResponse> {
+    const dslPath = path.join(process.cwd(), 'DesignDSL.json');
     const originalDSL = await this.designDSLService.readDesignDSLFile(dslPath);
 
     const processedDSL =
-      body.convertPaths === false
-        ? originalDSL
-        : await this.designDSLService.processDesignDSL(originalDSL);
+      body.convertPaths === false ? originalDSL : await this.designDSLService.processDesignDSL(originalDSL);
     const stats = await this.designDSLService.getDSLStats(processedDSL);
 
     return new ProcessDesignDSLResponse(processedDSL, stats);
@@ -60,8 +49,8 @@ export class CodeAgentController {
   /**
    * 获取Redis缓存
    */
-  @Get("/dsl/cache")
-  async getDslCache(@Query("key") key?: string): Promise<RedisGetResponse> {
+  @Get('/dsl/cache')
+  async getDslCache(@Query('key') key?: string): Promise<RedisGetResponse> {
     if (!key) {
       this.ctx.status = 400;
       return new RedisGetResponse(null);
@@ -73,9 +62,9 @@ export class CodeAgentController {
   /**
    * 设置Redis缓存
    */
-  @Post("/dsl/cache")
+  @Post('/dsl/cache')
   async setDslCache(@Body() body: RedisSetRequest): Promise<RedisSetResponse> {
-    if (!body?.key || typeof body.value !== "string") {
+    if (!body?.key || typeof body.value !== 'string') {
       this.ctx.status = 400;
       return new RedisSetResponse(false);
     }
@@ -86,20 +75,10 @@ export class CodeAgentController {
   /**
    * 转换单个SVG路径
    */
-  @Post("/dsl/convert-path")
-  async convertPath(
-    @Body() body: ConvertPathRequest
-  ): Promise<ConvertPathResponse> {
-    const result = await this.designDSLService.convertSinglePath(
-      body.pathData,
-      body.fillStyle,
-      body.iconName
-    );
+  @Post('/dsl/convert-path')
+  async convertPath(@Body() body: ConvertPathRequest): Promise<ConvertPathResponse> {
+    const result = await this.designDSLService.convertSinglePath(body.pathData, body.fillStyle, body.iconName);
 
-    return new ConvertPathResponse(
-      result.imageUrl,
-      result.styleId,
-      result.svgPath
-    );
+    return new ConvertPathResponse(result.imageUrl, result.styleId, result.svgPath);
   }
 }

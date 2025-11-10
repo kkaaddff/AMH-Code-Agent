@@ -1,20 +1,11 @@
-import type {
-  LanguageModelV2Message,
-  LanguageModelV2ToolResultPart,
-} from "@ai-sdk/provider";
-import createDebug from "debug";
-import { COMPACT_MESSAGE, compact } from "./compact";
-import { MIN_TOKEN_THRESHOLD } from "./constants";
-import type {
-  AssistantMessage,
-  Message,
-  NormalizedMessage,
-  ToolResultPart2,
-  UserContent,
-} from "./message";
-import type { ModelInfo } from "./model";
-import { Usage } from "./usage";
-import { randomUUID } from "./utils/randomUUID";
+import type { LanguageModelV2Message, LanguageModelV2ToolResultPart } from '@ai-sdk/provider';
+import createDebug from 'debug';
+import { COMPACT_MESSAGE, compact } from './compact';
+import { MIN_TOKEN_THRESHOLD } from './constants';
+import type { AssistantMessage, Message, NormalizedMessage, ToolResultPart2, UserContent } from './message';
+import type { ModelInfo } from './model';
+import { Usage } from './usage';
+import { randomUUID } from './utils/randomUUID';
 
 export type OnMessage = (message: NormalizedMessage) => Promise<void>;
 export type HistoryOpts = {
@@ -22,7 +13,7 @@ export type HistoryOpts = {
   onMessage?: OnMessage;
 };
 
-const debug = createDebug("neovate:history");
+const debug = createDebug('neovate:history');
 
 export class History {
   messages: NormalizedMessage[];
@@ -38,7 +29,7 @@ export class History {
       parentUuid: lastMessage?.uuid || null,
       uuid: uuid || randomUUID(),
       ...message,
-      type: "message",
+      type: 'message',
       timestamp: new Date().toISOString(),
     };
     this.messages.push(normalizedMessage);
@@ -76,109 +67,97 @@ export class History {
 
   toLanguageV2Messages(): LanguageModelV2Message[] {
     return this.messages.map((message: NormalizedMessage) => {
-      if (message.role === "user") {
+      if (message.role === 'user') {
         const content = message.content as UserContent;
-        if (typeof content === "string") {
+        if (typeof content === 'string') {
           return {
-            role: "user",
-            content: [{ type: "text", text: content }],
+            role: 'user',
+            content: [{ type: 'text', text: content }],
           } as LanguageModelV2Message;
         } else {
           const normalizedContent = content.map((part: any) => {
-            if (part.type === "text") {
-              return { type: "text", text: part.text };
-            } else if (part.type === "image") {
-              const isBase64 = part.data.includes(";base64,");
-              const data = isBase64
-                ? part.data.split(";base64,")[1]
-                : part.data;
+            if (part.type === 'text') {
+              return { type: 'text', text: part.text };
+            } else if (part.type === 'image') {
+              const isBase64 = part.data.includes(';base64,');
+              const data = isBase64 ? part.data.split(';base64,')[1] : part.data;
               return {
-                type: "file",
+                type: 'file',
                 data,
                 mediaType: part.mimeType,
               };
-            } else if (part.type === "tool_result") {
+            } else if (part.type === 'tool_result') {
               // Compatible with old message format
               return part;
             } else {
-              throw new Error(
-                `Not implemented with type: ${part.type} of role: user`
-              );
+              throw new Error(`Not implemented with type: ${part.type} of role: user`);
             }
           });
           return {
-            role: "user",
+            role: 'user',
             content: normalizedContent,
           } as LanguageModelV2Message;
         }
-      } else if (message.role === "assistant") {
-        if (typeof message.content === "string") {
+      } else if (message.role === 'assistant') {
+        if (typeof message.content === 'string') {
           return {
-            role: "assistant",
-            content: [{ type: "text", text: message.content }],
+            role: 'assistant',
+            content: [{ type: 'text', text: message.content }],
           } as LanguageModelV2Message;
         } else {
           const normalizedContent = message.content.map((part: any) => {
-            if (part.type === "text") {
-              return { type: "text", text: part.text };
-            } else if (part.type === "reasoning") {
-              return { type: "reasoning", text: part.text };
-            } else if (part.type === "tool_use") {
+            if (part.type === 'text') {
+              return { type: 'text', text: part.text };
+            } else if (part.type === 'reasoning') {
+              return { type: 'reasoning', text: part.text };
+            } else if (part.type === 'tool_use') {
               return {
-                type: "tool-call",
+                type: 'tool-call',
                 toolCallId: part.id,
                 toolName: part.name,
                 input: part.input,
               };
             } else {
-              throw new Error(
-                `Not implemented with type: ${part.type} of role: assistant`
-              );
+              throw new Error(`Not implemented with type: ${part.type} of role: assistant`);
             }
           });
           return {
-            role: "assistant",
+            role: 'assistant',
             content: normalizedContent,
           } as LanguageModelV2Message;
         }
-      } else if (message.role === "system") {
+      } else if (message.role === 'system') {
         return {
-          role: "system",
+          role: 'system',
           content: message.content,
         };
-      } else if (message.role === "tool") {
+      } else if (message.role === 'tool') {
         return {
-          role: "tool",
+          role: 'tool',
           content: message.content.map((part: ToolResultPart2) => {
             const llmContent = part.result.llmContent;
             const output = (() => {
-              if (typeof llmContent === "string") {
-                return { type: "text", value: llmContent };
+              if (typeof llmContent === 'string') {
+                return { type: 'text', value: llmContent };
               } else if (Array.isArray(llmContent)) {
                 return {
-                  type: "content",
+                  type: 'content',
                   value: llmContent.map((part) => {
-                    if (part.type === "text") {
-                      return { type: "text", value: part.text };
-                    } else if (part.type === "image") {
-                      const isBase64 = part.data.includes(";base64,");
-                      const data = isBase64
-                        ? part.data.split(";base64,")[1]
-                        : part.data;
-                      return { type: "media", data, mediaType: part.mimeType };
+                    if (part.type === 'text') {
+                      return { type: 'text', value: part.text };
+                    } else if (part.type === 'image') {
+                      const isBase64 = part.data.includes(';base64,');
+                      const data = isBase64 ? part.data.split(';base64,')[1] : part.data;
+                      return { type: 'media', data, mediaType: part.mimeType };
                     } else {
-                      throw new Error(
-                        `Not implemented with type: ${
-                          (part as any).type
-                        } of role: tool`
-                      );
+                      throw new Error(`Not implemented with type: ${(part as any).type} of role: tool`);
                     }
                   }),
                 };
               }
             })();
             return {
-              type: "tool-result",
+              type: 'tool-result',
               toolCallId: part.toolCallId,
               toolName: part.toolName,
               output,
@@ -210,16 +189,13 @@ export class History {
         maxAllowedSize = contextLimit - COMPRESSION_RESERVE_TOKENS.MINI_CONTEXT;
         break;
       case 65536:
-        maxAllowedSize =
-          contextLimit - COMPRESSION_RESERVE_TOKENS.SMALL_CONTEXT;
+        maxAllowedSize = contextLimit - COMPRESSION_RESERVE_TOKENS.SMALL_CONTEXT;
         break;
       case 131072:
-        maxAllowedSize =
-          contextLimit - COMPRESSION_RESERVE_TOKENS.MEDIUM_CONTEXT;
+        maxAllowedSize = contextLimit - COMPRESSION_RESERVE_TOKENS.MEDIUM_CONTEXT;
         break;
       case 200000:
-        maxAllowedSize =
-          contextLimit - COMPRESSION_RESERVE_TOKENS.LARGE_CONTEXT;
+        maxAllowedSize = contextLimit - COMPRESSION_RESERVE_TOKENS.LARGE_CONTEXT;
         break;
       default:
         maxAllowedSize = Math.max(
@@ -229,13 +205,8 @@ export class History {
         break;
     }
     const effectiveOutputLimit = Math.min(outputLimit, 32_000);
-    const compressThreshold = Math.max(
-      (contextLimit - effectiveOutputLimit) * COMPRESSION_RATIO,
-      maxAllowedSize
-    );
-    debug(
-      `[compress] ${model.model.id} compressThreshold:${compressThreshold} usage:${usage.totalTokens}`
-    );
+    const compressThreshold = Math.max((contextLimit - effectiveOutputLimit) * COMPRESSION_RATIO, maxAllowedSize);
+    debug(`[compress] ${model.model.id} compressThreshold:${compressThreshold} usage:${usage.totalTokens}`);
     return usage.totalTokens >= compressThreshold;
   }
 
@@ -248,7 +219,7 @@ export class History {
       const message = this.messages[i];
 
       // Record the last assistant message we encounter
-      if (message.role === "assistant" && !lastAssistantMessage) {
+      if (message.role === 'assistant' && !lastAssistantMessage) {
         lastAssistantMessage = message;
       }
 
@@ -263,9 +234,7 @@ export class History {
     if (lastAssistantMessage) {
       const assistantIndex = this.messages.indexOf(lastAssistantMessage);
       if (assistantIndex >= sessionStart) {
-        return Usage.fromAssistantMessage(
-          lastAssistantMessage as AssistantMessage
-        );
+        return Usage.fromAssistantMessage(lastAssistantMessage as AssistantMessage);
       }
     }
 
@@ -282,7 +251,7 @@ export class History {
       return { compressed: false };
     }
 
-    debug("compressing...");
+    debug('compressing...');
     let summary: string | null = null;
     try {
       summary = await compact({
@@ -290,15 +259,11 @@ export class History {
         model,
       });
     } catch (error) {
-      debug("Compact failed:", error);
-      throw new Error(
-        `History compaction failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      debug('Compact failed:', error);
+      throw new Error(`History compaction failed: ${error instanceof Error ? error.message : String(error)}`);
     }
     if (!summary || summary.trim().length === 0) {
-      throw new Error("Generated summary is empty");
+      throw new Error('Generated summary is empty');
     }
 
     // Clear original messages and replace with summary
@@ -307,13 +272,13 @@ export class History {
     this.onMessage?.({
       parentUuid: null,
       uuid: randomUUID(),
-      role: "user",
-      content: [{ type: "text", text: summary }],
+      role: 'user',
+      content: [{ type: 'text', text: summary }],
       uiContent: COMPACT_MESSAGE,
-      type: "message",
+      type: 'message',
       timestamp: new Date().toISOString(),
     });
-    debug("Generated summary:", summary);
+    debug('Generated summary:', summary);
     return {
       compressed: true,
       summary,

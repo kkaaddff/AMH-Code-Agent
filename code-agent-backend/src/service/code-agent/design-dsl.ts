@@ -1,20 +1,13 @@
-import { Inject, Provide } from "@midwayjs/decorator";
-import fs from "fs/promises";
-import * as path from "path";
-import * as crypto from "crypto";
-import sharp from "sharp";
-import { Redis, RedisService } from "@midwayjs/redis";
-import { InjectEntityModel } from "@midwayjs/typegoose";
-import { ReturnModelType } from "@typegoose/typegoose";
-import {
-  DesignDSL,
-  DesignNode,
-  PathNode,
-  LayerNode,
-  DSLData,
-  LayerStyle,
-} from "../../types/design-dsl";
-import { DesignPathAssetEntity } from "../../entity/code-agent/design-dsl/path-asset";
+import { Inject, Provide } from '@midwayjs/decorator';
+import fs from 'fs/promises';
+import * as path from 'path';
+import * as crypto from 'crypto';
+import sharp from 'sharp';
+import { Redis, RedisService } from '@midwayjs/redis';
+import { InjectEntityModel } from '@midwayjs/typegoose';
+import { ReturnModelType } from '@typegoose/typegoose';
+import { DesignDSL, DesignNode, PathNode, LayerNode, DSLData, LayerStyle } from '../../types/design-dsl';
+import { DesignPathAssetEntity } from '../../entity/code-agent/design-dsl/path-asset';
 
 @Provide()
 export class DesignDSLService {
@@ -24,8 +17,8 @@ export class DesignDSLService {
   @InjectEntityModel(DesignPathAssetEntity)
   private designPathAssetModel: ReturnModelType<typeof DesignPathAssetEntity>;
 
-  private tempDir = path.join(process.cwd(), "temp");
-  private readonly pathCachePrefix = "design-dsl:path:";
+  private tempDir = path.join(process.cwd(), 'temp');
+  private readonly pathCachePrefix = 'design-dsl:path:';
   private readonly defaultCacheTTLSeconds = 7 * 24 * 60 * 60;
   private readonly redisRedirectClients = new Map<string, Redis>();
 
@@ -45,23 +38,23 @@ export class DesignDSLService {
   /**
    * 生成随机ID
    */
-  private generateId(prefix: string = "paint_1"): string {
+  private generateId(prefix: string = 'paint_1'): string {
     const randomNum = Math.floor(Math.random() * 99999);
-    return `${prefix}:${randomNum.toString().padStart(5, "0")}`;
+    return `${prefix}:${randomNum.toString().padStart(5, '0')}`;
   }
 
   /**
    * 生成随机文件名
    */
   private generateFileName(): string {
-    return crypto.randomBytes(16).toString("hex");
+    return crypto.randomBytes(16).toString('hex');
   }
 
   /**
    * 计算路径数据摘要
    */
   private getPathDigest(pathData: string): string {
-    return crypto.createHash("sha256").update(pathData).digest("hex");
+    return crypto.createHash('sha256').update(pathData).digest('hex');
   }
 
   /**
@@ -85,24 +78,22 @@ export class DesignDSLService {
   /**
    * 解析Redis MOVED/ASK错误中的目标节点
    */
-  private parseRedirectTarget(
-    error: any
-  ): { host: string; port: number; type: "MOVED" | "ASK" } | null {
-    const message = typeof error?.message === "string" ? error.message : "";
-    if (!message.startsWith("MOVED") && !message.startsWith("ASK")) {
+  private parseRedirectTarget(error: any): { host: string; port: number; type: 'MOVED' | 'ASK' } | null {
+    const message = typeof error?.message === 'string' ? error.message : '';
+    if (!message.startsWith('MOVED') && !message.startsWith('ASK')) {
       return null;
     }
-    const parts = message.split(" ");
+    const parts = message.split(' ');
     const target = parts[2];
     if (!target) {
       return null;
     }
-    const [host, portStr] = target.split(":");
+    const [host, portStr] = target.split(':');
     const port = Number(portStr);
     if (!host || !Number.isFinite(port)) {
       return null;
     }
-    const type = message.startsWith("ASK") ? "ASK" : "MOVED";
+    const type = message.startsWith('ASK') ? 'ASK' : 'MOVED';
     return { host, port, type };
   }
 
@@ -132,7 +123,7 @@ export class DesignDSLService {
    * 处理Redis集群重定向
    */
   private async tryHandleRedisRedirect(
-    action: "get" | "set",
+    action: 'get' | 'set',
     key: string,
     value: string | undefined,
     error: any,
@@ -145,19 +136,19 @@ export class DesignDSLService {
 
     const client = this.getRedirectClient(target.host, target.port);
     try {
-      if (target.type === "ASK") {
+      if (target.type === 'ASK') {
         await client.asking();
       }
-      if (action === "get") {
+      if (action === 'get') {
         return await client.get(key);
       }
 
-      if (action === "set") {
+      if (action === 'set') {
         if (value === undefined) {
           return false;
         }
         if (ttl !== undefined && Number.isFinite(ttl) && ttl > 0) {
-          await client.set(key, value, "EX", ttl);
+          await client.set(key, value, 'EX', ttl);
         } else {
           await client.set(key, value);
         }
@@ -168,7 +159,7 @@ export class DesignDSLService {
         `Failed to ${action} redis key ${key} after redirect to ${target.host}:${target.port}`,
         redirectError
       );
-      return action === "get" ? null : false;
+      return action === 'get' ? null : false;
     }
 
     return undefined;
@@ -181,12 +172,7 @@ export class DesignDSLService {
     try {
       return await this.redisClient.get(key);
     } catch (error) {
-      const redirectResult = await this.tryHandleRedisRedirect(
-        "get",
-        key,
-        undefined,
-        error
-      );
+      const redirectResult = await this.tryHandleRedisRedirect('get', key, undefined, error);
       if (redirectResult !== undefined) {
         return redirectResult as string;
       }
@@ -198,27 +184,16 @@ export class DesignDSLService {
   /**
    * Redis set 接口
    */
-  public async redisSet(
-    key: string,
-    value: string,
-    ttlSeconds?: number
-  ): Promise<void> {
-    const ttl =
-      typeof ttlSeconds === "number" ? ttlSeconds : this.getPathCacheTTL();
+  public async redisSet(key: string, value: string, ttlSeconds?: number): Promise<void> {
+    const ttl = typeof ttlSeconds === 'number' ? ttlSeconds : this.getPathCacheTTL();
     try {
       if (Number.isFinite(ttl) && ttl > 0) {
-        await this.redisClient.set(key, value, "EX", ttl);
+        await this.redisClient.set(key, value, 'EX', ttl);
       } else {
         await this.redisClient.set(key, value);
       }
     } catch (error) {
-      const redirected = await this.tryHandleRedisRedirect(
-        "set",
-        key,
-        value,
-        error,
-        ttl
-      );
+      const redirected = await this.tryHandleRedisRedirect('set', key, value, error, ttl);
       if (!redirected) {
         console.warn(`Failed to set redis key ${key}`, error);
       }
@@ -236,19 +211,13 @@ export class DesignDSLService {
     }
 
     try {
-      const record = await this.designPathAssetModel
-        .findOne({ digest })
-        .select("imageUrl")
-        .lean();
+      const record = await this.designPathAssetModel.findOne({ digest }).select('imageUrl').lean();
       if (record?.imageUrl) {
         void this.redisSet(cacheKey, record.imageUrl);
         return record.imageUrl;
       }
     } catch (error) {
-      console.warn(
-        `Failed to read design DSL cache from mongodb for digest ${digest}`,
-        error
-      );
+      console.warn(`Failed to read design DSL cache from mongodb for digest ${digest}`, error);
     }
 
     return null;
@@ -282,10 +251,7 @@ export class DesignDSLService {
         { upsert: true }
       );
     } catch (error) {
-      console.warn(
-        `Failed to persist design DSL path asset for digest ${digest}`,
-        error
-      );
+      console.warn(`Failed to persist design DSL path asset for digest ${digest}`, error);
     }
   }
 
@@ -293,10 +259,7 @@ export class DesignDSLService {
    * 将SVG路径数据转换为PNG图片
    * 使用 sharp 直接从内存 Buffer 转换，避免创建临时 SVG 文件
    */
-  private async convertSvgPathToPng(
-    pathData: string,
-    fillStyle: string
-  ): Promise<string> {
+  private async convertSvgPathToPng(pathData: string, fillStyle: string): Promise<string> {
     const digest = this.getPathDigest(pathData);
     const cachedUrl = await this.getCachedImageUrl(digest);
     if (cachedUrl) {
@@ -331,7 +294,7 @@ export class DesignDSLService {
       });
       return imageUrl;
     } catch (error) {
-      console.error("Error converting SVG to PNG with sharp:", error);
+      console.error('Error converting SVG to PNG with sharp:', error);
       throw error;
     }
   }
@@ -343,21 +306,18 @@ export class DesignDSLService {
     // 这里应该从DSL的styles中解析实际颜色
     // 暂时返回一些默认颜色
     const colorMap: Record<string, string> = {
-      "paint_1:0020": "#FF7000", // 品牌橙色
-      "paint_1:890": "#FFFFFF", // 白色
-      "paint_1:796": "#1A1A1A", // 深灰色
+      'paint_1:0020': '#FF7000', // 品牌橙色
+      'paint_1:890': '#FFFFFF', // 白色
+      'paint_1:796': '#1A1A1A', // 深灰色
     };
-    return colorMap[fillStyle] || "#000000";
+    return colorMap[fillStyle] || '#000000';
   }
 
   /**
    * 递归遍历节点并转换PATH为LAYER
    */
-  private async processNode(
-    node: DesignNode,
-    dslData: DSLData
-  ): Promise<DesignNode> {
-    if (node.type === "PATH") {
+  private async processNode(node: DesignNode, dslData: DSLData): Promise<DesignNode> {
+    if (node.type === 'PATH') {
       const pathNode = node as PathNode;
 
       // 检查是否有路径数据
@@ -367,10 +327,7 @@ export class DesignDSLService {
         if (pathItem.data && pathItem.fill) {
           try {
             // 转换SVG路径为PNG
-            const imageUrl = await this.convertSvgPathToPng(
-              pathItem.data,
-              pathItem.fill
-            );
+            const imageUrl = await this.convertSvgPathToPng(pathItem.data, pathItem.fill);
 
             // 生成新的样式ID
             const newStyleId = this.generateId();
@@ -380,7 +337,7 @@ export class DesignDSLService {
               value: [
                 {
                   url: imageUrl,
-                  filters: "",
+                  filters: '',
                 },
               ],
               token: `转换的SVG图像/${pathNode.name}`,
@@ -388,7 +345,7 @@ export class DesignDSLService {
 
             // 返回新的LAYER节点
             const layerNode: LayerNode = {
-              type: "LAYER",
+              type: 'LAYER',
               id: node.id,
               name: node.name,
               layoutStyle: node.layoutStyle,
@@ -408,13 +365,11 @@ export class DesignDSLService {
       return node;
     }
 
-    if (node.type === "GROUP" || node.type === "FRAME") {
+    if (node.type === 'GROUP' || node.type === 'FRAME') {
       // 递归处理子节点
       const processedNode = { ...node };
       if (node.children) {
-        processedNode.children = await Promise.all(
-          node.children.map((child) => this.processNode(child, dslData))
-        );
+        processedNode.children = await Promise.all(node.children.map((child) => this.processNode(child, dslData)));
       }
       return processedNode;
     }
@@ -430,9 +385,7 @@ export class DesignDSLService {
 
     // 递归处理所有节点
     processedDSL.dsl.nodes = await Promise.all(
-      processedDSL.dsl.nodes.map((node) =>
-        this.processNode(node, processedDSL.dsl)
-      )
+      processedDSL.dsl.nodes.map((node) => this.processNode(node, processedDSL.dsl))
     );
 
     return processedDSL;
@@ -443,10 +396,10 @@ export class DesignDSLService {
    */
   public async readDesignDSLFile(filePath: string): Promise<DesignDSL> {
     try {
-      const fileContent = await fs.readFile(filePath, "utf-8");
+      const fileContent = await fs.readFile(filePath, 'utf-8');
       return JSON.parse(fileContent) as DesignDSL;
     } catch (error) {
-      console.error("Error reading DesignDSL file:", error);
+      console.error('Error reading DesignDSL file:', error);
       throw error;
     }
   }
@@ -490,18 +443,14 @@ export class DesignDSLService {
     const countNodes = (nodes: DesignNode[]) => {
       nodes.forEach((node) => {
         totalNodes++;
-        if (node.type === "PATH") {
+        if (node.type === 'PATH') {
           pathNodes++;
           const pathNode = node as PathNode;
-          if (
-            pathNode.path &&
-            pathNode.path.length > 0 &&
-            pathNode.path[0].data
-          ) {
+          if (pathNode.path && pathNode.path.length > 0 && pathNode.path[0].data) {
             convertedNodes++;
           }
         }
-        if ((node.type === "GROUP" || node.type === "FRAME") && node.children) {
+        if ((node.type === 'GROUP' || node.type === 'FRAME') && node.children) {
           countNodes(node.children);
         }
       });

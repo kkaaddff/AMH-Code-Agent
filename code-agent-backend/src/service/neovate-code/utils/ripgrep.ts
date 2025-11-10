@@ -1,34 +1,29 @@
-import { execFile } from "child_process";
-import createDebug from "debug";
-import path from "pathe";
-import { findActualExecutable } from "spawn-rx";
-import { fileURLToPath } from "url";
-import { isLocal } from "./isLocal";
+import { execFile } from 'child_process';
+import createDebug from 'debug';
+import path from 'pathe';
+import { findActualExecutable } from 'spawn-rx';
+import { fileURLToPath } from 'url';
+import { isLocal } from './isLocal';
 
-const debug = createDebug("neovate:utils:ripgrep");
+const debug = createDebug('neovate:utils:ripgrep');
 
-const rootDir = isLocal()
-  ? path.resolve(__dirname, "../../")
-  : path.resolve(__dirname, "../");
+const rootDir = isLocal() ? path.resolve(__dirname, '../../') : path.resolve(__dirname, '../');
 
 function ripgrepPath() {
-  const { cmd } = findActualExecutable("rg", []);
-  if (cmd !== "rg") {
+  const { cmd } = findActualExecutable('rg', []);
+  if (cmd !== 'rg') {
     return cmd;
   } else {
-    const rgRoot = path.resolve(rootDir, "vendor", "ripgrep");
-    if (process.platform === "win32") {
-      return path.resolve(rgRoot, "x64-win32", "rg.exe");
+    const rgRoot = path.resolve(rootDir, 'vendor', 'ripgrep');
+    if (process.platform === 'win32') {
+      return path.resolve(rgRoot, 'x64-win32', 'rg.exe');
     } else {
-      return path.resolve(rgRoot, `${process.arch}-${process.platform}`, "rg");
+      return path.resolve(rgRoot, `${process.arch}-${process.platform}`, 'rg');
     }
   }
 }
 
-export async function ripGrep(
-  args: string[],
-  target: string
-): Promise<string[]> {
+export async function ripGrep(args: string[], target: string): Promise<string[]> {
   const rg = ripgrepPath();
   return new Promise((resolve) => {
     execFile(
@@ -43,7 +38,7 @@ export async function ripGrep(
           debug(`[Ripgrep] Error: ${err}`);
           resolve([]);
         } else {
-          resolve(stdout.trim().split("\n").filter(Boolean));
+          resolve(stdout.trim().split('\n').filter(Boolean));
         }
       }
     );

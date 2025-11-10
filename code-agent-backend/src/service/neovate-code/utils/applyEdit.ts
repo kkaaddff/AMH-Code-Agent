@@ -1,9 +1,9 @@
-import { readFileSync, writeFileSync } from "node:fs";
-import { isAbsolute, resolve } from "pathe";
-import type { Config } from "../config";
+import { readFileSync, writeFileSync } from 'node:fs';
+import { isAbsolute, resolve } from 'pathe';
+import type { Config } from '../config';
 
 function detectFileEncoding(filePath: string): BufferEncoding {
-  return "utf-8";
+  return 'utf-8';
 }
 
 export interface Hunk {
@@ -14,19 +14,14 @@ export interface Hunk {
   lines: string[];
 }
 
-function getPatch(options: {
-  filePath: string;
-  fileContents: string;
-  oldStr: string;
-  newStr: string;
-}): Hunk[] {
-  const lines = options.newStr.split("\n").map((line) => "+" + line);
+function getPatch(options: { filePath: string; fileContents: string; oldStr: string; newStr: string }): Hunk[] {
+  const lines = options.newStr.split('\n').map((line) => '+' + line);
   return [
     {
       oldStart: 1,
-      oldLines: options.oldStr.split("\n").length,
+      oldLines: options.oldStr.split('\n').length,
       newStart: 1,
-      newLines: options.newStr.split("\n").length,
+      newLines: options.newStr.split('\n').length,
       lines,
     },
   ];
@@ -37,25 +32,20 @@ export function applyEdit(
   file_path: string,
   old_string: string,
   new_string: string,
-  mode: "search-replace" | "whole-file" = "search-replace"
+  mode: 'search-replace' | 'whole-file' = 'search-replace'
 ): { patch: Hunk[]; updatedFile: string } {
-  const fullFilePath = isAbsolute(file_path)
-    ? file_path
-    : resolve(cwd, file_path);
+  const fullFilePath = isAbsolute(file_path) ? file_path : resolve(cwd, file_path);
 
   let originalFile: string;
   let updatedFile: string;
 
-  if (mode === "whole-file") {
+  if (mode === 'whole-file') {
     // In whole-file mode, we directly use the new content
-    originalFile =
-      old_string === ""
-        ? ""
-        : readFileSync(fullFilePath, detectFileEncoding(fullFilePath));
+    originalFile = old_string === '' ? '' : readFileSync(fullFilePath, detectFileEncoding(fullFilePath));
     updatedFile = new_string;
   } else {
-    if (old_string === "") {
-      originalFile = "";
+    if (old_string === '') {
+      originalFile = '';
       updatedFile = new_string;
     } else {
       const enc = detectFileEncoding(fullFilePath);
@@ -66,13 +56,11 @@ export function applyEdit(
 
   if (updatedFile === originalFile) {
     throw new Error(
-      `Original and edited file match exactly. Failed to apply edit. ${JSON.stringify(
-        {
-          file_path,
-          old_string,
-          new_string,
-        }
-      )}`
+      `Original and edited file match exactly. Failed to apply edit. ${JSON.stringify({
+        file_path,
+        old_string,
+        new_string,
+      })}`
     );
   }
 

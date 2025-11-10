@@ -1,9 +1,9 @@
-import { ApiProperty } from "@midwayjs/swagger";
-import { AsyncResponse } from "../../types";
-import { DesignDSL } from "../../types/design-dsl";
+import { ApiProperty } from '@midwayjs/swagger';
+import { AsyncResponse } from '../../types';
+import { DesignDSL } from '../../types/design-dsl';
 
 export class GetDesignDSLResponse extends AsyncResponse {
-  @ApiProperty({ description: "DesignDSL数据" })
+  @ApiProperty({ description: 'DesignDSL数据' })
   public data: DesignDSL;
 
   constructor(data: DesignDSL) {
@@ -13,10 +13,10 @@ export class GetDesignDSLResponse extends AsyncResponse {
 }
 
 export class ProcessDesignDSLResponse extends AsyncResponse {
-  @ApiProperty({ description: "处理后的DesignDSL数据" })
+  @ApiProperty({ description: '处理后的DesignDSL数据' })
   public data: DesignDSL;
 
-  @ApiProperty({ description: "处理统计信息" })
+  @ApiProperty({ description: '处理统计信息' })
   public stats: {
     totalNodes: number;
     pathNodes: number;
@@ -32,13 +32,13 @@ export class ProcessDesignDSLResponse extends AsyncResponse {
 }
 
 export class ConvertPathResponse extends AsyncResponse {
-  @ApiProperty({ description: "转换后的图片URL" })
+  @ApiProperty({ description: '转换后的图片URL' })
   public imageUrl: string;
 
-  @ApiProperty({ description: "生成的样式ID" })
+  @ApiProperty({ description: '生成的样式ID' })
   public styleId: string;
 
-  @ApiProperty({ description: "SVG文件路径" })
+  @ApiProperty({ description: 'SVG文件路径' })
   public svgPath: string;
 
   constructor(imageUrl: string, styleId: string, svgPath: string) {
@@ -50,7 +50,7 @@ export class ConvertPathResponse extends AsyncResponse {
 }
 
 export class GetDesignDSLStatsResponse extends AsyncResponse {
-  @ApiProperty({ description: "DSL统计信息" })
+  @ApiProperty({ description: 'DSL统计信息' })
   public data: {
     totalNodes: number;
     pathNodes: number;
@@ -65,7 +65,7 @@ export class GetDesignDSLStatsResponse extends AsyncResponse {
 }
 
 export class RedisGetResponse extends AsyncResponse {
-  @ApiProperty({ description: "Redis返回值", required: false })
+  @ApiProperty({ description: 'Redis返回值', required: false })
   public value: string | null;
 
   constructor(value: string | null) {
@@ -75,7 +75,7 @@ export class RedisGetResponse extends AsyncResponse {
 }
 
 export class RedisSetResponse extends AsyncResponse {
-  @ApiProperty({ description: "设置是否成功" })
+  @ApiProperty({ description: '设置是否成功' })
   public success: boolean;
 
   constructor(success: boolean) {

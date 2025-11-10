@@ -1,1 +1,1 @@
-export * from "./model-gateway.service";
+export * from './model-gateway.service';

@@ -34,7 +34,7 @@ describe('AgentService integration', () => {
   it('runs send and plan end-to-end with callback hooks', async () => {
     const service = await createAgentService({
       cwd: projectDir,
-      productName: 'NEOVATE',
+      productName: 'agentServiceTest',
       version: '0.0.0-test',
       configOverrides: {
         model: 'glm-4.6',

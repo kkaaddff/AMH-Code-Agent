@@ -1,6 +1,6 @@
-import type { NormalizedMessage } from "./message";
-import type { ModelInfo } from "./model";
-import { query } from "./query";
+import type { NormalizedMessage } from './message';
+import type { ModelInfo } from './model';
+import { query } from './query';
 
 type CompactOptions = {
   messages: NormalizedMessage[];
@@ -18,8 +18,8 @@ export async function compact(opts: CompactOptions): Promise<string> {
   });
   if (result.success === true) {
     const summary = result.data.text;
-    if (!summary || summary.trim() === "") {
-      throw new Error("Failed to compact: received empty summary from model");
+    if (!summary || summary.trim() === '') {
+      throw new Error('Failed to compact: received empty summary from model');
     }
     return summary;
   } else {

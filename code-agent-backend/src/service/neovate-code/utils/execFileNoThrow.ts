@@ -1,4 +1,4 @@
-import { execFile } from "child_process";
+import { execFile } from 'child_process';
 
 const MS_IN_SECOND = 1000;
 const SECONDS_IN_MINUTE = 60;
@@ -28,14 +28,14 @@ export function execFileNoThrow(
         (error, stdout, stderr) => {
           if (error) {
             if (preserveOutputOnError) {
-              const errorCode = typeof error.code === "number" ? error.code : 1;
+              const errorCode = typeof error.code === 'number' ? error.code : 1;
               resolve({
-                stdout: stdout || "",
-                stderr: stderr || "",
+                stdout: stdout || '',
+                stderr: stderr || '',
                 code: errorCode,
               });
             } else {
-              resolve({ stdout: "", stderr: "", code: 1 });
+              resolve({ stdout: '', stderr: '', code: 1 });
             }
           } else {
             resolve({ stdout, stderr, code: 0 });
@@ -43,7 +43,7 @@ export function execFileNoThrow(
         }
       );
     } catch (error) {
-      resolve({ stdout: "", stderr: "", code: 1 });
+      resolve({ stdout: '', stderr: '', code: 1 });
     }
   });
 }

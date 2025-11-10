@@ -1,23 +1,15 @@
-import {
-  Config,
-  Inject,
-  MidwayHttpError,
-  Provide,
-  Scope,
-  ScopeEnum,
-  HttpStatus,
-} from "@midwayjs/core";
-import { InjectEntityModel } from "@midwayjs/typegoose";
-import type { DocumentType, ReturnModelType } from "@typegoose/typegoose";
-import { RedisService } from "@midwayjs/redis";
-import { createHash } from "crypto";
-import { DesignDocumentEntity } from "../../entity/design";
+import { Config, Inject, MidwayHttpError, Provide, Scope, ScopeEnum, HttpStatus } from '@midwayjs/core';
+import { InjectEntityModel } from '@midwayjs/typegoose';
+import type { DocumentType, ReturnModelType } from '@typegoose/typegoose';
+import { RedisService } from '@midwayjs/redis';
+import { createHash } from 'crypto';
+import { DesignDocumentEntity } from '../../entity/design';
 import type {
   DesignDocumentPaginationQuery,
   CreateDesignDocumentBody,
   UpdateDesignDocumentBody,
-} from "../../dto/design";
-import { MasterGoService } from "./mastergo.service";
+} from '../../dto/design';
+import { MasterGoService } from './mastergo.service';
 
 interface CachedDslPayload {
   revision: number;
@@ -38,14 +30,14 @@ export class DesignDocumentService {
   @Inject()
   private mastergoService: MasterGoService;
 
-  @Config("designModule")
+  @Config('designModule')
   private designModuleConfig: {
     cacheTTL?: { dsl?: number };
     codeGeneration?: { concurrency?: number };
   };
 
   private getDslCacheKey(designId: string, revision?: number): string {
-    const suffix = revision !== undefined ? `:${revision}` : "";
+    const suffix = revision !== undefined ? `:${revision}` : '';
     return `design:dsl:${designId}${suffix}`;
   }
 
@@ -59,35 +51,18 @@ export class DesignDocumentService {
 
   private computeDslDigest(dslData: Record<string, unknown>): string {
     const json = JSON.stringify(dslData);
-    return createHash("sha256").update(json).digest("hex");
+    return createHash('sha256').update(json).digest('hex');
   }
 
-  private async cacheDsl(
-    designId: string,
-    revision: number,
-    dslData: Record<string, unknown> | null
-  ): Promise<void> {
+  private async cacheDsl(designId: string, revision: number, dslData: Record<string, unknown> | null): Promise<void> {
     const payload: CachedDslPayload = { revision, dsl: dslData };
     const serialized = JSON.stringify(payload);
     const ttl = this.getDslCacheTTLSeconds();
     try {
-      await this.redisService.set(
-        this.getDslCacheKey(designId),
-        serialized,
-        "EX",
-        ttl
-      );
-      await this.redisService.set(
-        this.getDslCacheKey(designId, revision),
-        serialized,
-        "EX",
-        ttl
-      );
+      await this.redisService.set(this.getDslCacheKey(designId), serialized, 'EX', ttl);
+      await this.redisService.set(this.getDslCacheKey(designId, revision), serialized, 'EX', ttl);
     } catch (error) {
-      console.warn(
-        `Failed to cache design DSL for designId=${designId}`,
-        error
-      );
+      console.warn(`Failed to cache design DSL for designId=${designId}`, error);
     }
   }
 
@@ -105,22 +80,13 @@ export class DesignDocumentService {
   }
 
   private normalizeDocument(
-    doc:
-      | DocumentType<DesignDocumentEntity>
-      | (DesignDocumentEntity & { _id?: any })
+    doc: DocumentType<DesignDocumentEntity> | (DesignDocumentEntity & { _id?: any })
   ): DesignDocumentEntity {
     if (!doc) {
       return null;
     }
-    const plain =
-      typeof (doc as any).toObject === "function"
-        ? (doc as any).toObject()
-        : { ...(doc as any) };
-    if (
-      plain._id &&
-      typeof plain._id === "object" &&
-      typeof plain._id.toString === "function"
-    ) {
+    const plain = typeof (doc as any).toObject === 'function' ? (doc as any).toObject() : { ...(doc as any) };
+    if (plain._id && typeof plain._id === 'object' && typeof plain._id.toString === 'function') {
       plain._id = plain._id.toString();
     }
     if (plain.createdAt instanceof Date) {
@@ -153,16 +119,12 @@ export class DesignDocumentService {
         ...(metadata ?? {}),
         componentDocumentLinks: dslResponse.componentDocumentLinks,
       },
-      status: "active",
+      status: 'active',
       createdBy: operatorId,
       updatedBy: operatorId,
     });
     const normalized = this.normalizeDocument(doc);
-    await this.cacheDsl(
-      normalized._id,
-      normalized.dslRevision ?? 1,
-      (normalized as any).dslData ?? null
-    );
+    await this.cacheDsl(normalized._id, normalized.dslRevision ?? 1, (normalized as any).dslData ?? null);
     return normalized;
   }
 
@@ -173,21 +135,15 @@ export class DesignDocumentService {
   ): Promise<DesignDocumentEntity> {
     const document = await this.designDocumentModel.findById(designId);
     if (!document) {
-      throw new MidwayHttpError(
-        "Design document not found",
-        HttpStatus.NOT_FOUND
-      );
+      throw new MidwayHttpError('Design document not found', HttpStatus.NOT_FOUND);
     }
 
     if (
-      typeof payload.dslRevision === "number" &&
-      typeof document.dslRevision === "number" &&
+      typeof payload.dslRevision === 'number' &&
+      typeof document.dslRevision === 'number' &&
       payload.dslRevision !== document.dslRevision
     ) {
-      throw new MidwayHttpError(
-        "DSL revision mismatch, please refresh and retry",
-        HttpStatus.CONFLICT
-      );
+      throw new MidwayHttpError('DSL revision mismatch, please refresh and retry', HttpStatus.CONFLICT);
     }
 
     let nextRevision = document.dslRevision ?? 1;
@@ -213,11 +169,9 @@ export class DesignDocumentService {
       document.dslData = payload.dslData;
       nextRevision = (document.dslRevision ?? 0) + 1;
       document.dslRevision = nextRevision;
-      document.dslDigest = payload.dslData
-        ? this.computeDslDigest(payload.dslData)
-        : undefined;
+      document.dslDigest = payload.dslData ? this.computeDslDigest(payload.dslData) : undefined;
       nextDslData = payload.dslData;
-      document.markModified("dslData");
+      document.markModified('dslData');
     }
 
     document.updatedBy = operatorId;
@@ -233,14 +187,12 @@ export class DesignDocumentService {
     return normalized;
   }
 
-  public async getDesignDocumentById(
-    designId: string
-  ): Promise<DesignDocumentEntity | null> {
+  public async getDesignDocumentById(designId: string): Promise<DesignDocumentEntity | null> {
     const doc = await this.designDocumentModel.findById(designId).lean();
     if (!doc) {
       return null;
     }
-    if (doc._id && typeof (doc._id as any).toString === "function") {
+    if (doc._id && typeof (doc._id as any).toString === 'function') {
       doc._id = (doc._id as any).toString();
     }
     if (doc.createdAt instanceof Date) {
@@ -266,7 +218,7 @@ export class DesignDocumentService {
       filter.createdBy = query.createdBy;
     }
     if (query.keyword) {
-      const regex = new RegExp(query.keyword, "i");
+      const regex = new RegExp(query.keyword, 'i');
       filter.$or = [{ name: regex }, { description: regex }];
     }
 
@@ -280,7 +232,7 @@ export class DesignDocumentService {
     ]);
 
     const normalized = list.map((item: any) => {
-      if (item._id && typeof item._id.toString === "function") {
+      if (item._id && typeof item._id.toString === 'function') {
         item._id = item._id.toString();
       }
       if (item.createdAt instanceof Date) {

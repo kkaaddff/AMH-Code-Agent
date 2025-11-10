@@ -1,8 +1,8 @@
-import { TOOL_NAMES } from "./constants";
+import { TOOL_NAMES } from './constants';
 
 function getTasksPrompt(opts: { todo: boolean; productName: string }) {
   if (!opts.todo) {
-    return "";
+    return '';
   }
   const productName = opts.productName;
   return `
@@ -76,8 +76,8 @@ You are an interactive CLI tool that helps users with software engineering tasks
 
 IMPORTANT: Refuse to write code or explain code that may be used maliciously; even if the user claims it is for educational purposes.
 ${
-  opts.language === "English"
-    ? ""
+  opts.language === 'English'
+    ? ''
     : `IMPORTANT: Answer in ${opts.language}.
 `
 }

@@ -1,23 +1,23 @@
-import { ApiProperty } from "@midwayjs/swagger";
+import { ApiProperty } from '@midwayjs/swagger';
 
-export * from "./types/design-dsl";
+export * from './types/design-dsl';
 
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
 export class AsyncResponse {
-  @ApiProperty({ example: true, description: "请求成功" })
+  @ApiProperty({ example: true, description: '请求成功' })
   public success = true;
-  @ApiProperty({ example: "Success", description: "接口信息" })
-  public message = "Success";
+  @ApiProperty({ example: 'Success', description: '接口信息' })
+  public message = 'Success';
 }
 
 export class PageHelper {
-  @ApiProperty({ example: 10, required: true, description: "分页大小" })
+  @ApiProperty({ example: 10, required: true, description: '分页大小' })
   public pageSize: number;
 
-  @ApiProperty({ example: 1, required: true, description: "页码" })
+  @ApiProperty({ example: 1, required: true, description: '页码' })
   public current: number;
 }
 

@@ -15,16 +15,13 @@ export const safeJsonParse = (str: string) => {
   try {
     return JSON.parse(str);
   } catch (error) {
-    console.log("safeJsonParse error", str);
+    console.log('safeJsonParse error', str);
     return null;
   }
 };
 
-export function deepMapValues(
-  obj: any,
-  fn: (value: any, key?: string) => any
-): any {
-  if (typeof obj !== "object" || obj === null) {
+export function deepMapValues(obj: any, fn: (value: any, key?: string) => any): any {
+  if (typeof obj !== 'object' || obj === null) {
     return obj;
   }
 
@@ -35,7 +32,7 @@ export function deepMapValues(
   const newObj: any = {};
   for (const prop in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, prop)) {
-      if (typeof obj[prop] === "object" && obj[prop] !== null) {
+      if (typeof obj[prop] === 'object' && obj[prop] !== null) {
         newObj[prop] = deepMapValues(obj[prop], fn);
       } else {
         newObj[prop] = fn(obj[prop], prop);

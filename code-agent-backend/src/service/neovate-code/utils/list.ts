@@ -1,12 +1,12 @@
-import createDebug from "debug";
-import fs from "fs";
-import { basename, join, relative, sep } from "pathe";
-import { PRODUCT_NAME } from "../constants";
-import { isIgnored } from "./ignore";
+import createDebug from 'debug';
+import fs from 'fs';
+import { basename, join, relative, sep } from 'pathe';
+import { PRODUCT_NAME } from '../constants';
+import { isIgnored } from './ignore';
 export const MAX_FILES = 1000;
 export const TRUNCATED_MESSAGE = `There are more than ${MAX_FILES} files in the repository. Use the LS tool (passing a specific path), Bash tool, and other tools to explore nested directories. The first ${MAX_FILES} files and directories are included below:\n\n`;
 
-const debug = createDebug("neovate:utils:list");
+const debug = createDebug('neovate:utils:list');
 
 export function listDirectory(
   initialPath: string,
@@ -37,7 +37,7 @@ export function listDirectory(
       continue;
     }
     for (const child of children) {
-      if (child.name === "node_modules") {
+      if (child.name === 'node_modules') {
         continue;
       }
 
@@ -65,7 +65,7 @@ export function listDirectory(
 }
 
 function skip(path: string) {
-  if (path !== "." && basename(path).startsWith(".")) {
+  if (path !== '.' && basename(path).startsWith('.')) {
     return true;
   }
   return false;
@@ -74,7 +74,7 @@ function skip(path: string) {
 type TreeNode = {
   name: string;
   path: string;
-  type: "file" | "directory";
+  type: 'file' | 'directory';
   children?: TreeNode[];
 };
 
@@ -84,7 +84,7 @@ export function createFileTree(sortedPaths: string[]): TreeNode[] {
   for (const path of sortedPaths) {
     const parts = path.split(sep);
     let currentLevel = root;
-    let currentPath = "";
+    let currentPath = '';
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i]!;
@@ -103,7 +103,7 @@ export function createFileTree(sortedPaths: string[]): TreeNode[] {
         const newNode: TreeNode = {
           name: part,
           path: currentPath,
-          type: isLastPart ? "file" : "directory",
+          type: isLastPart ? 'file' : 'directory',
         };
 
         if (!isLastPart) {
@@ -126,25 +126,18 @@ export function createFileTree(sortedPaths: string[]): TreeNode[] {
  *   - utils/
  *     - file.ts
  */
-export function printTree(
-  cwd: string,
-  tree: TreeNode[],
-  level = 0,
-  prefix = ""
-): string {
-  let result = "";
+export function printTree(cwd: string, tree: TreeNode[], level = 0, prefix = ''): string {
+  let result = '';
 
   // Add absolute path at root level
   if (level === 0) {
     result += `- ${cwd}${sep}\n`;
-    prefix = "  ";
+    prefix = '  ';
   }
 
   for (const node of tree) {
     // Add the current node to the result
-    result += `${prefix}${"-"} ${node.name}${
-      node.type === "directory" ? sep : ""
-    }\n`;
+    result += `${prefix}${'-'} ${node.name}${node.type === 'directory' ? sep : ''}\n`;
 
     // Recursively print children if they exist
     if (node.children && node.children.length > 0) {

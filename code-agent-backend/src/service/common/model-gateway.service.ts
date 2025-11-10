@@ -1,5 +1,5 @@
-import { Config, Provide, Scope, ScopeEnum } from "@midwayjs/core";
-import axios from "axios";
+import { Config, Provide, Scope, ScopeEnum } from '@midwayjs/core';
+import axios from 'axios';
 
 export interface ModelGatewayConfig {
   endpoint?: string;
@@ -36,7 +36,7 @@ export interface ModelResponse {
 @Provide()
 @Scope(ScopeEnum.Request, { allowDowngrade: true })
 export class ModelGatewayService {
-  @Config("modelGateway.default")
+  @Config('modelGateway.default')
   private modelConfig: ModelGatewayConfig;
 
   /**
@@ -49,34 +49,32 @@ export class ModelGatewayService {
     }
 
     // 直接返回字符串
-    if (typeof payload === "string") {
+    if (typeof payload === 'string') {
       return payload;
     }
 
     // 常见的响应格式
     const textPaths = [
-      "output", // 通用格式
-      "result", // 通用格式
-      "text", // 通用格式
-      "response", // 通用格式
-      "data.0.text", // 某些API格式
-      "data.0.content", // 某些API格式
-      "choices.0.message.content", // OpenAI格式
-      "choices.0.text", // OpenAI兼容格式
+      'output', // 通用格式
+      'result', // 通用格式
+      'text', // 通用格式
+      'response', // 通用格式
+      'data.0.text', // 某些API格式
+      'data.0.content', // 某些API格式
+      'choices.0.message.content', // OpenAI格式
+      'choices.0.text', // OpenAI兼容格式
     ];
 
     for (const path of textPaths) {
       const value = this.getNestedValue(payload, path);
-      if (typeof value === "string") {
+      if (typeof value === 'string') {
         return value;
       }
     }
 
     // 处理数组形式的content (例如OpenAI的多模态响应)
     if (Array.isArray(payload.choices?.[0]?.message?.content)) {
-      const contentPart = payload.choices[0].message.content.find(
-        (part: any) => part.type === "text" && part.text
-      );
+      const contentPart = payload.choices[0].message.content.find((part: any) => part.type === 'text' && part.text);
       if (contentPart?.text) {
         return contentPart.text;
       }
@@ -85,19 +83,16 @@ export class ModelGatewayService {
     // 处理messages数组的最后一条消息
     if (Array.isArray(payload.messages)) {
       const lastMessage = payload.messages[payload.messages.length - 1];
-      if (lastMessage && typeof lastMessage.content === "string") {
+      if (lastMessage && typeof lastMessage.content === 'string') {
         return lastMessage.content;
       }
     }
 
     // 处理output数组
     if (Array.isArray(payload.output)) {
-      const first = payload.output.find(
-        (item: any) =>
-          typeof item?.text === "string" || typeof item === "string"
-      );
+      const first = payload.output.find((item: any) => typeof item?.text === 'string' || typeof item === 'string');
       if (first) {
-        return typeof first === "string" ? first : first.text;
+        return typeof first === 'string' ? first : first.text;
       }
     }
 
@@ -105,10 +100,10 @@ export class ModelGatewayService {
     if (Array.isArray(payload.data) && payload.data.length > 0) {
       const item = payload.data[0];
       if (item?.text) {
-        return typeof item.text === "string" ? item.text : item.text.join("\n");
+        return typeof item.text === 'string' ? item.text : item.text.join('\n');
       }
       if (item?.content) {
-        return typeof item.content === "string" ? item.content : null;
+        return typeof item.content === 'string' ? item.content : null;
       }
     }
 
@@ -119,22 +114,20 @@ export class ModelGatewayService {
    * 获取嵌套对象的值
    */
   private getNestedValue(obj: any, path: string): any {
-    return path.split(".").reduce((current, key) => {
-      return current && typeof current === "object" ? current[key] : undefined;
+    return path.split('.').reduce((current, key) => {
+      return current && typeof current === 'object' ? current[key] : undefined;
     }, obj);
   }
 
   /**
    * 提取使用量信息
    */
-  private extractUsageFromPayload(
-    payload: any
-  ): Record<string, any> | undefined {
-    const usagePaths = ["usage", "tokenUsage", "meta.usage", "data.0.usage"];
+  private extractUsageFromPayload(payload: any): Record<string, any> | undefined {
+    const usagePaths = ['usage', 'tokenUsage', 'meta.usage', 'data.0.usage'];
 
     for (const path of usagePaths) {
       const usage = this.getNestedValue(payload, path);
-      if (usage && typeof usage === "object") {
+      if (usage && typeof usage === 'object') {
         return usage;
       }
     }
@@ -146,9 +139,7 @@ export class ModelGatewayService {
    * 构建请求载荷
    * 支持多种模型API格式
    */
-  private buildRequestPayload(
-    options: ModelRequestOptions
-  ): Record<string, any> {
+  private buildRequestPayload(options: ModelRequestOptions): Record<string, any> {
     const config = { ...this.modelConfig };
     const {
       prompt,
@@ -176,7 +167,7 @@ export class ModelGatewayService {
         ...basePayload,
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: prompt,
           },
         ],
@@ -205,11 +196,11 @@ export class ModelGatewayService {
     const config = this.modelConfig;
 
     if (!config.endpoint) {
-      throw new Error("Model gateway endpoint is not configured");
+      throw new Error('Model gateway endpoint is not configured');
     }
 
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     };
 
     // 添加认证头
@@ -236,9 +227,9 @@ export class ModelGatewayService {
       const content = this.extractTextFromModelPayload(response);
       if (!content) {
         return {
-          content: "",
+          content: '',
           success: false,
-          error: "Unable to extract content from model response",
+          error: 'Unable to extract content from model response',
         };
       }
 
@@ -252,17 +243,17 @@ export class ModelGatewayService {
         success: true,
       };
     } catch (error) {
-      console.error("[ModelGatewayService] 模型调用失败:", error);
+      console.error('[ModelGatewayService] 模型调用失败:', error);
 
-      let errorMessage = "Unknown error occurred";
+      let errorMessage = 'Unknown error occurred';
       if (error instanceof Error) {
         errorMessage = error.message;
-      } else if (typeof error === "string") {
+      } else if (typeof error === 'string') {
         errorMessage = error;
       }
 
       return {
-        content: "",
+        content: '',
         success: false,
         error: errorMessage,
       };
@@ -283,28 +274,26 @@ export class ModelGatewayService {
       const delta = choice.delta || choice.message || choice;
 
       if (delta) {
-        if (typeof delta.content === "string") {
+        if (typeof delta.content === 'string') {
           return delta.content;
         }
         if (Array.isArray(delta.content)) {
-          const textPart = delta.content.find(
-            (item: any) => item.type === "text" && typeof item.text === "string"
-          );
+          const textPart = delta.content.find((item: any) => item.type === 'text' && typeof item.text === 'string');
           if (textPart) {
             return textPart.text;
           }
         }
-        if (typeof delta.text === "string") {
+        if (typeof delta.text === 'string') {
           return delta.text;
         }
       }
 
-      if (typeof choice.text === "string") {
+      if (typeof choice.text === 'string') {
         return choice.text;
       }
     }
 
-    if (typeof payload.text === "string") {
+    if (typeof payload.text === 'string') {
       return payload.text;
     }
 
@@ -314,47 +303,44 @@ export class ModelGatewayService {
   /**
    * 流式调用模型并将内容通过回调输出
    */
-  public async streamModel(
-    options: ModelRequestOptions,
-    onChunk: (chunk: string) => void
-  ): Promise<boolean> {
+  public async streamModel(options: ModelRequestOptions, onChunk: (chunk: string) => void): Promise<boolean> {
     const payload = this.buildRequestPayload({ ...options, stream: true });
     const config = this.modelConfig;
 
     if (!config.endpoint) {
-      throw new Error("Model gateway endpoint is not configured");
+      throw new Error('Model gateway endpoint is not configured');
     }
 
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Accept: "text/event-stream",
-      Connection: "keep-alive",
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+      Connection: 'keep-alive',
       ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
     };
 
     const response = await axios.post(config.endpoint, payload, {
       headers,
       timeout: config.timeout ?? 600_000,
-      responseType: "stream",
+      responseType: 'stream',
     });
 
     return await new Promise<boolean>((resolve, reject) => {
       const stream = response.data;
-      let buffer = "";
+      let buffer = '';
       let hasChunk = false;
       let finished = false;
-      console.log("开始读取流");
+      console.log('开始读取流');
       const cleanup = () => {
         finished = true;
-        stream.removeAllListeners("data");
-        stream.removeAllListeners("end");
-        stream.removeAllListeners("error");
-        stream.removeAllListeners("close");
+        stream.removeAllListeners('data');
+        stream.removeAllListeners('end');
+        stream.removeAllListeners('error');
+        stream.removeAllListeners('close');
       };
 
       const flushEvents = (force = false) => {
-        const events = buffer.split("\n\n");
-        buffer = force ? "" : events.pop() ?? "";
+        const events = buffer.split('\n\n');
+        buffer = force ? '' : (events.pop() ?? '');
 
         for (const rawEvent of events) {
           const trimmedEvent = rawEvent.trim();
@@ -362,14 +348,14 @@ export class ModelGatewayService {
             continue;
           }
 
-          if (trimmedEvent.startsWith(":")) {
+          if (trimmedEvent.startsWith(':')) {
             continue;
           }
 
-          const lines = trimmedEvent.split("\n");
+          const lines = trimmedEvent.split('\n');
           for (const line of lines) {
             const trimmedLine = line.trim();
-            if (!trimmedLine || !trimmedLine.startsWith("data:")) {
+            if (!trimmedLine || !trimmedLine.startsWith('data:')) {
               continue;
             }
 
@@ -378,7 +364,7 @@ export class ModelGatewayService {
               continue;
             }
 
-            if (dataStr === "[DONE]") {
+            if (dataStr === '[DONE]') {
               cleanup();
               resolve(hasChunk);
               return;
@@ -399,12 +385,12 @@ export class ModelGatewayService {
         }
       };
 
-      stream.on("data", (chunk: Buffer) => {
+      stream.on('data', (chunk: Buffer) => {
         if (finished) {
           return;
         }
-        buffer += chunk.toString("utf8");
-        console.log("读取到流buffer", buffer);
+        buffer += chunk.toString('utf8');
+        console.log('读取到流buffer', buffer);
         flushEvents();
       });
 
@@ -419,9 +405,9 @@ export class ModelGatewayService {
         resolve(hasChunk);
       };
 
-      stream.on("end", handleEnd);
-      stream.on("close", handleEnd);
-      stream.on("error", (error: unknown) => {
+      stream.on('end', handleEnd);
+      stream.on('close', handleEnd);
+      stream.on('error', (error: unknown) => {
         if (finished) {
           return;
         }
@@ -437,7 +423,7 @@ export class ModelGatewayService {
   public async checkHealth(): Promise<boolean> {
     try {
       const result = await this.callModel({
-        prompt: "test",
+        prompt: 'test',
         temperature: 0.1,
       });
       return result.success;

@@ -4,30 +4,23 @@ import type {
   LanguageModelV2Message,
   LanguageModelV2Prompt,
   SharedV2Headers,
-} from "@ai-sdk/provider";
-import createDebug from "debug";
-import { At } from "./at";
-import { History, type OnMessage } from "./history";
-import type {
-  AssistantContent,
-  NormalizedMessage,
-  ToolUsePart,
-} from "./message";
-import type { ModelInfo } from "./model";
-import { getThinkingConfig } from "./thinking-config";
-import type { ToolResult, Tools, ToolUse } from "./tool";
-import { Usage } from "./usage";
-import { randomUUID } from "./utils/randomUUID";
+} from '@ai-sdk/provider';
+import createDebug from 'debug';
+import { At } from './at';
+import { History, type OnMessage } from './history';
+import type { AssistantContent, NormalizedMessage, ToolUsePart } from './message';
+import type { ModelInfo } from './model';
+import { getThinkingConfig } from './thinking-config';
+import type { ToolResult, Tools, ToolUse } from './tool';
+import { Usage } from './usage';
+import { randomUUID } from './utils/randomUUID';
 
 const DEFAULT_MAX_TURNS = 50;
 const DEFAULT_ERROR_RETRY_TURNS = 10;
 
-const debug = createDebug("neovate:loop");
+const debug = createDebug('neovate:loop');
 
-async function exponentialBackoffWithCancellation(
-  attempt: number,
-  signal?: AbortSignal
-): Promise<void> {
+async function exponentialBackoffWithCancellation(attempt: number, signal?: AbortSignal): Promise<void> {
   const baseDelay = 1000;
   const delay = baseDelay * Math.pow(2, attempt - 1);
   const checkInterval = 100;
@@ -35,14 +28,9 @@ async function exponentialBackoffWithCancellation(
   const startTime = Date.now();
   while (Date.now() - startTime < delay) {
     if (signal?.aborted) {
-      throw new Error("Cancelled during retry backoff");
+      throw new Error('Cancelled during retry backoff');
     }
-    await new Promise((resolve) =>
-      setTimeout(
-        resolve,
-        Math.min(checkInterval, delay - (Date.now() - startTime))
-      )
-    );
+    await new Promise((resolve) => setTimeout(resolve, Math.min(checkInterval, delay - (Date.now() - startTime))));
   }
 }
 
@@ -59,7 +47,7 @@ export type LoopResult =
   | {
       success: false;
       error: {
-        type: "tool_denied" | "max_turns_exceeded" | "api_error" | "canceled";
+        type: 'tool_denied' | 'max_turns_exceeded' | 'api_error' | 'canceled';
         message: string;
         details?: Record<string, any>;
       };
@@ -95,7 +83,7 @@ type RunLoopOpts = {
   llmsContexts?: string[];
   autoCompact?: boolean;
   thinking?: {
-    effort: "low" | "medium" | "high";
+    effort: 'low' | 'medium' | 'high';
   };
   onTextDelta?: (text: string) => Promise<void>;
   onText?: (text: string) => Promise<void>;
@@ -103,16 +91,8 @@ type RunLoopOpts = {
   onStreamResult?: (result: StreamResult) => Promise<void>;
   onChunk?: (chunk: any, requestId: string) => Promise<void>;
   onToolUse?: (toolUse: ToolUse) => Promise<ToolUse>;
-  onToolResult?: (
-    toolUse: ToolUse,
-    toolResult: ToolResult,
-    approved: boolean
-  ) => Promise<ToolResult>;
-  onTurn?: (turn: {
-    usage: Usage;
-    startTime: Date;
-    endTime: Date;
-  }) => Promise<void>;
+  onToolResult?: (toolUse: ToolUse, toolResult: ToolResult, approved: boolean) => Promise<ToolResult>;
+  onTurn?: (turn: { usage: Usage; startTime: Date; endTime: Date }) => Promise<void>;
   onToolApprove?: (toolUse: ToolUse) => Promise<boolean>;
   onMessage?: OnMessage;
 };
@@ -121,7 +101,7 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
   const startTime = Date.now();
   let turnsCount = 0;
   let toolCallsCount = 0;
-  let finalText = "";
+  let finalText = '';
   let lastUsage = Usage.empty();
   const totalUsage = Usage.empty();
   const history = new History({
@@ -129,9 +109,9 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
       ? opts.input
       : [
           {
-            role: "user",
+            role: 'user',
             content: opts.input,
-            type: "message",
+            type: 'message',
             timestamp: new Date().toISOString(),
             uuid: randomUUID(),
             parentUuid: null,
@@ -146,8 +126,8 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
   const createCancelError = (): LoopResult => ({
     success: false,
     error: {
-      type: "canceled",
-      message: "Operation was canceled",
+      type: 'canceled',
+      message: 'Operation was canceled',
       details: { turnsCount, history, usage: totalUsage },
     },
   });
@@ -168,7 +148,7 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
       return {
         success: false,
         error: {
-          type: "max_turns_exceeded",
+          type: 'max_turns_exceeded',
           message: `Maximum turns (${maxTurns}) exceeded`,
           details: {
             turnsCount,
@@ -181,19 +161,19 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
     if (opts.autoCompact) {
       const compressed = await history.compress(opts.model);
       if (compressed.compressed) {
-        debug("history compressed", compressed);
+        debug('history compressed', compressed);
       }
     }
     lastUsage.reset();
 
     const systemPromptMessage = {
-      role: "system",
-      content: opts.systemPrompt || "",
+      role: 'system',
+      content: opts.systemPrompt || '',
     } as LanguageModelV2Message;
     const llmsContexts = opts.llmsContexts || [];
     const llmsContextMessages = llmsContexts.map((llmsContext) => {
       return {
-        role: "system",
+        role: 'system',
         content: llmsContext,
       } as LanguageModelV2Message;
     });
@@ -212,8 +192,8 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
       shouldAtNormalize = false;
     }
 
-    let text = "";
-    let reasoning = "";
+    let text = '';
+    let reasoning = '';
     const toolCalls: Array<{
       toolCallId: string;
       toolName: string;
@@ -248,7 +228,7 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
         const result = await m.doStream({
           prompt: prompt,
           tools,
-          toolChoice: { type: "auto" },
+          toolChoice: { type: 'auto' },
           abortSignal: abortController.signal,
           ...thinkingConfig,
         });
@@ -267,42 +247,38 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
           }
           await opts.onChunk?.(chunk, requestId);
           switch (chunk.type) {
-            case "text-delta": {
+            case 'text-delta': {
               const textDelta = chunk.delta;
               text += textDelta;
               await opts.onTextDelta?.(textDelta);
               break;
             }
-            case "reasoning-delta":
+            case 'reasoning-delta':
               reasoning += chunk.delta;
               break;
-            case "tool-call":
+            case 'tool-call':
               toolCalls.push({
                 toolCallId: chunk.toolCallId,
                 toolName: chunk.toolName,
                 input: chunk.input,
               });
               break;
-            case "finish":
+            case 'finish':
               lastUsage = Usage.fromEventUsage(chunk.usage);
               totalUsage.add(lastUsage);
-              if (toolCalls.length === 0 && text.trim() === "") {
-                const error = new Error(
-                  "Empty response: no text or tool calls received"
-                );
+              if (toolCalls.length === 0 && text.trim() === '') {
+                const error = new Error('Empty response: no text or tool calls received');
                 (error as any).isRetryable = true;
                 throw error;
               }
               break;
-            case "error": {
+            case 'error': {
               const message = (() => {
                 if ((chunk as any).error.message) {
                   return (chunk as any).error.message;
                 }
                 try {
-                  const message = JSON.parse(
-                    (chunk as any).error.value?.details
-                  )?.error?.message;
+                  const message = JSON.parse((chunk as any).error.value?.details)?.error?.message;
                   if (message) {
                     return message;
                   }
@@ -355,11 +331,8 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
         return {
           success: false,
           error: {
-            type: "api_error",
-            message:
-              error instanceof Error
-                ? error.message
-                : "Unknown streaming error",
+            type: 'api_error',
+            message: error instanceof Error ? error.message : 'Unknown streaming error',
             details: {
               code: error.data?.error?.code,
               status: error.data?.error?.status,
@@ -393,14 +366,14 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
     const assistantContent: AssistantContent = [];
     if (reasoning) {
       assistantContent.push({
-        type: "reasoning",
+        type: 'reasoning',
         text: reasoning,
       });
     }
     if (text) {
       finalText = text;
       assistantContent.push({
-        type: "text",
+        type: 'text',
         text: text,
       });
     }
@@ -413,7 +386,7 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
       });
       const displayName = tool?.displayName;
       const toolUse: ToolUsePart = {
-        type: "tool_use",
+        type: 'tool_use',
         id: toolCall.toolCallId,
         name: toolCall.toolName,
         input: input,
@@ -428,7 +401,7 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
     }
     await history.addMessage(
       {
-        role: "assistant",
+        role: 'assistant',
         content: assistantContent,
         text,
         model,
@@ -453,15 +426,10 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
       if (opts.onToolUse) {
         toolUse = await opts.onToolUse(toolUse as ToolUse);
       }
-      const approved = opts.onToolApprove
-        ? await opts.onToolApprove(toolUse as ToolUse)
-        : true;
+      const approved = opts.onToolApprove ? await opts.onToolApprove(toolUse as ToolUse) : true;
       if (approved) {
         toolCallsCount++;
-        let toolResult = await opts.tools.invoke(
-          toolUse.name,
-          JSON.stringify(toolUse.params)
-        );
+        let toolResult = await opts.tools.invoke(toolUse.name, JSON.stringify(toolUse.params));
         if (opts.onToolResult) {
           toolResult = await opts.onToolResult(toolUse, toolResult, approved);
         }
@@ -474,7 +442,7 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
         // Prevent normal turns from being terminated due to exceeding the limit
         turnsCount--;
       } else {
-        const message = "Error: Tool execution was denied by user.";
+        const message = 'Error: Tool execution was denied by user.';
         let toolResult: ToolResult = {
           llmContent: message,
           isError: true,
@@ -489,10 +457,10 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
           result: toolResult,
         });
         await history.addMessage({
-          role: "tool",
+          role: 'tool',
           content: toolResults.map((tr) => {
             return {
-              type: "tool-result",
+              type: 'tool-result',
               toolCallId: tr.toolCallId,
               toolName: tr.toolName,
               input: tr.input,
@@ -503,7 +471,7 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
         return {
           success: false,
           error: {
-            type: "tool_denied",
+            type: 'tool_denied',
             message,
             details: {
               toolUse,
@@ -516,10 +484,10 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
     }
     if (toolResults.length) {
       await history.addMessage({
-        role: "tool",
+        role: 'tool',
         content: toolResults.map((tr) => {
           return {
-            type: "tool-result",
+            type: 'tool-result',
             toolCallId: tr.toolCallId,
             toolName: tr.toolName,
             input: tr.input,

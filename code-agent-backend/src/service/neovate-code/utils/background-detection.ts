@@ -1,26 +1,26 @@
-import { BACKGROUND_THRESHOLD_MS } from "../constants";
+import { BACKGROUND_THRESHOLD_MS } from '../constants';
 
 const DEV_COMMANDS = [
-  "npm",
-  "pnpm",
-  "yarn",
-  "node",
-  "python",
-  "python3",
-  "go",
-  "cargo",
-  "make",
-  "docker",
-  "webpack",
-  "vite",
-  "jest",
-  "pytest",
+  'npm',
+  'pnpm',
+  'yarn',
+  'node',
+  'python',
+  'python3',
+  'go',
+  'cargo',
+  'make',
+  'docker',
+  'webpack',
+  'vite',
+  'jest',
+  'pytest',
 ];
 
 export function getCommandRoot(command: string): string | undefined {
   return command
     .trim()
-    .replace(/[{}()]/g, "")
+    .replace(/[{}()]/g, '')
     .split(/[\s;&|]+/)[0]
     ?.split(/[\/\\]/)
     .pop();

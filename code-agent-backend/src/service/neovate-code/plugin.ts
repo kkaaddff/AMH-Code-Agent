@@ -1,19 +1,19 @@
-import type { OpenAIProvider } from "@ai-sdk/openai";
-import type { LanguageModelV2 } from "@openrouter/ai-sdk-provider";
-import defu from "defu";
-import type { Config } from "./config";
-import type { Context, ContextCreateOpts } from "./context";
-import type { LoopResult } from "./loop";
-import type { ModelMap } from "./model";
-import type { Tool, ToolResult, ToolUse } from "./tool";
-import type { Usage } from "./usage";
+import type { OpenAIProvider } from '@ai-sdk/openai';
+import type { LanguageModelV2 } from '@openrouter/ai-sdk-provider';
+import defu from 'defu';
+import type { Config } from './config';
+import type { Context, ContextCreateOpts } from './context';
+import type { LoopResult } from './loop';
+import type { ModelMap } from './model';
+import type { Tool, ToolResult, ToolUse } from './tool';
+import type { Usage } from './usage';
 
 export enum PluginHookType {
-  First = "first",
-  Series = "series",
-  SeriesMerge = "seriesMerge",
-  SeriesLast = "seriesLast",
-  Parallel = "parallel",
+  First = 'first',
+  Series = 'series',
+  SeriesMerge = 'seriesMerge',
+  SeriesLast = 'seriesLast',
+  Parallel = 'parallel',
 }
 
 export type PluginApplyOpts = {
@@ -28,24 +28,18 @@ export class PluginManager {
   #plugins: Plugin[] = [];
   constructor(rawPlugins: Plugin[]) {
     this.#plugins = [
-      ...rawPlugins.filter((p) => p.enforce === "pre"),
+      ...rawPlugins.filter((p) => p.enforce === 'pre'),
       ...rawPlugins.filter((p) => !p.enforce),
-      ...rawPlugins.filter((p) => p.enforce === "post"),
+      ...rawPlugins.filter((p) => p.enforce === 'post'),
     ];
   }
 
-  async apply({
-    hook,
-    args,
-    memo,
-    type = PluginHookType.Series,
-    pluginContext,
-  }: PluginApplyOpts) {
+  async apply({ hook, args, memo, type = PluginHookType.Series, pluginContext }: PluginApplyOpts) {
     const plugins = this.#plugins.filter((p) => !!p[hook]);
     if (type === PluginHookType.First) {
       for (const plugin of plugins) {
         const hookFn: any = plugin[hook];
-        if (typeof hookFn === "function") {
+        if (typeof hookFn === 'function') {
           const result = await hookFn.apply(pluginContext, args);
           if (result != null) {
             return result;
@@ -57,7 +51,7 @@ export class PluginManager {
       const results = await Promise.all(
         plugins.map((p) => {
           const hookFn: any = p[hook];
-          if (typeof hookFn === "function") {
+          if (typeof hookFn === 'function') {
             return hookFn.apply(pluginContext, args);
           }
           return null;
@@ -67,7 +61,7 @@ export class PluginManager {
     } else if (type === PluginHookType.Series) {
       for (const plugin of plugins) {
         const hookFn: any = plugin[hook];
-        if (typeof hookFn === "function") {
+        if (typeof hookFn === 'function') {
           await hookFn.apply(pluginContext, args);
         }
       }
@@ -75,7 +69,7 @@ export class PluginManager {
       let result = memo;
       for (const plugin of plugins) {
         const hookFn: any = plugin[hook];
-        if (typeof hookFn === "function") {
+        if (typeof hookFn === 'function') {
           result = await hookFn.apply(pluginContext, [result, ...args]);
         }
       }
@@ -85,7 +79,7 @@ export class PluginManager {
       const isArray = Array.isArray(result);
       for (const plugin of plugins) {
         const hookFn: any = plugin[hook];
-        if (typeof hookFn === "function") {
+        if (typeof hookFn === 'function') {
           if (isArray) {
             result = result.concat(await hookFn.apply(pluginContext, args));
           } else {
@@ -108,7 +102,7 @@ type TempPluginContext = ContextCreateOpts & {
   apply: (opts: PluginApplyOpts) => Promise<any> | any;
 };
 
-type Enforce = "pre" | "post";
+type Enforce = 'pre' | 'post';
 
 export type GeneralInfo = Record<
   string,
@@ -164,25 +158,14 @@ export type Plugin = {
       sessionId: string;
     }
   ) => Promise<Record<string, string> | {}> | Record<string, string> | {};
-  userPrompt?: (
-    this: PluginContext,
-    userPrompt: string,
-    opts: { sessionId: string }
-  ) => Promise<string> | string;
+  userPrompt?: (this: PluginContext, userPrompt: string, opts: { sessionId: string }) => Promise<string> | string;
   systemPrompt?: (
     this: PluginContext,
     systemPrompt: string,
     opts: { isPlan?: boolean; sessionId: string }
   ) => Promise<string> | string;
-  tool?: (
-    this: PluginContext,
-    opts: { isPlan?: boolean; sessionId: string }
-  ) => Promise<Tool[]> | Tool[];
-  toolUse?: (
-    this: PluginContext,
-    toolUse: ToolUse,
-    opts: { sessionId: string }
-  ) => Promise<ToolUse> | ToolUse;
+  tool?: (this: PluginContext, opts: { isPlan?: boolean; sessionId: string }) => Promise<Tool[]> | Tool[];
+  toolUse?: (this: PluginContext, toolUse: ToolUse, opts: { sessionId: string }) => Promise<ToolUse> | ToolUse;
   toolResult?: (
     this: PluginContext,
     toolResult: ToolResult,
@@ -226,19 +209,13 @@ export type Plugin = {
   ) => Promise<void> | void;
 
   // server
-  _serverAppData?: (
-    this: PluginContext,
-    opts: { context: any; cwd: string }
-  ) => Promise<any> | any;
-  _serverRoutes?: (
-    this: PluginContext,
-    opts: { app: any; prefix: string; opts: any }
-  ) => Promise<any> | any;
+  _serverAppData?: (this: PluginContext, opts: { context: any; cwd: string }) => Promise<any> | any;
+  _serverRoutes?: (this: PluginContext, opts: { app: any; prefix: string; opts: any }) => Promise<any> | any;
   _serverRouteCompletions?: (
     this: PluginContext,
     opts: {
       message: {
-        role: "user";
+        role: 'user';
         content: string;
         attachedContexts: any[];
         contextContent: string;

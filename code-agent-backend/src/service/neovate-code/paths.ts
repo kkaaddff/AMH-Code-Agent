@@ -1,15 +1,15 @@
-import fs from "fs";
-import os from "os";
-import path from "pathe";
-import type { SessionConfig } from "./session";
+import fs from 'fs';
+import os from 'os';
+import path from 'pathe';
+import type { SessionConfig } from './session';
 
 interface ConfigLogEntry {
-  type: "config";
+  type: 'config';
   config: SessionConfig;
 }
 
 interface MessageLogEntry {
-  type: "message";
+  type: 'message';
   role: string;
   content: string | any[];
   [key: string]: any;
@@ -25,18 +25,14 @@ export class Paths {
   constructor(opts: { productName: string; cwd: string }) {
     const productName = opts.productName.toLowerCase();
     this.globalConfigDir = path.join(os.homedir(), `.${productName}`);
-    this.globalProjectDir = path.join(
-      this.globalConfigDir,
-      "projects",
-      formatPath(opts.cwd)
-    );
+    this.globalProjectDir = path.join(this.globalConfigDir, 'projects', formatPath(opts.cwd));
     this.projectConfigDir = path.join(opts.cwd, `.${productName}`);
   }
 
   getSessionLogPath(sessionId: string) {
     if (path.isAbsolute(sessionId)) {
       return sessionId;
-    } else if (sessionId.startsWith(".") || sessionId.endsWith(".jsonl")) {
+    } else if (sessionId.startsWith('.') || sessionId.endsWith('.jsonl')) {
       return path.join(process.cwd(), sessionId);
     } else {
       return path.join(this.globalProjectDir, `${sessionId}.jsonl`);
@@ -49,17 +45,15 @@ export class Paths {
     }
     const jsonlFileTimeStamps = fs
       .readdirSync(this.globalProjectDir)
-      .filter((file) => file.endsWith(".jsonl"))
+      .filter((file) => file.endsWith('.jsonl'))
       .map((file) => {
         const stats = fs.statSync(path.join(this.globalProjectDir, file));
         return {
           timestamp: stats.mtime.getTime(),
-          sessionId: path.basename(file, ".jsonl"),
+          sessionId: path.basename(file, '.jsonl'),
         };
       });
-    const latestSession = jsonlFileTimeStamps.sort(
-      (a, b) => b.timestamp - a.timestamp
-    )[0];
+    const latestSession = jsonlFileTimeStamps.sort((a, b) => b.timestamp - a.timestamp)[0];
     return latestSession.sessionId;
   }
 
@@ -69,25 +63,25 @@ export class Paths {
     }
     const jsonlFiles = fs
       .readdirSync(this.globalProjectDir)
-      .filter((file) => file.endsWith(".jsonl"))
+      .filter((file) => file.endsWith('.jsonl'))
       .map((file) => {
         const filePath = path.join(this.globalProjectDir, file);
         const stats = fs.statSync(filePath);
-        const sessionId = path.basename(file, ".jsonl");
+        const sessionId = path.basename(file, '.jsonl');
 
         // Read message count and summary
         let messageCount = 0;
-        let summary = "";
+        let summary = '';
         try {
-          const content = fs.readFileSync(filePath, "utf-8");
-          const lines = content.split("\n").filter(Boolean);
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const lines = content.split('\n').filter(Boolean);
           messageCount = lines.length;
 
           // Extract summary: prioritize config.summary, fallback to first user message
           if (lines.length > 0) {
             try {
               const firstEntry: LogEntry = JSON.parse(lines[0]);
-              if (firstEntry.type === "config" && firstEntry.config.summary) {
+              if (firstEntry.type === 'config' && firstEntry.config.summary) {
                 summary = firstEntry.config.summary;
               } else {
                 summary = extractFirstUserMessageSummary(lines);
@@ -115,15 +109,15 @@ export class Paths {
   }
 
   getGlobalDataPath() {
-    return path.join(this.globalConfigDir, "data.json");
+    return path.join(this.globalConfigDir, 'data.json');
   }
 }
 
 function normalizeSummary(summary: string): string {
-  if (!summary) return "";
+  if (!summary) return '';
   return summary
-    .replace(/\r\n|\r|\n/g, " ") // Replace all line breaks with spaces
-    .replace(/\s+/g, " ") // Merge consecutive whitespace characters into single space
+    .replace(/\r\n|\r|\n/g, ' ') // Replace all line breaks with spaces
+    .replace(/\s+/g, ' ') // Merge consecutive whitespace characters into single space
     .trim(); // Remove leading and trailing whitespace
 }
 
@@ -131,26 +125,19 @@ function extractFirstUserMessageSummary(lines: string[]): string {
   for (const line of lines) {
     try {
       const entry: LogEntry = JSON.parse(line);
-      if (
-        entry.type === "message" &&
-        "role" in entry &&
-        entry.role === "user" &&
-        typeof entry.content === "string"
-      ) {
-        return entry.content.length > 50
-          ? entry.content.slice(0, 50) + "..."
-          : entry.content;
+      if (entry.type === 'message' && 'role' in entry && entry.role === 'user' && typeof entry.content === 'string') {
+        return entry.content.length > 50 ? entry.content.slice(0, 50) + '...' : entry.content;
       }
     } catch (e) {}
   }
-  return "";
+  return '';
 }
 
 function formatPath(from: string) {
   return from
-    .replace(/^\/+|\/+$/g, "") // Remove leading/trailing slashes
-    .replace(/[^a-zA-Z0-9]/g, "-")
-    .replace(/-+/g, "-") // Collapse multiple dashes
-    .replace(/^-+|-+$/g, "") // Remove leading/trailing dashes
+    .replace(/^\/+|\/+$/g, '') // Remove leading/trailing slashes
+    .replace(/[^a-zA-Z0-9]/g, '-')
+    .replace(/-+/g, '-') // Collapse multiple dashes
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing dashes
     .toLowerCase(); // Ensure consistency across filesystems
 }

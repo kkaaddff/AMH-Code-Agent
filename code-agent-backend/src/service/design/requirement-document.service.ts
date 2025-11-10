@@ -1,24 +1,17 @@
-import {
-  HttpStatus,
-  Inject,
-  MidwayHttpError,
-  Provide,
-  Scope,
-  ScopeEnum,
-} from "@midwayjs/core";
-import { InjectEntityModel } from "@midwayjs/typegoose";
-import type { DocumentType, ReturnModelType } from "@typegoose/typegoose";
-import fse from "fs-extra";
-import path from "path";
-import { DesignRequirementDocumentEntity } from "../../entity/design";
+import { HttpStatus, Inject, MidwayHttpError, Provide, Scope, ScopeEnum } from '@midwayjs/core';
+import { InjectEntityModel } from '@midwayjs/typegoose';
+import type { DocumentType, ReturnModelType } from '@typegoose/typegoose';
+import fse from 'fs-extra';
+import path from 'path';
+import { DesignRequirementDocumentEntity } from '../../entity/design';
 import type {
   GenerateRequirementDocumentBody,
   RequirementDocumentPaginationQuery,
   UpdateRequirementDocumentBody,
-} from "../../dto/design";
-import { DesignDocumentService } from "./design-document.service";
-import { DesignComponentAnnotationService } from "./component-annotation.service";
-import { RequirementSpecModelService } from "./requirement-spec-model.service";
+} from '../../dto/design';
+import { DesignDocumentService } from './design-document.service';
+import { DesignComponentAnnotationService } from './component-annotation.service';
+import { RequirementSpecModelService } from './requirement-spec-model.service';
 
 const MAX_PAGE_SIZE = 50;
 
@@ -26,9 +19,7 @@ const MAX_PAGE_SIZE = 50;
 @Scope(ScopeEnum.Request, { allowDowngrade: true })
 export class DesignRequirementDocumentService {
   @InjectEntityModel(DesignRequirementDocumentEntity)
-  private requirementDocModel: ReturnModelType<
-    typeof DesignRequirementDocumentEntity
-  >;
+  private requirementDocModel: ReturnModelType<typeof DesignRequirementDocumentEntity>;
 
   @Inject()
   private designDocumentService: DesignDocumentService;
@@ -40,22 +31,13 @@ export class DesignRequirementDocumentService {
   private requirementSpecModelService: RequirementSpecModelService;
 
   private normalizeDocument(
-    doc:
-      | DocumentType<DesignRequirementDocumentEntity>
-      | (DesignRequirementDocumentEntity & { _id?: any })
+    doc: DocumentType<DesignRequirementDocumentEntity> | (DesignRequirementDocumentEntity & { _id?: any })
   ): DesignRequirementDocumentEntity {
     if (!doc) {
       return null;
     }
-    const plain =
-      typeof (doc as any).toObject === "function"
-        ? (doc as any).toObject()
-        : { ...(doc as any) };
-    if (
-      plain._id &&
-      typeof plain._id === "object" &&
-      typeof plain._id.toString === "function"
-    ) {
+    const plain = typeof (doc as any).toObject === 'function' ? (doc as any).toObject() : { ...(doc as any) };
+    if (plain._id && typeof plain._id === 'object' && typeof plain._id.toString === 'function') {
       plain._id = plain._id.toString();
     }
     if (plain.createdAt instanceof Date) {
@@ -70,24 +52,19 @@ export class DesignRequirementDocumentService {
     if (plain.archivedAt instanceof Date) {
       plain.archivedAt = plain.archivedAt.toISOString();
     }
-    plain.exportFormats = Array.isArray(plain.exportFormats)
-      ? plain.exportFormats
-      : [];
+    plain.exportFormats = Array.isArray(plain.exportFormats) ? plain.exportFormats : [];
     return plain as DesignRequirementDocumentEntity;
   }
 
   private ensureStatusTransition(current: string, next: string) {
     const transitions: Record<string, string[]> = {
-      draft: ["published", "archived"],
-      published: ["archived"],
+      draft: ['published', 'archived'],
+      published: ['archived'],
       archived: [],
     };
     const allowed = transitions[current] || [];
     if (!allowed.includes(next)) {
-      throw new MidwayHttpError(
-        `Invalid status transition from ${current} to ${next}`,
-        HttpStatus.BAD_REQUEST
-      );
+      throw new MidwayHttpError(`Invalid status transition from ${current} to ${next}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -96,14 +73,13 @@ export class DesignRequirementDocumentService {
     payload: GenerateRequirementDocumentBody,
     operatorId: string
   ): Promise<string> {
-    const generation =
-      await this.requirementSpecModelService.generateSpecification({
-        templateKey: payload.templateKey,
-        rootAnnotation: payload.rootAnnotation,
-        annotationVersion: payload.annotationVersion,
-        annotationSchemaVersion: payload.annotationSchemaVersion,
-        operatorId,
-      });
+    const generation = await this.requirementSpecModelService.generateSpecification({
+      templateKey: payload.templateKey,
+      rootAnnotation: payload.rootAnnotation,
+      annotationVersion: payload.annotationVersion,
+      annotationSchemaVersion: payload.annotationSchemaVersion,
+      operatorId,
+    });
 
     return generation;
   }
@@ -137,10 +113,7 @@ export class DesignRequirementDocumentService {
   ): Promise<DesignRequirementDocumentEntity> {
     const doc = await this.requirementDocModel.findById(docId);
     if (!doc) {
-      throw new MidwayHttpError(
-        "Requirement document not found",
-        HttpStatus.NOT_FOUND
-      );
+      throw new MidwayHttpError('Requirement document not found', HttpStatus.NOT_FOUND);
     }
 
     if (payload.title !== undefined) {
@@ -148,15 +121,15 @@ export class DesignRequirementDocumentService {
     }
     if (payload.content !== undefined) {
       doc.content = payload.content;
-      doc.markModified("content");
+      doc.markModified('content');
     }
     if (payload.status !== undefined && payload.status !== doc.status) {
       this.ensureStatusTransition(doc.status, payload.status);
       doc.status = payload.status;
-      if (payload.status === "published") {
+      if (payload.status === 'published') {
         doc.publishedAt = new Date();
       }
-      if (payload.status === "archived") {
+      if (payload.status === 'archived') {
         doc.archivedAt = new Date();
       }
     }
@@ -168,14 +141,12 @@ export class DesignRequirementDocumentService {
     return this.normalizeDocument(saved);
   }
 
-  public async getRequirementDocumentById(
-    docId: string
-  ): Promise<DesignRequirementDocumentEntity | null> {
+  public async getRequirementDocumentById(docId: string): Promise<DesignRequirementDocumentEntity | null> {
     const doc = await this.requirementDocModel.findById(docId).lean();
     if (!doc) {
       return null;
     }
-    if (doc._id && typeof (doc._id as any).toString === "function") {
+    if (doc._id && typeof (doc._id as any).toString === 'function') {
       doc._id = (doc._id as any).toString();
     }
     if (doc.createdAt instanceof Date) {
@@ -190,9 +161,7 @@ export class DesignRequirementDocumentService {
     if (doc.archivedAt instanceof Date) {
       doc.archivedAt = doc.archivedAt.toISOString() as any;
     }
-    doc.exportFormats = Array.isArray(doc.exportFormats)
-      ? doc.exportFormats
-      : [];
+    doc.exportFormats = Array.isArray(doc.exportFormats) ? doc.exportFormats : [];
     return doc as DesignRequirementDocumentEntity;
   }
 
@@ -218,7 +187,7 @@ export class DesignRequirementDocumentService {
     ]);
 
     const normalized = list.map((item: any) => {
-      if (item._id && typeof item._id.toString === "function") {
+      if (item._id && typeof item._id.toString === 'function') {
         item._id = item._id.toString();
       }
       if (item.createdAt instanceof Date) {
@@ -233,47 +202,30 @@ export class DesignRequirementDocumentService {
       if (item.archivedAt instanceof Date) {
         item.archivedAt = item.archivedAt.toISOString();
       }
-      item.exportFormats = Array.isArray(item.exportFormats)
-        ? item.exportFormats
-        : [];
+      item.exportFormats = Array.isArray(item.exportFormats) ? item.exportFormats : [];
       return item as DesignRequirementDocumentEntity;
     });
 
     return { list: normalized, total };
   }
 
-  public async exportRequirementDocument(
-    docId: string,
-    operatorId: string
-  ): Promise<string> {
+  public async exportRequirementDocument(docId: string, operatorId: string): Promise<string> {
     const doc = await this.requirementDocModel.findById(docId);
     if (!doc) {
-      throw new MidwayHttpError(
-        "Requirement document not found",
-        HttpStatus.NOT_FOUND
-      );
+      throw new MidwayHttpError('Requirement document not found', HttpStatus.NOT_FOUND);
     }
 
-    const relativeKey = path.posix.join(
-      "design",
-      "requirement-docs",
-      `${doc._id}.md`
-    );
-    const outputDir = path.join(
-      process.cwd(),
-      "files-cache",
-      "design",
-      "requirement-docs"
-    );
+    const relativeKey = path.posix.join('design', 'requirement-docs', `${doc._id}.md`);
+    const outputDir = path.join(process.cwd(), 'files-cache', 'design', 'requirement-docs');
     await fse.ensureDir(outputDir);
     const absolutePath = path.join(outputDir, `${doc._id}.md`);
-    await fse.writeFile(absolutePath, doc.content || "", { encoding: "utf8" });
+    await fse.writeFile(absolutePath, doc.content || '', { encoding: 'utf8' });
 
     doc.ossObjectKey = relativeKey;
     doc.updatedBy = operatorId;
     doc.updatedAt = new Date();
     const formats = new Set(doc.exportFormats ?? []);
-    formats.add("md");
+    formats.add('md');
     doc.exportFormats = Array.from(formats);
     await doc.save();
 

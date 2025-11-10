@@ -1,21 +1,9 @@
-import {
-  Config,
-  Inject,
-  MidwayHttpError,
-  Provide,
-  Scope,
-  ScopeEnum,
-  HttpStatus,
-} from "@midwayjs/core";
-import { InjectEntityModel } from "@midwayjs/typegoose";
-import type { DocumentType, ReturnModelType } from "@typegoose/typegoose";
-import { RedisService } from "@midwayjs/redis";
-import { DesignComponentAnnotationEntity } from "../../entity/design";
-import type {
-  SaveDesignAnnotationBody,
-  DiffDesignAnnotationQuery,
-  DiffChangeSetItem,
-} from "../../dto/design";
+import { Config, Inject, MidwayHttpError, Provide, Scope, ScopeEnum, HttpStatus } from '@midwayjs/core';
+import { InjectEntityModel } from '@midwayjs/typegoose';
+import type { DocumentType, ReturnModelType } from '@typegoose/typegoose';
+import { RedisService } from '@midwayjs/redis';
+import { DesignComponentAnnotationEntity } from '../../entity/design';
+import type { SaveDesignAnnotationBody, DiffDesignAnnotationQuery, DiffChangeSetItem } from '../../dto/design';
 
 interface CachedAnnotationPayload {
   version: number;
@@ -26,18 +14,16 @@ interface CachedAnnotationPayload {
 @Scope(ScopeEnum.Request, { allowDowngrade: true })
 export class DesignComponentAnnotationService {
   @InjectEntityModel(DesignComponentAnnotationEntity)
-  private annotationModel: ReturnModelType<
-    typeof DesignComponentAnnotationEntity
-  >;
+  private annotationModel: ReturnModelType<typeof DesignComponentAnnotationEntity>;
 
   @Inject()
   private redisService: RedisService;
 
-  @Config("designModule")
+  @Config('designModule')
   private designModuleConfig: { cacheTTL?: { annotation?: number } };
 
   private getAnnotationCacheKey(designId: string, version?: number): string {
-    const suffix = version !== undefined ? `:${version}` : "";
+    const suffix = version !== undefined ? `:${version}` : '';
     return `design:annotations:${designId}${suffix}`;
   }
 
@@ -50,22 +36,13 @@ export class DesignComponentAnnotationService {
   }
 
   private normalizeAnnotation(
-    doc:
-      | DocumentType<DesignComponentAnnotationEntity>
-      | (DesignComponentAnnotationEntity & { _id?: any })
+    doc: DocumentType<DesignComponentAnnotationEntity> | (DesignComponentAnnotationEntity & { _id?: any })
   ): DesignComponentAnnotationEntity {
     if (!doc) {
       return null;
     }
-    const plain =
-      typeof (doc as any).toObject === "function"
-        ? (doc as any).toObject()
-        : { ...(doc as any) };
-    if (
-      plain._id &&
-      typeof plain._id === "object" &&
-      typeof plain._id.toString === "function"
-    ) {
+    const plain = typeof (doc as any).toObject === 'function' ? (doc as any).toObject() : { ...(doc as any) };
+    if (plain._id && typeof plain._id === 'object' && typeof plain._id.toString === 'function') {
       plain._id = plain._id.toString();
     }
     if (plain.createdAt instanceof Date) {
@@ -74,9 +51,7 @@ export class DesignComponentAnnotationService {
     if (plain.updatedAt instanceof Date) {
       plain.updatedAt = plain.updatedAt.toISOString();
     }
-    plain.expandedKeys = Array.isArray(plain.expandedKeys)
-      ? plain.expandedKeys
-      : [];
+    plain.expandedKeys = Array.isArray(plain.expandedKeys) ? plain.expandedKeys : [];
     return plain as DesignComponentAnnotationEntity;
   }
 
@@ -91,30 +66,15 @@ export class DesignComponentAnnotationService {
     const ttl = this.getAnnotationCacheTTLSeconds();
     try {
       if (isLatest) {
-        await this.redisService.set(
-          this.getAnnotationCacheKey(designId),
-          serialized,
-          "EX",
-          ttl
-        );
+        await this.redisService.set(this.getAnnotationCacheKey(designId), serialized, 'EX', ttl);
       }
-      await this.redisService.set(
-        this.getAnnotationCacheKey(designId, version),
-        serialized,
-        "EX",
-        ttl
-      );
+      await this.redisService.set(this.getAnnotationCacheKey(designId, version), serialized, 'EX', ttl);
     } catch (error) {
-      console.warn(
-        `Failed to cache annotation for designId=${designId}`,
-        error
-      );
+      console.warn(`Failed to cache annotation for designId=${designId}`, error);
     }
   }
 
-  private async parseCachedAnnotation(
-    key: string
-  ): Promise<CachedAnnotationPayload | null> {
+  private async parseCachedAnnotation(key: string): Promise<CachedAnnotationPayload | null> {
     try {
       const cached = await this.redisService.get(key);
       if (!cached) {
@@ -130,7 +90,7 @@ export class DesignComponentAnnotationService {
   private flattenAnnotation(root: any): Map<string, any> {
     const map = new Map<string, any>();
     const dfs = (node: any) => {
-      if (!node || typeof node !== "object") {
+      if (!node || typeof node !== 'object') {
         return;
       }
       if (node.id) {
@@ -150,10 +110,7 @@ export class DesignComponentAnnotationService {
     payload: SaveDesignAnnotationBody,
     operatorId: string
   ): Promise<DesignComponentAnnotationEntity> {
-    const latestAnnotation = await this.annotationModel
-      .findOne({ designId })
-      .sort({ version: -1 })
-      .lean();
+    const latestAnnotation = await this.annotationModel.findOne({ designId }).sort({ version: -1 }).lean();
     const existing = payload.version
       ? await this.annotationModel.findOne({
           designId,
@@ -165,20 +122,13 @@ export class DesignComponentAnnotationService {
 
     if (existing) {
       if (!payload.force) {
-        throw new MidwayHttpError(
-          "Annotation version already exists",
-          HttpStatus.CONFLICT
-        );
+        throw new MidwayHttpError('Annotation version already exists', HttpStatus.CONFLICT);
       }
       targetVersion = existing.version;
     } else if (targetVersion !== undefined) {
-      if (
-        latestAnnotation &&
-        targetVersion <= (latestAnnotation.version ?? 0) &&
-        !payload.force
-      ) {
+      if (latestAnnotation && targetVersion <= (latestAnnotation.version ?? 0) && !payload.force) {
         throw new MidwayHttpError(
-          "Annotation version must be greater than current latest version",
+          'Annotation version must be greater than current latest version',
           HttpStatus.CONFLICT
         );
       }
@@ -187,25 +137,21 @@ export class DesignComponentAnnotationService {
     }
 
     if (targetVersion === undefined || targetVersion <= 0) {
-      throw new MidwayHttpError(
-        "Invalid annotation version",
-        HttpStatus.BAD_REQUEST
-      );
+      throw new MidwayHttpError('Invalid annotation version', HttpStatus.BAD_REQUEST);
     }
 
     let record: DocumentType<DesignComponentAnnotationEntity>;
     const expandedKeys = payload.expandedKeys ?? [];
-    const isLatestVersion =
-      !latestAnnotation || targetVersion >= (latestAnnotation.version ?? 0);
+    const isLatestVersion = !latestAnnotation || targetVersion >= (latestAnnotation.version ?? 0);
 
     if (existing) {
       existing.rootAnnotation = payload.rootAnnotation as any;
       existing.expandedKeys = expandedKeys;
       existing.schemaVersion = payload.schemaVersion;
-      existing.status = "active";
+      existing.status = 'active';
       existing.updatedBy = operatorId;
       existing.updatedAt = new Date();
-      existing.markModified("rootAnnotation");
+      existing.markModified('rootAnnotation');
       record = await existing.save();
     } else {
       record = await this.annotationModel.create({
@@ -214,16 +160,13 @@ export class DesignComponentAnnotationService {
         rootAnnotation: payload.rootAnnotation as any,
         expandedKeys,
         schemaVersion: payload.schemaVersion,
-        status: "active",
+        status: 'active',
         createdBy: operatorId,
         updatedBy: operatorId,
       });
 
       // 历史版本标记为归档
-      await this.annotationModel.updateMany(
-        { designId, _id: { $ne: record._id } },
-        { $set: { status: "archived" } }
-      );
+      await this.annotationModel.updateMany({ designId, _id: { $ne: record._id } }, { $set: { status: 'archived' } });
     }
 
     const normalized = this.normalizeAnnotation(record);
@@ -231,7 +174,7 @@ export class DesignComponentAnnotationService {
       designId,
       normalized.version,
       normalized,
-      isLatestVersion || normalized.status === "active"
+      isLatestVersion || normalized.status === 'active'
     );
     return normalized;
   }
@@ -250,15 +193,9 @@ export class DesignComponentAnnotationService {
     if (version !== undefined) {
       doc = await this.annotationModel.findOne({ designId, version }).lean();
     } else {
-      doc = await this.annotationModel
-        .findOne({ designId, status: "active" })
-        .sort({ version: -1 })
-        .lean();
+      doc = await this.annotationModel.findOne({ designId, status: 'active' }).sort({ version: -1 }).lean();
       if (!doc) {
-        doc = await this.annotationModel
-          .findOne({ designId })
-          .sort({ version: -1 })
-          .lean();
+        doc = await this.annotationModel.findOne({ designId }).sort({ version: -1 }).lean();
       }
     }
 
@@ -267,30 +204,19 @@ export class DesignComponentAnnotationService {
     }
 
     const normalized = this.normalizeAnnotation(doc);
-    const latestVersion = doc.status === "active" || version === undefined;
-    await this.cacheAnnotation(
-      designId,
-      normalized.version,
-      normalized,
-      latestVersion
-    );
+    const latestVersion = doc.status === 'active' || version === undefined;
+    await this.cacheAnnotation(designId, normalized.version, normalized, latestVersion);
     return normalized;
   }
 
-  public async diffAnnotations(
-    designId: string,
-    params: DiffDesignAnnotationQuery
-  ): Promise<DiffChangeSetItem[]> {
+  public async diffAnnotations(designId: string, params: DiffDesignAnnotationQuery): Promise<DiffChangeSetItem[]> {
     const [from, to] = await Promise.all([
       this.getLatestAnnotation(designId, params.fromVersion),
       this.getLatestAnnotation(designId, params.toVersion),
     ]);
 
     if (!from || !to) {
-      throw new MidwayHttpError(
-        "Annotation version not found",
-        HttpStatus.NOT_FOUND
-      );
+      throw new MidwayHttpError('Annotation version not found', HttpStatus.NOT_FOUND);
     }
 
     const fromMap = this.flattenAnnotation(from.rootAnnotation);
@@ -301,7 +227,7 @@ export class DesignComponentAnnotationService {
       if (!fromMap.has(nodeId)) {
         changes.push({
           nodeId,
-          changeType: "added",
+          changeType: 'added',
           detail: { after: newNode },
         });
       } else {
@@ -309,7 +235,7 @@ export class DesignComponentAnnotationService {
         if (JSON.stringify(oldNode) !== JSON.stringify(newNode)) {
           changes.push({
             nodeId,
-            changeType: "updated",
+            changeType: 'updated',
             detail: { before: oldNode, after: newNode },
           });
         }
@@ -320,7 +246,7 @@ export class DesignComponentAnnotationService {
       if (!toMap.has(nodeId)) {
         changes.push({
           nodeId,
-          changeType: "removed",
+          changeType: 'removed',
           detail: { before: oldNode },
         });
       }
