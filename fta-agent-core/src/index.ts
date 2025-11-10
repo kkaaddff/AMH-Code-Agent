@@ -5,4 +5,8 @@ export type { ProjectTaskKind, ProjectTaskCallbacks, ProjectTaskOptions } from '
 export { Context } from './context';
 export type { SessionId } from './session';
 export { runFrontendProjectWorkflow } from './frontendProjectService';
-export type { FrontendProjectWorkflowOptions, FrontendProjectWorkflowResult } from './frontendProjectService';
+export type {
+  FrontendProjectWorkflowOptions,
+  FrontendProjectWorkflowResult,
+  FrontendProjectWorkflowCallbacks,
+} from './frontendProjectService';

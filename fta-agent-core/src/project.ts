@@ -5,10 +5,11 @@ import { runLoop, type StreamResult } from './loop';
 import type { ImagePart, NormalizedMessage, UserContent } from './message';
 import { resolveModelWithContext } from './model';
 import { generatePlanSystemPrompt } from './prompts/planSystemPrompt';
-import { Session, SessionConfigManager, type SessionId } from './session';
 import { generateSystemPrompt } from './prompts/systemPrompt';
+import { Session, SessionConfigManager, type SessionId } from './session';
 import type { ApprovalCategory, Tool, ToolUse } from './tool';
 import { resolveTools, Tools } from './tool';
+import type { Usage } from './usage';
 import { randomUUID } from './utils/randomUUID';
 
 export type ProjectTaskKind = 'send' | 'plan';
@@ -17,8 +18,10 @@ export type ProjectTaskCallbacks = {
   onMessage?: (opts: { message: NormalizedMessage }) => Promise<void>;
   onToolApprove?: (opts: { toolUse: ToolUse; category?: ApprovalCategory }) => Promise<boolean>;
   onTextDelta?: (text: string) => Promise<void>;
+  onText?: (text: string) => Promise<void>;
   onChunk?: (chunk: any, requestId: string) => Promise<void>;
   onStreamResult?: (result: StreamResult) => Promise<void>;
+  onTurn?: (turn: { usage: Usage; startTime: Date; endTime: Date }) => Promise<void>;
 };
 
 export type ProjectTaskOptions = ProjectTaskCallbacks & {

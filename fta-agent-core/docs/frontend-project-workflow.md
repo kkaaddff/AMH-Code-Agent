@@ -54,7 +54,24 @@ if (result.success) {
 | `requirementDoc`  | ✅   | 会作为 `initialMessage` 内容，也用于构造 `LlmsContext`     | 建议提供 Markdown 结构               |
 | `specFiles`       | ✅   | 交给 `createSpecReaderTool`，供 Agent 在对话中读取         | key 为展示名，value 为绝对路径       |
 | `configOverrides` | ❌   | 部分覆盖默认配置（模型、超参、自动压缩等）                 | 透传给 `Context.create`              |
+| `callbacks`       | ❌   | 复用 `AgentService.send/plan` 的回调钩子，监听消息/流/工具 | `onMessage`、`onToolApprove` 等同型  |
 | `language`        | ❌   | 明确系统提示词语言，未提供则使用 `context.config.language` | 影响 `generateFrontendProjectPrompt` |
+
+`callbacks` 的结构完全沿用 `AgentService`（见 `agentService.test.ts`），因此可直接将
+
+```ts
+const callbacks = { ... };
+await service.send('Inspect repo', callbacks);
+```
+
+中的同一对象传入：
+
+```ts
+await runFrontendProjectWorkflow({
+  ...,
+  callbacks,
+});
+```
 
 ---
 

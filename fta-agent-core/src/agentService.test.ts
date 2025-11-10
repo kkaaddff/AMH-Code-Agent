@@ -1,9 +1,9 @@
+import { config as loadEnv } from 'dotenv';
 import fs from 'fs';
 import os from 'os';
 import path from 'pathe';
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAgentService } from './agentService';
-import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(process.cwd(), '.env') });
 
 describe('AgentService integration', () => {

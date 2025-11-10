@@ -253,10 +253,7 @@ export function createTodoTool(opts: { filePath: string }) {
       } catch (error) {
         return {
           isError: true,
-          llmContent:
-            error instanceof Error
-              ? `Failed to write todos: ${error.message}`
-              : 'Unknown error',
+          llmContent: error instanceof Error ? `Failed to write todos: ${error.message}` : 'Unknown error',
         };
       }
     },
@@ -273,19 +270,13 @@ export function createTodoTool(opts: { filePath: string }) {
       try {
         const todos = await readTodos();
         return {
-          llmContent:
-            todos.length === 0
-              ? 'Todo list is empty'
-              : `Found ${todos.length} todos`,
+          llmContent: todos.length === 0 ? 'Todo list is empty' : `Found ${todos.length} todos`,
           returnDisplay: { type: 'todo_read', todos },
         };
       } catch (error) {
         return {
           isError: true,
-          llmContent:
-            error instanceof Error
-              ? `Failed to read todos: ${error.message}`
-              : 'Unknown error',
+          llmContent: error instanceof Error ? `Failed to read todos: ${error.message}` : 'Unknown error',
         };
       }
     },

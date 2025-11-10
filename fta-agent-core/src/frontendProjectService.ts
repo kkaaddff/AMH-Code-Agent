@@ -1,5 +1,6 @@
 import path from 'pathe';
 import type { Config } from './config';
+import type { ProjectTaskCallbacks } from './project';
 import { Context } from './context';
 import { LlmsContext } from './llmsContext';
 import { runLoop, type LoopResult } from './loop';
@@ -14,6 +15,8 @@ import { createTodoTool } from './tools/todo';
 import { createSpecReaderTool, type SpecRegistry } from './tools/specReader';
 import { createFileDraftTool, FileDraftStore } from './tools/fileDraft';
 
+export type FrontendProjectWorkflowCallbacks = ProjectTaskCallbacks;
+
 export type FrontendProjectWorkflowOptions = {
   cwd: string;
   productName: string;
@@ -21,6 +24,7 @@ export type FrontendProjectWorkflowOptions = {
   requirementDoc: string;
   specFiles: SpecRegistry;
   configOverrides?: Partial<Config>;
+  callbacks?: FrontendProjectWorkflowCallbacks;
 };
 
 export type FrontendProjectWorkflowResult =
@@ -83,6 +87,12 @@ export async function runFrontendProjectWorkflow(
       timestamp: new Date().toISOString(),
     };
 
+    const callbacks = opts.callbacks;
+
+    await callbacks?.onMessage?.({
+      message: initialMessage,
+    });
+
     const loopResult = await runLoop({
       input: [initialMessage],
       model,
@@ -91,7 +101,28 @@ export async function runFrontendProjectWorkflow(
       systemPrompt,
       llmsContexts: llmsContext.messages,
       autoCompact: context.config.autoCompact,
-      onToolApprove: async () => true,
+      onMessage: callbacks?.onMessage
+        ? async (message) => {
+            await callbacks.onMessage!({
+              message,
+            });
+          }
+        : undefined,
+      onTextDelta: callbacks?.onTextDelta,
+      onStreamResult: callbacks?.onStreamResult,
+      onChunk: callbacks?.onChunk,
+      onText: callbacks?.onText,
+      onTurn: callbacks?.onTurn,
+      onToolApprove: async (toolUse) => {
+        if (!callbacks?.onToolApprove) {
+          return true;
+        }
+        const tool = toolsManager.get(toolUse.name);
+        return await callbacks.onToolApprove({
+          toolUse,
+          category: tool?.approval?.category,
+        });
+      },
       thinking: {
         effort: 'medium',
       },

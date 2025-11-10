@@ -7,7 +7,6 @@ import { safeStringify } from '../utils/safeStringify';
 
 export type SpecRegistry = Record<string, string>;
 
-const MOCK_SPEC_ENV = 'FTA_AGENT_USE_MOCK_SPECS';
 const THIS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(THIS_DIR, '../..');
 const MOCK_SPEC_DIR = path.join(PACKAGE_ROOT, 'mock-specs');
@@ -73,10 +72,7 @@ export function createSpecReaderTool(opts: { specs: SpecRegistry; cwd: string })
 }
 
 function loadMockSpecsIfNeeded(registry: Record<string, string>) {
-  const shouldLoadMock =
-    process.env[MOCK_SPEC_ENV] === '1' ||
-    process.env[MOCK_SPEC_ENV]?.toLowerCase() === 'true' ||
-    process.env.VITEST === 'true';
+  const shouldLoadMock = process.env.VITEST === 'true';
   if (!shouldLoadMock) return;
   if (!fs.existsSync(MOCK_SPEC_DIR)) {
     return;

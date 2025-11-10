@@ -1,10 +1,14 @@
+import { config as loadEnv } from 'dotenv';
 import fs from 'fs';
+import { fileURLToPath } from 'node:url';
 import os from 'os';
 import path from 'pathe';
-import { fileURLToPath } from 'node:url';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runFrontendProjectWorkflow } from './frontendProjectService';
 import { createSpecReaderTool } from './tools/specReader';
+import { FileDraftStore } from './tools/fileDraft';
+import type { Usage } from './usage';
+loadEnv({ path: path.join(process.cwd(), '.env') });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
@@ -13,34 +17,60 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
   let projectDir: string;
   let homeDir: string;
   let originalHome: string | undefined;
-  const originalEnv: Record<string, string | undefined> = {
-    FTA_AGENT_FAKE_LLM: process.env.FTA_AGENT_FAKE_LLM,
-    FTA_AGENT_USE_MOCK_SPECS: process.env.FTA_AGENT_USE_MOCK_SPECS,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  };
+  let addSpy: any;
 
   beforeEach(() => {
     projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'frontend-project-repo-'));
     homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'frontend-project-home-'));
     originalHome = process.env.HOME;
     process.env.HOME = homeDir;
-    process.env.FTA_AGENT_FAKE_LLM = '1';
-    process.env.FTA_AGENT_USE_MOCK_SPECS = '1';
-    process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'fake-key';
+
     fs.writeFileSync(path.join(projectDir, 'README.md'), '# Temp Repo', 'utf-8');
+
+    // Spy FileDraftStore.add 方法，在测试缓存文件夹中写入文件
+    const originalAdd = FileDraftStore.prototype.add;
+    const mockSpecDir = path.join(PACKAGE_ROOT, 'mock-temp');
+    // 判断 mockSpecDir 是否存在，如果不存在则创建；无论如何都清空目录内容
+    if (!fs.existsSync(mockSpecDir)) {
+      fs.mkdirSync(mockSpecDir, { recursive: true });
+    } else {
+      // 用一个函数清空目录
+      // fs.rmSync(mockSpecDir, { recursive: true, force: true });
+      // fs.mkdirSync(mockSpecDir, { recursive: true });
+    }
+
+    addSpy = vi.spyOn(FileDraftStore.prototype, 'add').mockImplementation(function (this: FileDraftStore, draft) {
+      // 调用原始方法以保持原有行为
+      originalAdd.call(this, draft);
+
+      // 在测试缓存文件夹中按相对路径写入文件
+      const targetPath = path.join(mockSpecDir, draft.path);
+
+      if (draft.kind === 'directory') {
+        // 创建目录
+        fs.mkdirSync(targetPath, { recursive: true });
+      } else if (draft.kind === 'file' && draft.content !== undefined) {
+        // 确保父目录存在
+        const parentDir = path.dirname(targetPath);
+        if (!fs.existsSync(parentDir)) {
+          fs.mkdirSync(parentDir, { recursive: true });
+        }
+        // 写入文件内容
+        fs.writeFileSync(targetPath, draft.content, 'utf-8');
+      }
+    });
   });
 
   afterEach(() => {
+    // 恢复 spy
+    if (addSpy) {
+      addSpy.mockRestore();
+    }
+
     if (originalHome !== undefined) {
       process.env.HOME = originalHome;
     }
-    for (const [key, value] of Object.entries(originalEnv)) {
-      if (typeof value === 'undefined') {
-        delete process.env[key];
-      } else {
-        process.env[key] = value;
-      }
-    }
+
     if (projectDir && fs.existsSync(projectDir)) {
       fs.rmSync(projectDir, { recursive: true, force: true });
     }
@@ -50,6 +80,51 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
   });
 
   it('runs the workflow end-to-end with fake model and mock specs', async () => {
+    const callbacks = {
+      onMessage: vi.fn(async (opts: { message: any }) => {
+        const { message } = opts;
+        console.log('[onMessage]', {
+          role: message.role,
+          uuid: message.uuid,
+          parentUuid: message.parentUuid,
+          content:
+            typeof message.content === 'string'
+              ? message.content.substring(0, 100)
+              : JSON.stringify(message.content).substring(0, 100),
+          timestamp: message.timestamp,
+        });
+      }),
+      onToolApprove: vi.fn(async (opts: { toolUse: any; category?: string }) => {
+        const { toolUse, category } = opts;
+        console.log('[onToolApprove]', {
+          toolName: toolUse.name,
+          callId: toolUse.callId,
+          params: JSON.stringify(toolUse.params),
+          category,
+        });
+        return true;
+      }),
+      onText: vi.fn(async (text: string) => {
+        console.log('[onText]', text.substring(0, 200));
+      }),
+      onTurn: vi.fn(async (turn: { usage: Usage; startTime: Date; endTime: Date }) => {
+        console.log('[onTurn]', {
+          usage: turn.usage,
+          startTime: turn.startTime,
+          endTime: turn.endTime,
+        });
+      }),
+      onStreamResult: vi.fn(async (result: any) => {
+        console.log('[onStreamResult]', {
+          requestId: result.requestId,
+          model: result.model?.modelId || JSON.stringify(result.model),
+          hasError: !!result.error,
+          statusCode: result.response?.statusCode,
+          error: result.error ? JSON.stringify(result.error).substring(0, 300) : undefined,
+        });
+      }),
+    };
+
     const result = await runFrontendProjectWorkflow({
       cwd: projectDir,
       productName: 'NEOVATE',
@@ -62,6 +137,7 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
         model: 'glm-4.6',
         planModel: 'glm-4.6',
       },
+      callbacks,
     });
 
     expect(result.success).toBe(true);
@@ -73,20 +149,7 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
   });
 
   describe('SpecReader tool mock registration', () => {
-    const originalEnv = {
-      FTA_AGENT_USE_MOCK_SPECS: process.env.FTA_AGENT_USE_MOCK_SPECS,
-    };
-
-    afterEach(() => {
-      if (typeof originalEnv.FTA_AGENT_USE_MOCK_SPECS === 'undefined') {
-        delete process.env.FTA_AGENT_USE_MOCK_SPECS;
-      } else {
-        process.env.FTA_AGENT_USE_MOCK_SPECS = originalEnv.FTA_AGENT_USE_MOCK_SPECS;
-      }
-    });
-
     it('reads mock specs directly when special env is enabled', async () => {
-      process.env.FTA_AGENT_USE_MOCK_SPECS = '1';
       const tool = createSpecReaderTool({
         specs: {},
         cwd: PACKAGE_ROOT,
