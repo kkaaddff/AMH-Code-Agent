@@ -113,11 +113,3 @@ export function isCanceledMessage(message: Message) {
     message.content[0].text === CANCELED_MESSAGE_TEXT
   );
 }
-
-export function isUserBashCommandMessage(message: Message) {
-  return message.role === 'user' && typeof message.content === 'string' && message.content.startsWith('<bash-input>');
-}
-
-export function isUserBashOutputMessage(message: Message) {
-  return message.role === 'user' && typeof message.content === 'string' && message.content.startsWith('<bash-stdout>');
-}

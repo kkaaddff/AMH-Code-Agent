@@ -4,7 +4,7 @@ import { Config, Inject, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import path from 'path';
 import { DesignComponentAnnotationService } from '../design/component-annotation.service';
 import { DesignDocumentService } from '../design/design-document.service';
-import { ModelGatewayConfig } from '../common/model-gateway.service';
+import { ModelGatewayConfig } from '../common/model-gateway';
 
 export interface FrontendWorkflowOptions {
   designDocId: string;

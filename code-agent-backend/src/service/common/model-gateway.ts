@@ -340,7 +340,7 @@ export class ModelGatewayService {
 
       const flushEvents = (force = false) => {
         const events = buffer.split('\n\n');
-        buffer = force ? '' : (events.pop() ?? '');
+        buffer = force ? '' : events.pop() ?? '';
 
         for (const rawEvent of events) {
           const trimmedEvent = rawEvent.trim();
