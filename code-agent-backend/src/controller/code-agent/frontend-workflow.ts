@@ -16,7 +16,7 @@ export class FrontendWorkflowController {
   @Post('/frontend-workflow')
   @Validate()
   async startFrontendWorkflow(@Body() body: FrontendWorkflowRequestDTO) {
-    const { designDocId, version, productName, model, planModel, rulesFilePath } = body;
+    const { designDocId, version = 1, productName = 'FTA-Frontend' } = body;
 
     // 设置 SSE 响应头
     this.ctx.status = 200;
@@ -73,9 +73,6 @@ export class FrontendWorkflowController {
         designDocId,
         version,
         productName,
-        model,
-        planModel,
-        rulesFilePath,
         sessionId,
         callbacks: {
           onMessage: async (opts) => {

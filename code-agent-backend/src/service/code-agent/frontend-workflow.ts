@@ -1,17 +1,15 @@
-import { Config, Inject, Provide, Scope, ScopeEnum } from '@midwayjs/core';
-import path from 'path';
 import { runFrontendProjectWorkflow, type FrontendProjectWorkflowCallbacks } from '@fta/agent-core';
 import { flattenAnnotation, formatAnnotationSummary } from '@fta/agent-core/dist/utils/annotation';
-import { DesignDocumentService } from '../design/design-document.service';
+import { Config, Inject, Provide, Scope, ScopeEnum } from '@midwayjs/core';
+import path from 'path';
 import { DesignComponentAnnotationService } from '../design/component-annotation.service';
+import { DesignDocumentService } from '../design/design-document.service';
+import { ModelGatewayConfig } from '../common/model-gateway.service';
 
 export interface FrontendWorkflowOptions {
   designDocId: string;
   version?: number;
   productName?: string;
-  model?: string;
-  planModel?: string;
-  rulesFilePath?: string;
   sessionId: string;
   callbacks?: FrontendProjectWorkflowCallbacks;
 }
@@ -36,14 +34,8 @@ export class FrontendWorkflowService {
   @Inject()
   private designComponentAnnotationService: DesignComponentAnnotationService;
 
-  @Config('CODE_AGENT_VERSION')
-  private codeAgentVersion: string;
-
-  @Config('MODEL_NAME')
-  private modelName: string;
-
-  @Config('PLAN_MODEL_NAME')
-  private planModelName: string;
+  @Config('modelGateway.default')
+  private modelConfig: ModelGatewayConfig;
 
   /**
    * 获取设计 DSL 数据
@@ -77,7 +69,7 @@ export class FrontendWorkflowService {
    * 执行前端项目生成工作流
    */
   async runWorkflow(options: FrontendWorkflowOptions): Promise<FrontendWorkflowResult> {
-    const { designDocId, version, productName, model, planModel, rulesFilePath, sessionId, callbacks } = options;
+    const { designDocId, version, productName, sessionId, callbacks } = options;
 
     try {
       // 获取 DSL 数据
@@ -102,17 +94,16 @@ export class FrontendWorkflowService {
 
       // 调用 workflow
       const result = await runFrontendProjectWorkflow({
-        cwd,
+        cwd: process.cwd(),
         designDsl: JSON.stringify(dsl),
         pageAnnotation: annotationSummary,
         productName: productName || 'FTA-Frontend',
-        version: this.codeAgentVersion || '0.0.0',
+        version: '0.0.0',
         specFiles: {},
         configOverrides: {
-          model: model || this.modelName,
-          planModel: planModel || this.planModelName,
+          model: this.modelConfig.model,
+          planModel: this.modelConfig.model,
         },
-        rulesFilePath,
         callbacks,
       });
 

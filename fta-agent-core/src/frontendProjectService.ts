@@ -1,30 +1,31 @@
+import { fileURLToPath } from 'node:url';
 import path from 'pathe';
 import type { Config } from './config';
-import type { ProjectTaskCallbacks } from './project';
 import { Context } from './context';
 import { JsonlLogger, RequestLogger } from './jsonl';
 import { LlmsContext } from './llmsContext';
 import { runLoop, type LoopResult } from './loop';
 import type { NormalizedMessage } from './message';
 import { resolveModelWithContext } from './model';
+import type { ProjectTaskCallbacks } from './project';
 import { generateFrontendProjectPrompt } from './prompts/frontendProject';
 import { Session } from './session';
 import type { Tool } from './tool';
 import { Tools } from './tool';
-import { randomUUID } from './utils/randomUUID';
-import { createTodoTool } from './tools/todo';
-import { createSpecReaderTool, type SpecRegistry } from './tools/specReader';
 import { createFileDraftTool, FileDraftStore } from './tools/fileDraft';
+import { createSpecReaderTool, type SpecRegistry } from './tools/specReader';
+import { createTodoTool } from './tools/todo';
+import { randomUUID } from './utils/randomUUID';
 
 export type FrontendProjectWorkflowCallbacks = ProjectTaskCallbacks;
 
 export type FrontendProjectWorkflowOptions = {
   designDsl: string;
   pageAnnotation: string;
-  cwd: string;
   productName: string;
   version: string;
   specFiles: SpecRegistry;
+  cwd?: string;
   configOverrides?: Partial<Config>;
   callbacks?: FrontendProjectWorkflowCallbacks;
   rulesFilePath?: string;
@@ -41,12 +42,14 @@ export type FrontendProjectWorkflowResult =
       error: Extract<LoopResult, { success: false }>['error'];
       files: FileDraftStore['drafts'];
     };
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rulesFilePath = path.join(__dirname, 'prompts/fta-project-spec-4agent.md');
 
 export async function runFrontendProjectWorkflow(
   opts: FrontendProjectWorkflowOptions
 ): Promise<FrontendProjectWorkflowResult> {
   const context = await Context.create({
-    cwd: opts.cwd,
+    cwd: opts.cwd ?? process.cwd(),
     productName: opts.productName,
     version: opts.version,
     argvConfig: opts.configOverrides || {},
@@ -76,8 +79,8 @@ export async function runFrontendProjectWorkflow(
     const toolsManager = new Tools(toolset);
 
     const userInitPrompt = `# Page Layout Annotation
-
     ${opts.pageAnnotation}
+
     # Design DSL
     ${opts.designDsl}`;
 
@@ -85,7 +88,7 @@ export async function runFrontendProjectWorkflow(
       context,
       sessionId: session.id,
       userPrompt: userInitPrompt,
-      rulesFilePath: opts.rulesFilePath,
+      rulesFilePath: opts.rulesFilePath ?? rulesFilePath,
     });
 
     const systemPrompt = generateFrontendProjectPrompt({

@@ -25,28 +25,4 @@ export class FrontendWorkflowRequestDTO {
   })
   @Rule(RuleType.string().optional())
   productName?: string;
-
-  @ApiProperty({
-    required: false,
-    example: 'claude-3-5-sonnet-20241022',
-    description: '模型配置（可选，默认使用环境变量配置）',
-  })
-  @Rule(RuleType.string().optional())
-  model?: string;
-
-  @ApiProperty({
-    required: false,
-    example: 'claude-3-5-sonnet-20241022',
-    description: '规划模型配置（可选）',
-  })
-  @Rule(RuleType.string().optional())
-  planModel?: string;
-
-  @ApiProperty({
-    required: false,
-    example: '/path/to/custom/rules.md',
-    description: '自定义规则文件路径（可选）',
-  })
-  @Rule(RuleType.string().optional())
-  rulesFilePath?: string;
 }

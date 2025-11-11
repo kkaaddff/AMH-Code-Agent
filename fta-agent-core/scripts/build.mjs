@@ -18,6 +18,9 @@ async function main() {
   console.log('> Compiling TypeScript sources');
   await runTsc();
 
+  console.log('> Fixing import statements');
+  await runCommand(process.execPath, [path.join(__dirname, 'fix-imports.mjs')]);
+
   console.log('> Copying static assets');
   for (const dir of ASSET_DIRS) {
     await copyAssetDir(dir);

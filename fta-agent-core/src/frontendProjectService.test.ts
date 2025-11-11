@@ -20,7 +20,6 @@ const rootAnnotation = JSON.stringify(
 const designDsl = JSON.stringify(
   JSON.parse(fs.readFileSync(path.join(__dirname, 'tests/fixtures/designDsl.json'), 'utf-8'))
 );
-const rulesFilePath = path.join(__dirname, 'tests/fixtures/fta-project-spec-4agent.md');
 
 const rootAnnotationSummary = formatAnnotationSummary(flattenAnnotation(JSON.parse(rootAnnotation) as AnnotationNode));
 
@@ -123,7 +122,6 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
     };
 
     const result = await runFrontendProjectWorkflow({
-      cwd: homeDir,
       productName: 'frontendProjectTest',
       version: '0.0.0-test',
       specFiles: {},
@@ -134,7 +132,6 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
       callbacks,
       pageAnnotation: rootAnnotationSummary,
       designDsl: designDsl,
-      rulesFilePath: rulesFilePath,
     });
 
     expect(result.success).toBe(true);
