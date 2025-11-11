@@ -2,8 +2,8 @@ import { Config, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import axios from 'axios';
 
 export interface ModelGatewayConfig {
-  endpoint?: string;
-  apiKey?: string;
+  baseURL: string;
+  apiKey: string;
   model?: string;
   timeout?: number;
   temperature?: number;
@@ -195,7 +195,7 @@ export class ModelGatewayService {
   private async makeRequest(payload: Record<string, any>): Promise<any> {
     const config = this.modelConfig;
 
-    if (!config.endpoint) {
+    if (!config.baseURL) {
       throw new Error('Model gateway endpoint is not configured');
     }
 
@@ -204,11 +204,9 @@ export class ModelGatewayService {
     };
 
     // 添加认证头
-    if (config.apiKey) {
-      headers.Authorization = `Bearer ${config.apiKey}`;
-    }
+    headers.Authorization = `Bearer ${config.apiKey}`;
 
-    const response = await axios.post(config.endpoint, payload, {
+    const response = await axios.post(config.baseURL + '/chat/completions', payload, {
       headers,
       timeout: config.timeout ?? 45_000,
     });
@@ -307,18 +305,14 @@ export class ModelGatewayService {
     const payload = this.buildRequestPayload({ ...options, stream: true });
     const config = this.modelConfig;
 
-    if (!config.endpoint) {
-      throw new Error('Model gateway endpoint is not configured');
-    }
-
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream',
       Connection: 'keep-alive',
-      ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+      Authorization: `Bearer ${config.apiKey}`,
     };
 
-    const response = await axios.post(config.endpoint, payload, {
+    const response = await axios.post(config.baseURL + '/chat/completions', payload, {
       headers,
       timeout: config.timeout ?? 600_000,
       responseType: 'stream',

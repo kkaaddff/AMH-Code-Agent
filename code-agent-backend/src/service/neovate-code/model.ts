@@ -103,7 +103,7 @@ export const models: ModelMap = {
 };
 
 export const defaultModelCreator = (name: string): LanguageModelV2 => {
-  const baseURL = process.env[`OPENAI_API_BASE`] || '';
+  const baseURL = process.env[`OPENAI_BASE_URL`] || '';
   const apiKey = process.env[`OPENAI_API_KEY`] || '';
   return createOpenAI({
     baseURL,

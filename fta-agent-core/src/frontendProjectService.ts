@@ -29,6 +29,8 @@ export type FrontendProjectWorkflowOptions = {
   configOverrides?: Partial<Config>;
   callbacks?: FrontendProjectWorkflowCallbacks;
   rulesFilePath?: string;
+  apiKey: string;
+  baseURL: string;
 };
 
 export type FrontendProjectWorkflowResult =
@@ -95,7 +97,7 @@ export async function runFrontendProjectWorkflow(
       specs: Object.keys(opts.specFiles),
     });
 
-    const model = (await resolveModelWithContext(context.config.model, context)).model!;
+    const model = (await resolveModelWithContext(context.config.model, context, opts.apiKey, opts.baseURL)).model!;
 
     const initialMessage: NormalizedMessage = {
       parentUuid: null,

@@ -510,9 +510,13 @@ export class ProjectService {
     const { documentId } = data;
 
     // Get document reference
-    const document = await this.documentReferenceEntity.findOne({
-      id: documentId,
-    });
+    const document = await this.documentReferenceEntity.findOne(
+      {
+        _id: documentId,
+      },
+      null,
+      { lean: true }
+    );
     if (!document) {
       // throw new Error('文档不存在');
       return null;

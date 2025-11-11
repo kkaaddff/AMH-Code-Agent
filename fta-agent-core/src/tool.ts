@@ -1,3 +1,4 @@
+import assert from 'assert';
 import type { LanguageModelV2FunctionTool } from '@ai-sdk/provider';
 import path from 'pathe';
 import * as z from 'zod';
@@ -24,7 +25,10 @@ type ResolveToolsOpts = {
 export async function resolveTools(opts: ResolveToolsOpts) {
   const { cwd, productName, paths } = opts.context;
   const sessionId = opts.sessionId;
-  const model = (await resolveModelWithContext(opts.context.config.model, opts.context)).model!;
+  const apiKey = process.env.OPENAI_API_KEY;
+  const baseURL = process.env.OPENAI_BASE_URL;
+  assert(apiKey, 'OPENAI_API_KEY is required to call the agent.');
+  const model = (await resolveModelWithContext(opts.context.config.model, opts.context, apiKey, baseURL)).model!;
   const readonlyTools = [
     createReadTool({ cwd, productName }),
     createLSTool({ cwd, productName }),

@@ -16,11 +16,11 @@ export class FrontendWorkflowController {
   @Post('/frontend-workflow')
   @Validate()
   async startFrontendWorkflow(@Body() body: FrontendWorkflowRequestDTO) {
-    const { designDocId, version = 1, productName = 'FTA-Frontend' } = body;
+    const { designDocId, productName = 'FTA-Frontend' } = body;
 
     // 设置 SSE 响应头
     this.ctx.status = 200;
-    this.ctx.set('Content-Type', 'text/event-stream');
+    this.ctx.set('Content-Type', 'text/event-stream; charset=utf-8');
     this.ctx.set('Cache-Control', 'no-cache');
     this.ctx.set('Connection', 'keep-alive');
     this.ctx.set('Access-Control-Allow-Origin', '*');
@@ -36,42 +36,9 @@ export class FrontendWorkflowController {
     const sessionId = uuid();
 
     try {
-      // 获取设计 DSL 数据（用于前置验证和日志）
-      const { dsl, revision } = await this.frontendWorkflowService.getDesignDsl(designDocId);
-
-      if (!dsl) {
-        sendSSE('error', {
-          message: `Design document ${designDocId} not found or DSL data is missing`,
-        });
-        res.end();
-        return;
-      }
-
-      sendSSE('info', {
-        message: `Loaded DSL data, revision: ${revision}`,
-      });
-
-      // 获取 annotation 摘要（用于前置验证和日志）
-      const annotationSummary = await this.frontendWorkflowService.getAnnotationSummary(designDocId, version);
-
-      if (!annotationSummary) {
-        sendSSE('warning', {
-          message: `No annotation found for design ${designDocId}, workflow will proceed without annotation data`,
-        });
-      } else {
-        sendSSE('info', {
-          message: `Loaded annotation data successfully`,
-        });
-      }
-
-      sendSSE('info', {
-        message: `Starting frontend project workflow, session: ${sessionId}`,
-      });
-
       // 调用 service 执行 workflow
       const result = await this.frontendWorkflowService.runWorkflow({
         designDocId,
-        version,
         productName,
         sessionId,
         callbacks: {
@@ -84,9 +51,6 @@ export class FrontendWorkflowController {
               parentUuid: message.parentUuid,
               timestamp: message.timestamp,
             });
-          },
-          onTextDelta: async (text) => {
-            sendSSE('text_delta', { text });
           },
           onText: async (text) => {
             sendSSE('text', { text });
@@ -102,12 +66,6 @@ export class FrontendWorkflowController {
                     name: streamResult.error.name,
                   }
                 : undefined,
-            });
-          },
-          onChunk: async (chunk, requestId) => {
-            sendSSE('chunk', {
-              chunk,
-              requestId,
             });
           },
           onTurn: async (turn) => {

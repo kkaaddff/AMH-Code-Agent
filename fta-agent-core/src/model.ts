@@ -37,20 +37,24 @@ function resolveModelMeta(modelId: string): ModelMeta {
   );
 }
 
-export async function resolveModelWithContext(name: string | null, context: Context) {
+export async function resolveModelWithContext(
+  name: string | null,
+  context: Context,
+  apiKey: string,
+  baseURL?: string
+) {
   const modelId = name || context.config.model;
   assert(modelId, 'A language model must be specified in config or arguments.');
-  const model = await createOpenAIModel(modelId);
+  const model = await createOpenAIModel(modelId, apiKey, baseURL);
   return { model };
 }
 
-async function createOpenAIModel(modelId: string): Promise<ModelInfo> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  assert(apiKey, 'OPENAI_API_KEY is required to call the agent.');
+async function createOpenAIModel(modelId: string, apiKey: string, baseURL?: string): Promise<ModelInfo> {
+  assert(apiKey, 'API key is required to call the agent.');
   const llmTimeoutMs = getConfiguredLlmTimeout();
   const client = createOpenAI({
     apiKey,
-    baseURL: process.env.OPENAI_BASE_URL,
+    baseURL,
     ...(llmTimeoutMs ? { fetch: createTimeoutFetch(llmTimeoutMs) } : {}),
   });
   return {

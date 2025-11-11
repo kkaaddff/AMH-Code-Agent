@@ -132,6 +132,8 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
       callbacks,
       pageAnnotation: rootAnnotationSummary,
       designDsl: designDsl,
+      apiKey: process.env.OPENAI_API_KEY || 'test-api-key',
+      baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
     });
 
     expect(result.success).toBe(true);

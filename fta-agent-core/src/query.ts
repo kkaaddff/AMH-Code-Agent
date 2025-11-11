@@ -26,7 +26,10 @@ export async function query(opts: {
     },
   ];
   assert(opts.model || opts.context, 'model or context is required');
-  const model = opts.model || (await resolveModelWithContext(null, opts.context!)).model!;
+  const apiKey = process.env.OPENAI_API_KEY;
+  const baseURL = process.env.OPENAI_BASE_URL;
+  assert(apiKey, 'OPENAI_API_KEY is required to call the agent.');
+  const model = opts.model || (await resolveModelWithContext(null, opts.context!, apiKey, baseURL)).model!;
   return await runLoop({
     input: messages,
     model,

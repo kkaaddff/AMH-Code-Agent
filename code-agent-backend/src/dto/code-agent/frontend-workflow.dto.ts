@@ -12,14 +12,6 @@ export class FrontendWorkflowRequestDTO {
 
   @ApiProperty({
     required: false,
-    example: 1,
-    description: 'annotation 版本号（可选，默认取最新版本）',
-  })
-  @Rule(RuleType.number().optional())
-  version?: number;
-
-  @ApiProperty({
-    required: false,
     example: 'FTA-Frontend',
     description: '产品名称',
   })

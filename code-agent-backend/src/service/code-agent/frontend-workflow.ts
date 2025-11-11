@@ -2,13 +2,11 @@ import { runFrontendProjectWorkflow, type FrontendProjectWorkflowCallbacks } fro
 import { flattenAnnotation, formatAnnotationSummary } from '@fta/agent-core/dist/utils/annotation';
 import { Config, Inject, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import path from 'path';
-import { DesignComponentAnnotationService } from '../design/component-annotation.service';
-import { DesignDocumentService } from '../design/design-document.service';
 import { ModelGatewayConfig } from '../common/model-gateway';
+import { ProjectService } from './project';
 
 export interface FrontendWorkflowOptions {
   designDocId: string;
-  version?: number;
   productName?: string;
   sessionId: string;
   callbacks?: FrontendProjectWorkflowCallbacks;
@@ -29,34 +27,10 @@ export interface FrontendWorkflowResult {
 @Scope(ScopeEnum.Request, { allowDowngrade: true })
 export class FrontendWorkflowService {
   @Inject()
-  private designDocumentService: DesignDocumentService;
-
-  @Inject()
-  private designComponentAnnotationService: DesignComponentAnnotationService;
+  private projectService: ProjectService;
 
   @Config('modelGateway.default')
   private modelConfig: ModelGatewayConfig;
-
-  /**
-   * 获取设计 DSL 数据
-   */
-  async getDesignDsl(designDocId: string) {
-    const { dsl, revision } = await this.designDocumentService.getDesignDsl(designDocId);
-    return { dsl, revision };
-  }
-
-  /**
-   * 获取组件标注数据并转换为摘要格式
-   */
-  async getAnnotationSummary(designDocId: string, version?: number): Promise<string> {
-    const annotation = await this.designComponentAnnotationService.getLatestAnnotation(designDocId, version);
-
-    if (!annotation?.rootAnnotation) {
-      return '';
-    }
-
-    return formatAnnotationSummary(flattenAnnotation(annotation.rootAnnotation as any));
-  }
 
   /**
    * 准备工作目录路径
@@ -69,11 +43,11 @@ export class FrontendWorkflowService {
    * 执行前端项目生成工作流
    */
   async runWorkflow(options: FrontendWorkflowOptions): Promise<FrontendWorkflowResult> {
-    const { designDocId, version, productName, sessionId, callbacks } = options;
+    const { designDocId, productName, sessionId, callbacks } = options;
 
     try {
       // 获取 DSL 数据
-      const { dsl } = await this.getDesignDsl(designDocId);
+      const { data: dsl, annotationData } = await this.projectService.getDocumentContent({ documentId: designDocId });
 
       if (!dsl) {
         return {
@@ -87,14 +61,14 @@ export class FrontendWorkflowService {
       }
 
       // 获取 annotation 摘要
-      const annotationSummary = await this.getAnnotationSummary(designDocId, version);
+      const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData));
 
       // 准备工作目录
       const cwd = this.getWorkflowCwd(sessionId);
 
       // 调用 workflow
       const result = await runFrontendProjectWorkflow({
-        cwd: process.cwd(),
+        cwd,
         designDsl: JSON.stringify(dsl),
         pageAnnotation: annotationSummary,
         productName: productName || 'FTA-Frontend',
@@ -105,6 +79,8 @@ export class FrontendWorkflowService {
           planModel: this.modelConfig.model,
         },
         callbacks,
+        apiKey: this.modelConfig.apiKey,
+        baseURL: this.modelConfig.baseURL,
       });
 
       if (result.success === true) {

@@ -283,19 +283,19 @@ export class GetDocumentContentRequest {
     description: '项目ID',
     example: 'project_123',
   })
-  projectId: string;
+  projectId?: string;
 
-  @ApiProperty({ description: '页面ID', example: 'page_123', required: true })
-  pageId: string;
+  @ApiProperty({ description: '页面ID', example: 'page_123' })
+  pageId?: string;
 
   @ApiProperty({
     description: '文档类型',
     example: 'design',
     enum: ['design', 'prd', 'openapi'],
   })
-  type: 'design' | 'prd' | 'openapi';
+  type?: 'design' | 'prd' | 'openapi';
 
-  @ApiProperty({ description: '文档ID', example: 'doc_123' })
+  @ApiProperty({ description: '文档ID', example: 'doc_123', required: true })
   documentId: string;
 }
 

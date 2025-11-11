@@ -1,3 +1,4 @@
+import assert from 'assert';
 import type { Context } from './context';
 import { JsonlLogger, RequestLogger } from './jsonl';
 import { LlmsContext } from './llmsContext';
@@ -133,7 +134,10 @@ async function runWithResolvedEnvironment(opts: ResolvedProjectTaskOptions) {
 
   const message = opts.message;
 
-  const model = (await resolveModelWithContext(opts.model ?? opts.defaultModel ?? null, opts.context)).model!;
+  const apiKey = process.env.OPENAI_API_KEY;
+  const baseURL = process.env.OPENAI_BASE_URL;
+  assert(apiKey, 'OPENAI_API_KEY is required to call the agent.');
+  const model = (await resolveModelWithContext(opts.model ?? opts.defaultModel ?? null, opts.context, apiKey, baseURL)).model!;
 
   const llmsContext = await LlmsContext.create({
     context: opts.context,
