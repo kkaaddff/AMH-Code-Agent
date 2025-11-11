@@ -84,13 +84,10 @@ async function getMcpTools(context: Context): Promise<Tool[]> {
 export class Tools {
   tools: Record<string, Tool>;
   constructor(tools: Tool[]) {
-    this.tools = tools.reduce(
-      (acc, tool) => {
-        acc[tool.name] = tool;
-        return acc;
-      },
-      {} as Record<string, Tool>
-    );
+    this.tools = tools.reduce((acc, tool) => {
+      acc[tool.name] = tool;
+      return acc;
+    }, {} as Record<string, Tool>);
   }
 
   get(toolName: string) {
@@ -130,7 +127,6 @@ export class Tools {
   }
 
   toLanguageV2Tools(): LanguageModelV2FunctionTool[] {
-    // @ts-expect-error
     return Object.entries(this.tools).map(([key, tool]) => {
       // parameters of mcp tools is not zod object
       const isMCP = key.startsWith('mcp__');

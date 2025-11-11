@@ -24,6 +24,7 @@
     "@ai-sdk/provider": "^2.0.0",
     "@ai-sdk/xai": "^2.0.28",
     "@fta/server-middleware-lion": "^0.0.8",
+    "@fta/agent-core": "0.0.1",
     "@midwayjs/bootstrap": "^3.11.15",
     "@midwayjs/bull": "^3.11.15",
     "@midwayjs/core": "^3.11.15",
