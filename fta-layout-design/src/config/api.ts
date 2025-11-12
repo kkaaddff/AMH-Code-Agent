@@ -14,11 +14,11 @@ export const getEnvironment = (): Environment => {
 // API 基础配置
 export const API_CONFIG = {
   development: {
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:7001',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     timeout: Number(import.meta.env.VITE_REQUEST_TIMEOUT) || 30000,
   },
   production: {
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://qa-fta-snapshot.amh-group.com',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     timeout: Number(import.meta.env.VITE_REQUEST_TIMEOUT) || 30000,
   },
 };

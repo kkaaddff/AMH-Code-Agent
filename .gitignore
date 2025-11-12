@@ -24,3 +24,6 @@ run/
 temp/
 front-end-requirements
 mock-temp
+
+.env*
+!.env.example

@@ -37,6 +37,7 @@ export class FrontendWorkflowScheduler {
   async execute(params: FrontendWorkflowParams, callbacks: FrontendWorkflowCallbacks = {}): Promise<void> {
     this.abortController = new AbortController();
     this.currentIteration = 0;
+    console.log('execute params', params);
 
     try {
       const response = await fetch(buildApiUrl('/code-agent/frontend-workflow'), {

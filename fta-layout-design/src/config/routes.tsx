@@ -2,6 +2,7 @@ import type { RouteConfig } from '@/types/router';
 import { Navigate } from 'react-router-dom';
 
 import Layout from '@/components/Layout';
+import { IndexHtmlRedirect } from '@/components/IndexHtmlRedirect';
 import EditorPageComponentDetect from '@/pages/EditorPage/EditorPageComponentDetect';
 import HomePage from '@/pages/HomePage';
 import RequirementPage from '@/pages/RequirementPage';
@@ -13,6 +14,11 @@ import { MarkdownPage } from '@/pages/MarkdownPage';
  * 所有路由信息集中管理
  */
 export const routes: RouteConfig[] = [
+  {
+    path: '/index.html',
+    element: <IndexHtmlRedirect />,
+    withLayout: true, // 重定向路由不需要 Layout
+  },
   {
     path: '/',
     element: <HomePage />,
