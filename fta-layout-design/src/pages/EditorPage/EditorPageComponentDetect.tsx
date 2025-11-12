@@ -181,7 +181,6 @@ const EditorPageContent: React.FC = () => {
         },
         {
           onIterationStart: (iteration) => {
-            console.log(`开始第 ${iteration} 轮调用日志`);
             setCurrentIteration(iteration);
 
             // 创建新的迭代项
@@ -206,12 +205,10 @@ const EditorPageContent: React.FC = () => {
 
           onTodoUpdate: (todos) => {
             // 更新 TODO 列表
-            console.log('TODO 更新:', todos);
             updateTodos(todos);
           },
 
-          onIterationEnd: (iteration) => {
-            console.log(`第 ${iteration} 轮调用结束`);
+          onIterationEnd: () => {
             // 将当前迭代项标记为完成
             if (currentIterationThoughtId) {
               updateThoughtItem(currentIterationThoughtId, {

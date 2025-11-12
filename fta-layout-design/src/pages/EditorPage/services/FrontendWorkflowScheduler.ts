@@ -6,13 +6,22 @@
  * 2. 解析 SSE 事件流
  * 3. 将新接口事件映射到原有回调函数
  */
-
 import { buildApiUrl } from '@/config/api';
+import { callService } from '@/utils/workstationConnector';
 import { TodoItem } from './CodeGenerationLoop/types';
 
 export interface FrontendWorkflowParams {
   designDocId: string;
   productName?: string;
+}
+
+export interface FileProposal {
+  path: string;
+  kind: 'file' | 'directory';
+  description?: string;
+  content?: string;
+  tags?: string[];
+  callId?: string;
 }
 
 export interface FrontendWorkflowCallbacks {
@@ -127,12 +136,10 @@ export class FrontendWorkflowScheduler {
       case 'turn':
         // turn 事件表示新的一轮对话开始
         this.currentIteration += 1;
-        console.log(`开始第 ${this.currentIteration} 轮迭代`);
         callbacks.onIterationStart?.(this.currentIteration);
 
         // turn 事件也包含结束时间，表示这轮迭代结束
         if (data.endTime) {
-          console.log(`第 ${this.currentIteration} 轮迭代结束`);
           callbacks.onIterationEnd?.(this.currentIteration);
         }
         break;
@@ -175,10 +182,26 @@ export class FrontendWorkflowScheduler {
         break;
 
       case 'tool_approve':
-        // 工具批准事件，当 toolName 为 todoWrite 时，提取 TODO 列表
+        // 工具批准事件
         if (data.toolName === 'todoWrite' && data.params?.todos && Array.isArray(data.params.todos)) {
-          console.log('TODO 更新:', data.params.todos);
           callbacks.onTodoUpdate?.(data.params.todos);
+        } else if (data.toolName === 'propose_file' && data.params) {
+          // 处理 propose_file 工具调用
+          const fileProposal: FileProposal = {
+            path: data.params.path || '',
+            kind: data.params.kind || 'file',
+            description: data.params.description,
+            content: data.params.content,
+            tags: data.params.tags,
+            callId: data.callId,
+          };
+          console.log('文件工具调用:', fileProposal);
+          if (fileProposal.kind === 'file' && fileProposal.content) {
+            callService?.('common', 'writeFile', {
+              filePath: `${fileProposal.path}`,
+              content: fileProposal.content,
+            });
+          }
         }
         break;
 
