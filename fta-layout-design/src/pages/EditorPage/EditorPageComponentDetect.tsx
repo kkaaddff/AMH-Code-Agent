@@ -1,5 +1,5 @@
 import { projectService } from '@/services/projectService';
-import { DesignDSL } from '@/types/dsl';
+import type { DesignDSL } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import {
   AppstoreOutlined,
@@ -25,9 +25,10 @@ import { TDocumentKeys } from './constants';
 import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGenerationContext';
 import { designDetectionActions, designDetectionStore } from './contexts/DesignDetectionContext';
 import { editorPageActions, editorPageStore } from './contexts/EditorPageContext';
-import './styles/EditorPageStyles.css';
-import { AnnotationNode } from './types/componentDetection';
 import { FrontendWorkflowScheduler } from './services/FrontendWorkflowScheduler';
+import './styles/EditorPageStyles.css';
+import type { AnnotationNode } from './types/componentDetection';
+
 const { Sider, Content } = Layout;
 const { Title } = Typography;
 

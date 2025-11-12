@@ -1,9 +1,9 @@
-import { Drawer, Space, Typography, List, Divider, Alert } from 'antd';
-import { LoadingOutlined, CheckSquareFilled, BorderOutlined } from '@ant-design/icons';
-import React, { useMemo, useState } from 'react';
-import { useSnapshot } from 'valtio/react';
+import { BorderOutlined, CheckSquareFilled, LoadingOutlined } from '@ant-design/icons';
+import { Alert, Divider, Drawer, List, Space, Typography } from 'antd';
+import React, { useMemo } from 'react';
 import { Streamdown } from 'streamdown';
-import { codeGenerationActions, codeGenerationStore } from '../contexts/CodeGenerationContext';
+import { useSnapshot } from 'valtio/react';
+import { codeGenerationStore } from '../contexts/CodeGenerationContext';
 
 const { Text, Title } = Typography;
 
@@ -84,15 +84,10 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
 
       {generationStatus === 'generating' && (
         <Alert
-          message='代码生成中'
-          description='代码生成正在进行中，请耐心等待。'
+          message='  代码生成正在进行中，请耐心等待。'
           type='info'
           showIcon
-          icon={
-            <span className='anticon anticon-loading' style={{ fontSize: 16 }}>
-              <i className='anticon anticon-loading ant-spin' />
-            </span>
-          }
+          icon={<LoadingOutlined spin />}
           style={{ marginBottom: 16 }}
         />
       )}
