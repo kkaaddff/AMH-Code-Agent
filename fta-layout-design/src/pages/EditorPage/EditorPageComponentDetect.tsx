@@ -1,5 +1,5 @@
 import { projectService } from '@/services/projectService';
-import { DesignDSL, DSLData, DSLNode } from '@/types/dsl';
+import { DesignDSL } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import {
   AppstoreOutlined,
@@ -24,16 +24,10 @@ import PRDEditorPanel from './components/PRDEditorPanel';
 import { TDocumentKeys } from './constants';
 import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGenerationContext';
 import { designDetectionActions, designDetectionStore } from './contexts/DesignDetectionContext';
-import { dslDataActions, dslDataStore } from './contexts/DSLDataContext';
 import { editorPageActions, editorPageStore } from './contexts/EditorPageContext';
-import { commonUserPrompt } from './services/CodeGenerationLoop/CommonPrompt';
-import { AgentScheduler } from './services/CodeGenerationLoop/index.AgentScheduler.backup';
-import { generateUID } from './services/CodeGenerationLoop/utils';
 import './styles/EditorPageStyles.css';
 import { AnnotationNode } from './types/componentDetection';
-import { flattenAnnotation, formatAnnotationSummary } from './utils/prompt';
-
-// import { SSEScheduler } from './services/CodeGenerationLoop/SSEScheduler';
+import { FrontendWorkflowScheduler } from './services/FrontendWorkflowScheduler';
 const { Sider, Content } = Layout;
 const { Title } = Typography;
 
@@ -67,9 +61,6 @@ const EditorPageContent: React.FC = () => {
     clearThoughtChain,
   } = codeGenerationActions;
 
-  // 使用 designId 获取 DSL 数据（仅在选中设计文档时）
-  const dslDataStoreSnapshot = useSnapshot(dslDataStore);
-
   const [scale, setScale] = useState(0.5);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -79,8 +70,8 @@ const EditorPageContent: React.FC = () => {
   const [pageError, setPageError] = useState<string | null>(null);
   const [isAnnotationConfirmOpen, setIsAnnotationConfirmOpen] = useState(false);
 
-  // const schedulerRef = useRef<SSEScheduler | null>(null);
-  const schedulerRef = useRef<AgentScheduler | null>(null);
+  // Frontend Workflow Scheduler
+  const schedulerRef = useRef<FrontendWorkflowScheduler | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -118,12 +109,6 @@ const EditorPageContent: React.FC = () => {
       return;
     }
     setActiveDesignDocument();
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      // codeStreamControllerRef.current?.abort();
-    };
   }, []);
 
   const handleScaleChange = (value: number) => {
@@ -170,155 +155,99 @@ const EditorPageContent: React.FC = () => {
 
     // 当前迭代的思维链 ID（在 try 块外定义，以便在 catch 块中访问）
     let currentIterationThoughtId: string | null = null;
+    const sessionId = `session-${Date.now()}`;
+
+    // 初始化或重置 scheduler
+    if (!schedulerRef.current) {
+      schedulerRef.current = new FrontendWorkflowScheduler();
+    } else {
+      // 中断之前的连接
+      schedulerRef.current.abort();
+    }
+
+    const scheduler = schedulerRef.current;
 
     try {
-      // 初始化 SSE Scheduler
-      if (!schedulerRef.current) {
-        schedulerRef.current = new AgentScheduler();
-        // schedulerRef.current = new SSEScheduler()
-      }
-
-      const scheduler = schedulerRef.current;
-      const sessionId = generateUID();
-
-      // 构建初始提示词
-      let initialPrompt = commonUserPrompt.mainPrompt;
-      const { rootAnnotation } = componentDetectionStoreSnapshot;
-      if (rootAnnotation) {
-        const annotationSummary = formatAnnotationSummary(flattenAnnotation(rootAnnotation as AnnotationNode));
-        initialPrompt += `\n\n当前设计标注数据：\n${annotationSummary}`;
-      }
-      const dslJsonStr = JSON.stringify(designDetectionStore.dslData?.dsl ?? {});
-      // 创建会话
-      scheduler.createSession(sessionId, initialPrompt, dslJsonStr);
+      // 启动生成状态
       startGeneration(sessionId);
 
-      // 执行会话，传入回调函数
-      await scheduler.executeSession(sessionId, {
-        onIterationStart: (iteration) => {
-          console.log(`开始第 ${iteration} 轮迭代`);
-          setCurrentIteration(iteration);
-
-          // 创建新的迭代项
-          const thoughtId = `iteration-${sessionId}-${iteration}`;
-          currentIterationThoughtId = thoughtId;
-          addThoughtItem({
-            id: thoughtId,
-            title: `第 ${iteration} 轮迭代`,
-            status: 'in_progress',
-            content: '',
-            startedAt: new Date().toISOString(),
-            kind: 'iteration',
-          });
+      // 执行 SSE 会话
+      await scheduler.execute(
+        {
+          designDocId: selectedDocument.id,
+          productName: 'FTA-Frontend',
         },
+        {
+          onIterationStart: (iteration) => {
+            console.log(`开始第 ${iteration} 轮迭代`);
+            setCurrentIteration(iteration);
 
-        onTextChunk: (text) => {
-          // 将文本追加到当前迭代项
-          if (currentIterationThoughtId) {
-            appendToThoughtContent(currentIterationThoughtId, text);
-          }
-        },
-
-        onTodoUpdate: (todos) => {
-          // 更新 TODO 列表
-          console.log('TODO 更新:', todos);
-          updateTodos(todos);
-        },
-
-        onIterationEnd: (iteration) => {
-          console.log(`第 ${iteration} 轮迭代结束`);
-          // 将当前迭代项标记为完成
-          if (currentIterationThoughtId) {
-            updateThoughtItem(currentIterationThoughtId, {
-              status: 'success',
-              finishedAt: new Date().toISOString(),
+            // 创建新的迭代项
+            const thoughtId = `iteration-${sessionId}-${iteration}`;
+            currentIterationThoughtId = thoughtId;
+            addThoughtItem({
+              id: thoughtId,
+              title: `第 ${iteration} 轮迭代`,
+              status: 'in_progress',
+              content: '',
+              startedAt: new Date().toISOString(),
+              kind: 'iteration',
             });
-          }
-        },
+          },
 
-        onSessionComplete: () => {
-          console.log('会话完成');
-          message.success({ content: '代码生成完成', key: 'generate-code' });
-          stopGeneration();
-        },
-      });
-      // // 执行 SSE 会话，传入回调函数
-      // await scheduler.execute(
-      //   {
-      //     message: initialPrompt,
-      //     sessionId,
-      //   },
-      //   {
-      //     onIterationStart: (iteration) => {
-      //       console.log(`开始第 ${iteration} 轮迭代`);
-      //       setCurrentIteration(iteration);
+          onTextChunk: (text) => {
+            // 将文本追加到当前迭代项
+            if (currentIterationThoughtId) {
+              appendToThoughtContent(currentIterationThoughtId, text);
+            }
+          },
 
-      //       // 创建新的迭代项
-      //       const thoughtId = `iteration-${sessionId}-${iteration}`;
-      //       currentIterationThoughtId = thoughtId;
-      //       addThoughtItem({
-      //         id: thoughtId,
-      //         title: `第 ${iteration} 轮迭代`,
-      //         status: 'in_progress',
-      //         content: '',
-      //         startedAt: new Date().toISOString(),
-      //         kind: 'iteration',
-      //       });
-      //     },
+          onTodoUpdate: (todos) => {
+            // 更新 TODO 列表
+            console.log('TODO 更新:', todos);
+            updateTodos(todos);
+          },
 
-      //     onTextChunk: (text) => {
-      //       // 将文本追加到当前迭代项
-      //       if (currentIterationThoughtId) {
-      //         appendToThoughtContent(currentIterationThoughtId, text);
-      //       }
-      //     },
+          onIterationEnd: (iteration) => {
+            console.log(`第 ${iteration} 轮迭代结束`);
+            // 将当前迭代项标记为完成
+            if (currentIterationThoughtId) {
+              updateThoughtItem(currentIterationThoughtId, {
+                status: 'success',
+                finishedAt: new Date().toISOString(),
+              });
+            }
+          },
 
-      //     onTodoUpdate: (todos) => {
-      //       // 更新 TODO 列表
-      //       console.log('TODO 更新:', todos);
-      //       updateTodos(todos);
-      //     },
+          onSessionComplete: () => {
+            console.log('会话完成');
+            message.success({ content: '代码生成完成', key: 'generate-code' });
+            stopGeneration();
+          },
 
-      //     onIterationEnd: (iteration) => {
-      //       console.log(`第 ${iteration} 轮迭代结束`);
-      //       // 将当前迭代项标记为完成
-      //       if (currentIterationThoughtId) {
-      //         updateThoughtItem(currentIterationThoughtId, {
-      //           status: 'success',
-      //           finishedAt: new Date().toISOString(),
-      //         });
-      //       }
-      //     },
+          onError: (errorMessage) => {
+            console.error('代码生成失败:', errorMessage);
+            message.error({
+              content: `代码生成失败: ${errorMessage}`,
+              key: 'generate-code',
+            });
 
-      //     onSessionComplete: (returnedSessionId) => {
-      //       console.log('会话完成，SessionId:', returnedSessionId);
-      //       message.success({ content: '代码生成完成', key: 'generate-code' });
-      //       stopGeneration();
-      //     },
+            // 如果有正在进行的迭代，标记为失败
+            if (currentIterationThoughtId) {
+              updateThoughtItem(currentIterationThoughtId, {
+                status: 'error',
+                finishedAt: new Date().toISOString(),
+              });
+            }
 
-      //     onError: (error) => {
-      //       console.error('SSE 错误:', error);
-      //       message.error({
-      //         content: `代码生成失败: ${error}`,
-      //         key: 'generate-code',
-      //       });
-
-      //       // 如果有正在进行的迭代，标记为失败
-      //       if (currentIterationThoughtId) {
-      //         updateThoughtItem(currentIterationThoughtId, {
-      //           status: 'error',
-      //           finishedAt: new Date().toISOString(),
-      //         });
-      //       }
-
-      //       stopGeneration();
-      //     },
-      //   }
-      // );
-    } catch (error) {
+            stopGeneration();
+          },
+        }
+      );
+    } catch (error: any) {
       console.error('代码生成失败:', error);
       message.error({
-        content: '代码生成失败，请稍后重试',
+        content: `代码生成失败: ${error?.message || '未知错误'}`,
         key: 'generate-code',
       });
 
