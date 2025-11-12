@@ -1,9 +1,9 @@
 import { Drawer, Space, Typography, List, Divider, Alert } from 'antd';
 import { LoadingOutlined, CheckSquareFilled, BorderOutlined } from '@ant-design/icons';
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio/react';
 import { Streamdown } from 'streamdown';
-import { codeGenerationStore } from '../contexts/CodeGenerationContext';
+import { codeGenerationActions, codeGenerationStore } from '../contexts/CodeGenerationContext';
 
 const { Text, Title } = Typography;
 
@@ -13,9 +13,7 @@ interface CodeGenerationDrawerProps {
 }
 
 const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClose }) => {
-  const { thoughtChainItems, isGenerating } = useSnapshot(codeGenerationStore);
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
-  const [prevIsGenerating, setPrevIsGenerating] = useState(false);
+  const { thoughtChainItems, generationStatus } = useSnapshot(codeGenerationStore);
 
   // 分离 TODO 和 迭代数据
   const { todoItems, iterationItems } = useMemo(() => {
@@ -24,20 +22,9 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
     return { todoItems: todos, iterationItems: iterations };
   }, [thoughtChainItems]);
 
-  // 监听生成状态变化，当从生成中变为完成时显示成功提示
-  useEffect(() => {
-    if (prevIsGenerating && !isGenerating && iterationItems.length > 0) {
-      setShowSuccessAlert(true);
-    }
-    setPrevIsGenerating(isGenerating);
-  }, [isGenerating, prevIsGenerating, iterationItems]);
-
-  // 当抽屉关闭时重置成功提示状态
-  useEffect(() => {
-    if (!open) {
-      setShowSuccessAlert(false);
-    }
-  }, [open]);
+  const handleClose = () => {
+    onClose();
+  };
 
   // 将迭代数据格式化为 Markdown 文本
   const iterationMarkdown = useMemo(() => {
@@ -62,7 +49,7 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
 
         // 构建迭代块
         const parts: string[] = [];
-        const titleLine = `### ${timestamp ? ` *${timestamp}：*` : ''}`;
+        const titleLine = `##### ${timestamp ? ` *${timestamp}：*` : ''}`;
         parts.push(titleLine);
         parts.push(''); // 空行分隔
 
@@ -92,16 +79,42 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
       placement='right'
       width={1280}
       open={open}
-      onClose={onClose}>
+      onClose={handleClose}>
       {/* 成功提示 Alert */}
-      {showSuccessAlert && (
+
+      {generationStatus === 'generating' && (
+        <Alert
+          message='代码生成中'
+          description='代码生成正在进行中，请耐心等待。'
+          type='info'
+          showIcon
+          icon={
+            <span className='anticon anticon-loading' style={{ fontSize: 16 }}>
+              <i className='anticon anticon-loading ant-spin' />
+            </span>
+          }
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      {/* 成功提示 Alert */}
+      {generationStatus === 'completed' && (
         <Alert
           message='代码生成完成'
           description='代码生成已成功完成，您可以查看下方的运行日志了解详细信息。'
           type='success'
           showIcon
-          closable
-          onClose={() => setShowSuccessAlert(false)}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      {/* 失败提示 Alert */}
+      {generationStatus === 'failed' && (
+        <Alert
+          message='代码生成失败'
+          description='代码生成过程中出现错误，请查看下方的运行日志了解详细信息，或重新尝试生成。'
+          type='error'
+          showIcon
           style={{ marginBottom: 16 }}
         />
       )}
@@ -184,7 +197,7 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
                 textAlign: 'center',
                 color: 'rgba(0, 0, 0, 0.45)',
               }}>
-              {isGenerating ? '等待任务列表...' : '暂无任务'}
+              {generationStatus === 'generating' ? '等待任务列表...' : '暂无任务'}
             </div>
           )}
         </div>
@@ -203,12 +216,12 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
             borderRadius: 8,
             backgroundColor: '#fafafa',
             minHeight: 200,
-            maxHeight: '60vh',
+            maxHeight: 'calc(40vh - 70px)',
             overflow: 'auto',
           }}>
           {iterationMarkdown ? (
             <div style={{ padding: 16 }}>
-              <Streamdown isAnimating={isGenerating}>{iterationMarkdown}</Streamdown>
+              <Streamdown isAnimating={generationStatus === 'generating'}>{iterationMarkdown}</Streamdown>
             </div>
           ) : (
             <div
@@ -218,7 +231,7 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
                 color: 'rgba(0, 0, 0, 0.45)',
               }}>
               <div style={{ fontSize: 14 }}>
-                {isGenerating ? '正在初始化代码生成...' : '暂无迭代记录，点击「生成代码」开始体验'}
+                {generationStatus === 'generating' ? '正在初始化代码生成...' : '暂无迭代记录，点击「生成代码」开始体验'}
               </div>
             </div>
           )}

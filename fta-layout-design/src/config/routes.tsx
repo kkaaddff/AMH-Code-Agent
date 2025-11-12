@@ -6,6 +6,7 @@ import EditorPageComponentDetect from '@/pages/EditorPage/EditorPageComponentDet
 import HomePage from '@/pages/HomePage';
 import RequirementPage from '@/pages/RequirementPage';
 import TechnicalPage from '@/pages/TechnicalPage';
+import { MarkdownPage } from '@/pages/MarkdownPage';
 
 /**
  * 路由配置
@@ -15,6 +16,11 @@ export const routes: RouteConfig[] = [
   {
     path: '/',
     element: <HomePage />,
+    withLayout: true,
+  },
+  {
+    path: '/markdown',
+    element: <MarkdownPage />,
     withLayout: true,
   },
   {

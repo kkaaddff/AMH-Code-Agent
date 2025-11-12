@@ -11,9 +11,11 @@ export interface ThoughtChainItem {
   kind?: 'iteration' | 'task' | 'text';
 }
 
+export type GenerationStatus = 'idle' | 'generating' | 'completed' | 'failed';
+
 interface CodeGenerationState {
   isDrawerOpen: boolean;
-  isGenerating: boolean;
+  generationStatus: GenerationStatus;
   thoughtChainItems: ThoughtChainItem[];
   currentSessionId: string | null;
   currentIteration: number;
@@ -21,7 +23,7 @@ interface CodeGenerationState {
 
 export const codeGenerationStore = proxy<CodeGenerationState>({
   isDrawerOpen: false,
-  isGenerating: false,
+  generationStatus: 'idle',
   thoughtChainItems: [],
   currentSessionId: null,
   currentIteration: 0,
@@ -35,12 +37,12 @@ export const codeGenerationActions = {
     codeGenerationStore.isDrawerOpen = false;
   },
   startGeneration: (sessionId: string) => {
-    codeGenerationStore.isGenerating = true;
+    codeGenerationStore.generationStatus = 'generating';
     codeGenerationStore.currentSessionId = sessionId;
     codeGenerationStore.currentIteration = 0;
   },
-  stopGeneration: () => {
-    codeGenerationStore.isGenerating = false;
+  setGenerationStatus: (status: GenerationStatus) => {
+    codeGenerationStore.generationStatus = status;
   },
   addThoughtItem: (item: ThoughtChainItem) => {
     codeGenerationStore.thoughtChainItems = [...codeGenerationStore.thoughtChainItems, item];

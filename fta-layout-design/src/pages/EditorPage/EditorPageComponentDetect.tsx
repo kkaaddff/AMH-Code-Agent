@@ -52,7 +52,7 @@ const EditorPageContent: React.FC = () => {
     openDrawer: openCodeDrawer,
     closeDrawer: closeCodeDrawer,
     startGeneration,
-    stopGeneration,
+    setGenerationStatus,
     addThoughtItem,
     updateThoughtItem,
     appendToThoughtContent,
@@ -138,7 +138,7 @@ const EditorPageContent: React.FC = () => {
       return;
     }
 
-    if (codeGenerationStoreSnapshot.isGenerating) {
+    if (codeGenerationStoreSnapshot.generationStatus === 'generating') {
       message.info('代码生成进行中，请稍候');
       openCodeDrawer();
       return;
@@ -223,7 +223,7 @@ const EditorPageContent: React.FC = () => {
           onSessionComplete: () => {
             console.log('会话完成');
             message.success({ content: '代码生成完成', key: 'generate-code' });
-            stopGeneration();
+            setGenerationStatus('completed');
           },
 
           onError: (errorMessage) => {
@@ -241,7 +241,7 @@ const EditorPageContent: React.FC = () => {
               });
             }
 
-            stopGeneration();
+            setGenerationStatus('failed');
           },
         }
       );
@@ -260,7 +260,7 @@ const EditorPageContent: React.FC = () => {
         });
       }
 
-      stopGeneration();
+      setGenerationStatus('failed');
     }
   };
 
