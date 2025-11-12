@@ -46,8 +46,8 @@ export class FrontendWorkflowScheduler {
           Accept: 'text/event-stream',
         },
         body: JSON.stringify({
-          designDocId: params.designDocId,
-          productName: params.productName || 'FTA-Frontend',
+          designDocId: '690ab433aed2d277ac31d6c7',
+          productName: 'FTA-Frontend',
         }),
         signal: this.abortController.signal,
       });
@@ -139,7 +139,7 @@ export class FrontendWorkflowScheduler {
       case 'text':
         // 文本输出
         if (data.text && typeof data.text === 'string') {
-          callbacks.onTextChunk?.(data.text);
+          // callbacks.onTextChunk?.(data.text);
         }
         break;
 

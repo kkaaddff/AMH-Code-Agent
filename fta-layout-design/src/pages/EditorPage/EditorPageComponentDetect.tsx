@@ -147,6 +147,7 @@ const EditorPageContent: React.FC = () => {
     // 打开抽屉并清空之前的数据
     openCodeDrawer();
     clearThoughtChain();
+
     message.open({
       type: 'loading',
       content: '正在初始化代码生成...',
@@ -179,7 +180,7 @@ const EditorPageContent: React.FC = () => {
         },
         {
           onIterationStart: (iteration) => {
-            console.log(`开始第 ${iteration} 轮迭代`);
+            console.log(`开始第 ${iteration} 轮调用日志`);
             setCurrentIteration(iteration);
 
             // 创建新的迭代项
@@ -187,7 +188,7 @@ const EditorPageContent: React.FC = () => {
             currentIterationThoughtId = thoughtId;
             addThoughtItem({
               id: thoughtId,
-              title: `第 ${iteration} 轮迭代`,
+              title: `第 ${iteration} 轮调用`,
               status: 'in_progress',
               content: '',
               startedAt: new Date().toISOString(),
@@ -209,7 +210,7 @@ const EditorPageContent: React.FC = () => {
           },
 
           onIterationEnd: (iteration) => {
-            console.log(`第 ${iteration} 轮迭代结束`);
+            console.log(`第 ${iteration} 轮调用结束`);
             // 将当前迭代项标记为完成
             if (currentIterationThoughtId) {
               updateThoughtItem(currentIterationThoughtId, {
@@ -266,18 +267,8 @@ const EditorPageContent: React.FC = () => {
   const handleGenerateCodeV2 = () => {
     const { selectedDocument } = editorPageStoreSnapshot;
     const { rootAnnotation } = componentDetectionStoreSnapshot;
-    if (!selectedDocument?.id) {
-      message.error('请提供设计稿 ID 参数');
-      return;
-    }
-
-    if (selectedDocument?.type !== 'design') {
-      void handleGenerateCode();
-      return;
-    }
-
-    if (!rootAnnotation) {
-      message.error('当前没有可确认的标注数据');
+    if (!selectedDocument?.id || !rootAnnotation) {
+      message.error(!selectedDocument?.id ? '请提供设计稿 ID 参数' : '当前没有可确认的标注数据');
       return;
     }
 
@@ -370,7 +361,7 @@ const EditorPageContent: React.FC = () => {
             <LayerTreePanel
               onDeleteDocument={handleDeleteDocument}
               onSave={handleSave}
-              onGenerateCode={handleGenerateCodeV2}
+              onGenerateCode={handleGenerateCode}
             />
           </Sider>
 

@@ -1,8 +1,8 @@
-import { Drawer, Space, Typography, List, Divider } from 'antd';
-import { ThoughtChain, type ThoughtChainItem as AntThoughtChainItem } from '@ant-design/x';
+import { Drawer, Space, Typography, List, Divider, Alert } from 'antd';
 import { LoadingOutlined, CheckSquareFilled, BorderOutlined } from '@ant-design/icons';
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useSnapshot } from 'valtio/react';
+import { Streamdown } from 'streamdown';
 import { codeGenerationStore } from '../contexts/CodeGenerationContext';
 
 const { Text, Title } = Typography;
@@ -14,6 +14,8 @@ interface CodeGenerationDrawerProps {
 
 const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClose }) => {
   const { thoughtChainItems, isGenerating } = useSnapshot(codeGenerationStore);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [prevIsGenerating, setPrevIsGenerating] = useState(false);
 
   // 分离 TODO 和 迭代数据
   const { todoItems, iterationItems } = useMemo(() => {
@@ -22,31 +24,57 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
     return { todoItems: todos, iterationItems: iterations };
   }, [thoughtChainItems]);
 
-  // 将迭代数据转换为 ThoughtChain 格式
-  const thoughtChainData = useMemo(() => {
-    return iterationItems.map((item): AntThoughtChainItem => {
-      // ThoughtChain 只支持 pending, success, error 三种状态
-      let status: 'pending' | 'success' | 'error' = 'pending';
-      if (item.status === 'success') status = 'success';
-      else if (item.status === 'error') status = 'error';
+  // 监听生成状态变化，当从生成中变为完成时显示成功提示
+  useEffect(() => {
+    if (prevIsGenerating && !isGenerating && iterationItems.length > 0) {
+      setShowSuccessAlert(true);
+    }
+    setPrevIsGenerating(isGenerating);
+  }, [isGenerating, prevIsGenerating, iterationItems]);
 
-      const icon = item.status === 'in_progress' ? <LoadingOutlined spin /> : undefined;
+  // 当抽屉关闭时重置成功提示状态
+  useEffect(() => {
+    if (!open) {
+      setShowSuccessAlert(false);
+    }
+  }, [open]);
 
-      return {
-        key: item.id,
-        title: item.title,
-        status,
-        icon,
-        content: item.content || '',
-        extra: item.startedAt
+  // 将迭代数据格式化为 Markdown 文本
+  const iterationMarkdown = useMemo(() => {
+    if (iterationItems.length === 0) {
+      return '';
+    }
+
+    return iterationItems
+      .map((item) => {
+        const content = (item.content || '').trim();
+        if (content === '') {
+          return '';
+        }
+
+        const timestamp = item.startedAt
           ? new Date(item.startedAt).toLocaleTimeString('zh-CN', {
               hour: '2-digit',
               minute: '2-digit',
               second: '2-digit',
             })
-          : undefined,
-      };
-    });
+          : '';
+
+        // 构建迭代块
+        const parts: string[] = [];
+        const titleLine = `### ${timestamp ? ` *${timestamp}：*` : ''}`;
+        parts.push(titleLine);
+        parts.push(''); // 空行分隔
+
+        // 内容部分
+        if (content) {
+          parts.push(content);
+        }
+
+        return parts.join('\n');
+      })
+      .filter((item) => item !== '')
+      .join('\n\n---\n\n');
   }, [iterationItems]);
 
   return (
@@ -65,6 +93,19 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
       width={1280}
       open={open}
       onClose={onClose}>
+      {/* 成功提示 Alert */}
+      {showSuccessAlert && (
+        <Alert
+          message='代码生成完成'
+          description='代码生成已成功完成，您可以查看下方的运行日志了解详细信息。'
+          type='success'
+          showIcon
+          closable
+          onClose={() => setShowSuccessAlert(false)}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
       {/* 上视图：TODO 列表 */}
       <div style={{ marginBottom: 16 }}>
         <Title level={5} style={{ marginBottom: 12 }}>
@@ -154,25 +195,34 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
       {/* 下视图：迭代信息 */}
       <div>
         <Title level={5} style={{ marginBottom: 12 }}>
-          迭代过程 ({iterationItems.length})
+          运行日志:
         </Title>
-        {thoughtChainData.length > 0 ? (
-          <ThoughtChain size='small' collapsible items={thoughtChainData} />
-        ) : (
-          <div
-            style={{
-              padding: 32,
-              textAlign: 'center',
-              color: 'rgba(0, 0, 0, 0.45)',
-              border: '1px solid #f0f0f0',
-              borderRadius: 8,
-              backgroundColor: '#fafafa',
-            }}>
-            <div style={{ fontSize: 14 }}>
-              {isGenerating ? '正在初始化代码生成...' : '暂无迭代记录，点击「生成代码」开始体验'}
+        <div
+          style={{
+            border: '1px solid #f0f0f0',
+            borderRadius: 8,
+            backgroundColor: '#fafafa',
+            minHeight: 200,
+            maxHeight: '60vh',
+            overflow: 'auto',
+          }}>
+          {iterationMarkdown ? (
+            <div style={{ padding: 16 }}>
+              <Streamdown isAnimating={isGenerating}>{iterationMarkdown}</Streamdown>
             </div>
-          </div>
-        )}
+          ) : (
+            <div
+              style={{
+                padding: 32,
+                textAlign: 'center',
+                color: 'rgba(0, 0, 0, 0.45)',
+              }}>
+              <div style={{ fontSize: 14 }}>
+                {isGenerating ? '正在初始化代码生成...' : '暂无迭代记录，点击「生成代码」开始体验'}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </Drawer>
   );
