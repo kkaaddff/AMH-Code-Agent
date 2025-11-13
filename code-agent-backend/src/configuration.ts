@@ -15,6 +15,7 @@ import * as lion from '@fta/server-middleware-lion';
 import * as upload from '@midwayjs/upload';
 import * as egg from '@midwayjs/web';
 import { ModelMetricsService } from './service/common/model-metrics.service';
+import { AuthMiddleware } from './middleware/auth';
 
 // load .env file in process.cwd
 dotenv.config();
@@ -44,6 +45,7 @@ export class ContainerLifeCycle implements ILifeCycle {
   app: Application;
 
   async onReady(container: IMidwayContainer) {
+    this.app.useMiddleware(AuthMiddleware);
     // 预热模型指标服务，确保单例在启动阶段即开始轮询
     await container.getAsync(ModelMetricsService);
   }

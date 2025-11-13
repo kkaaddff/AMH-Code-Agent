@@ -20,7 +20,18 @@ export default (appInfo: EggAppInfo) => {
   config.cors = {
     credentials: true,
     allowMethods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'SonicToken', 'FTAToken', 'x-page-url', 'Yu1'],
+    allowHeaders: [
+      'Content-Type',
+      'SonicToken',
+      'FTAToken',
+      'x-page-url',
+      'Yu1',
+      'Authorization',
+      'userId',
+      'user-id',
+      'user_id',
+      'x-user-id',
+    ],
     origin: ({ ctx }: any) => {
       return ctx.header.origin;
     },
@@ -109,6 +120,13 @@ export default (appInfo: EggAppInfo) => {
 
   config.swagger = {
     title: 'code-agent-backend',
+  };
+
+  /**
+   * 鉴权中间件
+   */
+  config.authMiddleware = {
+    match: [/^\/api\//, /^\/custom\//, /.*/],
   };
 
   /**
