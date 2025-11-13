@@ -198,6 +198,11 @@ type TodoList = z.infer<typeof TodoListSchema>;
 
 export type TodoItem = z.infer<typeof TodoItemSchema>;
 
+type TodoStorage = {
+  read: () => Promise<TodoList>;
+  write: (todos: TodoList) => Promise<void>;
+};
+
 async function loadTodosFromFile(filePath: string) {
   if (!fs.existsSync(filePath)) return [];
   let fileContent = '';
@@ -216,22 +221,56 @@ async function saveTodos(todos: TodoList, filePath: string) {
   await writeFile(filePath, JSON.stringify(todos, null, 2));
 }
 
-export function createTodoTool(opts: { filePath: string }) {
+function createFileTodoStorage(filePath: string): TodoStorage {
   function ensureTodoDirectory() {
-    const todoDir = path.dirname(opts.filePath);
+    const todoDir = path.dirname(filePath);
     if (!fs.existsSync(todoDir)) {
       fs.mkdirSync(todoDir, { recursive: true });
     }
     return todoDir;
   }
 
-  function getTodoFilePath() {
+  async function read() {
     ensureTodoDirectory();
-    return opts.filePath;
+    return await loadTodosFromFile(filePath);
   }
 
+  async function write(todos: TodoList) {
+    ensureTodoDirectory();
+    await saveTodos(todos, filePath);
+  }
+
+  return {
+    read,
+    write,
+  };
+}
+
+export function createInMemoryTodoStorage(initialTodos: TodoList = []): TodoStorage {
+  let currentTodos = initialTodos.map((todo) => ({ ...todo }));
+  return {
+    async read() {
+      return currentTodos.map((todo) => ({ ...todo }));
+    },
+    async write(todos) {
+      currentTodos = todos.map((todo) => ({ ...todo }));
+    },
+  };
+}
+
+type TodoToolOptions =
+  | {
+      filePath: string;
+    }
+  | {
+      storage: TodoStorage;
+    };
+
+export function createTodoTool(opts: TodoToolOptions) {
+  const storage = 'storage' in opts ? opts.storage : createFileTodoStorage(opts.filePath);
+
   async function readTodos() {
-    return await loadTodosFromFile(getTodoFilePath());
+    return await storage.read();
   }
 
   const todoWriteTool = createTool({
@@ -244,7 +283,7 @@ export function createTodoTool(opts: { filePath: string }) {
       try {
         const oldTodos = await readTodos();
         const newTodos = todos;
-        await saveTodos(newTodos, getTodoFilePath());
+        await storage.write(newTodos);
 
         return {
           llmContent:

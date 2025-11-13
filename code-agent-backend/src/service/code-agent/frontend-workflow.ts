@@ -109,6 +109,7 @@ export class FrontendWorkflowService {
           model: this.modelConfig.model,
           planModel: this.modelConfig.model,
         },
+        todoStorageMode: 'memory',
         callbacks: signal
           ? {
               ...callbacks,

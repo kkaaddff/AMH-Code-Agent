@@ -14,7 +14,7 @@ import type { Tool } from './tool';
 import { Tools } from './tool';
 import { createFileDraftTool, FileDraftStore } from './tools/fileDraft';
 import { createSpecReaderTool, type SpecRegistry } from './tools/specReader';
-import { createTodoTool } from './tools/todo';
+import { createInMemoryTodoStorage, createTodoTool } from './tools/todo';
 import { randomUUID } from './utils/randomUUID';
 
 export type FrontendProjectWorkflowCallbacks = ProjectTaskCallbacks;
@@ -31,6 +31,7 @@ export type FrontendProjectWorkflowOptions = {
   rulesFilePath?: string;
   apiKey: string;
   baseURL: string;
+  todoStorageMode?: 'file' | 'memory';
 };
 
 export type FrontendProjectWorkflowResult =
@@ -67,9 +68,10 @@ export async function runFrontendProjectWorkflow(
 
   try {
     const todoFilePath = path.join(context.paths.globalConfigDir, 'todos', `${session.id}-frontend.json`);
-    const { todoReadTool, todoWriteTool } = createTodoTool({
-      filePath: todoFilePath,
-    });
+    const useMemoryTodoStorage = opts.todoStorageMode === 'memory';
+    const todoToolConfig = useMemoryTodoStorage ? { storage: createInMemoryTodoStorage() } : { filePath: todoFilePath };
+
+    const { todoReadTool, todoWriteTool } = createTodoTool(todoToolConfig);
 
     const specReaderTool = createSpecReaderTool({
       specs: opts.specFiles,
