@@ -244,22 +244,51 @@ const EditorPageContent: React.FC = () => {
         }
       );
     } catch (error: any) {
-      console.error('代码生成失败:', error);
-      message.error({
-        content: `代码生成失败: ${error?.message || '未知错误'}`,
-        key: 'generate-code',
-      });
-
-      // 如果有正在进行的迭代，标记为失败
-      if (currentIterationThoughtId) {
-        updateThoughtItem(currentIterationThoughtId, {
-          status: 'error',
-          finishedAt: new Date().toISOString(),
+      // 如果是 AbortError，说明用户主动中断
+      if (error.name === 'AbortError') {
+        console.log('代码生成已被用户中断');
+        message.warning({
+          content: '代码生成已被中断',
+          key: 'generate-code',
         });
-      }
 
-      setGenerationStatus('failed');
+        // 如果有正在进行的迭代，标记为失败并添加中断标记
+        if (currentIterationThoughtId) {
+          const currentItem = codeGenerationStore.thoughtChainItems.find(
+            (item) => item.id === currentIterationThoughtId
+          );
+          updateThoughtItem(currentIterationThoughtId, {
+            status: 'error',
+            content: (currentItem?.content || '') + '\n\n*已被用户中断*',
+            finishedAt: new Date().toISOString(),
+          });
+        }
+
+        setGenerationStatus('failed');
+      } else {
+        console.error('代码生成失败:', error);
+        message.error({
+          content: `代码生成失败: ${error?.message || '未知错误'}`,
+          key: 'generate-code',
+        });
+
+        // 如果有正在进行的迭代，标记为失败
+        if (currentIterationThoughtId) {
+          updateThoughtItem(currentIterationThoughtId, {
+            status: 'error',
+            finishedAt: new Date().toISOString(),
+          });
+        }
+
+        setGenerationStatus('failed');
+      }
     }
+  };
+  // 中断 SSE 请求
+  const abortGeneration = () => {
+    schedulerRef.current?.abort();
+    setGenerationStatus('failed');
+    closeCodeDrawer();
   };
 
   const handleGenerateCodeV2 = () => {
@@ -281,10 +310,6 @@ const EditorPageContent: React.FC = () => {
   const handleAnnotationConfirmCancel = useCallback(() => {
     setIsAnnotationConfirmOpen(false);
   }, []);
-
-  const handleCloseCodeDrawer = () => {
-    closeCodeDrawer();
-  };
 
   // 处理删除文档
   const handleDeleteDocument = async (type: keyof typeof TDocumentKeys, docId: string) => {
@@ -538,7 +563,7 @@ const EditorPageContent: React.FC = () => {
       />
       <Component3DInspectModal open={is3DModalOpen} onClose={() => setIs3DModalOpen(false)} />
       <InteractionGuideOverlay open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
-      <CodeGenerationDrawer open={codeGenerationStoreSnapshot.isDrawerOpen} onClose={handleCloseCodeDrawer} />
+      <CodeGenerationDrawer abortGeneration={abortGeneration} />
     </>
   );
 };

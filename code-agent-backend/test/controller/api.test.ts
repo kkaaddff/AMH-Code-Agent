@@ -1,10 +1,10 @@
 /// <reference types="jest" />
-import { describe, beforeAll, afterAll, test, expect } from "@jest/globals";
-import { createApp, close, createHttpRequest } from "@midwayjs/mock";
-import { Framework } from "@midwayjs/web";
-import { Application } from "egg";
+import { describe, beforeAll, afterAll, test, expect } from '@jest/globals';
+import { createApp, close, createHttpRequest } from '@midwayjs/mock';
+import { Framework } from '@midwayjs/web';
+import { Application } from 'egg';
 
-describe("test/controller/api.test.ts", () => {
+describe('test/controller/api.test.ts', () => {
   let app: Application;
 
   beforeAll(async () => {
@@ -16,14 +16,12 @@ describe("test/controller/api.test.ts", () => {
     await close(app);
   });
 
-  test("should POST /api/get_user", async () => {
+  test('should POST /api/get_user', async () => {
     // make request
-    const result = await createHttpRequest(app)
-      .post("/api/get_user")
-      .query({ uid: 123 });
+    const result = await createHttpRequest(app).post('/api/get_user').query({ uid: 123 });
 
     // use expect by jest
     expect(result.status).toBe(200);
-    expect(result.body.message).toBe("OK");
+    expect(result.body.message).toBe('OK');
   });
 });

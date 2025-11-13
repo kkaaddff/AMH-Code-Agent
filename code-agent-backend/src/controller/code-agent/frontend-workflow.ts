@@ -18,6 +18,15 @@ export class FrontendWorkflowController {
   async startFrontendWorkflow(@Body() body: FrontendWorkflowRequestDTO) {
     const { designDocId, productName = 'FTA-Frontend' } = body;
 
+    // 生成会话ID并开始日志记录
+    const sessionId = uuid();
+    const startTime = Date.now();
+
+    console.log(`frontend-workflow: [${sessionId}] 🚀 前端工作流开始启动`);
+    console.log(
+      `frontend-workflow: [${sessionId}] 📋 请求参数: designDocId=${designDocId}, productName=${productName}`
+    );
+
     // 设置 SSE 响应头
     this.ctx.status = 200;
     this.ctx.set('Content-Type', 'text/event-stream; charset=utf-8');
@@ -25,6 +34,8 @@ export class FrontendWorkflowController {
     this.ctx.set('Connection', 'keep-alive');
     this.ctx.set('Access-Control-Allow-Origin', '*');
 
+    // 监听客户端断开连接
+    const req = this.ctx.req;
     const res = this.ctx.res;
 
     // SSE 事件发送辅助函数
@@ -33,17 +44,39 @@ export class FrontendWorkflowController {
       res.write(`event: ${event}\ndata: ${payload}\n\n`);
     };
 
-    const sessionId = uuid();
+    // 创建 AbortController 用于处理客户端断开连接
+    const abortController = new AbortController();
+
+    console.log(`frontend-workflow: [${sessionId}] 📡 SSE连接已建立，准备监听客户端断开事件`);
+
+    const onClose = (e: any) => {
+      console.log('客户端断开连接', e);
+      const duration = Date.now() - startTime;
+      console.log(
+        `frontend-workflow: [${sessionId}] ❌ 客户端断开连接 (持续${(duration / 1000).toFixed(2)}秒)，中断工作流`
+      );
+      abortController.abort();
+    };
+
+    res.on('close', onClose);
+    res.on('error', onClose);
+
+    req.on('close', onClose);
+    req.on('error', onClose);
 
     try {
+      console.log(`frontend-workflow: [${sessionId}] ⏳ 开始调用前端工作流服务`);
+
       // 调用 service 执行 workflow
       const result = await this.frontendWorkflowService.runWorkflow({
         designDocId,
         productName,
         sessionId,
+        signal: abortController.signal,
         callbacks: {
           onMessage: async (opts) => {
             const { message } = opts;
+            console.log(`frontend-workflow: [${sessionId}] 💬 收到消息: role=${message.role}, uuid=${message.uuid}`);
             sendSSE('message', {
               role: message.role,
               content: typeof message.content === 'string' ? message.content : JSON.stringify(message.content),
@@ -53,13 +86,27 @@ export class FrontendWorkflowController {
             });
           },
           onText: async (text) => {
+            console.log(
+              `frontend-workflow: [${sessionId}] 📝 收到文本片段: ${text.substring(0, 50)}${
+                text.length > 50 ? '...' : ''
+              }`
+            );
             sendSSE('text', { text });
           },
           onStreamResult: async (streamResult) => {
+            const hasError = !!streamResult.error;
+            console.log(
+              `frontend-workflow: [${sessionId}] 🔄 流式结果: requestId=${
+                streamResult.requestId
+              }, hasError=${hasError}, model=${streamResult.model?.model || 'N/A'}`
+            );
+            if (hasError) {
+              console.error(`frontend-workflow: [${sessionId}] ❌ 流式结果错误:`, streamResult.error);
+            }
             sendSSE('stream_result', {
               requestId: streamResult.requestId,
               model: streamResult.model?.model || null,
-              hasError: !!streamResult.error,
+              hasError,
               error: streamResult.error
                 ? {
                     message: streamResult.error.message,
@@ -69,6 +116,15 @@ export class FrontendWorkflowController {
             });
           },
           onTurn: async (turn) => {
+            const startTime = Number(turn.startTime);
+            const endTime = Number(turn.endTime);
+            const duration = endTime - startTime;
+            console.log(
+              `frontend-workflow: [${sessionId}] 🔄 对话轮次完成: 开始时间=${new Date(startTime).toISOString()}, 持续${(
+                duration / 1000
+              ).toFixed(2)}秒`
+            );
+            console.log(`frontend-workflow: [${sessionId}] 📊 Token使用情况:`, turn.usage);
             sendSSE('turn', {
               usage: turn.usage,
               startTime: turn.startTime,
@@ -77,6 +133,9 @@ export class FrontendWorkflowController {
           },
           onToolApprove: async (opts) => {
             const { toolUse, category } = opts;
+            console.log(
+              `frontend-workflow: [${sessionId}] 🔧 工具调用审批: toolName=${toolUse.name}, callId=${toolUse.callId}, category=${category}`
+            );
             sendSSE('tool_approve', {
               toolName: toolUse.name,
               callId: toolUse.callId,
@@ -89,17 +148,65 @@ export class FrontendWorkflowController {
         },
       });
 
-      // 发送完成事件
-      sendSSE('complete', result);
+      // 计算总执行时间
+      const totalDuration = Date.now() - startTime;
 
+      // 发送完成事件
+      console.log(
+        `frontend-workflow: [${sessionId}] ✅ 工作流执行完成 (总耗时: ${(totalDuration / 1000).toFixed(2)}秒)`
+      );
+      console.log(
+        `frontend-workflow: [${sessionId}] 📊 执行结果: success=${result.success}, filesCount=${result.filesCount || 0}`
+      );
+
+      sendSSE('complete', {
+        ...result,
+        executionTime: totalDuration,
+        sessionId,
+        timestamp: new Date().toISOString(),
+      });
+
+      console.log(`frontend-workflow: [${sessionId}] 📤 发送完成事件，关闭SSE连接`);
       res.end();
     } catch (error: any) {
-      console.error('Frontend workflow error:', error);
-      sendSSE('error', {
-        message: error?.message || 'Frontend workflow failed',
-        stack: error?.stack,
-      });
+      // 计算错误发生时的执行时间
+      const errorDuration = Date.now() - startTime;
+
+      // 如果是 AbortError，表示客户端主动断开
+      if (error.name === 'AbortError' || abortController.signal.aborted) {
+        console.log(
+          `frontend-workflow: [${sessionId}] ⏹️ 工作流已被中断 (执行${(errorDuration / 1000).toFixed(2)}秒后)`
+        );
+        sendSSE('aborted', {
+          message: '工作流已被用户中断',
+          sessionId,
+          executionTime: errorDuration,
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        console.error(
+          `frontend-workflow: [${sessionId}] ❌ 工作流执行失败 (执行${(errorDuration / 1000).toFixed(2)}秒后):`,
+          error
+        );
+        console.error(`frontend-workflow: [${sessionId}] 🔍 错误详情:`, {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        });
+        sendSSE('error', {
+          message: error?.message || 'Frontend workflow failed',
+          stack: error?.stack,
+          sessionId,
+          executionTime: errorDuration,
+          timestamp: new Date().toISOString(),
+        });
+      }
       res.end();
+    } finally {
+      // 清理事件监听器
+      console.log(`frontend-workflow: [${sessionId}] 🧹 清理事件监听器`);
+      req.off('close', onClose);
+      req.off('error', onClose);
     }
   }
 }

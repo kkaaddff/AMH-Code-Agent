@@ -218,10 +218,23 @@ export class FrontendWorkflowScheduler {
         callbacks.onError?.(errorMessage);
         break;
 
+      case 'aborted':
+        // 工作流已被中断
+        console.log('工作流已被中断:', data.message);
+        callbacks.onError?.(data.message || '工作流已被用户中断');
+        break;
+
       default:
         // 忽略其他事件类型（如 stream_result, info, warning 等）
         break;
     }
+  }
+
+  /**
+   * 获取当前的 AbortController
+   */
+  getAbortController(): AbortController | null {
+    return this.abortController;
   }
 
   /**

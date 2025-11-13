@@ -1,19 +1,17 @@
-import { BorderOutlined, CheckSquareFilled, LoadingOutlined } from '@ant-design/icons';
-import { Alert, Divider, Drawer, List, Space, Typography } from 'antd';
+import { BorderOutlined, CheckSquareFilled, ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Alert, Divider, Drawer, List, Modal, Space, Typography } from 'antd';
 import React, { useMemo } from 'react';
 import { Streamdown } from 'streamdown';
 import { useSnapshot } from 'valtio/react';
-import { codeGenerationStore } from '../contexts/CodeGenerationContext';
+import { codeGenerationActions, codeGenerationStore } from '../contexts/CodeGenerationContext';
 
 const { Text, Title } = Typography;
 
 interface CodeGenerationDrawerProps {
-  open: boolean;
-  onClose: () => void;
+  abortGeneration: () => void;
 }
-
-const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClose }) => {
-  const { thoughtChainItems, generationStatus } = useSnapshot(codeGenerationStore);
+const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ abortGeneration }) => {
+  const { thoughtChainItems, generationStatus, isDrawerOpen } = useSnapshot(codeGenerationStore);
 
   // 分离 TODO 和 迭代数据
   const { todoItems, iterationItems } = useMemo(() => {
@@ -23,7 +21,28 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
   }, [thoughtChainItems]);
 
   const handleClose = () => {
-    onClose();
+    // 如果正在生成中，显示确认弹窗
+    if (generationStatus === 'generating') {
+      Modal.confirm({
+        title: '确认强制退出',
+        icon: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
+        content: (
+          <div>
+            <p>代码生成正在进行中，强制退出将中断当前任务。</p>
+            <p style={{ marginBottom: 0, color: '#ff4d4f', fontWeight: 500 }}>此操作不可恢复，确定要退出吗？</p>
+          </div>
+        ),
+        okText: '强制退出',
+        okType: 'danger',
+        cancelText: '继续生成',
+        onOk: () => {
+          abortGeneration();
+        },
+      });
+    } else {
+      // 非生成状态直接关闭
+      codeGenerationActions.closeDrawer();
+    }
   };
 
   // 将迭代数据格式化为 Markdown 文本
@@ -78,7 +97,9 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
       }
       placement='right'
       width={1280}
-      open={open}
+      open={isDrawerOpen}
+      closable={{ placement: 'end' }}
+      maskClosable={false}
       onClose={handleClose}>
       {generationStatus === 'generating' && (
         <Alert

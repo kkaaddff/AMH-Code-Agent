@@ -25,6 +25,7 @@ export interface FrontendWorkflowOptions {
   designDocId: string;
   productName?: string;
   sessionId: string;
+  signal?: AbortSignal;
   callbacks?: FrontendProjectWorkflowCallbacks;
 }
 
@@ -59,7 +60,10 @@ export class FrontendWorkflowService {
    * 执行前端项目生成工作流
    */
   async runWorkflow(options: FrontendWorkflowOptions): Promise<FrontendWorkflowResult> {
-    const { designDocId, productName, sessionId, callbacks } = options;
+    const { designDocId, productName, sessionId, signal, callbacks } = options;
+    const workflowStartTime = Date.now();
+
+    console.log(`frontend-workflow: [${sessionId}] 🏭 开始执行前端工作流服务`);
 
     try {
       // 获取 DSL 数据
@@ -80,8 +84,19 @@ export class FrontendWorkflowService {
       const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData));
 
       // 准备工作目录
+
       const cwd = this.getWorkflowCwd(sessionId);
-      console.log('specFiles===================> ', specFiles);
+      // 如果收到 abort 信号，抛出 AbortError
+      if (signal?.aborted) {
+        console.log(`frontend-workflow: [${sessionId}] ⏹️ 检测到中断信号，工作流在启动前被中止`);
+        const error = new Error('Workflow aborted before start');
+        error.name = 'AbortError';
+        throw error;
+      }
+
+      console.log(`frontend-workflow: [${sessionId}] 🚀 开始调用核心工作流引擎`);
+      const workflowEngineStart = Date.now();
+
       // 调用 workflow
       const result = await runFrontendProjectWorkflow({
         cwd,
@@ -94,10 +109,46 @@ export class FrontendWorkflowService {
           model: this.modelConfig.model,
           planModel: this.modelConfig.model,
         },
-        callbacks,
+        callbacks: signal
+          ? {
+              ...callbacks,
+              // 包装回调函数，在每次回调时检查 abort 信号
+              onMessage: callbacks?.onMessage
+                ? async (opts) => {
+                    if (signal.aborted) {
+                      console.log(`frontend-workflow: [${sessionId}] ⏹️ 在消息回调中检测到中断信号`);
+                      const error = new Error('Workflow aborted during execution');
+                      error.name = 'AbortError';
+                      throw error;
+                    }
+                    return callbacks.onMessage!(opts);
+                  }
+                : undefined,
+              onText: callbacks?.onText
+                ? async (text) => {
+                    if (signal.aborted) {
+                      console.log(`frontend-workflow: [${sessionId}] ⏹️ 在文本回调中检测到中断信号`);
+                      const error = new Error('Workflow aborted during execution');
+                      error.name = 'AbortError';
+                      throw error;
+                    }
+                    return callbacks.onText!(text);
+                  }
+                : undefined,
+            }
+          : callbacks,
         apiKey: this.modelConfig.apiKey,
         baseURL: this.modelConfig.baseURL,
       });
+
+      const workflowEngineDuration = Date.now() - workflowEngineStart;
+      const totalWorkflowDuration = Date.now() - workflowStartTime;
+
+      console.log(
+        `frontend-workflow: [${sessionId}] ✅ 核心工作流引擎执行完成 (引擎耗时: ${(
+          workflowEngineDuration / 1000
+        ).toFixed(2)}秒, 总耗时: ${(totalWorkflowDuration / 1000).toFixed(2)}秒)`
+      );
 
       if (result.success === true) {
         return {
@@ -111,6 +162,7 @@ export class FrontendWorkflowService {
         };
       }
 
+      console.log(`frontend-workflow: [${sessionId}] ❌ 工作流执行失败:`, result.error);
       return {
         success: false,
         sessionId,
@@ -122,6 +174,17 @@ export class FrontendWorkflowService {
           : undefined,
       };
     } catch (error: any) {
+      const totalWorkflowDuration = Date.now() - workflowStartTime;
+      console.log(
+        `frontend-workflow: [${sessionId}] 💥 工作流执行异常 (总耗时: ${(totalWorkflowDuration / 1000).toFixed(2)}秒):`,
+        error
+      );
+      console.log(`frontend-workflow: [${sessionId}] 🔍 异常详情:`, {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
+
       return {
         success: false,
         sessionId,
