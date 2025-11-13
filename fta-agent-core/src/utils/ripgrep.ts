@@ -5,7 +5,7 @@ import { findActualExecutable } from 'spawn-rx';
 import { fileURLToPath } from 'url';
 import { isLocal } from './isLocal';
 
-const debug = createDebug('neovate:utils:ripgrep');
+const debug = createDebug('code agent core:utils:ripgrep');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

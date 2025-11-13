@@ -11,7 +11,7 @@ import { shouldRunInBackground } from '../utils/background-detection';
 import { getErrorMessage } from '../utils/error';
 import { shellExecute } from '../utils/shell-execution';
 
-const debug = createDebug('neovate:tools:bash');
+const debug = createDebug('code agent core:tools:bash');
 
 const BANNED_COMMANDS = [
   'alias',

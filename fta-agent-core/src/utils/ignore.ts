@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { homedir } from 'os';
 import { join, relative, sep } from 'pathe';
-
+import { PRODUCT_NAME } from '../constants';
 /**
  * Gets the global gitignore file path
  */
@@ -184,7 +184,7 @@ function matchesPattern(filePath: string, pattern: string): boolean {
 /**
  * Checks if a file or directory should be ignored based on ignore rules
  */
-export function isIgnored(filePath: string, rootPath: string, productName: string = 'neovate'): boolean {
+export function isIgnored(filePath: string, rootPath: string, productName: string = PRODUCT_NAME): boolean {
   const { patterns, negationPatterns } = parseIgnoreFiles(rootPath, productName);
 
   // If no patterns, nothing is ignored

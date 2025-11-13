@@ -107,11 +107,7 @@ async function resolveTaskEnvironment(opts: ProjectTaskOptions): Promise<TaskEnv
       language: opts.context.config.language,
     });
   } else {
-    systemPrompt = generateSystemPrompt({
-      todo: opts.context.config.todo!,
-      productName: opts.context.productName,
-      language: opts.context.config.language,
-    });
+    systemPrompt = generateSystemPrompt({});
   }
 
   return {

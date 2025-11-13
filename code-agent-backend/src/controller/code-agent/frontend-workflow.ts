@@ -50,12 +50,13 @@ export class FrontendWorkflowController {
     console.log(`frontend-workflow: [${sessionId}] 📡 SSE连接已建立，准备监听客户端断开事件`);
 
     const onClose = (e: any) => {
-      console.log('客户端断开连接', e);
-      const duration = Date.now() - startTime;
-      console.log(
-        `frontend-workflow: [${sessionId}] ❌ 客户端断开连接 (持续${(duration / 1000).toFixed(2)}秒)，中断工作流`
-      );
-      abortController.abort();
+      if (abortController.signal.aborted) {
+        console.log('客户端断开连接', e);
+        const duration = Date.now() - startTime;
+        console.log(
+          `frontend-workflow: [${sessionId}] ❌ 客户端断开连接 (持续${(duration / 1000).toFixed(2)}秒)，中断工作流`
+        );
+      }
     };
 
     res.on('close', onClose);

@@ -13,7 +13,7 @@ export type HistoryOpts = {
   onMessage?: OnMessage;
 };
 
-const debug = createDebug('neovate:history');
+const debug = createDebug('code agent core:history');
 
 export class History {
   messages: NormalizedMessage[];

@@ -19,7 +19,7 @@ import { safeParseJson } from './utils/safeParseJson';
 const DEFAULT_MAX_TURNS = 50;
 const DEFAULT_ERROR_RETRY_TURNS = 10;
 
-const debug = createDebug('neovate:loop');
+const debug = createDebug('code agent core:loop');
 
 async function exponentialBackoffWithCancellation(attempt: number, signal?: AbortSignal): Promise<void> {
   const baseDelay = 1000;

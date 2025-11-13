@@ -20,7 +20,7 @@ export interface MCPConfig {
   headers?: Record<string, string>;
 }
 
-const debug = createDebug('neovate:mcp');
+const debug = createDebug('code agent core:mcp');
 
 type MCPServerStatus = 'pending' | 'connecting' | 'connected' | 'failed' | 'disconnected';
 

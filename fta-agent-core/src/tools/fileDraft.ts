@@ -35,10 +35,7 @@ export function createFileDraftTool(store: FileDraftStore) {
       path: z.string().describe('相对于项目根目录的路径，例如 src/pages/Home.tsx'),
       kind: z.enum(['file', 'directory']).describe('是生成文件还是目录'),
       description: z.string().optional().describe('说明该文件/目录的作用'),
-      content: z
-        .string()
-        .optional()
-        .describe('若 kind=file，则提供完整文件内容；目录无需填写'),
+      content: z.string().optional().describe('若 kind=file，则提供完整文件内容；目录无需填写'),
       tags: z.array(z.string()).optional().describe('可选标签，例如 ["layout","state"]'),
     }),
     getDescription: ({ params }) => {

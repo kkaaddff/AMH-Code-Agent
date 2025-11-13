@@ -149,12 +149,6 @@ const EditorPageContent: React.FC = () => {
     openCodeDrawer();
     clearThoughtChain();
 
-    message.open({
-      type: 'loading',
-      content: '正在初始化代码生成...',
-      key: 'generate-code',
-    });
-
     // 当前迭代的思维链 ID（在 try 块外定义，以便在 catch 块中访问）
     let currentIterationThoughtId: string | null = null;
     const sessionId = `session-${Date.now()}`;
