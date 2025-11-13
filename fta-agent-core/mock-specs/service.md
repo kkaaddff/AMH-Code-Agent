@@ -38,7 +38,6 @@ src/services/
 ### 基础客户端
 
 ```typescript
-// http/client.ts
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { setupInterceptors } from './interceptors';
 
@@ -100,7 +99,6 @@ export const httpClient = new HttpClient({
 ### 请求/响应拦截器
 
 ```typescript
-// http/interceptors.ts
 import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { TokenManager } from '../auth/tokenManager';
 import { refreshToken } from '../auth/authService';

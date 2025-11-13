@@ -27,7 +27,7 @@ interface GlobalState {
 ### Context 设计
 
 ```typescript
-// contexts/GlobalContext.tsx
+// contexts/global-context.tsx
 interface GlobalContextType {
   state: GlobalState;
   dispatch: Dispatch<GlobalAction>;
@@ -65,7 +65,7 @@ export type AppAction =
 ### 主 Reducer
 
 ```typescript
-// reducers/globalReducer.ts
+// reducers/global-reducer.ts
 export const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {
   switch (action.type) {
     case 'SET_USER':
@@ -97,7 +97,7 @@ export const rootReducer = combineReducers({
 ### 全局状态 Hook
 
 ```typescript
-// hooks/useGlobalState.ts
+// hooks/use-global-state.ts
 export const useGlobalState = () => {
   const context = useContext(GlobalContext);
   if (!context) {
@@ -110,7 +110,7 @@ export const useGlobalState = () => {
 ### 专用 Hooks
 
 ```typescript
-// hooks/useAuth.ts
+// hooks/use-auth.ts
 export const useAuth = () => {
   const { state, dispatch, actions } = useGlobalState();
 
@@ -170,41 +170,12 @@ const [selectedItem, setSelectedItem] = useState<string | null>(null);
 const [formState, formDispatch] = useReducer(formReducer, initialFormState);
 ```
 
-## 状态持久化
-
-### LocalStorage 集成
-
-```typescript
-// hooks/usePersistedState.ts
-export const usePersistedState = <T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] => {
-  const [state, setState] = useState<T>(() => {
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      return initialValue;
-    }
-  });
-
-  const setPersistedState = (value: T) => {
-    try {
-      setState(value);
-      window.localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error('Error saving to localStorage:', error);
-    }
-  };
-
-  return [state, setPersistedState];
-};
-```
-
 ## 异步状态管理
 
 ### 数据获取 Hook
 
 ```typescript
-// hooks/useAsyncData.ts
+// hooks/use-async-data.ts
 export const useAsyncData = <T>(fetcher: () => Promise<T>, dependencies: any[] = []) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);

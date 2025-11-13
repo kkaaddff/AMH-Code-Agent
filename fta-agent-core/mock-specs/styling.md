@@ -40,15 +40,6 @@ src/styles/
 ├── themes/              # 主题
 │   ├── light.scss
 │   └── dark.scss
-├── components/          # 组件样式
-│   ├── Button/
-│   ├── Input/
-│   ├── Card/
-│   └── Modal/
-├── layouts/             # 布局样式
-│   ├── AppLayout/
-│   ├── PageLayout/
-│   └── AuthLayout/
 ├── pages/               # 页面样式
 ├── main.scss            # 主样式文件
 └── index.scss           # 入口文件
@@ -58,34 +49,20 @@ src/styles/
 
 ### 1. 性能优化
 
-```scss
+````scss
 // 避免重复的属性声明
 .button {
   // 好的做法：将通用属性放在一起
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-3) var(--spacing-4);
   border: none;
-  border-radius: var(--radius-md);
-  font-family: var(--font-family-sans);
-  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
 
   // 变体样式
   &.primary {
-    background-color: var(--color-primary-500);
     color: white;
   }
-}
-
-// 使用 CSS 自定义属性提高性能
-.card {
-  background-color: var(--color-bg-primary);
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
 }
 ```
 
@@ -98,9 +75,6 @@ src/styles/
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: var(--radius-md);
-  font-family: var(--font-family-sans);
-  font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
@@ -120,14 +94,12 @@ src/styles/
 
 .button {
   @include button-base;
-  @include button-variant(var(--color-primary-500), white);
 }
 
 .button-secondary {
   @include button-base;
-  @include button-variant(var(--color-secondary-100), var(--color-secondary-900));
 }
-```
+````
 
 ### 3. 命名规范
 
@@ -153,17 +125,6 @@ src/styles/
 
   &--hoverable {
     // Modifier
-  }
-}
-
-// 或者使用模块化的命名方式
-.container {
-  .wrapper {
-    .content {
-      .title {
-        // 嵌套结构
-      }
-    }
   }
 }
 ```

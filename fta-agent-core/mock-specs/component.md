@@ -20,24 +20,7 @@
 
 ## 组件分类
 
-### 1. 基础 UI 组件 (Base Components)
-
-`@fta/components`组件库提供最基础的 UI 元素。
-
-```typescript
-// Button
-interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'outline' | 'text';
-  size?: 'sm' | 'md' | 'lg';
-  disabled?: boolean;
-  loading?: boolean;
-  icon?: ReactNode;
-  children: ReactNode;
-  onClick?: () => void;
-}
-```
-
-### 2. 业务组件 (Business Components)
+### 1. 业务组件 (Business Components)
 
 位于 `src/components/`，包含特定业务逻辑的复合组件。
 
@@ -54,7 +37,7 @@ export const UserProfileCard: FC<UserProfileCardProps> = ({ user, onEdit, showAc
 };
 ```
 
-### 3. 页面组件 (Page Components)
+### 2. 页面组件 (Page Components)
 
 位于 `src/pages/`，代表应用中的完整页面。
 
@@ -64,61 +47,19 @@ export const UserProfileCard: FC<UserProfileCardProps> = ({ user, onEdit, showAc
 
 ```typescript
 interface ComponentProps {
-  // 必需属性
   requiredProp: string;
-
-  // 可选属性提供默认值
   optionalProp?: number;
-
-  // 枚举类型
   variant?: 'primary' | 'secondary';
-
-  // 复杂对象类型
   config?: {
     theme: ThemeConfig;
     animations: AnimationConfig;
   };
-
-  // 事件处理器
   onSubmit?: (data: FormData) => void;
   onChange?: (value: string) => void;
-
-  // 渲染属性
   children?: ReactNode;
   renderHeader?: (data: HeaderData) => ReactNode;
-
-  // HTML 属性透传
-  [key: string]: any;
+  [key: string]: unkown;
 }
-```
-
-### 组件复合模式
-
-```typescript
-// Card.tsx - 支持复合模式
-interface CardProps {
-  children: ReactNode;
-  className?: string;
-  bordered?: boolean;
-}
-
-const Card: FC<CardProps> & {
-  Header: typeof CardHeader;
-  Body: typeof CardBody;
-  Footer: typeof CardFooter;
-} = ({ children, className, bordered = true }) => {
-  return <View className={`card ${bordered ? 'card-bordered' : ''} ${className || ''}`}>{children}</View>;
-};
-
-// 子组件
-const CardHeader: FC<{ children: ReactNode }> = ({ children }) => <View className='card-header'>{children}</View>;
-
-// 使用方式
-<Card>
-  <Card.Header>标题</Card.Header>
-  <Card.Body>内容</Card.Body>
-  <Card.Footer>底部</Card.Footer>
-</Card>;
 ```
 
 ## 组件实现模式
@@ -231,8 +172,8 @@ const Tabs: FC<TabsProps> = ({ activeTab, onTabChange, children }) => {
 ### 1. CSS Modules
 
 ```typescript
-// Button.module.css
-.button {
+// Car.module.scss
+.CarButton {
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
@@ -241,102 +182,16 @@ const Tabs: FC<TabsProps> = ({ activeTab, onTabChange, children }) => {
   transition: all 0.2s ease;
 }
 
-.buttonPrimary {
-  background-color: var(--primary-color);
+.CarButtonPrimary {
   color: white;
 }
 
-.buttonSecondary {
-  background-color: var(--secondary-color);
-  color: var(--text-color);
-}
-
-// Button.tsx
+// Car.tsx
 import styles from './Button.module.css';
 
-export const Button: FC<ButtonProps> = ({ variant = 'primary', className, ...props }) => (
-  <button className={clsx(styles.button, styles[`button${capitalize(variant)}`], className)} {...props} />
+export const Car: FC<ButtonProps> = ({ variant = 'primary', className, ...props }) => (
+  <View className='CarButton' {...props} />
 );
-```
-
-### 2. Styled Components
-
-```typescript
-import styled from 'styled-components';
-
-const StyledButton = styled.button<{ variant: 'primary' | 'secondary' }>`
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  background-color: ${(props) =>
-    props.variant === 'primary' ? props.theme.colors.primary : props.theme.colors.secondary};
-
-  &:hover {
-    opacity: 0.8;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-```
-
-## 组件测试规范
-
-### 1. 单元测试
-
-```typescript
-// Button.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Button } from './Button';
-
-describe('Button', () => {
-  it('renders children correctly', () => {
-    render(<Button>Click me</Button>);
-    expect(screen.getByText('Click me')).toBeInTheDocument();
-  });
-
-  it('calls onClick when clicked', () => {
-    const handleClick = jest.fn();
-    render(<Button onClick={handleClick}>Click me</Button>);
-
-    fireEvent.click(screen.getByText('Click me'));
-    expect(handleClick).toHaveBeenCalledTimes(1);
-  });
-
-  it('applies correct variant styles', () => {
-    render(<Button variant='secondary'>Button</Button>);
-    expect(screen.getByRole('button')).toHaveClass('buttonSecondary');
-  });
-});
-```
-
-### 2. 集成测试
-
-```typescript
-// UserProfileCard.test.tsx
-import { render, screen } from '@testing-library/react';
-import { UserProfileCard } from './UserProfileCard';
-
-const mockUser = {
-  id: '1',
-  name: 'John Doe',
-  email: 'john@example.com',
-};
-
-describe('UserProfileCard', () => {
-  it('displays user information correctly', () => {
-    render(<UserProfileCard user={mockUser} />);
-
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('john@example.com')).toBeInTheDocument();
-  });
-});
 ```
 
 ## 组件文档规范
@@ -365,40 +220,6 @@ interface UserProfileCardProps {
   showActions?: boolean;
 }
 ````
-
-### 2. Storybook 故事
-
-```typescript
-// Button.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from './Button';
-
-const meta: Meta<typeof Button> = {
-  title: 'UI/Button',
-  component: Button,
-  parameters: {
-    layout: 'centered',
-  },
-  tags: ['autodocs'],
-};
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Primary: Story = {
-  args: {
-    variant: 'primary',
-    children: 'Primary Button',
-  },
-};
-
-export const Secondary: Story = {
-  args: {
-    variant: 'secondary',
-    children: 'Secondary Button',
-  },
-};
-```
 
 ## 性能优化
 
@@ -435,88 +256,12 @@ const Component: FC<Props> = ({ items, onSelect }) => {
 };
 ```
 
-## 可访问性 (A11y)
-
-### 1. 语义化 HTML
-
-```typescript
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: ReactNode;
-}
-
-export const Modal: FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-  const modalRef = useRef<HTMLViewElement>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      modalRef.current?.focus();
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  return (
-    <View className='modal-overlay' onClick={onClose}>
-      <View
-        className='modal'
-        ref={modalRef}
-        role='dialog'
-        aria-modal='true'
-        aria-labelledby='modal-title'
-        onClick={(e) => e.stopPropagation()}>
-        <h2 id='modal-title'>{title}</h2>
-        <button className='modal-close' onClick={onClose} aria-label='关闭'>
-          ×
-        </button>
-        <View className='modal-content'>{children}</View>
-      </View>
-    </View>
-  );
-};
-```
-
-### 2. 键盘导航
-
-```typescript
-const useKeyboardNavigation = (items: string[], onSelect: (item: string) => void) => {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          setSelectedIndex((prev) => (prev + 1) % items.length);
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setSelectedIndex((prev) => (prev - 1 + items.length) % items.length);
-          break;
-        case 'Enter':
-          e.preventDefault();
-          onSelect(items[selectedIndex]);
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [items, selectedIndex, onSelect]);
-
-  return selectedIndex;
-};
-```
-
 ## 最佳实践总结
 
 1. **保持组件小而专注**：单个组件最好不要超过 200 行
 2. **使用 TypeScript 严格模式**：确保类型安全
-3. **编写全面的测试**：包括单元测试和集成测试
-4. **考虑性能和可访问性**：使用 React.memo、语义化 HTML 等
-5. **提供清晰的文档**：包括 JSDoc 注释和 Storybook 故事
-6. **遵循命名约定**：使用描述性的组件名和属性名
-7. **合理使用 children**：提供灵活的组合方式
-8. **处理边界情况**：加载状态、错误状态、空数据等
+3. **考虑性能**：使用 React.memo 等
+4. **提供必要的文档**：包括 JSDoc 注释
+5. **遵循命名约定**：使用描述性的组件名和属性名
+6. **合理使用 children**：提供灵活的组合方式
+7. **处理边界情况**：加载状态、错误状态、空数据等
