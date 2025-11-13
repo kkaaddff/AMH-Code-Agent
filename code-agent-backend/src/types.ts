@@ -1,6 +1,7 @@
 import { ApiProperty } from '@midwayjs/swagger';
 
 export * from './types/design-dsl';
+export * from './types/model-metrics';
 
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];

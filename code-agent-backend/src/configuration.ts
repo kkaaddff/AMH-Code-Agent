@@ -14,6 +14,7 @@ import * as typegoose from '@midwayjs/typegoose';
 import * as lion from '@fta/server-middleware-lion';
 import * as upload from '@midwayjs/upload';
 import * as egg from '@midwayjs/web';
+import { ModelMetricsService } from './service/common/model-metrics.service';
 
 // load .env file in process.cwd
 dotenv.config();
@@ -42,7 +43,10 @@ export class ContainerLifeCycle implements ILifeCycle {
   @App()
   app: Application;
 
-  async onReady() {}
+  async onReady(container: IMidwayContainer) {
+    // 预热模型指标服务，确保单例在启动阶段即开始轮询
+    await container.getAsync(ModelMetricsService);
+  }
 
   async onServerReady(container: IMidwayContainer) {}
 }
