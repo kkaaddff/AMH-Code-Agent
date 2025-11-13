@@ -37,12 +37,14 @@ export function createSpecReaderTool(opts: { specs: SpecRegistry; cwd: string })
     execute: async ({ spec_name }) => {
       const filePath = normalizedSpecs[spec_name];
       if (!filePath) {
+        console.log(`🚩 规范 "${spec_name}" 的文件路径：${filePath}，未注册到 specFiles 中`);
         return {
           isError: true,
           llmContent: `规范 "${spec_name}" 未注册。可用规范：${Object.keys(normalizedSpecs).join(', ') || '无'}`,
         };
       }
       if (!fs.existsSync(filePath)) {
+        console.log(`🚩 规范 "${spec_name}" 的文件不存在：${filePath}`);
         return {
           isError: true,
           llmContent: `规范 "${spec_name}" 的文件不存在：${filePath}`,
@@ -50,6 +52,7 @@ export function createSpecReaderTool(opts: { specs: SpecRegistry; cwd: string })
       }
       try {
         const content = fs.readFileSync(filePath, 'utf-8');
+        console.log(`🚩 规范 "${spec_name}" 的文件存在：${filePath}`);
         return {
           llmContent: safeStringify({
             spec: spec_name,

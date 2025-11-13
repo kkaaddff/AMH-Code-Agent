@@ -49,7 +49,7 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
 
         // 构建迭代块
         const parts: string[] = [];
-        const titleLine = `##### ${timestamp ? ` *${timestamp}：*` : ''}`;
+        const titleLine = timestamp ? ` *${timestamp}*` : '';
         parts.push(titleLine);
         parts.push(''); // 空行分隔
 
@@ -80,8 +80,6 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
       width={1280}
       open={open}
       onClose={handleClose}>
-      {/* 成功提示 Alert */}
-
       {generationStatus === 'generating' && (
         <Alert
           message='  代码生成正在进行中，请耐心等待。'
@@ -91,8 +89,6 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
           style={{ marginBottom: 16 }}
         />
       )}
-
-      {/* 成功提示 Alert */}
       {generationStatus === 'completed' && (
         <Alert
           message='代码生成完成'
@@ -102,8 +98,6 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ open, onClo
           style={{ marginBottom: 16 }}
         />
       )}
-
-      {/* 失败提示 Alert */}
       {generationStatus === 'failed' && (
         <Alert
           message='代码生成失败'

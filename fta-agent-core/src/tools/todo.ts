@@ -200,12 +200,13 @@ export type TodoItem = z.infer<typeof TodoItemSchema>;
 
 async function loadTodosFromFile(filePath: string) {
   if (!fs.existsSync(filePath)) return [];
-
+  let fileContent = '';
   try {
-    const fileContent = await readFile(filePath, { encoding: 'utf-8' });
+    fileContent = await readFile(filePath, { encoding: 'utf-8' });
     const parsedData = JSON.parse(fileContent);
     return TodoListSchema.parse(parsedData);
   } catch (error) {
+    console.log(`🚩 读取 todo 文件失败：${filePath}\n\n文件内容：${fileContent}`);
     console.error(error instanceof Error ? error : new Error(String(error)));
     return [];
   }
