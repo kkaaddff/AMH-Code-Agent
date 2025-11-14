@@ -71,10 +71,11 @@ interface SimpleProject {
   members: number;
   tags: string[];
   avatar: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
   userId: string;
   gitId: string;
+  workdirs: string[];
 }
 
 // Project Response Types
@@ -173,9 +174,33 @@ export class UpdateDocumentResponse extends BaseResponse<SimpleProject> {
   }
 }
 
+export class ResolveProjectContextResponse extends BaseResponse<{
+  matchedProject?: SimpleProject | null;
+  matchedBy?: 'gitId' | 'workdir' | null;
+  resolvedGitId?: string | null;
+  requestedWorkdir?: string | null;
+  projects: SimpleProject[];
+}> {
+  constructor(payload: {
+    matchedProject?: SimpleProject | null;
+    matchedBy?: 'gitId' | 'workdir' | null;
+    resolvedGitId?: string | null;
+    requestedWorkdir?: string | null;
+    projects: SimpleProject[];
+  }) {
+    super(payload, true, 'Project context resolved successfully');
+  }
+}
+
+export class BindProjectContextResponse extends BaseResponse<SimpleProject> {
+  constructor(project: SimpleProject | any) {
+    super(project as SimpleProject, true, 'Project binding updated successfully');
+  }
+}
+
 // GitLab Response Types
-export class GetGitlabProjectIdResponse extends BaseResponse<{ gitId: number }> {
-  constructor(gitId: number) {
+export class GetGitlabProjectIdResponse extends BaseResponse<{ gitId: string }> {
+  constructor(gitId: string) {
     super({ gitId }, true, 'GitLab project ID retrieved successfully');
   }
 }

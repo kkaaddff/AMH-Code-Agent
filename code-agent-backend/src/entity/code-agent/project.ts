@@ -52,10 +52,10 @@ export class DocumentReference {
   pageId: string;
 
   @prop({ required: true })
-  userId: string;
+  userId?: string;
 
   @prop({ required: true, default: 'empty' })
-  gitId: string;
+  gitId?: string;
 }
 
 @EntityModel()
@@ -160,6 +160,9 @@ export class Project {
 
   @prop({ ref: () => Page, default: () => [] })
   pages: Page[];
+
+  @prop({ type: () => [String], default: () => [] })
+  workdirs: string[];
 
   @prop({ required: true })
   createdAt: Date;

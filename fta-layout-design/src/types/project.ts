@@ -17,6 +17,7 @@ export interface Project {
   pages: Page[];
   userId: string;
   gitId: string;
+  workdirs: string[];
 }
 
 export interface ProjectListParams {
@@ -31,6 +32,16 @@ export interface ProjectListResponse {
   total: number;
   page: number;
   size: number;
+}
+
+export type ProjectMatchSource = 'gitId' | 'workdir' | null;
+
+export interface ProjectResolutionResult {
+  matchedProject: Project | null;
+  matchedBy: ProjectMatchSource;
+  resolvedGitId: string | null;
+  requestedWorkdir: string | null;
+  projects: Project[];
 }
 
 export interface Page {

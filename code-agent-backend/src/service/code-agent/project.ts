@@ -1,6 +1,9 @@
 import { Inject, Provide } from '@midwayjs/decorator';
-import { DocumentReference, Page, Project } from '../../entity/code-agent/project';
+import { InjectEntityModel } from '@midwayjs/typegoose';
+import { Context } from '@midwayjs/web';
+import { ReturnModelType } from '@typegoose/typegoose';
 import {
+  BindProjectContextRequest,
   CreatePageRequest,
   CreateProjectRequest,
   DeletePageRequest,
@@ -9,17 +12,15 @@ import {
   GetPageDetailRequest,
   GetProjectDetailRequest,
   ProjectListRequest,
+  ResolveProjectContextRequest,
   SyncDocumentRequest,
   UpdateDocumentStatusRequest,
   UpdatePageRequest,
   UpdateProjectRequest,
 } from '../../dto/code-agent/req';
-
-import { InjectEntityModel } from '@midwayjs/typegoose';
-import { ReturnModelType } from '@typegoose/typegoose';
+import { DocumentReference, Page, Project } from '../../entity/code-agent/project';
 import { MasterGoServiceV1 } from './mastergo.service';
-
-type UserContext = { userId: string; gitId: string };
+import { GitlabService } from './gitlab.service';
 
 @Provide()
 export class ProjectService {
@@ -35,21 +36,48 @@ export class ProjectService {
   @Inject()
   masterGoServiceV1: MasterGoServiceV1;
 
-  private resolveUserContext(userId: string, gitId?: string): UserContext {
-    if (!userId || !userId.trim()) {
-      throw new Error('用户 ID 不能为空');
+  @Inject()
+  ctx: Context;
+
+  @Inject()
+  gitlabService: GitlabService;
+
+  private resolveUserId(): string {
+    const userId = this.ctx.get('user-id');
+    if (userId) {
+      return userId;
     }
-    return {
-      userId: userId.trim(),
-      gitId: gitId && gitId.trim() ? gitId.trim() : 'empty',
-    };
+    const user = this.ctx.state?.user;
+    if (user) {
+      return user.id;
+    }
+    return undefined;
   }
 
-  private buildUserFilter(context: UserContext) {
-    return {
-      userId: context.userId,
-      gitId: context.gitId,
-    };
+  private readonly projectPagesPopulateOptions = {
+    path: 'pages',
+    populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
+  };
+
+  private sanitizeWorkdirs(workdirs?: string[]): string[] {
+    if (!Array.isArray(workdirs)) {
+      return [];
+    }
+    return Array.from(
+      new Set(
+        workdirs
+          .map((item) => (typeof item === 'string' ? item.trim() : ''))
+          .filter((item): item is string => Boolean(item))
+      )
+    );
+  }
+
+  private normalizeWorkdir(workdir?: string): string | null {
+    if (!workdir || typeof workdir !== 'string') {
+      return null;
+    }
+    const normalized = workdir.trim();
+    return normalized.length > 0 ? normalized : null;
   }
 
   /**
@@ -75,12 +103,12 @@ export class ProjectService {
   /**
    * Create document references from URLs
    */
-  private async createDocumentReferences(
-    urls: string[] = [],
-    context: UserContext,
-    pageId: string
-  ): Promise<DocumentReference[]> {
+  private async createDocumentReferences(urls: string[] = [], pageId: string): Promise<DocumentReference[]> {
     const now = new Date();
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
     const documents = (urls || [])
       .filter((url) => Boolean(url))
       .map((url, index) => ({
@@ -92,8 +120,8 @@ export class ProjectService {
         createdAt: now,
         updatedAt: now,
         pageId,
-        userId: context.userId,
-        gitId: context.gitId,
+        userId,
+        gitId: 'empty',
       }));
 
     // Save documents to database
@@ -112,16 +140,17 @@ export class ProjectService {
   private async mergeDocumentReferences(
     existingIds: any[] = [],
     urls: string[] = [],
-    pageId: string,
-    context: UserContext
+    pageId: string
   ): Promise<DocumentReference[]> {
     const now = new Date();
     const result: DocumentReference[] = [];
-
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
     // Fetch existing documents by their _ids
     const existingDocs = await this.documentReferenceEntity.find({
       _id: { $in: existingIds },
-      ...this.buildUserFilter(context),
     });
 
     for (const url of urls || []) {
@@ -130,10 +159,7 @@ export class ProjectService {
       const matched = existingDocs.find((doc) => doc.url === url);
       if (matched) {
         // Update existing document
-        await this.documentReferenceEntity.updateOne(
-          { id: matched.id, ...this.buildUserFilter(context) },
-          { updatedAt: now }
-        );
+        await this.documentReferenceEntity.updateOne({ id: matched.id }, { updatedAt: now });
         result.push(matched._id);
       } else {
         // Create new document
@@ -146,8 +172,6 @@ export class ProjectService {
           createdAt: now,
           updatedAt: now,
           pageId,
-          userId: context.userId,
-          gitId: context.gitId,
         };
         const savedDoc = await this.documentReferenceEntity.create(newDoc);
         result.push(savedDoc._id);
@@ -157,11 +181,14 @@ export class ProjectService {
     return result;
   }
 
-  private async findProject(projectId: string, context: UserContext): Promise<Project> {
-    const project = await this.projectEntity.findOne({ id: projectId, ...this.buildUserFilter(context) }).populate({
-      path: 'pages',
-      populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
-    });
+  private async findProject(projectId: string): Promise<Project> {
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
+    const project = await this.projectEntity
+      .findOne({ id: projectId, userId })
+      .populate(this.projectPagesPopulateOptions);
 
     if (!project) {
       throw new Error('项目不存在');
@@ -169,12 +196,8 @@ export class ProjectService {
     return project;
   }
 
-  private async findPageInProject(
-    projectId: string,
-    pageId: string,
-    context: UserContext
-  ): Promise<{ project: Project; page: Page }> {
-    const project = await this.findProject(projectId, context);
+  private async findPageInProject(projectId: string, pageId: string): Promise<{ project: Project; page: Page }> {
+    const project = await this.findProject(projectId);
     const page = project.pages.find((item) => item.id === pageId);
 
     if (!page) {
@@ -188,18 +211,17 @@ export class ProjectService {
    */
   async findPage(params: GetPageDetailRequest): Promise<Page> {
     const { pageId, projectId } = params;
-    const context = this.resolveUserContext(params.userId, params.gitId);
 
     let page: Page | null = null;
 
     if (projectId) {
       // Find page within specific project
-      const project = await this.findProject(projectId, context);
+      const project = await this.findProject(projectId);
       page = project.pages.find((item) => item.id === pageId) || null;
     } else {
       // Find page across all projects
       page = await this.pageEntity
-        .findOne({ id: pageId, ...this.buildUserFilter(context) })
+        .findOne({ id: pageId })
         .populate([{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }])
         .exec();
     }
@@ -218,16 +240,15 @@ export class ProjectService {
     const page = Number(params.page) || 1;
     const size = Number(params.size) || 10;
     const skip = (page - 1) * size;
-    const context = this.resolveUserContext(params.userId, params.gitId);
-    const filter = this.buildUserFilter(context);
-
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
+    const filter = { userId };
     const [projects, total] = await Promise.all([
       this.projectEntity
         .find(filter)
-        .populate({
-          path: 'pages',
-          populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
-        })
+        .populate(this.projectPagesPopulateOptions)
         .skip(skip)
         .limit(size)
         .sort({ updatedAt: -1 }),
@@ -241,7 +262,10 @@ export class ProjectService {
    * Create project
    */
   async createProject(data: CreateProjectRequest): Promise<Project> {
-    const context = this.resolveUserContext(data.userId, data.gitId);
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
     const timestamp = new Date();
     const newProject: Partial<Project> = {
       id: this.generateId('project'),
@@ -257,8 +281,9 @@ export class ProjectService {
       tags: data.tags || [],
       avatar: data.avatar || '📁',
       pages: [],
-      userId: context.userId,
-      gitId: context.gitId,
+      userId,
+      gitId: 'empty',
+      workdirs: this.sanitizeWorkdirs(data.workdirs),
     };
 
     const createdProject = await this.projectEntity.create(newProject);
@@ -269,18 +294,21 @@ export class ProjectService {
    * Update project
    */
   async updateProject(id: string, updates: UpdateProjectRequest): Promise<Project> {
-    const context = this.resolveUserContext(updates.userId, updates.gitId);
-    const { userId: _discardUserId, gitId: _discardGitId, ...rest } = updates;
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
+    const { workdirs, ...otherUpdates } = updates as Record<string, any>;
+    const updatePayload: Record<string, any> = {
+      ...otherUpdates,
+      updatedAt: new Date(),
+    };
+    if (workdirs !== undefined) {
+      updatePayload.workdirs = this.sanitizeWorkdirs(workdirs);
+    }
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate(
-        { id, ...this.buildUserFilter(context) },
-        { ...rest, updatedAt: new Date() },
-        { new: true, runValidators: true }
-      )
-      .populate({
-        path: 'pages',
-        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
-      });
+      .findOneAndUpdate({ id, userId }, updatePayload, { new: true, runValidators: true })
+      .populate(this.projectPagesPopulateOptions);
 
     if (!updatedProject) {
       throw new Error('项目不存在');
@@ -293,8 +321,11 @@ export class ProjectService {
    * Delete project
    */
   async deleteProject(params: DeleteProjectRequest): Promise<boolean> {
-    const context = this.resolveUserContext(params.userId, params.gitId);
-    const result = await this.projectEntity.deleteOne({ id: params.id, ...this.buildUserFilter(context) });
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
+    const result = await this.projectEntity.deleteOne({ id: params.id, userId });
 
     if (result.deletedCount === 0) {
       throw new Error('项目不存在');
@@ -307,25 +338,31 @@ export class ProjectService {
    * Get project detail
    */
   async getProjectDetail(params: GetProjectDetailRequest): Promise<Project> {
-    const context = this.resolveUserContext(params.userId, params.gitId);
-    return await this.findProject(params.id, context);
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
+    return await this.findProject(params.id);
   }
 
   /**
    * Create page
    */
   async createPage(data: CreatePageRequest): Promise<Project> {
-    const context = this.resolveUserContext(data.userId, data.gitId);
     const timestamp = new Date();
     const pageId = this.generateId('page');
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
 
-    await this.findProject(data.projectId, context);
+    await this.findProject(data.projectId);
 
     // Create document references asynchronously
     const [designDocuments, prdDocuments, openapiDocuments] = await Promise.all([
-      this.createDocumentReferences(data.designUrls, context, pageId),
-      this.createDocumentReferences(data.prdUrls, context, pageId),
-      this.createDocumentReferences(data.openapiUrls, context, pageId),
+      this.createDocumentReferences(data.designUrls, pageId),
+      this.createDocumentReferences(data.prdUrls, pageId),
+      this.createDocumentReferences(data.openapiUrls, pageId),
     ]);
 
     const newPage: Partial<Page> = {
@@ -342,8 +379,8 @@ export class ProjectService {
       designDocuments: designDocuments.map((doc) => doc._id) as any,
       prdDocuments: prdDocuments.map((doc) => doc._id) as any,
       openapiDocuments: openapiDocuments.map((doc) => doc._id) as any,
-      userId: context.userId,
-      gitId: context.gitId,
+      userId,
+      gitId: 'empty',
     };
 
     // Save page to database
@@ -352,14 +389,11 @@ export class ProjectService {
     // Add page reference to project
     const updatedProject = await this.projectEntity
       .findOneAndUpdate(
-        { id: data.projectId, ...this.buildUserFilter(context) },
+        { id: data.projectId, userId },
         { $push: { pages: createdPage._id }, updatedAt: timestamp },
         { new: true, runValidators: true }
       )
-      .populate({
-        path: 'pages',
-        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
-      });
+      .populate(this.projectPagesPopulateOptions);
 
     if (!updatedProject) {
       throw new Error('项目不存在');
@@ -372,8 +406,11 @@ export class ProjectService {
    * Update page
    */
   async updatePage(data: UpdatePageRequest): Promise<Project> {
-    const context = this.resolveUserContext(data.userId, data.gitId);
-    const { page } = await this.findPageInProject(data.projectId, data.pageId, context);
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
+    const { page } = await this.findPageInProject(data.projectId, data.pageId);
     const timestamp = new Date();
 
     const updateData: Partial<Page> = {
@@ -388,41 +425,27 @@ export class ProjectService {
       updateData.designDocuments = await this.mergeDocumentReferences(
         page.designDocuments,
         data.designUrls,
-        data.pageId,
-        context
+        data.pageId
       );
     }
     if (data.prdUrls !== undefined) {
-      updateData.prdDocuments = await this.mergeDocumentReferences(
-        page.prdDocuments,
-        data.prdUrls,
-        data.pageId,
-        context
-      );
+      updateData.prdDocuments = await this.mergeDocumentReferences(page.prdDocuments, data.prdUrls, data.pageId);
     }
     if (data.openapiUrls !== undefined) {
       updateData.openapiDocuments = await this.mergeDocumentReferences(
         page.openapiDocuments,
         data.openapiUrls,
-        data.pageId,
-        context
+        data.pageId
       );
     }
 
     // Update page in database
-    await this.pageEntity.updateOne({ id: data.pageId, ...this.buildUserFilter(context) }, updateData);
+    await this.pageEntity.updateOne({ id: data.pageId }, updateData);
 
     // Update project's updatedAt
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate(
-        { id: data.projectId, ...this.buildUserFilter(context) },
-        { updatedAt: timestamp },
-        { new: true, runValidators: true }
-      )
-      .populate({
-        path: 'pages',
-        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
-      });
+      .findOneAndUpdate({ id: data.projectId, userId }, { updatedAt: timestamp }, { new: true, runValidators: true })
+      .populate(this.projectPagesPopulateOptions);
 
     if (!updatedProject) {
       throw new Error('项目不存在');
@@ -435,24 +458,24 @@ export class ProjectService {
    * Delete page
    */
   async deletePage(data: DeletePageRequest): Promise<Project> {
-    const context = this.resolveUserContext(data.userId, data.gitId);
-    const { page } = await this.findPageInProject(data.projectId, data.pageId, context);
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
+    const { page } = await this.findPageInProject(data.projectId, data.pageId);
     const timestamp = new Date();
 
     // Delete page from database
-    await this.pageEntity.deleteOne({ id: data.pageId, ...this.buildUserFilter(context) });
+    await this.pageEntity.deleteOne({ id: data.pageId, userId });
 
     // Remove page reference from project
     const updatedProject = await this.projectEntity
       .findOneAndUpdate(
-        { id: data.projectId, ...this.buildUserFilter(context) },
+        { id: data.projectId, userId },
         { $pull: { pages: page._id }, updatedAt: timestamp },
         { new: true, runValidators: true }
       )
-      .populate({
-        path: 'pages',
-        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
-      });
+      .populate(this.projectPagesPopulateOptions);
 
     if (!updatedProject) {
       throw new Error('项目不存在');
@@ -465,8 +488,11 @@ export class ProjectService {
    * Update document status
    */
   async updateDocumentStatus(data: UpdateDocumentStatusRequest): Promise<Project> {
-    const context = this.resolveUserContext(data.userId, data.gitId);
-    await this.findPageInProject(data.projectId, data.pageId, context);
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
+    await this.findPageInProject(data.projectId, data.pageId);
     const timestamp = new Date();
 
     const updateData = {
@@ -477,22 +503,15 @@ export class ProjectService {
     };
 
     // Update document in database
-    await this.documentReferenceEntity.updateOne({ id: data.documentId, ...this.buildUserFilter(context) }, updateData);
+    await this.documentReferenceEntity.updateOne({ id: data.documentId, userId }, updateData);
 
     // Update page's updatedAt
-    await this.pageEntity.updateOne({ id: data.pageId, ...this.buildUserFilter(context) }, { updatedAt: timestamp });
+    await this.pageEntity.updateOne({ id: data.pageId, userId }, { updatedAt: timestamp });
 
     // Update project's updatedAt
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate(
-        { id: data.projectId, ...this.buildUserFilter(context) },
-        { updatedAt: timestamp },
-        { new: true, runValidators: true }
-      )
-      .populate({
-        path: 'pages',
-        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
-      });
+      .findOneAndUpdate({ id: data.projectId, userId }, { updatedAt: timestamp }, { new: true, runValidators: true })
+      .populate(this.projectPagesPopulateOptions);
 
     if (!updatedProject) {
       throw new Error('项目不存在');
@@ -508,16 +527,19 @@ export class ProjectService {
    */
   async syncDocument(data: SyncDocumentRequest): Promise<Project> {
     const { projectId, pageId, type, documentId } = data;
-    const context = this.resolveUserContext(data.userId, data.gitId);
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
     const timestamp = new Date();
 
     // Verify page exists
-    await this.findPageInProject(projectId, pageId, context);
+    await this.findPageInProject(projectId, pageId);
 
     // Get document reference to fetch the URL
     const document = await this.documentReferenceEntity.findOne({
       id: documentId,
-      ...this.buildUserFilter(context),
+      userId,
     });
     if (!document) {
       throw new Error('文档不存在');
@@ -544,7 +566,7 @@ export class ProjectService {
     } catch (error) {
       // If data fetching fails, update status to 'failed'
       await this.documentReferenceEntity.updateOne(
-        { id: documentId, ...this.buildUserFilter(context) },
+        { id: documentId, userId },
         {
           status: 'failed',
           progress: 0,
@@ -565,14 +587,11 @@ export class ProjectService {
       updateData.data = documentData;
     }
 
-    await this.documentReferenceEntity.updateOne({ id: documentId, ...this.buildUserFilter(context) }, updateData);
+    await this.documentReferenceEntity.updateOne({ id: documentId, userId }, updateData);
 
     const updatedProject = await this.projectEntity
-      .findOne({ id: projectId, ...this.buildUserFilter(context) })
-      .populate({
-        path: 'pages',
-        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
-      });
+      .findOne({ id: projectId, userId })
+      .populate(this.projectPagesPopulateOptions);
 
     if (!updatedProject) {
       throw new Error('项目不存在');
@@ -587,13 +606,16 @@ export class ProjectService {
    */
   async getDocumentContent(data: GetDocumentContentRequest): Promise<DocumentReference> {
     const { documentId } = data;
-    const context = this.resolveUserContext(data.userId, data.gitId);
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
 
     // Get document reference
     const document = await this.documentReferenceEntity.findOne(
       {
         _id: documentId,
-        ...this.buildUserFilter(context),
+        userId,
       },
       null,
       { lean: true }
@@ -612,26 +634,137 @@ export class ProjectService {
    */
   async updateDocument(data: DocumentReference): Promise<DocumentReference> {
     const { id } = data;
-    const context = this.resolveUserContext(data.userId, data.gitId);
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
     const timestamp = new Date();
 
-    const document = await this.documentReferenceEntity.findOne({ id, ...this.buildUserFilter(context) });
+    const document = await this.documentReferenceEntity.findOne({ id, userId });
     if (!document) {
       throw new Error('文档不存在');
     }
 
     // Extract updatable fields and filter out undefined values
-    const { id: _, _id, createdAt, userId, gitId, ...updateFields } = data;
+    const { id: _, _id, createdAt, gitId, ...updateFields } = data;
     const updateData = {
       ...Object.fromEntries(Object.entries(updateFields).filter(([_, value]) => value !== undefined)),
       updatedAt: timestamp,
     };
 
     // Update document in database
-    await this.documentReferenceEntity.updateOne({ id, ...this.buildUserFilter(context) }, updateData);
+    await this.documentReferenceEntity.updateOne({ id, userId }, updateData);
 
     // Return the updated document
-    const updatedDocument = await this.documentReferenceEntity.findOne({ id, ...this.buildUserFilter(context) });
+    const updatedDocument = await this.documentReferenceEntity.findOne({ id, userId });
     return updatedDocument!;
+  }
+
+  async resolveProjectContext(params: ResolveProjectContextRequest): Promise<{
+    matchedProject: Project | null;
+    matchedBy: 'gitId' | 'workdir' | null;
+    requestedWorkdir: string | null;
+    projects: Project[];
+  }> {
+    const requestedWorkdir = this.normalizeWorkdir(params.workdir);
+    let matchedProject: Project | null = null;
+    let matchedBy: 'gitId' | 'workdir' | null = null;
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
+    let resolvedGitId = 'empty';
+    if (params.gitUrl) {
+      resolvedGitId = await this.gitlabService.getGitlabProjectId(params.gitUrl);
+
+      matchedProject = await this.projectEntity
+        .findOne({ userId, gitId: resolvedGitId })
+        .populate(this.projectPagesPopulateOptions);
+      if (matchedProject) {
+        matchedBy = 'gitId';
+      }
+    }
+
+    if (!matchedProject && requestedWorkdir) {
+      matchedProject = await this.projectEntity
+        .findOne({
+          userId,
+          $or: [{ gitId: requestedWorkdir }, { workdirs: requestedWorkdir }],
+        })
+        .populate(this.projectPagesPopulateOptions);
+      if (matchedProject) {
+        matchedBy = 'workdir';
+      }
+    }
+
+    if (!matchedProject && resolvedGitId !== 'empty' && !resolvedGitId) {
+      matchedProject = await this.projectEntity
+        .findOne({ userId, gitId: resolvedGitId })
+        .populate(this.projectPagesPopulateOptions);
+      if (matchedProject) {
+        matchedBy = 'gitId';
+      }
+    }
+
+    const projects = await this.projectEntity
+      .find({ userId })
+      .populate(this.projectPagesPopulateOptions)
+      .sort({ updatedAt: -1 });
+
+    return {
+      matchedProject,
+      matchedBy,
+      requestedWorkdir,
+      projects,
+    };
+  }
+
+  async bindProjectContext(params: BindProjectContextRequest): Promise<Project> {
+    const userId = this.resolveUserId();
+    if (!userId) {
+      throw new Error('用户 ID 不能为空');
+    }
+    const projectId = params.projectId?.trim();
+    if (!projectId) {
+      throw new Error('项目ID不能为空');
+    }
+
+    const normalizedWorkdir = this.normalizeWorkdir(params.workdir);
+    if (!params.gitUrl && !normalizedWorkdir) {
+      throw new Error('gitUrl 或 workdir 至少需要提供一个');
+    }
+
+    let resolvedGitId = 'empty';
+    if (params.gitUrl) {
+      resolvedGitId = await this.gitlabService.getGitlabProjectId(params.gitUrl);
+    }
+
+    const timestamp = new Date();
+    const updateData: Record<string, any> = {
+      $set: {
+        updatedAt: timestamp,
+      },
+    };
+
+    if (resolvedGitId) {
+      updateData.$set.gitId = resolvedGitId;
+    }
+
+    if (normalizedWorkdir) {
+      updateData.$addToSet = { workdirs: normalizedWorkdir };
+    }
+
+    const updatedProject = await this.projectEntity
+      .findOneAndUpdate({ id: projectId, userId }, updateData, {
+        new: true,
+        runValidators: true,
+      })
+      .populate(this.projectPagesPopulateOptions);
+
+    if (!updatedProject) {
+      throw new Error('项目不存在');
+    }
+
+    return updatedProject;
   }
 }

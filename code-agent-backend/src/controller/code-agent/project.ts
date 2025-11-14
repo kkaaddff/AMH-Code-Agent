@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Inject, Post, Query } from '@midwayjs/decorator';
 import { Context } from '@midwayjs/web';
 import {
+  BindProjectContextRequest,
   CreatePageRequest,
   CreateProjectRequest,
   DeletePageRequest,
@@ -9,12 +10,14 @@ import {
   GetPageDetailRequest,
   GetProjectDetailRequest,
   ProjectListRequest,
+  ResolveProjectContextRequest,
   SyncDocumentRequest,
   UpdateDocumentStatusRequest,
   UpdatePageRequest,
   UpdateProjectRequest,
 } from '../../dto/code-agent/req';
 import {
+  BindProjectContextResponse,
   CreatePageResponse,
   CreateProjectResponse,
   DeletePageResponse,
@@ -28,6 +31,7 @@ import {
   UpdateDocumentStatusResponse,
   UpdatePageResponse,
   UpdateProjectResponse,
+  ResolveProjectContextResponse,
 } from '../../dto/code-agent/res';
 import { DocumentReference } from '../../entity/code-agent';
 import { ProjectService } from '../../service/code-agent/project';
@@ -50,6 +54,33 @@ export class ProjectController {
       return new ProjectListResponse(projects, total, query.page || 1, query.size || 10);
     } catch (error) {
       this.ctx.status = 500;
+      throw error;
+    }
+  }
+
+  @Post('/internal/resolve')
+  async resolveProjectContext(@Body() body: ResolveProjectContextRequest): Promise<ResolveProjectContextResponse> {
+    try {
+      const data = await this.projectService.resolveProjectContext(body);
+      return new ResolveProjectContextResponse({
+        matchedProject: data.matchedProject || null,
+        matchedBy: data.matchedBy,
+        requestedWorkdir: data.requestedWorkdir,
+        projects: data.projects,
+      });
+    } catch (error) {
+      this.ctx.status = 400;
+      throw error;
+    }
+  }
+
+  @Post('/internal/bind')
+  async bindProjectContext(@Body() body: BindProjectContextRequest): Promise<BindProjectContextResponse> {
+    try {
+      const project = await this.projectService.bindProjectContext(body);
+      return new BindProjectContextResponse(project);
+    } catch (error) {
+      this.ctx.status = 400;
       throw error;
     }
   }

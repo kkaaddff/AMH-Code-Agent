@@ -42,42 +42,6 @@ export class ApiError extends Error {
   }
 }
 
-export interface UserContextPayload {
-  userId: string;
-  gitId: string;
-}
-
-const DEFAULT_USER_ID = (import.meta.env.VITE_DEFAULT_USER_ID as string | undefined)?.trim() || 'local-user';
-const DEFAULT_GIT_ID = (import.meta.env.VITE_DEFAULT_GIT_ID as string | undefined)?.trim() || 'empty';
-
-const resolveUserContext = (overrides?: Partial<UserContextPayload>): UserContextPayload => {
-  const userId = overrides?.userId?.trim() || DEFAULT_USER_ID;
-  if (!userId) {
-    throw new Error('用户 ID 不能为空，请配置 VITE_DEFAULT_USER_ID 或在调用 API 时显式传入 userId');
-  }
-  return {
-    userId,
-    gitId: overrides?.gitId?.trim() || DEFAULT_GIT_ID,
-  };
-};
-
-const withUserContextPayload = <T extends Record<string, any>>(
-  payload?: T,
-  overrides?: Partial<UserContextPayload>
-): T & UserContextPayload => {
-  return {
-    ...(payload || ({} as T)),
-    ...resolveUserContext(overrides),
-  };
-};
-
-const withUserContextParams = (params?: Record<string, any>, overrides?: Partial<UserContextPayload>) => {
-  return {
-    ...(params || {}),
-    ...resolveUserContext(overrides),
-  };
-};
-
 /**
  * 基础 HTTP 请求函数
  */
@@ -281,35 +245,37 @@ export const api = {
      * @param params 分页与过滤参数
      * @returns 项目列表响应 Promise
      */
-    list: (params?: { page?: number; size?: number } & Partial<UserContextPayload>) =>
-      ApiService.get(API_ENDPOINTS.project.list, { params: withUserContextParams(params) }),
+    list: (params?: { page?: number; size?: number; [key: string]: any }) =>
+      ApiService.get(API_ENDPOINTS.project.list, { params }),
     /**
      * 创建新项目。
      * @param data 项目创建请求体
      * @returns 创建结果响应 Promise
      */
-    create: (data: Record<string, any>) => ApiService.post(API_ENDPOINTS.project.create, withUserContextPayload(data)),
+    create: (data: Record<string, any>) => ApiService.post(API_ENDPOINTS.project.create, data),
     /**
      * 更新指定项目。
      * @param id 项目标识
      * @param data 项目更新请求体
      * @returns 更新结果响应 Promise
      */
-    update: (payload: { id: string } & Record<string, any>) =>
-      ApiService.post(API_ENDPOINTS.project.update, withUserContextPayload(payload)),
+    update: (payload: { id: string } & Record<string, any>) => ApiService.post(API_ENDPOINTS.project.update, payload),
     /**
      * 删除指定项目。
      * @param id 项目标识
      * @returns 删除结果响应 Promise
      */
-    delete: (payload: { id: string }) => ApiService.post(API_ENDPOINTS.project.delete, withUserContextPayload(payload)),
+    delete: (payload: { id: string }) => ApiService.post(API_ENDPOINTS.project.delete, payload),
     /**
      * 获取项目详情。
      * @param id 项目标识
      * @returns 项目详情响应 Promise
      */
-    detail: (params: { id: string } & Partial<UserContextPayload>) =>
-      ApiService.get(API_ENDPOINTS.project.detail, { params: withUserContextParams(params) }),
+    detail: (params: { id: string }) => ApiService.get(API_ENDPOINTS.project.detail, { params }),
+    internal: {
+      resolve: (payload: Record<string, any>) => ApiService.post(API_ENDPOINTS.project.internal.resolve, payload),
+      bind: (payload: Record<string, any>) => ApiService.post(API_ENDPOINTS.project.internal.bind, payload),
+    },
     page: {
       /**
        * 创建项目页面。
@@ -317,28 +283,28 @@ export const api = {
        * @returns 页面创建响应 Promise
        */
       create: (payload: { projectId: string } & Record<string, any>) =>
-        ApiService.post(API_ENDPOINTS.project.page.create, withUserContextPayload(payload)),
+        ApiService.post(API_ENDPOINTS.project.page.create, payload),
       /**
        * 更新项目页面。
        * @param payload 页面更新参数，需包含项目和页面 ID
        * @returns 页面更新响应 Promise
        */
       update: (payload: { projectId: string; pageId: string } & Record<string, any>) =>
-        ApiService.post(API_ENDPOINTS.project.page.update, withUserContextPayload(payload)),
+        ApiService.post(API_ENDPOINTS.project.page.update, payload),
       /**
        * 删除项目页面。
        * @param params 页面删除参数，需包含项目和页面 ID
        * @returns 页面删除响应 Promise
        */
       delete: (params: { projectId: string; pageId: string }) =>
-        ApiService.post(API_ENDPOINTS.project.page.delete, withUserContextPayload(params)),
+        ApiService.post(API_ENDPOINTS.project.page.delete, params),
       /**
        * 查询页面详情。
        * @param pageId 页面标识
        * @returns 页面详情响应 Promise
        */
-      detail: (params: { pageId: string; projectId?: string } & Partial<UserContextPayload>) =>
-        ApiService.get(API_ENDPOINTS.project.page.detail, { params: withUserContextParams(params) }),
+      detail: (params: { pageId: string; projectId?: string }) =>
+        ApiService.get(API_ENDPOINTS.project.page.detail, { params }),
     },
     document: {
       /**
@@ -352,30 +318,28 @@ export const api = {
         documentId: string;
         type: 'design' | 'prd' | 'openapi';
         status: string;
-      }) => ApiService.post(API_ENDPOINTS.project.document.updateStatus, withUserContextPayload(payload)),
+      }) => ApiService.post(API_ENDPOINTS.project.document.updateStatus, payload),
       /**
        * 同步项目文档。
        * @param payload 同步参数
        * @returns 文档同步响应 Promise
        */
       sync: (payload: { projectId: string; pageId: string; documentId: string; type: 'design' | 'prd' | 'openapi' }) =>
-        ApiService.post(API_ENDPOINTS.project.document.sync, withUserContextPayload(payload)),
+        ApiService.post(API_ENDPOINTS.project.document.sync, payload),
       /**
        * 获取文档内容。
        * @param params 查询参数，需包含文档 ID
        * @returns 文档内容响应 Promise
        */
-      getContent: (params: { documentId: string } & Partial<UserContextPayload>) =>
-        ApiService.get<DocumentReference>(API_ENDPOINTS.project.document.getContent, {
-          params: withUserContextParams(params),
-        }),
+      getContent: (params: { documentId: string; [key: string]: any }) =>
+        ApiService.get<DocumentReference>(API_ENDPOINTS.project.document.getContent, { params }),
       /**
        * 更新文档信息。
        * @param payload 文档更新请求体
        * @returns 文档更新响应 Promise
        */
       update: (payload: Partial<DocumentReference> & { id: string }) =>
-        ApiService.post(API_ENDPOINTS.project.document.update, withUserContextPayload(payload)),
+        ApiService.post(API_ENDPOINTS.project.document.update, payload),
     },
   },
 
@@ -388,28 +352,27 @@ export const api = {
      * @returns 上传结果响应 Promise
      */
     upload: (file: File, additionalData?: { projectId?: string }) =>
-      ApiService.upload(API_ENDPOINTS.dsl.upload, file, withUserContextPayload(additionalData)),
+      ApiService.upload(API_ENDPOINTS.dsl.upload, file, additionalData),
     /**
      * 解析 DSL 数据。
      * @param data 包含 DSL 内容的请求体
      * @returns 解析结果响应 Promise
      */
-    parse: (data: { dslContent: string; projectId?: string }) =>
-      ApiService.post(API_ENDPOINTS.dsl.parse, withUserContextPayload(data)),
+    parse: (data: { dslContent: string; projectId?: string }) => ApiService.post(API_ENDPOINTS.dsl.parse, data),
     /**
      * 导出 DSL 数据。
      * @param params 导出参数，需包含项目 ID
      * @returns 导出结果响应 Promise
      */
     export: (params: { projectId: string; format?: string }) =>
-      ApiService.get(API_ENDPOINTS.dsl.export, { params: withUserContextParams(params) }),
+      ApiService.get(API_ENDPOINTS.dsl.export, { params: params }),
     /**
      * 处理 DSL 数据（转换 PATH 为 LAYER 等）。
      * @param data 包含 DSL 数据的请求体
      * @returns 处理后的 DSL 数据响应 Promise
      */
     process: (data: { dsl: DSLData; convertPaths?: boolean; keepOriginalPaths?: boolean }) =>
-      ApiService.post(API_ENDPOINTS.dsl.process, withUserContextPayload(data)),
+      ApiService.post(API_ENDPOINTS.dsl.process, data),
   },
 
   // 组件识别相关
@@ -419,29 +382,26 @@ export const api = {
      * @param data 检测请求体
      * @returns 检测结果响应 Promise
      */
-    detect: (data: { dslData: any; options?: any }) =>
-      ApiService.post(API_ENDPOINTS.component.detect, withUserContextPayload(data)),
+    detect: (data: { dslData: any; options?: any }) => ApiService.post(API_ENDPOINTS.component.detect, data),
     /**
      * 识别组件内容。
      * @param data 识别请求体
      * @returns 识别结果响应 Promise
      */
     recognize: (data: { imageData: string; components: any[] }) =>
-      ApiService.post(API_ENDPOINTS.component.recognize, withUserContextPayload(data)),
+      ApiService.post(API_ENDPOINTS.component.recognize, data),
     /**
      * 保存组件信息。
      * @param data 保存请求体
      * @returns 保存结果响应 Promise
      */
-    save: (data: { projectId: string; components: any[] }) =>
-      ApiService.post(API_ENDPOINTS.component.save, withUserContextPayload(data)),
+    save: (data: { projectId: string; components: any[] }) => ApiService.post(API_ENDPOINTS.component.save, data),
     /**
      * 查询组件列表。
      * @param projectId 项目标识
      * @returns 组件列表响应 Promise
      */
-    list: (projectId: string) =>
-      ApiService.get(API_ENDPOINTS.component.list, { params: withUserContextParams({ projectId }) }),
+    list: (projectId: string) => ApiService.get(API_ENDPOINTS.component.list, { params: { projectId } }),
   },
 
   // 需求文档相关
@@ -452,7 +412,7 @@ export const api = {
      * @returns 列表响应 Promise
      */
     list: (params: { designId: string; page?: number; size?: number }) =>
-      ApiService.get(API_ENDPOINTS.requirement.list, { params: withUserContextParams(params) }),
+      ApiService.get(API_ENDPOINTS.requirement.list, { params: params }),
     /**
      * 生成需求文档。
      * @param payload 生成请求体
@@ -465,16 +425,13 @@ export const api = {
       annotationVersion?: number;
       annotationSchemaVersion?: string;
     }) =>
-      ApiService.post(
-        API_ENDPOINTS.requirement.generate,
-        withUserContextPayload({
-          designId: payload.designId,
-          templateKey: payload.templateKey,
-          rootAnnotation: payload.rootAnnotation,
-          annotationVersion: payload.annotationVersion,
-          annotationSchemaVersion: payload.annotationSchemaVersion,
-        })
-      ),
+      ApiService.post(API_ENDPOINTS.requirement.generate, {
+        designId: payload.designId,
+        templateKey: payload.templateKey,
+        rootAnnotation: payload.rootAnnotation,
+        annotationVersion: payload.annotationVersion,
+        annotationSchemaVersion: payload.annotationSchemaVersion,
+      }),
     /**
      * 获取需求文档详情。
      * @param docId 文档标识
@@ -482,7 +439,7 @@ export const api = {
      */
     detail: (docId: string) =>
       ApiService.get(API_ENDPOINTS.requirement.detail, {
-        params: withUserContextParams({ docId }),
+        params: { docId },
       }),
     /**
      * 更新需求文档信息。
@@ -490,13 +447,13 @@ export const api = {
      * @returns 更新结果响应 Promise
      */
     update: (payload: { docId: string; title?: string; content?: string; status?: string }) =>
-      ApiService.post(API_ENDPOINTS.requirement.update, withUserContextPayload(payload)),
+      ApiService.post(API_ENDPOINTS.requirement.update, payload),
     /**
      * 导出需求文档。
      * @param docId 文档标识
      * @returns 导出结果响应 Promise
      */
-    export: (docId: string) => ApiService.post(API_ENDPOINTS.requirement.export, withUserContextPayload({ docId })),
+    export: (docId: string) => ApiService.post(API_ENDPOINTS.requirement.export, { docId }),
   },
 
   // 布局相关
@@ -506,22 +463,20 @@ export const api = {
      * @param data 布局保存请求体
      * @returns 保存结果响应 Promise
      */
-    save: (data: { projectId: string; layoutData: any }) =>
-      ApiService.post(API_ENDPOINTS.layout.save, withUserContextPayload(data)),
+    save: (data: { projectId: string; layoutData: any }) => ApiService.post(API_ENDPOINTS.layout.save, data),
     /**
      * 加载布局数据。
      * @param projectId 项目标识
      * @returns 布局数据响应 Promise
      */
-    load: (projectId: string) =>
-      ApiService.get(API_ENDPOINTS.layout.load, { params: withUserContextParams({ projectId }) }),
+    load: (projectId: string) => ApiService.get(API_ENDPOINTS.layout.load, { params: { projectId } }),
     /**
      * 预览布局版本。
      * @param params 预览参数
      * @returns 预览结果响应 Promise
      */
     preview: (params: { projectId: string; version?: string }) =>
-      ApiService.get(API_ENDPOINTS.layout.preview, { params: withUserContextParams(params) }),
+      ApiService.get(API_ENDPOINTS.layout.preview, { params: params }),
   },
 };
 

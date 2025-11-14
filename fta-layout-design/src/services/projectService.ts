@@ -12,6 +12,8 @@ import type {
   ProjectListParams,
   ProjectListResponse,
   DocumentReference,
+  ProjectResolutionResult,
+  ProjectMatchSource,
 } from '@/types/project';
 import { projectMockService } from './mockProjectService';
 import { resolveRequest, shouldUseMock } from './baseService';
@@ -254,5 +256,28 @@ export const projectService = {
         return response.data;
       }
     );
+  },
+
+  async resolveProjectContext(payload: { gitUrl?: string; workdir?: string }): Promise<ProjectResolutionResult> {
+    if (shouldUseMock()) {
+      return projectMockService.resolveProjectContext(payload);
+    }
+    const response = await api.project.internal.resolve(payload);
+    const data = response.data;
+    return {
+      matchedProject: (data?.matchedProject as Project) || null,
+      matchedBy: (data?.matchedBy as ProjectMatchSource) ?? null,
+      resolvedGitId: data?.resolvedGitId ?? null,
+      requestedWorkdir: data?.requestedWorkdir ?? null,
+      projects: (data?.projects as Project[]) || [],
+    };
+  },
+
+  async bindProjectContext(payload: { projectId: string; gitUrl?: string; workdir?: string }): Promise<Project> {
+    if (shouldUseMock()) {
+      return projectMockService.bindProjectContext(payload);
+    }
+    const response = await api.project.internal.bind(payload);
+    return response.data;
   },
 };

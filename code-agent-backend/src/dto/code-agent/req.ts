@@ -1,8 +1,7 @@
 import { ApiProperty } from '@midwayjs/swagger';
-import { UserContextDto } from '../common/user-context';
 
 // Project Request DTOs
-export class ProjectListRequest extends UserContextDto {
+export class ProjectListRequest {
   @ApiProperty({ description: '页码', example: 1, default: 1 })
   page?: number;
 
@@ -10,7 +9,7 @@ export class ProjectListRequest extends UserContextDto {
   size?: number;
 }
 
-export class CreateProjectRequest extends UserContextDto {
+export class CreateProjectRequest {
   @ApiProperty({ description: '项目名称', example: '新项目', required: true })
   name: string;
 
@@ -53,9 +52,17 @@ export class CreateProjectRequest extends UserContextDto {
 
   @ApiProperty({ description: '项目头像', example: '📁' })
   avatar?: string;
+
+  @ApiProperty({
+    description: '工作目录映射',
+    example: ['/Users/foo/bar'],
+    type: [String],
+    required: false,
+  })
+  workdirs?: string[];
 }
 
-export class UpdateProjectRequest extends UserContextDto {
+export class UpdateProjectRequest {
   @ApiProperty({ description: '项目名称', example: '更新的项目名' })
   name?: string;
 
@@ -98,9 +105,17 @@ export class UpdateProjectRequest extends UserContextDto {
 
   @ApiProperty({ description: '项目头像', example: '🚀' })
   avatar?: string;
+
+  @ApiProperty({
+    description: '工作目录映射',
+    example: ['/Users/foo/bar'],
+    type: [String],
+    required: false,
+  })
+  workdirs?: string[];
 }
 
-export class GetProjectDetailRequest extends UserContextDto {
+export class GetProjectDetailRequest {
   @ApiProperty({
     description: '项目ID',
     example: 'project_123',
@@ -109,7 +124,7 @@ export class GetProjectDetailRequest extends UserContextDto {
   id: string;
 }
 
-export class DeleteProjectRequest extends UserContextDto {
+export class DeleteProjectRequest {
   @ApiProperty({
     description: '项目ID',
     example: 'project_123',
@@ -119,7 +134,7 @@ export class DeleteProjectRequest extends UserContextDto {
 }
 
 // Page Request DTOs
-export class CreatePageRequest extends UserContextDto {
+export class CreatePageRequest {
   @ApiProperty({
     description: '项目ID',
     example: 'project_123',
@@ -158,7 +173,7 @@ export class CreatePageRequest extends UserContextDto {
   openapiUrls?: string[];
 }
 
-export class UpdatePageRequest extends UserContextDto {
+export class UpdatePageRequest {
   @ApiProperty({
     description: '项目ID',
     example: 'project_123',
@@ -200,7 +215,7 @@ export class UpdatePageRequest extends UserContextDto {
   openapiUrls?: string[];
 }
 
-export class DeletePageRequest extends UserContextDto {
+export class DeletePageRequest {
   @ApiProperty({
     description: '项目ID',
     example: 'project_123',
@@ -212,7 +227,7 @@ export class DeletePageRequest extends UserContextDto {
   pageId: string;
 }
 
-export class GetPageDetailRequest extends UserContextDto {
+export class GetPageDetailRequest {
   @ApiProperty({
     description: '项目ID',
     example: 'project_123',
@@ -225,7 +240,7 @@ export class GetPageDetailRequest extends UserContextDto {
 }
 
 // Document Request DTOs
-export class UpdateDocumentStatusRequest extends UserContextDto {
+export class UpdateDocumentStatusRequest {
   @ApiProperty({
     description: '项目ID',
     example: 'project_123',
@@ -256,7 +271,7 @@ export class UpdateDocumentStatusRequest extends UserContextDto {
   status: string;
 }
 
-export class SyncDocumentRequest extends UserContextDto {
+export class SyncDocumentRequest {
   @ApiProperty({
     description: '项目ID',
     example: 'project_123',
@@ -279,7 +294,7 @@ export class SyncDocumentRequest extends UserContextDto {
   documentId: string;
 }
 
-export class GetDocumentContentRequest extends UserContextDto {
+export class GetDocumentContentRequest {
   @ApiProperty({
     description: '项目ID',
     example: 'project_123',
@@ -300,7 +315,7 @@ export class GetDocumentContentRequest extends UserContextDto {
   documentId: string;
 }
 
-export class UpdateDocumentRequest extends UserContextDto {
+export class UpdateDocumentRequest {
   @ApiProperty({
     description: '项目ID',
     example: 'project_123',
@@ -335,8 +350,47 @@ export class UpdateDocumentRequest extends UserContextDto {
   url?: string;
 }
 
+export class ResolveProjectContextRequest {
+  @ApiProperty({
+    description: 'Git 仓库 URL',
+    example: 'https://code.amh-group.com/foo/bar',
+    required: false,
+  })
+  gitUrl?: string;
+
+  @ApiProperty({
+    description: '工作目录',
+    example: '/Users/foo/bar',
+    required: false,
+  })
+  workdir?: string;
+}
+
+export class BindProjectContextRequest {
+  @ApiProperty({
+    description: '项目ID',
+    example: 'project_123',
+    required: true,
+  })
+  projectId: string;
+
+  @ApiProperty({
+    description: 'Git 仓库 URL',
+    example: 'https://code.amh-group.com/foo/bar',
+    required: false,
+  })
+  gitUrl?: string;
+
+  @ApiProperty({
+    description: '工作目录',
+    example: '/Users/foo/bar',
+    required: false,
+  })
+  workdir?: string;
+}
+
 // GitLab Request DTOs
-export class GetGitlabProjectIdRequest extends UserContextDto {
+export class GetGitlabProjectIdRequest {
   @ApiProperty({
     description: 'GitLab 仓库 URL',
     example: 'https://gitlab.com/foo/bar',

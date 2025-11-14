@@ -8,6 +8,7 @@ import HomePage from '@/pages/HomePage';
 import RequirementPage from '@/pages/RequirementPage';
 import TechnicalPage from '@/pages/TechnicalPage';
 import { MarkdownPage } from '@/pages/MarkdownPage';
+import InternalProjectPage from '@/pages/InternalProjectPage';
 
 /**
  * 路由配置
@@ -50,6 +51,11 @@ export const routes: RouteConfig[] = [
         element: <EditorPageComponentDetect />,
       },
     ],
+  },
+  {
+    path: '/internal/projects',
+    element: <InternalProjectPage />,
+    withLayout: true,
   },
 ];
 

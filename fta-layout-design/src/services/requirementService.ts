@@ -4,7 +4,6 @@
  */
 
 import { api } from '@/utils/apiService';
-import { requirementMockService } from './mockRequirementService';
 import { resolveRequest, shouldUseMock } from './baseService';
 
 /**
@@ -23,7 +22,7 @@ export const requirementService = {
   }) {
     return resolveRequest(
       shouldUseMock(),
-      () => requirementMockService.generateRequirement(params),
+      () => null as any,
       async () => {
         const response = await api.requirement.generate(params);
         return response.data;
@@ -37,7 +36,7 @@ export const requirementService = {
   async saveRequirement(data: { docId: string; title?: string; content?: string; status?: string }) {
     return resolveRequest(
       shouldUseMock(),
-      () => requirementMockService.saveRequirement(data),
+      () => null as any,
       async () => {
         const response = await api.requirement.update(data);
         return response.data;
@@ -51,7 +50,7 @@ export const requirementService = {
   async exportRequirement(params: { docId: string }) {
     return resolveRequest(
       shouldUseMock(),
-      () => requirementMockService.exportRequirement(params),
+      () => null as any,
       async () => {
         const response = await api.requirement.export(params.docId);
         return response.data;
@@ -65,7 +64,7 @@ export const requirementService = {
   async getRequirementDetail(docId: string) {
     return resolveRequest(
       shouldUseMock(),
-      () => requirementMockService.getRequirementDetail({ docId }),
+      () => null as any,
       async () => {
         const response = await api.requirement.detail(docId);
         return response.data;
@@ -79,7 +78,7 @@ export const requirementService = {
   async getRequirementList(params: { designId: string; page?: number; size?: number }) {
     return resolveRequest(
       shouldUseMock(),
-      () => requirementMockService.getRequirementList(params),
+      () => null as any,
       async () => {
         const response = await api.requirement.list(params);
         return response.data;

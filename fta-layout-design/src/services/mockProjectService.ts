@@ -6,6 +6,7 @@ import type {
   Project,
   ProjectListParams,
   ProjectListResponse,
+  ProjectResolutionResult,
   SyncStatus,
 } from '@/types/project';
 
@@ -84,6 +85,7 @@ let mockProjects: Project[] = [
     members: 6,
     tags: ['MasterGo', 'DSL', 'Demo'],
     avatar: '📁',
+    workdirs: ['/mock/projects/fta-demo'],
     userId: 'user_mock_1',
     gitId: 'git_mock_1',
     pages: [
@@ -119,6 +121,7 @@ let mockProjects: Project[] = [
     members: 4,
     tags: ['中台', '管理后台'],
     avatar: '🛒',
+    workdirs: ['/mock/projects/mid-platform'],
     pages: [],
     userId: 'user_mock_2',
     gitId: 'git_mock_2',
@@ -218,6 +221,7 @@ export const projectMockService = {
       tags: formData.tags || [],
       avatar: formData.avatar || '📁',
       pages: [],
+      workdirs: [],
       userId: 'user_mock_1',
       gitId: 'git_mock_1',
     };
@@ -382,6 +386,50 @@ export const projectMockService = {
     document.updatedAt = timestamp;
     project.updatedAt = timestamp;
 
+    return deepClone(project);
+  },
+
+  async resolveProjectContext(payload: {
+    userId?: string;
+    gitUrl?: string;
+    workdir?: string;
+  }): Promise<ProjectResolutionResult> {
+    await delay();
+    const normalizedWorkdir = payload.workdir?.trim() || null;
+    const scopedProjects = mockProjects.filter((project) => !payload.userId || project.userId === payload.userId);
+    const matchedRaw =
+      scopedProjects.find((project) => {
+        if (!normalizedWorkdir) {
+          return false;
+        }
+        return project.workdirs?.includes(normalizedWorkdir) || project.gitId === normalizedWorkdir;
+      }) ||
+      scopedProjects[0] ||
+      null;
+    const projects = deepClone(scopedProjects);
+    const matchedProject = matchedRaw ? projects.find((project) => project.id === matchedRaw.id) || null : null;
+    return {
+      matchedProject: matchedProject || null,
+      matchedBy: matchedProject ? (normalizedWorkdir ? 'workdir' : 'gitId') : null,
+      resolvedGitId: null,
+      requestedWorkdir: normalizedWorkdir,
+      projects,
+    };
+  },
+
+  async bindProjectContext(payload: { projectId: string; workdir?: string; gitUrl?: string }): Promise<Project> {
+    await delay();
+    const project = findProject(payload.projectId);
+    const normalizedWorkdir = payload.workdir?.trim();
+    if (normalizedWorkdir) {
+      const workdirSet = new Set(project.workdirs || []);
+      workdirSet.add(normalizedWorkdir);
+      project.workdirs = Array.from(workdirSet);
+    }
+    if (payload.gitUrl) {
+      project.gitId = payload.gitUrl;
+    }
+    project.updatedAt = new Date().toISOString();
     return deepClone(project);
   },
 };

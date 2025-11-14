@@ -27,8 +27,6 @@ export interface FrontendWorkflowOptions {
   sessionId: string;
   signal?: AbortSignal;
   callbacks?: FrontendProjectWorkflowCallbacks;
-  userId: string;
-  gitId: string;
 }
 
 export interface FrontendWorkflowResult {
@@ -62,7 +60,7 @@ export class FrontendWorkflowService {
    * 执行前端项目生成工作流
    */
   async runWorkflow(options: FrontendWorkflowOptions): Promise<FrontendWorkflowResult> {
-    const { designDocId, productName, sessionId, signal, callbacks, userId, gitId } = options;
+    const { designDocId, productName, sessionId, signal, callbacks } = options;
     const workflowStartTime = Date.now();
 
     console.log(`frontend-workflow: [${sessionId}] 🏭 开始执行前端工作流服务`);
@@ -71,8 +69,6 @@ export class FrontendWorkflowService {
       // 获取 DSL 数据
       const { data: dsl, annotationData } = await this.projectService.getDocumentContent({
         documentId: designDocId,
-        userId: userId,
-        gitId: gitId,
       });
 
       if (!dsl) {

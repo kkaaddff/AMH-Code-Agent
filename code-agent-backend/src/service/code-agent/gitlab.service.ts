@@ -30,7 +30,7 @@ export class GitlabService {
    * @param token GitLab Private Token (可选，公开项目无需提供)
    * @returns GitLab 项目 ID
    */
-  async getGitlabProjectId(gitUrl: string): Promise<number> {
+  async getGitlabProjectId(gitUrl: string): Promise<string> {
     try {
       // 提取项目路径
       const projectPath = this.extractProjectPath(gitUrl);
@@ -45,8 +45,8 @@ export class GitlabService {
       const response = await axios.get(apiUrl, { headers: { 'PRIVATE-TOKEN': GITLAB_API_TOKEN } });
 
       // 从响应中提取项目 ID
-      if (response.data && typeof response.data.id === 'number') {
-        return response.data.id;
+      if (response?.data?.id) {
+        return response.data.id.toString();
       } else {
         throw new Error('Invalid response from GitLab API: missing project ID');
       }

@@ -38,6 +38,10 @@ export const API_ENDPOINTS = {
     update: '/code-agent/project/update',
     delete: '/code-agent/project/delete',
     detail: '/code-agent/project/detail',
+    internal: {
+      resolve: '/code-agent/project/internal/resolve',
+      bind: '/code-agent/project/internal/bind',
+    },
     page: {
       create: '/code-agent/project/page/create',
       update: '/code-agent/project/page/update',
