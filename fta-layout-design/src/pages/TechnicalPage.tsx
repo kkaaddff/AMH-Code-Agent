@@ -97,7 +97,8 @@ const TechnicalPage: React.FC = () => {
       dataIndex: 'category',
       key: 'category',
       render: (category: string) => {
-        const color = category === '核心引擎' ? 'rgb(0, 0, 255)' : category === '适配层' ? 'rgb(0, 128, 0)' : 'rgb(255, 165, 0)';
+        const color =
+          category === '核心引擎' ? 'rgb(0, 0, 255)' : category === '适配层' ? 'rgb(0, 128, 0)' : 'rgb(255, 165, 0)';
         return <Tag color={color}>{category}</Tag>;
       },
     },
@@ -113,7 +114,7 @@ const TechnicalPage: React.FC = () => {
       render: (features: string[]) => (
         <Space wrap>
           {features.map((feature, index) => (
-            <Tag key={index} color="rgb(0, 255, 255)">
+            <Tag key={index} color='rgb(0, 255, 255)'>
               {feature}
             </Tag>
           ))}
@@ -135,7 +136,9 @@ const TechnicalPage: React.FC = () => {
           <Title level={1} style={{ color: 'rgb(24, 144, 255)', marginBottom: '16px' }}>
             技术方案设计
           </Title>
-          <Text style={{ fontSize: '18px', color: 'rgb(102, 102, 102)' }}>基于现代前端技术栈的设计到代码自动化平台</Text>
+          <Text style={{ fontSize: '18px', color: 'rgb(102, 102, 102)' }}>
+            基于现代前端技术栈的设计到代码自动化平台
+          </Text>
         </div>
 
         {/* Architecture Overview */}
@@ -144,7 +147,7 @@ const TechnicalPage: React.FC = () => {
             <ToolOutlined style={{ marginRight: '8px' }} />
             系统架构组件
           </Title>
-          <Table dataSource={architectureComponents} columns={columns} pagination={false} size="middle" />
+          <Table dataSource={architectureComponents} columns={columns} pagination={false} size='middle' />
         </Card>
 
         {/* Technology Stack */}
@@ -158,13 +161,12 @@ const TechnicalPage: React.FC = () => {
                     <span style={{ fontSize: '20px', color: 'rgb(24, 144, 255)' }}>{stack.icon}</span>
                     <span>{stack.category}</span>
                   </Space>
-                }
-              >
-                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                }>
+                <Space direction='vertical' size='middle' style={{ width: '100%' }}>
                   {stack.technologies.map((tech, idx) => (
                     <Descriptions
                       key={idx}
-                      size="small"
+                      size='small'
                       column={1}
                       bordered
                       items={[
@@ -174,11 +176,11 @@ const TechnicalPage: React.FC = () => {
                         },
                         {
                           label: '版本',
-                          children: <Tag color="rgb(0, 0, 255)">{tech.version}</Tag>,
+                          children: <Tag color='rgb(0, 0, 255)'>{tech.version}</Tag>,
                         },
                         {
                           label: '用途',
-                          children: <Text type="secondary">{tech.purpose}</Text>,
+                          children: <Text type='secondary'>{tech.purpose}</Text>,
                         },
                       ]}
                     />
@@ -204,8 +206,7 @@ const TechnicalPage: React.FC = () => {
                     backgroundColor: 'rgb(248, 249, 250)',
                     borderRadius: '8px',
                     border: '1px solid rgb(233, 236, 239)',
-                  }}
-                >
+                  }}>
                   <Text style={{ fontSize: '16px' }}>
                     <span style={{ color: 'rgb(82, 196, 26)', marginRight: '8px' }}>✓</span>
                     {feature}
@@ -226,24 +227,23 @@ const TechnicalPage: React.FC = () => {
                   <span>安全策略</span>
                 </Space>
               }
-              style={{ height: '100%' }}
-            >
-              <Space direction="vertical" size="middle">
+              style={{ height: '100%' }}>
+              <Space direction='vertical' size='middle'>
                 <div>
                   <Text strong>数据安全</Text>
-                  <Paragraph type="secondary" style={{ margin: '8px 0' }}>
+                  <Paragraph type='secondary' style={{ margin: '8px 0' }}>
                     所有上传文件均加密存储，支持私有化部署
                   </Paragraph>
                 </div>
                 <div>
                   <Text strong>访问控制</Text>
-                  <Paragraph type="secondary" style={{ margin: '8px 0' }}>
+                  <Paragraph type='secondary' style={{ margin: '8px 0' }}>
                     基于角色的权限管理，API接口鉴权
                   </Paragraph>
                 </div>
                 <div>
                   <Text strong>代码安全</Text>
-                  <Paragraph type="secondary" style={{ margin: '8px 0' }}>
+                  <Paragraph type='secondary' style={{ margin: '8px 0' }}>
                     生成代码经过安全扫描，防范XSS等安全漏洞
                   </Paragraph>
                 </div>
@@ -258,24 +258,23 @@ const TechnicalPage: React.FC = () => {
                   <span>性能优化</span>
                 </Space>
               }
-              style={{ height: '100%' }}
-            >
-              <Space direction="vertical" size="middle">
+              style={{ height: '100%' }}>
+              <Space direction='vertical' size='middle'>
                 <div>
                   <Text strong>渲染优化</Text>
-                  <Paragraph type="secondary" style={{ margin: '8px 0' }}>
+                  <Paragraph type='secondary' style={{ margin: '8px 0' }}>
                     虚拟滚动、懒加载、代码分割等性能优化
                   </Paragraph>
                 </div>
                 <div>
                   <Text strong>缓存策略</Text>
-                  <Paragraph type="secondary" style={{ margin: '8px 0' }}>
+                  <Paragraph type='secondary' style={{ margin: '8px 0' }}>
                     多级缓存机制，减少重复计算和网络请求
                   </Paragraph>
                 </div>
                 <div>
                   <Text strong>并发处理</Text>
-                  <Paragraph type="secondary" style={{ margin: '8px 0' }}>
+                  <Paragraph type='secondary' style={{ margin: '8px 0' }}>
                     支持大文件并发处理，提升解析和生成速度
                   </Paragraph>
                 </div>

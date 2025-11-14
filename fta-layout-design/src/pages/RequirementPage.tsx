@@ -10,35 +10,20 @@ const RequirementPage: React.FC = () => {
       title: '需求理解',
       icon: <BulbOutlined />,
       description: '深入分析设计稿需求，理解业务逻辑和用户交互流程',
-      details: [
-        '设计稿解析与理解',
-        '业务逻辑识别',
-        '用户交互流程分析',
-        '组件层次结构分析'
-      ]
+      details: ['设计稿解析与理解', '业务逻辑识别', '用户交互流程分析', '组件层次结构分析'],
     },
     {
       title: '技术选型',
       icon: <ToolOutlined />,
       description: '根据项目需求选择最适合的技术栈和架构方案',
-      details: [
-        'React/Vue技术栈',
-        '组件库选择(Ant Design/Element UI)',
-        '状态管理方案',
-        '构建工具配置'
-      ]
+      details: ['React/Vue技术栈', '组件库选择(Ant Design/Element UI)', '状态管理方案', '构建工具配置'],
     },
     {
       title: '代码生成',
       icon: <CodeOutlined />,
       description: '自动生成高质量、可维护的前端代码',
-      details: [
-        '组件化开发',
-        'TypeScript类型定义',
-        '响应式布局',
-        '性能优化'
-      ]
-    }
+      details: ['组件化开发', 'TypeScript类型定义', '响应式布局', '性能优化'],
+    },
   ];
 
   const capabilities = [
@@ -47,7 +32,7 @@ const RequirementPage: React.FC = () => {
     '自动生成组件代码',
     '支持多种前端框架',
     '响应式布局自适应',
-    '代码质量保证'
+    '代码质量保证',
   ];
 
   return (
@@ -67,20 +52,15 @@ const RequirementPage: React.FC = () => {
         <Row gutter={[32, 32]} style={{ marginBottom: '60px' }}>
           {features.map((feature, index) => (
             <Col span={8} key={index}>
-              <Card
-                style={{ height: '100%', textAlign: 'center' }}
-                styles={{ body: { padding: '40px 24px' } }}
-              >
-                <div style={{ fontSize: '48px', color: 'rgb(24, 144, 255)', marginBottom: '16px' }}>
-                  {feature.icon}
-                </div>
+              <Card style={{ height: '100%', textAlign: 'center' }} styles={{ body: { padding: '40px 24px' } }}>
+                <div style={{ fontSize: '48px', color: 'rgb(24, 144, 255)', marginBottom: '16px' }}>{feature.icon}</div>
                 <Title level={3} style={{ marginBottom: '16px' }}>
                   {feature.title}
                 </Title>
                 <Paragraph style={{ color: 'rgb(102, 102, 102)', marginBottom: '24px' }}>
                   {feature.description}
                 </Paragraph>
-                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                <Space direction='vertical' size='small' style={{ width: '100%' }}>
                   {feature.details.map((detail, idx) => (
                     <div key={idx} style={{ textAlign: 'left' }}>
                       <CheckCircleOutlined style={{ color: 'rgb(82, 196, 26)', marginRight: '8px' }} />
@@ -118,94 +98,90 @@ const RequirementPage: React.FC = () => {
           <Row gutter={[24, 24]}>
             <Col span={6}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgb(24, 144, 255)',
-                  color: 'rgb(255, 255, 255)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  margin: '0 auto 16px'
-                }}>
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgb(24, 144, 255)',
+                    color: 'rgb(255, 255, 255)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    margin: '0 auto 16px',
+                  }}>
                   1
                 </div>
                 <Title level={4}>设计导入</Title>
-                <Text type="secondary">
-                  上传设计稿或导入设计工具文件
-                </Text>
+                <Text type='secondary'>上传设计稿或导入设计工具文件</Text>
               </div>
             </Col>
             <Col span={6}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgb(24, 144, 255)',
-                  color: 'rgb(255, 255, 255)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  margin: '0 auto 16px'
-                }}>
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgb(24, 144, 255)',
+                    color: 'rgb(255, 255, 255)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    margin: '0 auto 16px',
+                  }}>
                   2
                 </div>
                 <Title level={4}>需求分析</Title>
-                <Text type="secondary">
-                  智能解析设计意图和业务需求
-                </Text>
+                <Text type='secondary'>智能解析设计意图和业务需求</Text>
               </div>
             </Col>
             <Col span={6}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgb(24, 144, 255)',
-                  color: 'rgb(255, 255, 255)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  margin: '0 auto 16px'
-                }}>
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgb(24, 144, 255)',
+                    color: 'rgb(255, 255, 255)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    margin: '0 auto 16px',
+                  }}>
                   3
                 </div>
                 <Title level={4}>技术方案</Title>
-                <Text type="secondary">
-                  制定最优的技术实现方案
-                </Text>
+                <Text type='secondary'>制定最优的技术实现方案</Text>
               </div>
             </Col>
             <Col span={6}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgb(24, 144, 255)',
-                  color: 'rgb(255, 255, 255)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  margin: '0 auto 16px'
-                }}>
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgb(24, 144, 255)',
+                    color: 'rgb(255, 255, 255)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    margin: '0 auto 16px',
+                  }}>
                   4
                 </div>
                 <Title level={4}>代码生成</Title>
-                <Text type="secondary">
-                  自动生成高质量前端代码
-                </Text>
+                <Text type='secondary'>自动生成高质量前端代码</Text>
               </div>
             </Col>
           </Row>

@@ -925,21 +925,28 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       const canvasY = (mouseInContainerY - contentOffset.y - panOffset.y) / effectiveScale;
 
       // 检查鼠标是否在canvas范围内（包括padding区域）
-      const isInCanvas = canvasX >= -horizontalPadding && canvasX <= width + horizontalPadding &&
-                       canvasY >= -verticalPadding && canvasY <= height + verticalPadding;
+      const isInCanvas =
+        canvasX >= -horizontalPadding &&
+        canvasX <= width + horizontalPadding &&
+        canvasY >= -verticalPadding &&
+        canvasY <= height + verticalPadding;
 
       // 调试信息（可以删除，先保留看看）
       console.log('缩放调试:', {
-        mouseInContainerX, mouseInContainerY,
+        mouseInContainerX,
+        mouseInContainerY,
         contentOffsetX: contentOffset.x,
         contentOffsetY: contentOffset.y,
         panOffsetX: panOffset.x,
         panOffsetY: panOffset.y,
         effectiveScale,
-        canvasX, canvasY,
-        width, height,
-        horizontalPadding, verticalPadding,
-        isInCanvas
+        canvasX,
+        canvasY,
+        width,
+        height,
+        horizontalPadding,
+        verticalPadding,
+        isInCanvas,
       });
 
       // 2. 缩放
@@ -975,8 +982,18 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
         onScaleChange(newScale);
       }
     },
-    [scale, onScaleChange, width, height, horizontalPadding, verticalPadding,
-       containerSize, panOffset, effectiveScale, commitPanOffset]
+    [
+      scale,
+      onScaleChange,
+      width,
+      height,
+      horizontalPadding,
+      verticalPadding,
+      containerSize,
+      panOffset,
+      effectiveScale,
+      commitPanOffset,
+    ]
   );
 
   const styles = useMemo(() => {

@@ -15,13 +15,12 @@ const InteractionGuideOverlay: React.FC<InteractionGuideOverlayProps> = ({ open,
       open={open}
       onCancel={onClose}
       onOk={onClose}
-      okText="知道了"
+      okText='知道了'
       cancelButtonProps={{ style: { display: 'none' } }}
       width={860}
       centered
-      title="交互引导"
-      className={styles.modalRoot}
-    >
+      title='交互引导'
+      className={styles.modalRoot}>
       <div className={styles.container}>
         <section className={styles.section}>
           <Title level={5} className={styles.sectionTitle}>
@@ -40,7 +39,7 @@ const InteractionGuideOverlay: React.FC<InteractionGuideOverlayProps> = ({ open,
               </div>
               <div className={styles.shortcutDesc}>
                 <Text strong>创建标注</Text>
-                <Text type="secondary" className={styles.shortcutSubtext}>
+                <Text type='secondary' className={styles.shortcutSubtext}>
                   选中 DSL 节点或多选后，快速创建 FTA 组件标注
                 </Text>
               </div>
@@ -55,7 +54,7 @@ const InteractionGuideOverlay: React.FC<InteractionGuideOverlayProps> = ({ open,
               <div className={styles.shortcutDesc}>
                 <Text strong>删除标注</Text>
 
-                <Text type="secondary" className={styles.shortcutSubtext}>
+                <Text type='secondary' className={styles.shortcutSubtext}>
                   删除选中的标注（根节点不可删除）
                 </Text>
               </div>
@@ -68,7 +67,7 @@ const InteractionGuideOverlay: React.FC<InteractionGuideOverlayProps> = ({ open,
               <div className={styles.shortcutDesc}>
                 <Text strong>清空选中</Text>
 
-                <Text type="secondary" className={styles.shortcutSubtext}>
+                <Text type='secondary' className={styles.shortcutSubtext}>
                   取消所有选中的节点
                 </Text>
               </div>
@@ -106,7 +105,7 @@ const InteractionGuideOverlay: React.FC<InteractionGuideOverlayProps> = ({ open,
             <Title level={5} className={styles.sectionTitle}>
               多选与层级处理
             </Title>
-            <Tag color="blue" className={styles.sectionTag}>
+            <Tag color='blue' className={styles.sectionTag}>
               Ctrl / ⌘ + 点击
             </Tag>
           </div>
@@ -146,7 +145,7 @@ const InteractionGuideOverlay: React.FC<InteractionGuideOverlayProps> = ({ open,
             <div className={styles.sceneColumn}>
               <div className={styles.sceneLabel}>
                 正交框选
-                <Tag color="processing" className={styles.sectionTag}>
+                <Tag color='processing' className={styles.sectionTag}>
                   L → R
                 </Tag>
               </div>
@@ -164,7 +163,7 @@ const InteractionGuideOverlay: React.FC<InteractionGuideOverlayProps> = ({ open,
             <div className={styles.sceneColumn}>
               <div className={styles.sceneLabel}>
                 反交框选
-                <Tag color="success" className={styles.sectionTag}>
+                <Tag color='success' className={styles.sectionTag}>
                   R → L
                 </Tag>
               </div>
