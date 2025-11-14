@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes } from 'react-router-dom';
 import { ConfigProvider, App as AntApp, theme } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
 import './App.css';
 import 'antd/dist/reset.css';
 
@@ -9,6 +10,7 @@ import { renderRoutes } from './utils/routerUtils';
 function App() {
   return (
     <ConfigProvider
+      locale={zhCN}
       theme={{
         algorithm: [
           theme.compactAlgorithm, // 启用紧凑主题算法

@@ -13,7 +13,7 @@ const InternalProjectPage: React.FC = () => {
   const { message } = App.useApp();
 
   const gitUrl = searchParams.get('gitUrl')?.trim() || undefined;
-  const workdir = searchParams.get('workdir')?.trim() || undefined;
+  const workdir = searchParams.get('workdir')?.trim() || '/demo';
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

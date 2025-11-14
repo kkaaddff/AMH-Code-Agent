@@ -11,7 +11,7 @@ export const IndexHtmlRedirect = () => {
 
   useEffect(() => {
     // 构建新的路径，保留查询参数和 hash
-    const newPath = `/${location.search}${location.hash}`;
+    const newPath = `/internal/projects${location.search}${location.hash}`;
     navigate(newPath, { replace: true });
   }, [location.search, location.hash, navigate]);
 

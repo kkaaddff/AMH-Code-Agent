@@ -22,7 +22,7 @@ export const routes: RouteConfig[] = [
   },
   {
     path: '/',
-    element: <HomePage />,
+    element: <InternalProjectPage />,
     withLayout: true,
   },
   {

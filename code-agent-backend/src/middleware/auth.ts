@@ -87,7 +87,6 @@ export class AuthMiddleware implements IMiddleware<Context, NextFunction> {
   }
 
   match(ctx: Context) {
-    debugger;
     // 如果没有配置匹配规则，则不启用中间件
     if (!this.authConfig.match || !Array.isArray(this.authConfig.match)) {
       return false;
