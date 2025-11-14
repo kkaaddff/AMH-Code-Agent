@@ -11,7 +11,10 @@ import {
   RedisSetRequest,
   RedisSetResponse,
 } from '../../dto/design-dsl';
+import { GetGitlabProjectIdRequest } from '../../dto/code-agent/req';
+import { GetGitlabProjectIdResponse } from '../../dto/code-agent/res';
 import { DesignDSLService } from '../../service/code-agent/design-dsl';
+import { GitlabService } from '../../service/code-agent/gitlab.service';
 import { DesignDSL } from '../../types/design-dsl';
 
 @Controller('/code-agent')
@@ -21,6 +24,9 @@ export class CodeAgentController {
 
   @Inject()
   private designDSLService: DesignDSLService;
+
+  @Inject()
+  private gitlabService: GitlabService;
 
   /**
    * 获取DSLData原始数据
@@ -84,5 +90,24 @@ export class CodeAgentController {
     const result = await this.designDSLService.convertSinglePath(body.pathData, body.fillStyle, body.iconName);
 
     return new ConvertPathResponse(result.imageUrl, result.styleId, result.svgPath);
+  }
+
+  /**
+   * 获取 GitLab 项目 ID
+   */
+  @Post('/gitlab/project-id')
+  async getGitlabProjectId(@Body() body: GetGitlabProjectIdRequest): Promise<GetGitlabProjectIdResponse> {
+    if (!body.gitUrl) {
+      this.ctx.status = 400;
+      throw new Error('GitLab URL is required');
+    }
+
+    try {
+      const gitId = await this.gitlabService.getGitlabProjectId(body.gitUrl);
+      return new GetGitlabProjectIdResponse(gitId);
+    } catch (error: any) {
+      this.ctx.status = error.message.includes('not found') ? 404 : 500;
+      throw error;
+    }
   }
 }

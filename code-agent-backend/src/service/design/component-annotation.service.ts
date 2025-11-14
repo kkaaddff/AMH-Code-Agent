@@ -110,6 +110,8 @@ export class DesignComponentAnnotationService {
     payload: SaveDesignAnnotationBody,
     operatorId: string
   ): Promise<DesignComponentAnnotationEntity> {
+    const resolvedUserId = (payload.userId && payload.userId.trim()) || operatorId;
+    const resolvedGitId = payload.gitId && payload.gitId.trim() ? payload.gitId.trim() : 'empty';
     const latestAnnotation = await this.annotationModel.findOne({ designId }).sort({ version: -1 }).lean();
     const existing = payload.version
       ? await this.annotationModel.findOne({
@@ -145,6 +147,8 @@ export class DesignComponentAnnotationService {
     const isLatestVersion = !latestAnnotation || targetVersion >= (latestAnnotation.version ?? 0);
 
     if (existing) {
+      existing.userId = existing.userId || resolvedUserId;
+      existing.gitId = existing.gitId || resolvedGitId;
       existing.rootAnnotation = payload.rootAnnotation as any;
       existing.expandedKeys = expandedKeys;
       existing.schemaVersion = payload.schemaVersion;
@@ -163,6 +167,8 @@ export class DesignComponentAnnotationService {
         status: 'active',
         createdBy: operatorId,
         updatedBy: operatorId,
+        userId: resolvedUserId,
+        gitId: resolvedGitId,
       });
 
       // 历史版本标记为归档

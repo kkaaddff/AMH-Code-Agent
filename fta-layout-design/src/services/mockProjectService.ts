@@ -37,6 +37,8 @@ const createDocumentReferences = (urls: string[] = []): DocumentReference[] => {
       progress: 0,
       createdAt: now,
       updatedAt: now,
+      userId: 'user_mock_1',
+      gitId: 'git_mock_1',
     }));
 };
 
@@ -60,6 +62,8 @@ const mergeDocumentReferences = (existing: DocumentReference[] = [], urls: strin
         progress: 0,
         createdAt: now,
         updatedAt: now,
+        userId: 'user_mock_1',
+        gitId: 'git_mock_1',
       };
     });
 };
@@ -80,6 +84,8 @@ let mockProjects: Project[] = [
     members: 6,
     tags: ['MasterGo', 'DSL', 'Demo'],
     avatar: '📁',
+    userId: 'user_mock_1',
+    gitId: 'git_mock_1',
     pages: [
       {
         id: 'page_mock_1',
@@ -95,6 +101,8 @@ let mockProjects: Project[] = [
         designDocuments: createDocumentReferences(['https://MasterGo.com/login']),
         prdDocuments: createDocumentReferences(['https://docs.company.com/prd/login']),
         openapiDocuments: createDocumentReferences(['https://api.company.com/openapi/login.json']),
+        userId: 'user_mock_1',
+        gitId: 'git_mock_1',
       },
     ],
   },
@@ -112,6 +120,8 @@ let mockProjects: Project[] = [
     tags: ['中台', '管理后台'],
     avatar: '🛒',
     pages: [],
+    userId: 'user_mock_2',
+    gitId: 'git_mock_2',
   },
 ];
 
@@ -170,6 +180,8 @@ const buildPagePayload = (projectId: string, formData: CreatePageForm): Page => 
     designDocuments: createDocumentReferences(formData.designUrls),
     prdDocuments: createDocumentReferences(formData.prdUrls),
     openapiDocuments: createDocumentReferences(formData.openapiUrls),
+    userId: 'user_mock_1',
+    gitId: 'git_mock_1',
   };
 };
 
@@ -206,6 +218,8 @@ export const projectMockService = {
       tags: formData.tags || [],
       avatar: formData.avatar || '📁',
       pages: [],
+      userId: 'user_mock_1',
+      gitId: 'git_mock_1',
     };
     mockProjects = [...mockProjects, newProject];
     return deepClone(newProject);
@@ -343,6 +357,8 @@ export const projectMockService = {
       updatedAt: document.updatedAt,
       annotationData: document.annotationData,
       data: document.data,
+      userId: document.userId,
+      gitId: document.gitId,
     };
   },
 

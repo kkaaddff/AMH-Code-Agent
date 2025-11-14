@@ -518,7 +518,7 @@ ${pathElements}
   public async convertSinglePath(
     pathData: string,
     fillStyle: string,
-    iconName?: string
+    iconName: string | undefined
   ): Promise<{
     imageUrl: string;
     styleId: string;

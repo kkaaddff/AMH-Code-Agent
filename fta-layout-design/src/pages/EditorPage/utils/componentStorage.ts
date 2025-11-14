@@ -226,7 +226,7 @@ export async function saveAnnotationState(designId: string, rootAnnotation: Anno
       version: ANNOTATION_VERSION,
     };
 
-    const payload: Partial<DocumentReference> = {
+    const payload: Partial<DocumentReference> & { id: string } = {
       id: designId,
       annotationData: snapshot,
     };

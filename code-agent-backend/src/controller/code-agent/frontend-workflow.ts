@@ -16,7 +16,7 @@ export class FrontendWorkflowController {
   @Post('/frontend-workflow')
   @Validate()
   async startFrontendWorkflow(@Body() body: FrontendWorkflowRequestDTO) {
-    const { designDocId, productName = 'FTA-Frontend' } = body;
+    const { designDocId, productName = 'FTA-Frontend', userId, gitId } = body;
 
     // 生成会话ID并开始日志记录
     const sessionId = uuid();
@@ -74,6 +74,8 @@ export class FrontendWorkflowController {
         productName,
         sessionId,
         signal: abortController.signal,
+        userId: userId,
+        gitId: gitId,
         callbacks: {
           onMessage: async (opts) => {
             const { message } = opts;

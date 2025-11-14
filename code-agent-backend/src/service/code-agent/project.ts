@@ -19,6 +19,8 @@ import { InjectEntityModel } from '@midwayjs/typegoose';
 import { ReturnModelType } from '@typegoose/typegoose';
 import { MasterGoServiceV1 } from './mastergo.service';
 
+type UserContext = { userId: string; gitId: string };
+
 @Provide()
 export class ProjectService {
   @InjectEntityModel(Project)
@@ -32,6 +34,23 @@ export class ProjectService {
 
   @Inject()
   masterGoServiceV1: MasterGoServiceV1;
+
+  private resolveUserContext(userId: string, gitId?: string): UserContext {
+    if (!userId || !userId.trim()) {
+      throw new Error('用户 ID 不能为空');
+    }
+    return {
+      userId: userId.trim(),
+      gitId: gitId && gitId.trim() ? gitId.trim() : 'empty',
+    };
+  }
+
+  private buildUserFilter(context: UserContext) {
+    return {
+      userId: context.userId,
+      gitId: context.gitId,
+    };
+  }
 
   /**
    * Generate a unique ID with prefix
@@ -56,7 +75,11 @@ export class ProjectService {
   /**
    * Create document references from URLs
    */
-  private async createDocumentReferences(urls: string[] = []): Promise<DocumentReference[]> {
+  private async createDocumentReferences(
+    urls: string[] = [],
+    context: UserContext,
+    pageId: string
+  ): Promise<DocumentReference[]> {
     const now = new Date();
     const documents = (urls || [])
       .filter((url) => Boolean(url))
@@ -68,6 +91,9 @@ export class ProjectService {
         progress: 0,
         createdAt: now,
         updatedAt: now,
+        pageId,
+        userId: context.userId,
+        gitId: context.gitId,
       }));
 
     // Save documents to database
@@ -86,7 +112,8 @@ export class ProjectService {
   private async mergeDocumentReferences(
     existingIds: any[] = [],
     urls: string[] = [],
-    pageId: string
+    pageId: string,
+    context: UserContext
   ): Promise<DocumentReference[]> {
     const now = new Date();
     const result: DocumentReference[] = [];
@@ -94,6 +121,7 @@ export class ProjectService {
     // Fetch existing documents by their _ids
     const existingDocs = await this.documentReferenceEntity.find({
       _id: { $in: existingIds },
+      ...this.buildUserFilter(context),
     });
 
     for (const url of urls || []) {
@@ -102,7 +130,10 @@ export class ProjectService {
       const matched = existingDocs.find((doc) => doc.url === url);
       if (matched) {
         // Update existing document
-        await this.documentReferenceEntity.updateOne({ id: matched.id }, { updatedAt: now });
+        await this.documentReferenceEntity.updateOne(
+          { id: matched.id, ...this.buildUserFilter(context) },
+          { updatedAt: now }
+        );
         result.push(matched._id);
       } else {
         // Create new document
@@ -115,6 +146,8 @@ export class ProjectService {
           createdAt: now,
           updatedAt: now,
           pageId,
+          userId: context.userId,
+          gitId: context.gitId,
         };
         const savedDoc = await this.documentReferenceEntity.create(newDoc);
         result.push(savedDoc._id);
@@ -124,8 +157,8 @@ export class ProjectService {
     return result;
   }
 
-  private async findProject(projectId: string): Promise<Project> {
-    const project = await this.projectEntity.findOne({ id: projectId }).populate({
+  private async findProject(projectId: string, context: UserContext): Promise<Project> {
+    const project = await this.projectEntity.findOne({ id: projectId, ...this.buildUserFilter(context) }).populate({
       path: 'pages',
       populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
     });
@@ -136,8 +169,12 @@ export class ProjectService {
     return project;
   }
 
-  private async findPageInProject(projectId: string, pageId: string): Promise<{ project: Project; page: Page }> {
-    const project = await this.findProject(projectId);
+  private async findPageInProject(
+    projectId: string,
+    pageId: string,
+    context: UserContext
+  ): Promise<{ project: Project; page: Page }> {
+    const project = await this.findProject(projectId, context);
     const page = project.pages.find((item) => item.id === pageId);
 
     if (!page) {
@@ -151,17 +188,18 @@ export class ProjectService {
    */
   async findPage(params: GetPageDetailRequest): Promise<Page> {
     const { pageId, projectId } = params;
+    const context = this.resolveUserContext(params.userId, params.gitId);
 
     let page: Page | null = null;
 
     if (projectId) {
       // Find page within specific project
-      const project = await this.findProject(projectId);
+      const project = await this.findProject(projectId, context);
       page = project.pages.find((item) => item.id === pageId) || null;
     } else {
       // Find page across all projects
       page = await this.pageEntity
-        .findOne({ id: pageId })
+        .findOne({ id: pageId, ...this.buildUserFilter(context) })
         .populate([{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }])
         .exec();
     }
@@ -180,10 +218,12 @@ export class ProjectService {
     const page = Number(params.page) || 1;
     const size = Number(params.size) || 10;
     const skip = (page - 1) * size;
+    const context = this.resolveUserContext(params.userId, params.gitId);
+    const filter = this.buildUserFilter(context);
 
     const [projects, total] = await Promise.all([
       this.projectEntity
-        .find()
+        .find(filter)
         .populate({
           path: 'pages',
           populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
@@ -191,7 +231,7 @@ export class ProjectService {
         .skip(skip)
         .limit(size)
         .sort({ updatedAt: -1 }),
-      this.projectEntity.countDocuments(),
+      this.projectEntity.countDocuments(filter),
     ]);
 
     return { projects, total };
@@ -201,6 +241,7 @@ export class ProjectService {
    * Create project
    */
   async createProject(data: CreateProjectRequest): Promise<Project> {
+    const context = this.resolveUserContext(data.userId, data.gitId);
     const timestamp = new Date();
     const newProject: Partial<Project> = {
       id: this.generateId('project'),
@@ -216,6 +257,8 @@ export class ProjectService {
       tags: data.tags || [],
       avatar: data.avatar || '📁',
       pages: [],
+      userId: context.userId,
+      gitId: context.gitId,
     };
 
     const createdProject = await this.projectEntity.create(newProject);
@@ -226,8 +269,14 @@ export class ProjectService {
    * Update project
    */
   async updateProject(id: string, updates: UpdateProjectRequest): Promise<Project> {
+    const context = this.resolveUserContext(updates.userId, updates.gitId);
+    const { userId: _discardUserId, gitId: _discardGitId, ...rest } = updates;
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate({ id }, { ...updates, updatedAt: new Date() }, { new: true, runValidators: true })
+      .findOneAndUpdate(
+        { id, ...this.buildUserFilter(context) },
+        { ...rest, updatedAt: new Date() },
+        { new: true, runValidators: true }
+      )
       .populate({
         path: 'pages',
         populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
@@ -244,7 +293,8 @@ export class ProjectService {
    * Delete project
    */
   async deleteProject(params: DeleteProjectRequest): Promise<boolean> {
-    const result = await this.projectEntity.deleteOne({ id: params.id });
+    const context = this.resolveUserContext(params.userId, params.gitId);
+    const result = await this.projectEntity.deleteOne({ id: params.id, ...this.buildUserFilter(context) });
 
     if (result.deletedCount === 0) {
       throw new Error('项目不存在');
@@ -257,24 +307,29 @@ export class ProjectService {
    * Get project detail
    */
   async getProjectDetail(params: GetProjectDetailRequest): Promise<Project> {
-    return await this.findProject(params.id);
+    const context = this.resolveUserContext(params.userId, params.gitId);
+    return await this.findProject(params.id, context);
   }
 
   /**
    * Create page
    */
   async createPage(data: CreatePageRequest): Promise<Project> {
+    const context = this.resolveUserContext(data.userId, data.gitId);
     const timestamp = new Date();
+    const pageId = this.generateId('page');
+
+    await this.findProject(data.projectId, context);
 
     // Create document references asynchronously
     const [designDocuments, prdDocuments, openapiDocuments] = await Promise.all([
-      this.createDocumentReferences(data.designUrls),
-      this.createDocumentReferences(data.prdUrls),
-      this.createDocumentReferences(data.openapiUrls),
+      this.createDocumentReferences(data.designUrls, context, pageId),
+      this.createDocumentReferences(data.prdUrls, context, pageId),
+      this.createDocumentReferences(data.openapiUrls, context, pageId),
     ]);
 
     const newPage: Partial<Page> = {
-      id: this.generateId('page'),
+      id: pageId,
       projectId: data.projectId,
       name: data.name,
       routePath: data.routePath,
@@ -287,6 +342,8 @@ export class ProjectService {
       designDocuments: designDocuments.map((doc) => doc._id) as any,
       prdDocuments: prdDocuments.map((doc) => doc._id) as any,
       openapiDocuments: openapiDocuments.map((doc) => doc._id) as any,
+      userId: context.userId,
+      gitId: context.gitId,
     };
 
     // Save page to database
@@ -295,7 +352,7 @@ export class ProjectService {
     // Add page reference to project
     const updatedProject = await this.projectEntity
       .findOneAndUpdate(
-        { id: data.projectId },
+        { id: data.projectId, ...this.buildUserFilter(context) },
         { $push: { pages: createdPage._id }, updatedAt: timestamp },
         { new: true, runValidators: true }
       )
@@ -315,7 +372,8 @@ export class ProjectService {
    * Update page
    */
   async updatePage(data: UpdatePageRequest): Promise<Project> {
-    const { page } = await this.findPageInProject(data.projectId, data.pageId);
+    const context = this.resolveUserContext(data.userId, data.gitId);
+    const { page } = await this.findPageInProject(data.projectId, data.pageId, context);
     const timestamp = new Date();
 
     const updateData: Partial<Page> = {
@@ -330,26 +388,37 @@ export class ProjectService {
       updateData.designDocuments = await this.mergeDocumentReferences(
         page.designDocuments,
         data.designUrls,
-        data.pageId
+        data.pageId,
+        context
       );
     }
     if (data.prdUrls !== undefined) {
-      updateData.prdDocuments = await this.mergeDocumentReferences(page.prdDocuments, data.prdUrls, data.pageId);
+      updateData.prdDocuments = await this.mergeDocumentReferences(
+        page.prdDocuments,
+        data.prdUrls,
+        data.pageId,
+        context
+      );
     }
     if (data.openapiUrls !== undefined) {
       updateData.openapiDocuments = await this.mergeDocumentReferences(
         page.openapiDocuments,
         data.openapiUrls,
-        data.pageId
+        data.pageId,
+        context
       );
     }
 
     // Update page in database
-    await this.pageEntity.updateOne({ id: data.pageId }, updateData);
+    await this.pageEntity.updateOne({ id: data.pageId, ...this.buildUserFilter(context) }, updateData);
 
     // Update project's updatedAt
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate({ id: data.projectId }, { updatedAt: timestamp }, { new: true, runValidators: true })
+      .findOneAndUpdate(
+        { id: data.projectId, ...this.buildUserFilter(context) },
+        { updatedAt: timestamp },
+        { new: true, runValidators: true }
+      )
       .populate({
         path: 'pages',
         populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
@@ -366,16 +435,17 @@ export class ProjectService {
    * Delete page
    */
   async deletePage(data: DeletePageRequest): Promise<Project> {
-    const { page } = await this.findPageInProject(data.projectId, data.pageId);
+    const context = this.resolveUserContext(data.userId, data.gitId);
+    const { page } = await this.findPageInProject(data.projectId, data.pageId, context);
     const timestamp = new Date();
 
     // Delete page from database
-    await this.pageEntity.deleteOne({ id: data.pageId });
+    await this.pageEntity.deleteOne({ id: data.pageId, ...this.buildUserFilter(context) });
 
     // Remove page reference from project
     const updatedProject = await this.projectEntity
       .findOneAndUpdate(
-        { id: data.projectId },
+        { id: data.projectId, ...this.buildUserFilter(context) },
         { $pull: { pages: page._id }, updatedAt: timestamp },
         { new: true, runValidators: true }
       )
@@ -395,7 +465,8 @@ export class ProjectService {
    * Update document status
    */
   async updateDocumentStatus(data: UpdateDocumentStatusRequest): Promise<Project> {
-    await this.findPageInProject(data.projectId, data.pageId);
+    const context = this.resolveUserContext(data.userId, data.gitId);
+    await this.findPageInProject(data.projectId, data.pageId, context);
     const timestamp = new Date();
 
     const updateData = {
@@ -406,14 +477,18 @@ export class ProjectService {
     };
 
     // Update document in database
-    await this.documentReferenceEntity.updateOne({ id: data.documentId }, updateData);
+    await this.documentReferenceEntity.updateOne({ id: data.documentId, ...this.buildUserFilter(context) }, updateData);
 
     // Update page's updatedAt
-    await this.pageEntity.updateOne({ id: data.pageId }, { updatedAt: timestamp });
+    await this.pageEntity.updateOne({ id: data.pageId, ...this.buildUserFilter(context) }, { updatedAt: timestamp });
 
     // Update project's updatedAt
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate({ id: data.projectId }, { updatedAt: timestamp }, { new: true, runValidators: true })
+      .findOneAndUpdate(
+        { id: data.projectId, ...this.buildUserFilter(context) },
+        { updatedAt: timestamp },
+        { new: true, runValidators: true }
+      )
       .populate({
         path: 'pages',
         populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
@@ -433,14 +508,16 @@ export class ProjectService {
    */
   async syncDocument(data: SyncDocumentRequest): Promise<Project> {
     const { projectId, pageId, type, documentId } = data;
+    const context = this.resolveUserContext(data.userId, data.gitId);
     const timestamp = new Date();
 
     // Verify page exists
-    await this.findPageInProject(projectId, pageId);
+    await this.findPageInProject(projectId, pageId, context);
 
     // Get document reference to fetch the URL
     const document = await this.documentReferenceEntity.findOne({
       id: documentId,
+      ...this.buildUserFilter(context),
     });
     if (!document) {
       throw new Error('文档不存在');
@@ -467,7 +544,7 @@ export class ProjectService {
     } catch (error) {
       // If data fetching fails, update status to 'failed'
       await this.documentReferenceEntity.updateOne(
-        { id: documentId },
+        { id: documentId, ...this.buildUserFilter(context) },
         {
           status: 'failed',
           progress: 0,
@@ -488,12 +565,14 @@ export class ProjectService {
       updateData.data = documentData;
     }
 
-    await this.documentReferenceEntity.updateOne({ id: documentId }, updateData);
+    await this.documentReferenceEntity.updateOne({ id: documentId, ...this.buildUserFilter(context) }, updateData);
 
-    const updatedProject = await this.projectEntity.findOne({ id: projectId }).populate({
-      path: 'pages',
-      populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
-    });
+    const updatedProject = await this.projectEntity
+      .findOne({ id: projectId, ...this.buildUserFilter(context) })
+      .populate({
+        path: 'pages',
+        populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
+      });
 
     if (!updatedProject) {
       throw new Error('项目不存在');
@@ -508,11 +587,13 @@ export class ProjectService {
    */
   async getDocumentContent(data: GetDocumentContentRequest): Promise<DocumentReference> {
     const { documentId } = data;
+    const context = this.resolveUserContext(data.userId, data.gitId);
 
     // Get document reference
     const document = await this.documentReferenceEntity.findOne(
       {
         _id: documentId,
+        ...this.buildUserFilter(context),
       },
       null,
       { lean: true }
@@ -531,25 +612,26 @@ export class ProjectService {
    */
   async updateDocument(data: DocumentReference): Promise<DocumentReference> {
     const { id } = data;
+    const context = this.resolveUserContext(data.userId, data.gitId);
     const timestamp = new Date();
 
-    const document = await this.documentReferenceEntity.findOne({ id });
+    const document = await this.documentReferenceEntity.findOne({ id, ...this.buildUserFilter(context) });
     if (!document) {
       throw new Error('文档不存在');
     }
 
     // Extract updatable fields and filter out undefined values
-    const { id: _, _id, createdAt, ...updateFields } = data;
+    const { id: _, _id, createdAt, userId, gitId, ...updateFields } = data;
     const updateData = {
       ...Object.fromEntries(Object.entries(updateFields).filter(([_, value]) => value !== undefined)),
       updatedAt: timestamp,
     };
 
     // Update document in database
-    await this.documentReferenceEntity.updateOne({ id }, updateData);
+    await this.documentReferenceEntity.updateOne({ id, ...this.buildUserFilter(context) }, updateData);
 
     // Return the updated document
-    const updatedDocument = await this.documentReferenceEntity.findOne({ id });
+    const updatedDocument = await this.documentReferenceEntity.findOne({ id, ...this.buildUserFilter(context) });
     return updatedDocument!;
   }
 }

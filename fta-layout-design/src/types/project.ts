@@ -15,11 +15,15 @@ export interface Project {
   tags: string[];
   avatar?: string;
   pages: Page[];
+  userId: string;
+  gitId: string;
 }
 
 export interface ProjectListParams {
   page?: number;
   size?: number;
+  userId?: string;
+  gitId?: string;
 }
 
 export interface ProjectListResponse {
@@ -44,6 +48,8 @@ export interface Page {
   designDocuments: DocumentReference[]; // 设计稿文档列表
   prdDocuments: DocumentReference[]; // PRD文档列表
   openapiDocuments: DocumentReference[]; // OpenAPI文档列表
+  userId: string;
+  gitId: string;
 }
 
 export interface DesignSpec {
@@ -135,6 +141,9 @@ export interface DocumentReference {
   updatedAt: string;
   annotationData?: AnnotationSnapshot;
   data?: DesignDSL;
+  pageId?: string;
+  userId: string;
+  gitId: string;
 }
 
 export interface SyncHistoryItem {

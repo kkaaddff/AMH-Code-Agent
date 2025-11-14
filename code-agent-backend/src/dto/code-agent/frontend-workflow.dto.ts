@@ -1,7 +1,8 @@
 import { ApiProperty } from '@midwayjs/swagger';
 import { Rule, RuleType } from '@midwayjs/validate';
+import { UserContextDto } from '../common/user-context';
 
-export class FrontendWorkflowRequestDTO {
+export class FrontendWorkflowRequestDTO extends UserContextDto {
   @ApiProperty({
     required: true,
     example: '507f1f77bcf86cd799439011',

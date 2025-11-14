@@ -89,7 +89,7 @@ export const projectService = {
       shouldUseMock(),
       () => projectMockService.updateProject(id, data),
       async () => {
-        const response = await api.project.update(id, data);
+        const response = await api.project.update({ id, ...data });
         return response.data;
       }
     );
@@ -103,7 +103,7 @@ export const projectService = {
       shouldUseMock(),
       () => projectMockService.deleteProject(id),
       async () => {
-        const response = await api.project.delete(id);
+        const response = await api.project.delete({ id });
         return response.data;
       }
     );
@@ -117,7 +117,7 @@ export const projectService = {
       shouldUseMock(),
       () => projectMockService.getProjectDetail(id),
       async () => {
-        const response = await api.project.detail(id);
+        const response = await api.project.detail({ id });
         return response.data;
       }
     );
@@ -131,7 +131,7 @@ export const projectService = {
       shouldUseMock(),
       () => projectMockService.getPageDetail(pageId),
       async () => {
-        const response = await api.project.page.detail(pageId);
+        const response = await api.project.page.detail({ pageId });
         return response.data;
       }
     );
@@ -245,7 +245,7 @@ export const projectService = {
   /**
    * 更新文档内容
    */
-  async updateDocument(payload: Partial<DocumentReference>) {
+  async updateDocument(payload: Partial<DocumentReference> & { id: string }) {
     return resolveRequest(
       shouldUseMock(),
       () => projectMockService.updateDocument(payload),

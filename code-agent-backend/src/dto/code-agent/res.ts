@@ -73,6 +73,8 @@ interface SimpleProject {
   avatar: string;
   createdAt: string;
   updatedAt: string;
+  userId: string;
+  gitId: string;
 }
 
 // Project Response Types
@@ -137,6 +139,8 @@ interface SimplePage {
   documents?: any[];
   createdAt: string;
   updatedAt: string;
+  userId: string;
+  gitId: string;
 }
 
 export class PageDetailResponse extends BaseResponse<SimplePage> {
@@ -166,5 +170,12 @@ export class GetDocumentContentResponse extends BaseResponse<any> {
 export class UpdateDocumentResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
     super(project as SimpleProject, true, 'Document updated successfully');
+  }
+}
+
+// GitLab Response Types
+export class GetGitlabProjectIdResponse extends BaseResponse<{ gitId: number }> {
+  constructor(gitId: number) {
+    super({ gitId }, true, 'GitLab project ID retrieved successfully');
   }
 }

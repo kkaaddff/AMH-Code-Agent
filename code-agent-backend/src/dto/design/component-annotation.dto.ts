@@ -1,8 +1,9 @@
 import { ApiProperty } from '@midwayjs/swagger';
 import { AsyncResponse } from '../../types';
+import { UserContextDto } from '../common/user-context';
 import { DesignComponentAnnotationEntity } from '../../entity/design';
 
-export class SaveDesignAnnotationBody {
+export class SaveDesignAnnotationBody extends UserContextDto {
   @ApiProperty({
     required: false,
     example: 2,
@@ -39,7 +40,7 @@ export class SaveDesignAnnotationBody {
   force?: boolean;
 }
 
-export class GetDesignAnnotationQuery {
+export class GetDesignAnnotationQuery extends UserContextDto {
   @ApiProperty({ required: false, example: 2, description: '指定标注版本号' })
   version?: number;
 }
@@ -57,7 +58,7 @@ export class GetDesignAnnotationResponse extends AsyncResponse {
   }
 }
 
-export class DiffDesignAnnotationQuery {
+export class DiffDesignAnnotationQuery extends UserContextDto {
   @ApiProperty({ required: true, example: 1, description: '旧版本号' })
   fromVersion: number;
 

@@ -96,4 +96,12 @@ export class DesignDocumentEntity {
   @ApiProperty({ description: '额外元信息' })
   @prop({ type: () => Object })
   public metadata?: Record<string, unknown>;
+
+  @ApiProperty({ example: 'user_123', description: '所属用户 ID' })
+  @prop({ required: true })
+  public userId: string;
+
+  @ApiProperty({ example: 'git_123', description: 'Git 仓库 ID', default: 'empty' })
+  @prop({ required: true, default: 'empty' })
+  public gitId: string;
 }

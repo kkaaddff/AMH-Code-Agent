@@ -1,8 +1,9 @@
 import { ApiProperty } from '@midwayjs/swagger';
 import { AsyncResponse, PageHelper } from '../../types';
+import { UserContextDto } from '../common/user-context';
 import { DesignDocumentEntity } from '../../entity/design';
 
-export class CreateDesignDocumentBody {
+export class CreateDesignDocumentBody extends UserContextDto {
   @ApiProperty({ example: '用户登录页', description: '设计稿名称' })
   name: string;
 
@@ -52,7 +53,7 @@ export class CreateDesignDocumentBody {
   metadata?: Record<string, unknown>;
 }
 
-export class UpdateDesignDocumentBody {
+export class UpdateDesignDocumentBody extends UserContextDto {
   @ApiProperty({
     required: false,
     example: '用户登录页 v2',
@@ -97,6 +98,12 @@ export class UpdateDesignDocumentBody {
 }
 
 export class DesignDocumentPaginationQuery extends PageHelper {
+  @ApiProperty({ example: 'user_123', description: '用户 ID', required: true })
+  userId: string;
+
+  @ApiProperty({ example: 'git_123', description: 'Git 仓库 ID', required: false, default: 'empty' })
+  gitId?: string;
+
   @ApiProperty({ required: false, example: 'active', description: '状态过滤' })
   status?: string;
 

@@ -56,6 +56,14 @@ export class DesignComponentAnnotationEntity {
   @prop()
   public updatedBy?: string;
 
+  @ApiProperty({ example: 'user_123', description: '所属用户 ID' })
+  @prop({ required: true })
+  public userId: string;
+
+  @ApiProperty({ example: 'git_123', description: 'Git 仓库 ID', default: 'empty' })
+  @prop({ required: true, default: 'empty' })
+  public gitId: string;
+
   @ApiProperty({ type: 'string', description: '创建时间' })
   public createdAt?: Date;
 
