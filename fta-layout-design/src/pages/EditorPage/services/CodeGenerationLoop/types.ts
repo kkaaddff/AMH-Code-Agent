@@ -59,7 +59,7 @@ export interface RequestBody {
   metadata?: any;
   max_tokens?: number;
   stream?: boolean;
-  thinking?: any;
+  chat_template_kwargs?: any;
 }
 
 /**

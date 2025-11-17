@@ -176,7 +176,6 @@ export class HomeController {
       type: 'REQUEST',
       method: 'POST',
       endpoint: '/model-gateway-sync',
-      requestBody: questionBody,
       payload,
     };
 
@@ -192,7 +191,7 @@ export class HomeController {
           ...headers,
           Accept: 'application/json',
         },
-        timeout: this.modelGatewayConfig?.timeout ?? 60_000,
+        timeout: this.modelGatewayConfig?.timeout ?? 600_000,
       });
 
       // 记录出参

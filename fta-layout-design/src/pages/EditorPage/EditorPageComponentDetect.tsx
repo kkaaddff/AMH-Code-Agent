@@ -312,9 +312,8 @@ const EditorPageContent: React.FC = () => {
   // 智能识别处理函数
   const handleSmartDetection = async () => {
     setIsSmartDetecting(true);
-    const response = await smartDetection([{ role: 'user', content: '请识别当前设计稿中的组件' }]);
+    const response = await smartDetection(designDetectionStore.dslData?.dsl!);
     console.log(response);
-    debugger;
     setIsSmartDetecting(false);
   };
 
