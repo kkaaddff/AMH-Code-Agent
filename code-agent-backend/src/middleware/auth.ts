@@ -22,14 +22,7 @@ interface User {
  */
 async function authValidate(ctx: Context): Promise<void> {
   let user: User | null = null;
-  // 本地开发模式
-  if (!user && process.env.NODE_ENV === 'local') {
-    user = {
-      id: '1048906',
-      jobNumber: '1000000',
-      name: '测试用户',
-    };
-  }
+
   // 尝试使用 Cookie 鉴权
   if (!user) {
     const userCookie = ctx.cookies.get(cookieName);
@@ -53,6 +46,15 @@ async function authValidate(ctx: Context): Promise<void> {
         ctx.logger.warn('SSO验证失败:', error);
       }
     }
+  }
+
+  // 本地开发模式
+  if (!user && process.env.NODE_ENV === 'local') {
+    user = {
+      id: '1048906',
+      jobNumber: '1000000',
+      name: '测试用户',
+    };
   }
 
   // 验证用户信息
