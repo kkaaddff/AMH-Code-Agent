@@ -43,7 +43,7 @@ const SCALE_OPTIONS = [
 ];
 
 const EditorPageContent: React.FC = () => {
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
 
   const editorPageStoreSnapshot = useSnapshot(editorPageStore);
   const { setPageId, setProjectId, setCurrentPage, setSelectedDocument } = editorPageActions;
@@ -316,7 +316,24 @@ const EditorPageContent: React.FC = () => {
       message.info('智能识别进行中，请稍候');
       return;
     }
-    smartDetectionRef.current?.runDetection();
+
+    const rootAnnotation = componentDetectionStoreSnapshot.rootAnnotation;
+    const hasExistingAnnotations = rootAnnotation && rootAnnotation.children?.length > 0;
+
+    if (!hasExistingAnnotations) {
+      smartDetectionRef.current?.runDetection();
+      return;
+    }
+
+    modal.confirm({
+      title: '确认重新执行智能识别？',
+      content: '当前设计稿已存在标注，重新识别可能产生重复或冲突，请确认是否继续。',
+      okText: '继续识别',
+      cancelText: '取消',
+      okType: 'danger',
+      centered: true,
+      onOk: () => smartDetectionRef.current?.runDetection(),
+    });
   };
 
   // 智能识别状态变化回调

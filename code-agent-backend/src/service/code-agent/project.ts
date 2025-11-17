@@ -634,13 +634,10 @@ export class ProjectService {
    */
   async updateDocument(data: DocumentReference): Promise<DocumentReference> {
     const { id } = data;
-    const userId = this.resolveUserId();
-    if (!userId) {
-      throw new Error('用户 ID 不能为空');
-    }
+
     const timestamp = new Date();
 
-    const document = await this.documentReferenceEntity.findOne({ id, userId });
+    const document = await this.documentReferenceEntity.findOne({ id });
     if (!document) {
       throw new Error('文档不存在');
     }
@@ -653,10 +650,10 @@ export class ProjectService {
     };
 
     // Update document in database
-    await this.documentReferenceEntity.updateOne({ id, userId }, updateData);
+    await this.documentReferenceEntity.updateOne({ id }, updateData);
 
     // Return the updated document
-    const updatedDocument = await this.documentReferenceEntity.findOne({ id, userId });
+    const updatedDocument = await this.documentReferenceEntity.findOne({ id });
     return updatedDocument!;
   }
 
