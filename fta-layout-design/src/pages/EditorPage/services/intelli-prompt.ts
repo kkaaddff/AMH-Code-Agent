@@ -100,26 +100,31 @@ export const intelliPrompt = (FTA_COMPONENTS: string[], TaroComponents: string[]
 2.  **\`FTAComponents\`**：一份高阶（high-level）的FTA组件列表，这是**唯一合法**的组件名称来源。
 3.  **\`TaroComponents\`**：一份基础的Taro组件列表，这是**唯一合法**的基础组件名称来源。**如果一个节点看起来像一个Taro组件，那么它就是那个Taro组件。**
 
-你的工作是遍历 \`designDsl.json\` 中的 \`nodes\`，并**基于“Duck 模式”**（如果它看起来像、功能像一个组件，那么它就是那个组件）的原则，识别出哪些节点或节点组在语义上对应 \`FTAComponents\` 或 \`TaroComponents\` 里的一个组件。
+你的工作是遍历 \`designDsl.json\` 中的 \`nodes\`，并执行一个双层映射：
+
+1. 标准组件映射 (ComponentName): **基于“Duck 模式”**（如果它看起来像、功能像一个组件，那么它就是那个组件）的原则，识别出哪些节点或节点组在语义上对应 \`FTAComponents\` 或 \`TaroComponents\` 里的一个组件。
+2. 业务组件命名 (BusinessComponentName): 在（1）的基础上，你需要进一步推断该节点的语义意图，即它在业务场景中的具体用途，并为其命名一个业务组件名称（业务组件名称）。这个名称应该是有意义的、唯一的，并采用PascalCase命名法（例如 DriverCard, DriverSearchBar, AddFamiliarCarButton）。
 
 ## 输出格式
 
 你的输出**必须**严格遵守以下 CSV 格式，**不得包含**任何标题行或额外的解释性文字。每一行代表一个匹配成功的节点：
 
 \`\`\`
-node_id:ComponentName
+node_id:ComponentName:BusinessComponentName
 \`\`\`
+
+**BusinessComponentName**: 你推断出的业务组件名（语义匹配），只有具备完整业务意义的组件名称才需要填写。
 
 **示例：**
 
 \`\`\`
-1309:00390/1:0324:Search
-1309:24421:Dropdown
-1309:9831:Card
+1309:00390/1:0324:Search:DriverSearchBar
+1309:24421:Dropdown:DriverDropdown
+1309:9831:Card:DriverCard
 1309:9853:ListItem
 1309:00050:Avatar
 1309:00054:Button
-1309:53750:TabBar
+1309:53750:TabBar:DriverTabBar
 \`\`\`
 
 ---

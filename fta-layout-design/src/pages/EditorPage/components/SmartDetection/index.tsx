@@ -12,6 +12,7 @@ import { DSLData } from '@/types/dsl';
 type SmartDetectionEntry = {
   nodeId: string;
   component: string;
+  name?: string;
 };
 
 export type SmartDetectionHandle = {
@@ -53,32 +54,53 @@ const parseSmartDetectionEvents = (events: Array<{ type: string; text?: string }
     )
     .filter((line) => line.length > 0)
     .forEach((line) => {
-      const lastColonIndex = line.lastIndexOf(':');
-      if (lastColonIndex === -1) {
+      const parts = line
+        .split(':')
+        .map((part) => part.trim())
+        .filter((part) => part.length > 0);
+      if (parts.length < 2) {
         return;
       }
 
-      const rawNodeId = line.slice(0, lastColonIndex).trim();
-      const rawComponent = line.slice(lastColonIndex + 1).trim();
+      const normalizeNodeId = (value: string) => value.replace(/^['"]+|['"]+$/g, '');
 
-      if (!rawNodeId || !rawComponent) {
-        return;
+      const parseWithBusinessName = (): SmartDetectionEntry | null => {
+        if (parts.length < 3) return null;
+
+        const componentPart = parts[parts.length - 2];
+        const businessName = parts[parts.length - 1];
+        const nodeId = normalizeNodeId(parts.slice(0, parts.length - 2).join(':'));
+
+        if (!nodeId || !SMART_DETECTION_COMPONENT_REGEX.test(componentPart)) {
+          return null;
+        }
+
+        return {
+          nodeId,
+          component: componentPart.match(SMART_DETECTION_COMPONENT_REGEX)![0],
+          name: businessName || undefined,
+        };
+      };
+
+      const parseWithoutBusinessName = (): SmartDetectionEntry | null => {
+        const componentPart = parts[parts.length - 1];
+        const nodeId = normalizeNodeId(parts.slice(0, parts.length - 1).join(':'));
+
+        if (!nodeId || !SMART_DETECTION_COMPONENT_REGEX.test(componentPart)) {
+          return null;
+        }
+
+        return {
+          nodeId,
+          component: componentPart.match(SMART_DETECTION_COMPONENT_REGEX)![0],
+        };
+      };
+
+      const parsedEntry = parseWithBusinessName() ?? parseWithoutBusinessName();
+
+      if (parsedEntry) {
+        resultMap.set(parsedEntry.nodeId, parsedEntry);
       }
-
-      const componentMatch = rawComponent.match(SMART_DETECTION_COMPONENT_REGEX);
-      if (!componentMatch) {
-        return;
-      }
-
-      const normalizedNodeId = rawNodeId.replace(/^['"]+|['"]+$/g, '');
-      if (!normalizedNodeId) {
-        return;
-      }
-
-      resultMap.set(normalizedNodeId, {
-        nodeId: normalizedNodeId,
-        component: componentMatch[0],
-      });
     });
 
   return Array.from(resultMap.values());
@@ -229,7 +251,11 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
             continue;
           }
 
-          const created = await designDetectionActions.createAnnotation(dslNode, entry.component);
+          const created = await designDetectionActions.createAnnotation(
+            dslNode,
+            entry.component,
+            entry.name ? { name: entry.name, force: true } : undefined
+          );
           if (created) {
             createdCount += 1;
           } else {

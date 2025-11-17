@@ -528,23 +528,33 @@ export const designDetectionActions = {
       comment?: string;
       props?: Record<string, any>;
       layout?: any;
+      force?: boolean;
     }
   ): Promise<boolean> => {
     if (!designDetectionStore.rootAnnotation) {
-      componentDetectionDebugLog('createAnnotation:skipNoRoot');
       return false;
     }
 
-    componentDetectionDebugLog('createAnnotation:start', {
-      dslNodeId: dslNode.id,
-      ftaComponent,
-    });
+    // 覆盖三种情况: additionalProps 无值; additionalProps 有值且 force 无值; additionalProps.force 为 false
+    const shouldCheckDuplicate =
+      !additionalProps ||
+      (additionalProps && typeof additionalProps.force === 'undefined') ||
+      (additionalProps && additionalProps.force === false);
 
-    const existingAnnotation = designDetectionStore.annotations.find((a) => a.dslNodeId === dslNode.id);
-    if (existingAnnotation) {
-      console.warn('This DSL node is already annotated');
-      componentDetectionDebugLog('createAnnotation:skipAlreadyAnnotated', { dslNodeId: dslNode.id });
-      return false;
+    if (shouldCheckDuplicate) {
+      const existingAnnotation = designDetectionStore.annotations.find((a) => a.dslNodeId === dslNode.id);
+      if (existingAnnotation) {
+        console.warn('This DSL node is already annotated');
+        return false;
+      }
+    } else {
+      // 强制创建，删除重复标注
+      const existingAnnotation = designDetectionStore.annotations.find((a) => a.dslNodeId === dslNode.id);
+      if (existingAnnotation) {
+        designDetectionActions.deleteAnnotation(existingAnnotation.id, {
+          docId: designDetectionStore.currentDesignId!,
+        });
+      }
     }
 
     const collectDescendantDSLIds = (node: DSLNode): Set<string> => {
@@ -590,7 +600,6 @@ export const designDetectionActions = {
       });
 
       if (!confirmed) {
-        componentDetectionDebugLog('createAnnotation:userCancelled', { dslNodeId: dslNode.id });
         return false;
       }
     }
@@ -638,10 +647,6 @@ export const designDetectionActions = {
       const result = detachDescendantAnnotations(updatedRoot);
       updatedRoot = result.node;
       detachedChildren = result.detached;
-      componentDetectionDebugLog('createAnnotation:detachedDescendants', {
-        dslNodeId: dslNode.id,
-        detachedCount: detachedChildren.length,
-      });
     }
 
     const newAnnotation: AnnotationNode = {
@@ -702,11 +707,6 @@ export const designDetectionActions = {
     designDetectionStore.selectedAnnotation = newAnnotation;
     designDetectionStore.selectedDSLNode = null;
     designDetectionStore.expandedKeys = Array.from(expandedKeysSet);
-
-    componentDetectionDebugLog('createAnnotation:completed', {
-      dslNodeId: dslNode.id,
-      success: true,
-    });
 
     return true;
   },
