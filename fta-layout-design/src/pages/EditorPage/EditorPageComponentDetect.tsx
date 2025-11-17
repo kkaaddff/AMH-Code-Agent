@@ -7,6 +7,7 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
   QuestionCircleOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import { App as AntApp, App, Button, Dropdown, Layout, Space, Spin, Typography } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -21,6 +22,7 @@ import LayerTreePanel from './components/LayerTreePanel';
 import OpenAPIDataPanel from './components/OpenAPIDataPanel';
 import OpenAPIUrlPanel from './components/OpenAPIUrlPanel';
 import PRDEditorPanel from './components/PRDEditorPanel';
+import SmartDetectionAnimation from '@/components/SmartDetectionAnimation';
 import { TDocumentKeys } from './constants';
 import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGenerationContext';
 import { designDetectionActions, designDetectionStore } from './contexts/DesignDetectionContext';
@@ -70,6 +72,7 @@ const EditorPageContent: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
   const [isAnnotationConfirmOpen, setIsAnnotationConfirmOpen] = useState(false);
+  const [isSmartDetecting, setIsSmartDetecting] = useState(false);
 
   // Frontend Workflow Scheduler
   const schedulerRef = useRef<FrontendWorkflowScheduler | null>(null);
@@ -305,6 +308,16 @@ const EditorPageContent: React.FC = () => {
     setIsAnnotationConfirmOpen(false);
   }, []);
 
+  // 智能识别处理函数
+  const handleSmartDetection = () => {
+    setIsSmartDetecting(true);
+
+    // 10秒后完成检测
+    setTimeout(() => {
+      setIsSmartDetecting(false);
+    }, 3000);
+  };
+
   // 处理删除文档
   const handleDeleteDocument = async (type: keyof typeof TDocumentKeys, docId: string) => {
     const { selectedDocument, currentPage } = editorPageStoreSnapshot;
@@ -401,6 +414,22 @@ const EditorPageContent: React.FC = () => {
                         onClick={toggleShowAllBorders}
                         className='editor-page-button'>
                         框线
+                      </Button>
+                      <Button
+                        size='small'
+                        icon={<ThunderboltOutlined />}
+                        onClick={handleSmartDetection}
+                        disabled={isSmartDetecting}
+                        className='shadow-lg hover:shadow-xl transition-all duration-300 text-base px-8 py-6 h-auto editor-page-button'
+                        style={{
+                          background: isSmartDetecting
+                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          border: 'none',
+                          color: 'white',
+                          minWidth: '100px',
+                        }}>
+                        {isSmartDetecting ? '智能识别中...' : '智能识别'}
                       </Button>
                       <Button
                         type={is3DModalOpen ? 'primary' : 'default'}
@@ -558,6 +587,15 @@ const EditorPageContent: React.FC = () => {
       <Component3DInspectModal open={is3DModalOpen} onClose={() => setIs3DModalOpen(false)} />
       <InteractionGuideOverlay open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
       <CodeGenerationDrawer abortGeneration={abortGeneration} />
+
+      {/* 智能识别动画组件 */}
+      <SmartDetectionAnimation
+        isDetecting={isSmartDetecting}
+        onComplete={() => {
+          // 动画完成后的回调
+          console.log('Smart detection animation completed');
+        }}
+      />
     </>
   );
 };
