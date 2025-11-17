@@ -1,20 +1,82 @@
+import { Config } from '@midwayjs/core';
 import { Body, Controller, Get, Inject, Post, Query, Redirect } from '@midwayjs/decorator';
 import type { Context } from '@midwayjs/web';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
-
-const CLAUDE_BASE_URL = 'https://qa-user.aiapi.amh-group.com/claude/v1/messages';
-const CLAUDE_API_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoicWljaGVuZy56aGFuZyIsImlkIjoiMTAyMzQxOSIsImtleSI6IkJyT1ExS3E2IiwiY29uc3VtZXIiOiJhcGlrZXktNjhmOWVlMGFlNGIwYjI2MzliNjgyNTYzIn0.0h9dqhHBQzk6oWmNqeoZix_aGg-EOefKEBj09Lxv-AI';
-
-// const CLAUDE_BASE_URL = 'https://open.bigmodel.cn/api/anthropic/v1/messages'
-// const CLAUDE_API_KEY = '1a502e8ee34c4953a3c25b778f094b8e.c33zr72sfzXKf5Fr'
+import type { ModelGatewayConfig } from '../service/common/model-gateway';
 
 @Controller('/')
 export class HomeController {
   @Inject()
   private ctx: Context;
+
+  @Config('modelGateway.default')
+  private modelGatewayConfig: ModelGatewayConfig;
+
+  private getModelEndpoint(): string {
+    const baseURL = this.modelGatewayConfig?.baseURL;
+    if (!baseURL) {
+      throw new Error('Model gateway baseURL is not configured');
+    }
+    return `${baseURL.replace(/\/$/, '')}/v1/chat/completions`;
+  }
+
+  private getModelHeaders(): Record<string, string> {
+    const apiKey = this.modelGatewayConfig?.apiKey;
+    if (!apiKey) {
+      throw new Error('Model gateway apiKey is not configured');
+    }
+    return {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+      Connection: 'keep-alive',
+    };
+  }
+
+  private normalizeRequestBody(questionBody: any): Record<string, any> {
+    if (!questionBody) {
+      return {};
+    }
+
+    if (typeof questionBody === 'string') {
+      try {
+        return JSON.parse(questionBody);
+      } catch {
+        throw new Error('Invalid JSON payload');
+      }
+    }
+
+    return { ...questionBody };
+  }
+
+  private ensureOpenAIStyleMessages(payload: Record<string, any>): void {
+    const messages = payload.messages;
+    if (!Array.isArray(messages) || messages.length === 0) {
+      throw new Error('Model gateway expects an OpenAI-style payload with a non-empty messages array');
+    }
+
+    const hasSystemMessage = messages.some((message) => message?.role === 'system');
+    if (!hasSystemMessage) {
+      throw new Error('Model gateway requires the system prompt to be included as a system role message');
+    }
+  }
+
+  private buildOpenAIRequest(payload: Record<string, any>, stream: boolean): Record<string, any> {
+    const requestPayload: Record<string, any> = {
+      ...payload,
+      stream,
+    };
+
+    if (!requestPayload.model && this.modelGatewayConfig?.model) {
+      requestPayload.model = this.modelGatewayConfig.model;
+    }
+
+    this.ensureOpenAIStyleMessages(requestPayload);
+
+    return requestPayload;
+  }
 
   @Get('/')
   @Redirect('/swagger-ui/index.html')
@@ -33,51 +95,72 @@ export class HomeController {
 
   @Post('/model-gateway')
   async modelGateway(@Body() questionBody: any) {
-    this.ctx.res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    });
+    try {
+      const payload = this.buildOpenAIRequest(this.normalizeRequestBody(questionBody), true);
+      const headers = this.getModelHeaders();
+      const endpoint = this.getModelEndpoint();
 
-    await new Promise<void>((resolve, reject) => {
-      axios({
-        method: 'POST',
-        url: CLAUDE_BASE_URL,
-        responseType: 'stream',
-        data: questionBody,
-        headers: {
-          Authorization: `Bearer ${CLAUDE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((response) => {
-          // 这里处理成功的响应
-          if (response.status === 200) {
-            // 这里你可以将数据流转发给客户端，例如：res.send(response.data)
-            // 监听数据流
-            response.data.on('data', (chunk) => {
-              this.ctx.res.write(chunk.toString());
-            });
-            response.data.on('end', () => {
-              this.ctx.res.end();
-              resolve();
-            });
-          } else {
-            // 处理其他状态码的情况
-            reject(`Server responded with status code: ${response.status}`);
-          }
+      this.ctx.res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        axios({
+          method: 'POST',
+          url: endpoint,
+          responseType: 'stream',
+          data: payload,
+          headers,
+          timeout: this.modelGatewayConfig?.timeout ?? 600_000,
         })
-        .catch((error) => {
-          // 这里处理请求错误
-          // 结束响应，如果你在一个服务器上下文中
-          this.ctx.res.end();
-          reject('Request Error:' + error);
+          .then((response) => {
+            if (response.status === 200) {
+              response.data.on('data', (chunk) => {
+                this.ctx.res.write(chunk.toString());
+              });
+              response.data.on('end', () => {
+                this.ctx.res.end();
+                resolve();
+              });
+            } else {
+              reject(`Server responded with status code: ${response.status}`);
+            }
+          })
+          .catch((error) => {
+            this.ctx.res.end();
+            reject(error);
+          });
+      });
+    } catch (error: any) {
+      const message = error?.message || 'Model gateway request failed';
+      if (!this.ctx.res.headersSent) {
+        this.ctx.res.writeHead(500, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'close',
         });
-    });
+      }
+      this.ctx.res.write(`data: ${JSON.stringify({ error: message })}\n\n`);
+      this.ctx.res.write('data: [DONE]\n\n');
+      this.ctx.res.end();
+    }
   }
 
   @Post('/model-gateway-sync')
   async modelGatewaySync(@Body() questionBody: any) {
+    let payload: Record<string, any>;
+    try {
+      payload = this.buildOpenAIRequest(this.normalizeRequestBody(questionBody), false);
+    } catch (error: any) {
+      this.ctx.status = 400;
+      return {
+        success: false,
+        error: error?.message || 'Invalid request payload',
+      };
+    }
+
     const logDir = path.join(process.cwd(), 'logs', 'api');
     const timestamp = new Date().toISOString();
     const logFile = path.join(logDir, `model-gateway-sync-${new Date().toISOString().split('T')[0]}.log`);
@@ -94,23 +177,22 @@ export class HomeController {
       method: 'POST',
       endpoint: '/model-gateway-sync',
       requestBody: questionBody,
+      payload,
     };
 
     try {
-      // 确保请求体中 stream 参数为 false（如果存在）
-      const requestData = {
-        ...questionBody,
-        stream: false,
-      };
+      const headers = this.getModelHeaders();
+      const endpoint = this.getModelEndpoint();
 
       const response = await axios({
         method: 'POST',
-        url: CLAUDE_BASE_URL,
-        data: requestData,
+        url: endpoint,
+        data: payload,
         headers: {
-          Authorization: `Bearer ${CLAUDE_API_KEY}`,
-          'Content-Type': 'application/json',
+          ...headers,
+          Accept: 'application/json',
         },
+        timeout: this.modelGatewayConfig?.timeout ?? 60_000,
       });
 
       // 记录出参

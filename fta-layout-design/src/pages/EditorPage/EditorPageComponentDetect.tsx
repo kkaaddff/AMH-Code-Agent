@@ -30,6 +30,7 @@ import { editorPageActions, editorPageStore } from './contexts/EditorPageContext
 import { FrontendWorkflowScheduler } from './services/FrontendWorkflowScheduler';
 import './styles/EditorPageStyles.css';
 import type { AnnotationNode } from './types/componentDetection';
+import { smartDetection } from './services/SmartDetection';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
@@ -309,13 +310,12 @@ const EditorPageContent: React.FC = () => {
   }, []);
 
   // 智能识别处理函数
-  const handleSmartDetection = () => {
+  const handleSmartDetection = async () => {
     setIsSmartDetecting(true);
-
-    // 10秒后完成检测
-    setTimeout(() => {
-      setIsSmartDetecting(false);
-    }, 3000);
+    const response = await smartDetection([{ role: 'user', content: '请识别当前设计稿中的组件' }]);
+    console.log(response);
+    debugger;
+    setIsSmartDetecting(false);
   };
 
   // 处理删除文档

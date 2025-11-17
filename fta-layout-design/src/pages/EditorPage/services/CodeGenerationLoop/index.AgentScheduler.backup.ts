@@ -38,7 +38,7 @@ import { logToFile } from './utils';
 /**
  * 发送消息到模型 使用 syncModelGateway 中转
  */
-async function callModelAPI(requestBody: RequestBody): Promise<StreamModelGatewayEvent[]> {
+export async function callModelAPI(requestBody: RequestBody): Promise<StreamModelGatewayEvent[]> {
   const events = await syncModelGateway({ body: requestBody });
   return events;
 }
@@ -92,6 +92,26 @@ export class AgentScheduler {
     const session: SessionState = {
       uid,
       messages: [
+        {
+          role: 'system',
+          content: [
+            {
+              type: 'text',
+              text: commonSystemPrompt.cliPrompt,
+              cache_control: { type: 'ephemeral' } as const,
+            },
+          ],
+        },
+        {
+          role: 'system',
+          content: [
+            {
+              type: 'text',
+              text: commonSystemPrompt.mainPrompt,
+              cache_control: { type: 'ephemeral' } as const,
+            },
+          ],
+        },
         {
           role: 'user',
           content: [
@@ -166,18 +186,6 @@ export class AgentScheduler {
       // 发送当前消息到模型
       const requestBody: RequestBody = {
         messages: session.messages,
-        system: [
-          {
-            type: 'text',
-            text: commonSystemPrompt.cliPrompt,
-            cache_control: { type: 'ephemeral' } as const,
-          },
-          {
-            type: 'text',
-            text: commonSystemPrompt.mainPrompt,
-            cache_control: { type: 'ephemeral' } as const,
-          },
-        ],
         tools: this.availableTools,
         ...systemSetting,
       };
