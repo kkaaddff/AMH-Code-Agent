@@ -1,34 +1,13 @@
-import type { DSLData } from '@/types/dsl';
-import confetti, { ConfettiInstance, ConfettiOptions } from 'canvas-confetti';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { designDetectionActions, findDSLNodeById } from '../../contexts/DesignDetectionContext';
-import { smartDetection } from '../../services/SmartDetection';
-import type { AnnotationNode } from '../../types/componentDetection';
-import './styles.css';
 import { App } from 'antd';
-
-const COLOR_PALETTE = [
-  '#667eea',
-  '#764ba2',
-  '#5a67d8',
-  '#6b46c1',
-  '#805ad5',
-  '#4c51bf',
-  '#553c9a',
-  '#6366f1',
-  '#8b5cf6',
-  '#a78bfa',
-  '#60a5fa',
-  '#818cf8',
-  '#a78bfa',
-  '#c084fc',
-  '#e879f9',
-  '#fbbf24',
-  '#f59e0b',
-  '#ef4444',
-  '#ec4899',
-  '#f97316',
-];
+import confetti from 'canvas-confetti';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { useSnapshot } from 'valtio';
+import { designDetectionActions, designDetectionStore, findDSLNodeById } from '../../contexts/DesignDetectionContext';
+import { editorPageStore } from '../../contexts/EditorPageContext';
+import { smartDetection } from '../../services/SmartDetection';
+import { CONFETTI_BURSTS, SMART_DETECTION_COMPONENT_REGEX } from './config';
+import './styles.css';
+import { DSLData } from '@/types/dsl';
 
 type SmartDetectionEntry = {
   nodeId: string;
@@ -40,13 +19,9 @@ export type SmartDetectionHandle = {
   isDetecting: boolean;
 };
 
-interface SmartDetectionProps {
-  dslData: DSLData | null;
-  rootAnnotation: AnnotationNode | null;
-  selectedDocumentId?: string;
-}
-
-const SMART_DETECTION_COMPONENT_REGEX = /^[A-Za-z][A-Za-z0-9.]*/;
+export type SmartDetectionProps = {
+  onDetectingChange?: (isDetecting: boolean) => void;
+};
 
 const parseSmartDetectionEvents = (events: Array<{ type: string; text?: string }>): SmartDetectionEntry[] => {
   if (!Array.isArray(events) || events.length === 0) {
@@ -110,11 +85,19 @@ const parseSmartDetectionEvents = (events: Array<{ type: string; text?: string }
 };
 
 const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
-  ({ dslData, rootAnnotation, selectedDocumentId }, ref) => {
+  ({ onDetectingChange }, ref: React.Ref<SmartDetectionHandle>) => {
+    const componentDetectionStoreSnapshot = useSnapshot(designDetectionStore);
+    const { dslData, rootAnnotation } = componentDetectionStoreSnapshot;
+    const editorPageStoreSnapshot = useSnapshot(editorPageStore);
+    const selectedDocumentId =
+      editorPageStoreSnapshot.selectedDocument?.type === 'design'
+        ? editorPageStoreSnapshot.selectedDocument.id
+        : undefined;
+
     const { message } = App.useApp();
     const [isDetecting, setIsDetecting] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const confettiInstanceRef = useRef<ConfettiInstance | null>(null);
+    const confettiInstanceRef = useRef<ReturnType<typeof confetti.create> | null>(null);
     const timeoutsRef = useRef<number[]>([]);
     const [showLoading, setShowLoading] = useState(false);
     const [loadingExploding, setLoadingExploding] = useState(false);
@@ -147,87 +130,10 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
       const instance = confetti.create(canvas, { resize: true, useWorker: true });
       confettiInstanceRef.current = instance;
 
-      const baseOptions: ConfettiOptions = {
-        gravity: 1,
-        decay: 0.92,
-        spread: 80,
-        colors: COLOR_PALETTE,
-        scalar: 1.4,
-      };
-
-      const shoot = (options: ConfettiOptions) => {
-        instance({ ...baseOptions, ...options });
-      };
-
-      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
-
-      const bursts: Array<{ delay: number; options: ConfettiOptions }> = [
-        {
-          delay: 0,
-          options: {
-            particleCount: 180,
-            spread: 140,
-            scalar: 1.6,
-            origin: { x: 0.5, y: 0.55 },
-            startVelocity: 58,
-          },
-        },
-        {
-          delay: 450,
-          options: {
-            particleCount: 120,
-            spread: 70,
-            angle: 60,
-            origin: { x: 0.2, y: 0.75 },
-            scalar: 1.5,
-            startVelocity: 50,
-          },
-        },
-        {
-          delay: 900,
-          options: {
-            particleCount: 120,
-            spread: 70,
-            angle: 120,
-            origin: { x: 0.8, y: 0.75 },
-            scalar: 1.5,
-            startVelocity: 50,
-          },
-        },
-      ];
-
-      bursts.forEach(({ delay, options }) => {
-        scheduleTimeout(() => shoot(options), delay);
+      CONFETTI_BURSTS.forEach(({ delay, options }) => {
+        scheduleTimeout(() => instance(options), delay);
       });
-
-      for (let i = 0; i < 4; i++) {
-        scheduleTimeout(() => {
-          shoot({
-            particleCount: 50,
-            spread: 90,
-            startVelocity: 35,
-            scalar: randomInRange(1.1, 1.4),
-            origin: { x: randomInRange(0.2, 0.8), y: randomInRange(0.2, 0.55) },
-          });
-        }, 500 + i * 250);
-      }
-
-      const finaleDelay = 2000;
-      scheduleTimeout(() => {
-        shoot({
-          particleCount: 240,
-          spread: 160,
-          origin: { x: 0.5, y: 0.45 },
-          scalar: 1.7,
-          startVelocity: 60,
-        });
-      }, finaleDelay);
-
-      scheduleTimeout(() => {
-        setShowFireworks(false);
-        cleanupAll();
-      }, finaleDelay + 1800);
-    }, [cleanupAll, scheduleTimeout]);
+    }, [scheduleTimeout]);
 
     // 初始化画布
     useEffect(() => {
@@ -295,15 +201,16 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         return;
       }
 
-      if (!dslData || !rootAnnotation) {
+      if (!dslData?.dsl || !rootAnnotation) {
         message.error('当前文档的 DSL 或标注数据尚未加载完成');
         return;
       }
 
       setIsDetecting(true);
+      onDetectingChange?.(true);
 
       try {
-        const detectionEvents = await smartDetection(dslData);
+        const detectionEvents = await smartDetection(dslData.dsl as DSLData);
         const parsedEntries = parseSmartDetectionEvents(detectionEvents);
 
         if (!parsedEntries.length) {
@@ -350,8 +257,9 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         message.error(error?.message || '智能识别失败');
       } finally {
         setIsDetecting(false);
+        onDetectingChange?.(false);
       }
-    }, [dslData, isDetecting, rootAnnotation, selectedDocumentId]);
+    }, [dslData, isDetecting, rootAnnotation, selectedDocumentId, onDetectingChange]);
 
     useImperativeHandle(ref, () => ({
       runDetection,
@@ -382,5 +290,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
     );
   }
 );
+
+SmartDetection.displayName = 'SmartDetection';
 
 export default SmartDetection;

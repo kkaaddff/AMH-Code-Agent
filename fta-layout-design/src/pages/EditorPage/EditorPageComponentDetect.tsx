@@ -1,5 +1,5 @@
 import { projectService } from '@/services/projectService';
-import type { DesignDSL, DSLData } from '@/types/dsl';
+import type { DesignDSL } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import {
   AppstoreOutlined,
@@ -73,6 +73,7 @@ const EditorPageContent: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
   const [isAnnotationConfirmOpen, setIsAnnotationConfirmOpen] = useState(false);
+  const [isSmartDetecting, setIsSmartDetecting] = useState(false);
 
   // Frontend Workflow Scheduler
   const schedulerRef = useRef<FrontendWorkflowScheduler | null>(null);
@@ -311,12 +312,17 @@ const EditorPageContent: React.FC = () => {
 
   // 智能识别处理函数
   const handleSmartDetection = async () => {
-    if (smartDetectionRef.current?.isDetecting) {
+    if (isSmartDetecting) {
       message.info('智能识别进行中，请稍候');
       return;
     }
     smartDetectionRef.current?.runDetection();
   };
+
+  // 智能识别状态变化回调
+  const handleSmartDetectionChange = useCallback((detecting: boolean) => {
+    setIsSmartDetecting(detecting);
+  }, []);
 
   // 处理删除文档
   const handleDeleteDocument = async (type: keyof typeof TDocumentKeys, docId: string) => {
@@ -407,6 +413,14 @@ const EditorPageContent: React.FC = () => {
                     <Space>
                       <Button
                         size='small'
+                        icon={<ThunderboltOutlined />}
+                        onClick={handleSmartDetection}
+                        disabled={isSmartDetecting}
+                        className='editor-page-smart-detect'>
+                        {isSmartDetecting ? '智能识别中...' : '智能识别'}
+                      </Button>
+                      <Button
+                        size='small'
                         type={componentDetectionStoreSnapshot.showAllBorders ? 'primary' : 'default'}
                         icon={
                           componentDetectionStoreSnapshot.showAllBorders ? <EyeOutlined /> : <EyeInvisibleOutlined />
@@ -414,14 +428,6 @@ const EditorPageContent: React.FC = () => {
                         onClick={toggleShowAllBorders}
                         className='editor-page-button'>
                         框线
-                      </Button>
-                      <Button
-                        size='small'
-                        icon={<ThunderboltOutlined />}
-                        onClick={handleSmartDetection}
-                        disabled={smartDetectionRef.current?.isDetecting}
-                        className='shadow-lg hover:shadow-xl transition-all duration-300 text-base px-8 py-6 h-auto editor-page-button editor-page-smart-detect'>
-                        {smartDetectionRef.current?.isDetecting ? '智能识别中...' : '智能识别'}
                       </Button>
                       <Button
                         type={is3DModalOpen ? 'primary' : 'default'}
@@ -575,16 +581,7 @@ const EditorPageContent: React.FC = () => {
       <CodeGenerationDrawer abortGeneration={abortGeneration} />
 
       {/* 智能识别动画组件 */}
-      <SmartDetection
-        ref={smartDetectionRef}
-        dslData={componentDetectionStoreSnapshot.dslData?.dsl as DSLData | null}
-        rootAnnotation={componentDetectionStoreSnapshot.rootAnnotation as AnnotationNode | null}
-        selectedDocumentId={
-          editorPageStoreSnapshot.selectedDocument?.type === 'design'
-            ? editorPageStoreSnapshot.selectedDocument.id
-            : undefined
-        }
-      />
+      <SmartDetection ref={smartDetectionRef} onDetectingChange={handleSmartDetectionChange} />
     </>
   );
 };
