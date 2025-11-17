@@ -50,12 +50,6 @@ export class DocumentReference {
 
   @prop({ required: true })
   pageId: string;
-
-  @prop({ required: true })
-  userId?: string;
-
-  @prop({ required: true, default: 'empty' })
-  gitId?: string;
 }
 
 @EntityModel()
@@ -108,12 +102,6 @@ export class Page {
 
   @prop({ required: true })
   updatedAt: Date;
-
-  @prop({ required: true })
-  userId: string;
-
-  @prop({ required: true, default: 'empty' })
-  gitId: string;
 }
 
 @EntityModel()

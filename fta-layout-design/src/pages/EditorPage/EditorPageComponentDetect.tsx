@@ -94,7 +94,7 @@ const EditorPageContent: React.FC = () => {
         const pageData = await projectService.getPageDetail(_pageId!);
         setCurrentPage(pageData);
         // 初始化：默认选中第一个设计文档
-        setSelectedDocument({ type: 'design', id: pageData.designDocuments[0].id });
+        setSelectedDocument({ type: 'design', id: pageData.designDocuments?.[0]?.id || undefined });
       } catch (error: any) {
         console.error('获取页面数据失败:', error);
         setPageError(error.message || '获取页面数据失败');

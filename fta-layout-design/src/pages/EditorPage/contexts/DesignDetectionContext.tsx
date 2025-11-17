@@ -305,7 +305,7 @@ interface DesignDetectionState extends AnnotationState {
   designStoreMap: Record<string, DesignDocumentDetectionState>;
   dslData: DesignDSL | null;
   readonly dslRootNode: DSLNode | null;
-  readonly currentDesignId: string | null;
+  readonly currentDesignId: string | undefined;
 }
 
 const createEmptyDesignDocumentState = (): DesignDocumentDetectionState => {
@@ -328,7 +328,7 @@ const createEmptyDesignDocumentState = (): DesignDocumentDetectionState => {
 export const designDetectionStore = proxy<DesignDetectionState>({
   designStoreMap: {},
   get currentDesignId() {
-    return editorPageStore.selectedDocument?.type === 'design' ? editorPageStore.selectedDocument.id : null;
+    return editorPageStore.selectedDocument?.type === 'design' ? editorPageStore.selectedDocument.id : undefined;
   },
   get rootAnnotation() {
     if (!this.currentDesignId) {
@@ -422,7 +422,7 @@ const fetchDesignDocumentDSLInternal = async (doc: DocumentReference): Promise<v
   target.error = null;
 
   try {
-    const response = await api.project.document.getContent({ documentId: doc.id });
+    const response = await api.project.document.getContent({ documentId: doc._id });
     const rawDslData: DesignDSL | undefined = response?.data?.data;
     if (!rawDslData) {
       throw new Error('没有获取到DSL数据');

@@ -379,8 +379,6 @@ export class ProjectService {
       designDocuments: designDocuments.map((doc) => doc._id) as any,
       prdDocuments: prdDocuments.map((doc) => doc._id) as any,
       openapiDocuments: openapiDocuments.map((doc) => doc._id) as any,
-      userId,
-      gitId: 'empty',
     };
 
     // Save page to database
@@ -488,10 +486,6 @@ export class ProjectService {
    * Update document status
    */
   async updateDocumentStatus(data: UpdateDocumentStatusRequest): Promise<Project> {
-    const userId = this.resolveUserId();
-    if (!userId) {
-      throw new Error('用户 ID 不能为空');
-    }
     await this.findPageInProject(data.projectId, data.pageId);
     const timestamp = new Date();
 
@@ -503,14 +497,14 @@ export class ProjectService {
     };
 
     // Update document in database
-    await this.documentReferenceEntity.updateOne({ id: data.documentId, userId }, updateData);
+    await this.documentReferenceEntity.updateOne({ id: data.documentId }, updateData);
 
     // Update page's updatedAt
-    await this.pageEntity.updateOne({ id: data.pageId, userId }, { updatedAt: timestamp });
+    await this.pageEntity.updateOne({ id: data.pageId }, { updatedAt: timestamp });
 
     // Update project's updatedAt
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate({ id: data.projectId, userId }, { updatedAt: timestamp }, { new: true, runValidators: true })
+      .findOneAndUpdate({ id: data.projectId }, { updatedAt: timestamp }, { new: true, runValidators: true })
       .populate(this.projectPagesPopulateOptions);
 
     if (!updatedProject) {
@@ -527,10 +521,6 @@ export class ProjectService {
    */
   async syncDocument(data: SyncDocumentRequest): Promise<Project> {
     const { projectId, pageId, type, documentId } = data;
-    const userId = this.resolveUserId();
-    if (!userId) {
-      throw new Error('用户 ID 不能为空');
-    }
     const timestamp = new Date();
 
     // Verify page exists
@@ -539,7 +529,6 @@ export class ProjectService {
     // Get document reference to fetch the URL
     const document = await this.documentReferenceEntity.findOne({
       id: documentId,
-      userId,
     });
     if (!document) {
       throw new Error('文档不存在');
@@ -566,7 +555,7 @@ export class ProjectService {
     } catch (error) {
       // If data fetching fails, update status to 'failed'
       await this.documentReferenceEntity.updateOne(
-        { id: documentId, userId },
+        { id: documentId },
         {
           status: 'failed',
           progress: 0,
@@ -587,10 +576,10 @@ export class ProjectService {
       updateData.data = documentData;
     }
 
-    await this.documentReferenceEntity.updateOne({ id: documentId, userId }, updateData);
+    await this.documentReferenceEntity.updateOne({ id: documentId }, updateData);
 
     const updatedProject = await this.projectEntity
-      .findOne({ id: projectId, userId })
+      .findOne({ id: projectId })
       .populate(this.projectPagesPopulateOptions);
 
     if (!updatedProject) {
@@ -643,7 +632,7 @@ export class ProjectService {
     }
 
     // Extract updatable fields and filter out undefined values
-    const { id: _, _id, createdAt, gitId, ...updateFields } = data;
+    const { id: _, _id, createdAt, ...updateFields } = data;
     const updateData = {
       ...Object.fromEntries(Object.entries(updateFields).filter(([_, value]) => value !== undefined)),
       updatedAt: timestamp,

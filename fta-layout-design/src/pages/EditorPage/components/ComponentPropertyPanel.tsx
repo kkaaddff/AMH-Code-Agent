@@ -199,7 +199,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
       cancelText: '取消',
       onOk: () => {
         designDetectionActions.deleteAnnotation(selectedAnnotation.id, {
-          docId: selectedDocument!.id,
+          docId: selectedDocument?.id!,
           deleteChildren,
         });
         message.success('已删除标注');

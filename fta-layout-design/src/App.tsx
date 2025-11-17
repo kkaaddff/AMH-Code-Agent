@@ -23,8 +23,26 @@ function App() {
         if (!callService) {
           return;
         }
+
+        // 获取用户信息
         const { userInfo } = await callService('common', 'getUserInfo');
-        (window as any).userInfo = userInfo;
+
+        window.userInfo = userInfo;
+
+        // 获取工作空间信息
+        try {
+          const projectPath = await callService('project', 'getProjectRootPath');
+          const data = await callService('project', 'getProjectGitInfo');
+          const tree: TreeNode[] = await callService('common', 'getTreeData', { dir: projectPath + '/src', depth: 2 });
+          window.workspaceInfo = {
+            gitUrl: data?.remoteUrl,
+            workdir: projectPath,
+            srcTree: tree,
+          };
+        } catch (err) {
+          console.warn('Failed to get workspace info', err);
+          window.workspaceInfo = {};
+        }
       } catch (error) {
         console.error('Failed to initialize user info', error);
       } finally {

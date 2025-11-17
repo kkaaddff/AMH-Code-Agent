@@ -140,6 +140,9 @@ export interface AnnotationSnapshot {
   version: string;
 }
 export interface DocumentReference {
+  /** ObjectId */
+  _id: string;
+  /** doc_idxxx*/
   id: string;
   url: string;
   name?: string;

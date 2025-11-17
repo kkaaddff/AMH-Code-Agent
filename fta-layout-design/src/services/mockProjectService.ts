@@ -31,6 +31,7 @@ const createDocumentReferences = (urls: string[] = []): DocumentReference[] => {
   return (urls || [])
     .filter((url) => Boolean(url))
     .map((url, index) => ({
+      _id: generateId(''),
       id: generateId('doc'),
       url,
       name: deriveDocumentName(url, `文档-${index + 1}`),
@@ -56,6 +57,7 @@ const mergeDocumentReferences = (existing: DocumentReference[] = [], urls: strin
         };
       }
       return {
+        _id: generateId('doc'),
         id: generateId('doc'),
         url,
         name: deriveDocumentName(url, `文档-${index + 1}`),
@@ -350,6 +352,7 @@ export const projectMockService = {
     const type = collectionKey === 'designDocuments' ? 'design' : collectionKey === 'prdDocuments' ? 'prd' : 'openapi';
 
     return {
+      _id: document._id,
       id: document.id,
       url: document.url,
       name: document.name || '文档内容',

@@ -12,8 +12,10 @@ const InternalProjectPage: React.FC = () => {
   const navigate = useNavigate();
   const { message } = App.useApp();
 
-  const gitUrl = searchParams.get('gitUrl')?.trim() || undefined;
-  const workdir = searchParams.get('workdir')?.trim() || '/demo';
+  // 优先从 window.workspaceInfo 获取，其次从 URL 参数获取
+  const gitUrl = window.workspaceInfo?.gitUrl;
+  const workdir = window.workspaceInfo?.workdir;
+  const srcTree = window.workspaceInfo?.srcTree;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,12 @@ const InternalProjectPage: React.FC = () => {
 
   const matchedProject = result?.matchedProject ?? null;
   const projects = result?.projects ?? [];
-  const resolvedUserLabel = matchedProject?.userId || projects[0]?.userId || '当前登录用户';
+  const resolvedUserLabel =
+    matchedProject?.userId ||
+    projects[0]?.userId ||
+    window.userInfo?.name ||
+    window.userInfo?.jobNumber ||
+    '当前登录用户';
 
   const fetchResolution = useCallback(async () => {
     setLoading(true);

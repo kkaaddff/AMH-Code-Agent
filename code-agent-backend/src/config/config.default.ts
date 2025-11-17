@@ -27,10 +27,8 @@ export default (appInfo: EggAppInfo) => {
       'x-page-url',
       'Yu1',
       'Authorization',
-      'userId',
-      'user-id',
-      'user_id',
       'x-user-id',
+      'x-user-cookies',
     ],
     origin: ({ ctx }: any) => {
       return ctx.header.origin;

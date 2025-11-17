@@ -15,13 +15,43 @@ interface User {
 
 /**
  * 鉴权验证函数
- * 支持三种鉴权方式:
- * 1. Authorization header 中的 API Token
- * 2. Cookie 中的 ymmoa_passport
- * 3. 本地开发模式 (NODE_ENV=local)
+ * 支持四种鉴权方式:
+ * 1. X-User-Cookies header 中的 cookies JSON
+ * 2. Authorization header 中的 API Token
+ * 3. Cookie 中的 ymmoa_passport
+ * 4. 本地开发模式 (NODE_ENV=local)
  */
 async function authValidate(ctx: Context): Promise<void> {
   let user: User | null = null;
+
+  // 尝试从自定义 header 获取 cookies
+  if (!user) {
+    const userCookiesHeader = ctx.get('x-user-cookies');
+    if (userCookiesHeader) {
+      try {
+        const cookies = JSON.parse(userCookiesHeader);
+        const userCookie = cookies.ymmoa_passport || cookies.ymmoa_online;
+        if (userCookie) {
+          const response = await axios.get(`${ssoHost}/sso/verify`, {
+            params: {
+              passport: '',
+            },
+            headers: {
+              passport: userCookie,
+            },
+            timeout: 5000,
+          });
+
+          if (response.data?.result?.user?.id) {
+            user = response.data.result.user as User;
+          }
+        }
+      } catch (error) {
+        // 自定义 header 验证失败，继续尝试其他方式
+        ctx.logger.warn('自定义 header 验证失败:', error);
+      }
+    }
+  }
 
   // 尝试使用 Cookie 鉴权
   if (!user) {

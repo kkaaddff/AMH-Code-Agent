@@ -58,6 +58,12 @@ async function request<T = any>(
     ...headers,
   };
 
+  // 从 window.userInfo 中获取 cookies 并添加到自定义请求头
+  if (window.userInfo?.cookies) {
+    const cookiesJson = JSON.stringify(window.userInfo.cookies);
+    requestHeaders['X-User-Cookies'] = cookiesJson;
+  }
+
   // 构建查询参数
   let finalUrl = url;
   if (params && Object.keys(params).length > 0) {
@@ -80,6 +86,7 @@ async function request<T = any>(
       headers: requestHeaders,
       body: data ? JSON.stringify(data) : undefined,
       signal: controller.signal,
+      credentials: 'include', // 允许携带 cookies
     });
 
     clearTimeout(timeoutId);
@@ -191,14 +198,25 @@ export class ApiService {
       finalUrl = `${url}?${searchParams.toString()}`;
     }
 
+    // 构建请求头
+    const uploadHeaders: Record<string, string> = {};
+
+    // 从 window.userInfo 中获取 cookies 并添加到自定义请求头
+    if (window.userInfo?.cookies) {
+      const cookiesJson = JSON.stringify(window.userInfo.cookies);
+      uploadHeaders['X-User-Cookies'] = cookiesJson;
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
       const response = await fetch(finalUrl, {
         method: 'POST',
+        headers: uploadHeaders,
         body: formData,
         signal: controller.signal,
+        credentials: 'include', // 允许携带 cookies
       });
 
       clearTimeout(timeoutId);

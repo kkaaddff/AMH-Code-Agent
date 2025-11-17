@@ -6,7 +6,7 @@ import { createRootAnnotationFromDesignDoc } from '../components/LayerTreePanel/
 
 export interface SelectedDocument {
   type: keyof typeof TDocumentKeys;
-  id: string;
+  id: string | undefined;
 }
 
 interface EditorPageState {
