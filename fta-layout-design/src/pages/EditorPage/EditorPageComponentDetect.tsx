@@ -1,5 +1,5 @@
 import { projectService } from '@/services/projectService';
-import type { DesignDSL } from '@/types/dsl';
+import type { DesignDSL, DSLData } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import {
   AppstoreOutlined,
@@ -22,7 +22,8 @@ import LayerTreePanel from './components/LayerTreePanel';
 import OpenAPIDataPanel from './components/OpenAPIDataPanel';
 import OpenAPIUrlPanel from './components/OpenAPIUrlPanel';
 import PRDEditorPanel from './components/PRDEditorPanel';
-import SmartDetectionAnimation from '@/components/SmartDetectionAnimation';
+import type { SmartDetectionHandle } from './components/SmartDetection';
+import SmartDetection from './components/SmartDetection';
 import { TDocumentKeys } from './constants';
 import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGenerationContext';
 import { designDetectionActions, designDetectionStore } from './contexts/DesignDetectionContext';
@@ -30,7 +31,6 @@ import { editorPageActions, editorPageStore } from './contexts/EditorPageContext
 import { FrontendWorkflowScheduler } from './services/FrontendWorkflowScheduler';
 import './styles/EditorPageStyles.css';
 import type { AnnotationNode } from './types/componentDetection';
-import { smartDetection } from './services/SmartDetection';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
@@ -73,10 +73,10 @@ const EditorPageContent: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
   const [isAnnotationConfirmOpen, setIsAnnotationConfirmOpen] = useState(false);
-  const [isSmartDetecting, setIsSmartDetecting] = useState(false);
 
   // Frontend Workflow Scheduler
   const schedulerRef = useRef<FrontendWorkflowScheduler | null>(null);
+  const smartDetectionRef = useRef<SmartDetectionHandle | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -311,10 +311,11 @@ const EditorPageContent: React.FC = () => {
 
   // 智能识别处理函数
   const handleSmartDetection = async () => {
-    setIsSmartDetecting(true);
-    const response = await smartDetection(designDetectionStore.dslData?.dsl!);
-    console.log(response);
-    setIsSmartDetecting(false);
+    if (smartDetectionRef.current?.isDetecting) {
+      message.info('智能识别进行中，请稍候');
+      return;
+    }
+    smartDetectionRef.current?.runDetection();
   };
 
   // 处理删除文档
@@ -418,17 +419,9 @@ const EditorPageContent: React.FC = () => {
                         size='small'
                         icon={<ThunderboltOutlined />}
                         onClick={handleSmartDetection}
-                        disabled={isSmartDetecting}
-                        className='shadow-lg hover:shadow-xl transition-all duration-300 text-base px-8 py-6 h-auto editor-page-button'
-                        style={{
-                          background: isSmartDetecting
-                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          border: 'none',
-                          color: 'white',
-                          minWidth: '100px',
-                        }}>
-                        {isSmartDetecting ? '智能识别中...' : '智能识别'}
+                        disabled={smartDetectionRef.current?.isDetecting}
+                        className='shadow-lg hover:shadow-xl transition-all duration-300 text-base px-8 py-6 h-auto editor-page-button editor-page-smart-detect'>
+                        {smartDetectionRef.current?.isDetecting ? '智能识别中...' : '智能识别'}
                       </Button>
                       <Button
                         type={is3DModalOpen ? 'primary' : 'default'}
@@ -501,7 +494,7 @@ const EditorPageContent: React.FC = () => {
 
           {/* PRD 文档编辑器 */}
           {editorPageStoreSnapshot.selectedDocument?.type === 'prd' && (
-            <Layout style={{ flex: 1 }}>
+            <Layout className='editor-page-flex-layout'>
               <Content className='editor-page-content editor-page-content--no-padding'>
                 <div
                   onClick={() => setLeftCollapsed(!leftCollapsed)}
@@ -553,14 +546,8 @@ const EditorPageContent: React.FC = () => {
 
           {/* 没有选中任何文档时的提示 */}
           {!editorPageStoreSnapshot.selectedDocument && (
-            <Layout style={{ flex: 1 }}>
-              <Content
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgb(255, 255, 255)',
-                }}>
+            <Layout className='editor-page-flex-layout'>
+              <Content className='editor-page-empty-content'>
                 <div
                   onClick={() => setLeftCollapsed(!leftCollapsed)}
                   className='editor-page-collapse-button editor-page-collapse-button-left'>
@@ -588,12 +575,15 @@ const EditorPageContent: React.FC = () => {
       <CodeGenerationDrawer abortGeneration={abortGeneration} />
 
       {/* 智能识别动画组件 */}
-      <SmartDetectionAnimation
-        isDetecting={isSmartDetecting}
-        onComplete={() => {
-          // 动画完成后的回调
-          console.log('Smart detection animation completed');
-        }}
+      <SmartDetection
+        ref={smartDetectionRef}
+        dslData={componentDetectionStoreSnapshot.dslData?.dsl as DSLData | null}
+        rootAnnotation={componentDetectionStoreSnapshot.rootAnnotation as AnnotationNode | null}
+        selectedDocumentId={
+          editorPageStoreSnapshot.selectedDocument?.type === 'design'
+            ? editorPageStoreSnapshot.selectedDocument.id
+            : undefined
+        }
       />
     </>
   );

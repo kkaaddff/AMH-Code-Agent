@@ -53,6 +53,14 @@
   font-weight: 500;
 }
 
+.ant-btn.editor-page-smart-detect {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: #fff;
+  min-width: 100px;
+  padding: 0 16px;
+}
+
 .editor-page-canvas-container {
   flex: 1;
   overflow: auto;
@@ -95,4 +103,15 @@
 
 .editor-page-collapse-button-right {
   right: 0;
+}
+
+.editor-page-flex-layout {
+  flex: 1;
+}
+
+.editor-page-empty-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255, 255, 255);
 }
