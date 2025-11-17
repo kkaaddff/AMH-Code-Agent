@@ -13,6 +13,7 @@ This is the **FTA MasterGo-to-App Platform** - an enterprise-level "Design-to-Co
 | `code-agent-backend/` | Midway 3 (Egg.js) API that ingests MasterGo designs, versions DSL/annotations, streams requirement docs through a model gateway, manages Bull-driven code generation tasks, exposes project CRUD utilities, and powers the `/neo/send` agent SSE endpoint. | Node 20.19.5, Midway, MongoDB 5.13, Redis 4.28, Bull | 7001 |
 | `fta-layout-design/` | React + Vite UI with Ant Design & Valtio stores. Hosts dashboard/requirement/technical pages and the component-detection editor with 3D inspector, PRD/OpenAPI side panels, and code-generation drawer. | Node 20.19.5, React 19, AntD 5, Vite 5 | 5173 |
 | `messages-replayer/` | CLI that replays `messages.log` sessions exactly or re-sends them to any OpenAI-compatible endpoint. | Node 18+ | N/A |
+| `fta-agent-core/` | TypeScript agent runtime powering NEOVATE/automation flows; encapsulates `AgentService`, run-loop, tool orchestration, MCP connectivity, and the `runFrontendProjectWorkflow` helper. | Node 20+, TypeScript, ai-sdk, Vitest | N/A |
 
 Generated artifacts (`dist/`, `logs/`, `run/`, `files-cache/`, `messages-replayer/output/`) stay out of git.
 
@@ -43,6 +44,11 @@ amh_code_agent/
 │   │   ├── components/, contexts/, services/, utils/
 │   │   └── docs/              (function inventory, refactor notes)
 │   └── vite.config.ts, tailwind.config.js
+├── fta-agent-core/
+│   ├── src/                (agentService, loop, tools, prompts, frontend workflow)
+│   ├── docs/               (agent lifecycle + frontend workflow guides)
+│   ├── scripts/            (build helpers, import fixer)
+│   └── mock-specs/         (copied into dist for prompts/spec fixtures)
 └── messages-replayer/
     ├── src/ (parser/replayer/llmClient)
     └── messages.log (input)
@@ -75,6 +81,14 @@ npm run build            # TypeScript compilation + build
 npm run preview          # preview production build
 ```
 
+### Agent Core Library (fta-agent-core)
+```bash
+cd fta-agent-core
+yarn install
+yarn build               # cleans dist, compiles TS, copies mock-specs
+yarn typecheck           # TS only; use npx vitest when editing tests
+```
+
 ### Messages Replayer CLI
 ```bash
 cd messages-replayer
@@ -83,6 +97,13 @@ npm run parse            # summary of messages.log
 npm run replay           # reproduce log exactly
 npm run replay:live      # send to live endpoint (requires MODEL_* env)
 ```
+
+## Agent Core Notes (fta-agent-core)
+
+- Entrypoints: `createAgentService` (`src/agentService.ts`) bundles `Context`, `Session`, run-loop, tool resolver, MCP + background tasks; `runFrontendProjectWorkflow` (`src/frontendProjectService.ts`) is a one-shot pipeline that wires todo/spec/file-draft tools and emits drafts while streaming model output.
+- Prompts/tooling: `src/prompts/*` (system/plan/compact/frontend); `src/tools/*` + `src/tool.ts` define repo/todo/spec/file draft tools and approval rules; `src/loop.ts` drives streaming + tool-call dispatch.
+- Build: `scripts/build.mjs` cleans `dist`, compiles TS, fixes imports, then copies `mock-specs` into the bundle. Keep fixtures in sync when updating prompts/specs.
+- Logging/state: `src/jsonl.ts` + `src/history.ts` track messages for replay; `src/backgroundTaskManager.ts` manages bash tasks consumed by `bash`/`bash_output`/`kill_bash` tools.
 
 ## Backend Architecture (code-agent-backend)
 

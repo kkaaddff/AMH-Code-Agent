@@ -4,6 +4,7 @@
 - `code-agent-backend/` – Midway 3 + Egg web service (Node 20.19.5) that ingests MasterGo links, versions DSL + annotations, generates requirement docs through the model gateway, orchestrates Bull-based code generation tasks, and exposes project/DSL utilities plus the `/neo/send` streaming agent endpoint.
 - `fta-layout-design/` – React 19 + TypeScript + Vite app that hosts the dashboard, requirement & technical overviews, and the component-detection editor (Valtio stores + Ant Design). Shared docs such as `docs/function-inventory.md` and `docs/refactor-opportunities.md` live here.
 - `messages-replayer/` – Lightweight Node 18+ CLI that replays `messages.log` sessions and can re-send them to any OpenAI-compatible endpoint (uses `MODEL_*` env vars).
+- `fta-agent-core/` – TypeScript agent runtime powering NEOVATE CLI flows; wraps `AgentService`, run-loop/tooling, background task manager, MCP integration, and the `runFrontendProjectWorkflow` helper. See `fta-agent-core/docs/*.md` for lifecycle diagrams and workflow guidance.
 - Keep generated assets (`dist/`, `logs/`, `run/`, `files-cache/`, `output/`) untracked.
 
 ## Backend Service (`code-agent-backend/`)
@@ -33,6 +34,12 @@
 - Services (`src/services/*.ts`) wrap `api.requirement`, `api.project`, etc., and can fall back to mock data through `VITE_ENABLE_MOCK`. `src/utils/apiService.ts` centralizes fetch logic and honours `VITE_API_BASE_URL` + timeout.
 - Local documentation: `docs/function-inventory.md` (exhaustive function map) & `docs/refactor-opportunities.md` (tech debt log).
 
+## Agent Core Library (`fta-agent-core/`)
+- Purpose: reusable LLM agent runtime for CLI/automation. Exposes `createAgentService` (Context + Session + runLoop) and `runFrontendProjectWorkflow` (one-shot frontend generation pipeline with todo/spec/file-draft tools).
+- Key files: `src/agentService.ts`, `src/loop.ts`, `src/tool.ts`, `src/frontendProjectService.ts`, `src/prompts/*`, `src/tools/*`, `src/context.ts`, `src/session.ts`.
+- Docs: `docs/agent-service-lifecycle.md` (architecture + call chains), `docs/frontend-project-workflow.md` (parameter/return contract), `docs/runFrontendProjectWorkflow-browser-compatibility.md`.
+- Build script copies `mock-specs` into `dist` (run via `yarn build`); `yarn typecheck` validates TS. Optional unit specs live beside sources (`*.test.ts`, `vitest.config.ts`).
+
 ## Message Replayer (`messages-replayer/`)
 - Parses `../messages.log`, replays sessions verbatim (`npm run replay`), or re-sends each `uid` bucket to a live endpoint with `npm run replay:live` (requires `MODEL_ENDPOINT`, `MODEL_API_KEY`, optional `MODEL_NAME`, `MODEL_TEMPERATURE`, `MODEL_TIMEOUT`). Parsed summaries available via `npm run parse`.
 - Core files: `src/parser.js`, `src/replayer.js`, `src/llmClient.js`, `src/config.js`. Outputs live in `messages-replayer/output/`.
@@ -42,6 +49,7 @@
 | --- | --- | --- | --- | --- |
 | `code-agent-backend/` | `npm install` | `npm run dev` (hot reload) | `npm run build && npm start`, or `./start.sh <port>` | `npm run lint`, `npm run lint:fix`, `npm run prettier`, `npm run test`, `npm run cov` |
 | `fta-layout-design/` | `npm install` | `npm run dev` | `npm run build`, `npm run preview` | (Add Vitest/RTL when touching logic; currently manual verification) |
+| `fta-agent-core/` | `yarn install` | N/A | `yarn build` | `yarn typecheck` (use `npx vitest` when editing tests) |
 | `messages-replayer/` | `npm install` | `npm run replay` (default) | N/A | N/A |
 
 ## Coding Expectations
