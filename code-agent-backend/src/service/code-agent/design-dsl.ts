@@ -2,7 +2,7 @@ import { Inject, Provide } from '@midwayjs/decorator';
 import fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import sharp from 'sharp';
+import axios from 'axios';
 import { Redis, RedisService } from '@midwayjs/redis';
 import { InjectEntityModel } from '@midwayjs/typegoose';
 import { ReturnModelType } from '@typegoose/typegoose';
@@ -48,18 +48,12 @@ export class DesignDSLService {
   }
 
   /**
-   * 生成随机文件名
-   */
-  private generateFileName(): string {
-    return crypto.randomBytes(16).toString('hex');
-  }
-
-  /**
    * 计算路径数据摘要（支持多个 path 项）
    */
   private getPathDigest(pathItems: PathItem[]): string {
     const combined = pathItems.map((item) => `${item.data || ''}:${item.fill || ''}`).join('|');
-    return crypto.createHash('sha256').update(combined).digest('hex');
+    // 取 sha256 前 16 字符, 保持唯一性和长度要求
+    return crypto.createHash('sha256').update(combined).digest('hex').slice(0, 16);
   }
 
   /**
@@ -282,26 +276,22 @@ export class DesignDSLService {
       return cachedUrl;
     }
     console.log(`❌ ${digest} not cached image url, convert to png`);
-    // 构建 SVG 内容，合并所有 path 项
-    const pathElements = pathItems
-      .filter((item) => item.data)
-      .map((item) => {
-        const color = this.getColorFromFillStyle(item.fill || '', dslData);
-        return `  <path d="${item.data}" fill="${color}" />`;
-      })
-      .join('\n');
-
-    const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-${pathElements}
-</svg>`;
-
-    // 将SVG字符串转换为Buffer
-    const svgBuffer = Buffer.from(svgContent);
 
     try {
-      // 使用 sharp 将 SVG 转换为 PNG Buffer
-      const pngBuffer = await sharp(svgBuffer).png().toBuffer();
+      const response = await axios({
+        method: 'POST',
+        url: 'https://qa-fta-server.amh-group.com/design/convert-svg-path-to-png',
+        data: {
+          pathItems,
+          width,
+          height,
+          styles: dslData.styles,
+        },
+        responseType: 'arraybuffer',
+        timeout: 600_000,
+      });
+
+      const pngBuffer = Buffer.from(response.data);
 
       // 上传到 OSS
       const ossService = this.ossManagement.getOssService('fta-snapshot');
@@ -337,34 +327,6 @@ ${pathElements}
       console.error('Error converting SVG to PNG with sharp:', error);
       throw error;
     }
-  }
-
-  /**
-   * 从填充样式获取颜色值（从 DSL styles 中解析）
-   */
-  private getColorFromFillStyle(fillStyle: string, dslData?: DSLData): string {
-    if (!fillStyle || !fillStyle.startsWith('paint_')) {
-      return fillStyle || '#000000';
-    }
-
-    if (!dslData || !dslData.styles) {
-      return '#000000';
-    }
-
-    const style = dslData.styles[fillStyle];
-    if (!style) {
-      return '#000000';
-    }
-
-    // 处理颜色值数组格式（如 ["#FFFFFF"]）
-    if (Array.isArray(style.value) && style.value.length > 0) {
-      const firstValue = style.value[0];
-      if (typeof firstValue === 'string') {
-        return firstValue;
-      }
-    }
-
-    return '#000000';
   }
 
   /**
@@ -510,36 +472,6 @@ ${pathElements}
       console.error('Error reading DesignDSL file:', error);
       throw error;
     }
-  }
-
-  /**
-   * 公共方法：转换单个SVG路径（保持向后兼容）
-   */
-  public async convertSinglePath(
-    pathData: string,
-    fillStyle: string,
-    iconName: string | undefined
-  ): Promise<{
-    imageUrl: string;
-    styleId: string;
-    svgPath: string;
-  }> {
-    // 为了向后兼容，创建一个临时的 DSL 数据
-    const tempDSL: DSLData = {
-      styles: {},
-      nodes: [],
-    };
-
-    const pathItems: PathItem[] = [{ data: pathData, fill: fillStyle }];
-    const imageUrl = await this.convertSvgPathToPng(pathItems, 48, 48, tempDSL);
-    const styleId = this.generateId();
-    const svgPath = path.join(this.tempDir, `${this.generateFileName()}.svg`);
-
-    return {
-      imageUrl,
-      styleId,
-      svgPath,
-    };
   }
 
   /**

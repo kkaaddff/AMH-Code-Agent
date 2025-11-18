@@ -2,7 +2,7 @@ import { App as AntApp, ConfigProvider, Spin, theme } from 'antd';
 import 'antd/dist/reset.css';
 import zhCN from 'antd/locale/zh_CN';
 import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes } from 'react-router-dom';
+import { data, BrowserRouter as Router, Routes } from 'react-router-dom';
 import './App.css';
 import { routes } from './config/routes';
 import { renderRoutes } from './utils/routerUtils';
@@ -12,15 +12,15 @@ function App() {
   const [initializing, setInitializing] = useState<boolean>(true);
 
   useEffect(() => {
-    // 如果是开发环境，直接跳过用户信息初始化
-    if (import.meta.env.MODE === 'development') {
-      setInitializing(false);
-      return;
-    }
-
     const initUserInfo = async () => {
       try {
         if (!callService) {
+          // 如果是开发环境，直接跳过用户信息初始化
+          window.workspaceInfo = {
+            gitUrl: 'https://github.com/amh-group/fta-demo.git',
+            workdir: '/test/demo',
+            srcTree: [],
+          };
           return;
         }
 
@@ -34,6 +34,7 @@ function App() {
           const projectPath = await callService('project', 'getProjectRootPath');
           const data = await callService('project', 'getProjectGitInfo');
           const tree: TreeNode[] = await callService('common', 'getTreeData', { dir: projectPath + '/src', depth: 2 });
+
           window.workspaceInfo = {
             gitUrl: data?.remoteUrl,
             workdir: projectPath,

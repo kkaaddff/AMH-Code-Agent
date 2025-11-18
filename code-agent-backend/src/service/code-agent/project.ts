@@ -660,9 +660,14 @@ export class ProjectService {
       throw new Error('用户 ID 不能为空');
     }
     let resolvedGitId = 'empty';
-    if (params.gitUrl) {
-      resolvedGitId = await this.gitlabService.getGitlabProjectId(params.gitUrl);
 
+    try {
+      resolvedGitId = await this.gitlabService.getGitlabProjectId(params.gitUrl);
+    } catch (error) {
+      console.warn('Failed to get GitLab project ID', params.gitUrl);
+    }
+
+    if (params.gitUrl) {
       matchedProject = await this.projectEntity
         .findOne({ userId, gitId: resolvedGitId })
         .populate(this.projectPagesPopulateOptions);

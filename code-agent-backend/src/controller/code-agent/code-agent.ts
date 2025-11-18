@@ -83,16 +83,6 @@ export class CodeAgentController {
   }
 
   /**
-   * 转换单个SVG路径
-   */
-  @Post('/dsl/convert-path')
-  async convertPath(@Body() body: ConvertPathRequest): Promise<ConvertPathResponse> {
-    const result = await this.designDSLService.convertSinglePath(body.pathData, body.fillStyle, body.iconName);
-
-    return new ConvertPathResponse(result.imageUrl, result.styleId, result.svgPath);
-  }
-
-  /**
    * 获取 GitLab 项目 ID
    */
   @Post('/gitlab/project-id')
