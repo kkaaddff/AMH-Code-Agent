@@ -13,6 +13,7 @@ import { TodoItem } from './CodeGenerationLoop/types';
 export interface FrontendWorkflowParams {
   designDocId: string;
   productName?: string;
+  srcTree?: TreeNode[];
 }
 
 export interface FileProposal {
@@ -57,6 +58,7 @@ export class FrontendWorkflowScheduler {
         body: JSON.stringify({
           designDocId: params.designDocId,
           productName: params.productName || 'FTA-Frontend',
+          srcTree: params.srcTree || [],
         }),
         signal: this.abortController.signal,
       });

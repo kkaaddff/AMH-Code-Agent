@@ -448,15 +448,33 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
           borderTop: '1px solid rgb(240, 240, 240)',
           background: 'rgb(255, 255, 255)',
         }}>
-        <Space size='small' style={{ width: '100%', justifyContent: 'center' }}>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 24px',
+          }}>
           <Button type='primary' size='small' icon={<SaveOutlined />} onClick={onSave} style={{ minWidth: '80px' }}>
             保存
           </Button>
-          <Button size='small' icon={<ThunderboltOutlined />} onClick={onGenerateCode} style={{ minWidth: '120px' }}>
-            生成代码
-          </Button>
+          <div
+            role='button'
+            tabIndex={0}
+            className='gradient-action-button gradient-action-button--wide'
+            onClick={onGenerateCode}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onGenerateCode?.();
+              }
+            }}>
+            <ThunderboltOutlined />
+            <span>生成代码</span>
+          </div>
           {modelStatusTag}
-        </Space>
+        </div>
       </div>
 
       {/* 添加文档模态框 */}

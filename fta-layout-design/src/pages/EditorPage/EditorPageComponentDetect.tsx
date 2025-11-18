@@ -173,6 +173,7 @@ const EditorPageContent: React.FC = () => {
         {
           designDocId: selectedDocument!.id!,
           productName: 'FTA-Frontend',
+          srcTree: window.workspaceInfo?.srcTree || [],
         },
         {
           onIterationStart: (iteration) => {
@@ -423,15 +424,22 @@ const EditorPageContent: React.FC = () => {
                     <Title level={5} className='editor-page-title'>
                       组件标注编辑器
                     </Title>
-                    <Space>
-                      <Button
-                        size='small'
-                        icon={<ThunderboltOutlined />}
-                        onClick={handleSmartDetection}
-                        disabled={isSmartDetecting}
-                        className='editor-page-smart-detect'>
-                        {isSmartDetecting ? '智能识别中...' : '智能识别'}
-                      </Button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div
+                        role='button'
+                        tabIndex={isSmartDetecting ? -1 : 0}
+                        aria-disabled={isSmartDetecting}
+                        className={`gradient-action-button ${isSmartDetecting ? 'is-disabled' : ''}`}
+                        onClick={isSmartDetecting ? undefined : handleSmartDetection}
+                        onKeyDown={(e) => {
+                          if ((e.key === 'Enter' || e.key === ' ') && !isSmartDetecting) {
+                            e.preventDefault();
+                            handleSmartDetection();
+                          }
+                        }}>
+                        <ThunderboltOutlined />
+                        <span>{isSmartDetecting ? '智能识别中...' : '智能识别'}</span>
+                      </div>
                       <Button
                         size='small'
                         type={componentDetectionStoreSnapshot.showAllBorders ? 'primary' : 'default'}
@@ -468,7 +476,7 @@ const EditorPageContent: React.FC = () => {
                           {Math.round(scale * 100)}% <DownOutlined />
                         </a>
                       </Dropdown>
-                    </Space>
+                    </div>
                   </div>
 
                   <div className='editor-page-canvas-container'>

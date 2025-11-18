@@ -6,6 +6,7 @@ import { DesignDSL } from '../../types';
 import { ModelGatewayConfig } from '../common/model-gateway';
 import { DesignDSLService } from './design-dsl';
 import { ProjectService } from './project';
+import { TreeNode } from '../../dto/code-agent/frontend-workflow.dto';
 
 let agentCorePromise: Promise<typeof import('@fta/agent-core')> | null = null;
 let annotationUtilsPromise: Promise<typeof import('@fta/agent-core/dist/utils/annotation')> | null = null;
@@ -45,6 +46,7 @@ export interface FrontendWorkflowOptions {
   sessionId: string;
   signal?: AbortSignal;
   callbacks?: FrontendProjectWorkflowCallbacks;
+  srcTree?: TreeNode[];
 }
 
 export interface FrontendWorkflowResult {
@@ -81,7 +83,7 @@ export class FrontendWorkflowService {
    * 执行前端项目生成工作流
    */
   async runWorkflow(options: FrontendWorkflowOptions): Promise<FrontendWorkflowResult> {
-    const { designDocId, productName, sessionId, signal, callbacks } = options;
+    const { designDocId, productName, sessionId, signal, callbacks, srcTree } = options;
     const workflowStartTime = Date.now();
 
     console.log(`frontend-workflow: [${sessionId}] 🏭 开始执行前端工作流服务`);

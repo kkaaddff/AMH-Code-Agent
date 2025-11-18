@@ -38,7 +38,7 @@ const InternalProjectPage: React.FC = () => {
     window.userInfo?.jobNumber ||
     '当前登录用户';
 
-  const fetchResolution = useCallback(async () => {
+  const fetchResolution = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -58,11 +58,11 @@ const InternalProjectPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [gitUrl, workdir]);
+  };
 
   useEffect(() => {
     fetchResolution();
-  }, [fetchResolution]);
+  }, []);
 
   const handleBindProject = async (projectId: string) => {
     setBindingProjectId(projectId);

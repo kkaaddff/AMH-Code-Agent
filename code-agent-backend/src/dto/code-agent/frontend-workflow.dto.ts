@@ -1,6 +1,13 @@
 import { ApiProperty } from '@midwayjs/swagger';
 import { Rule, RuleType } from '@midwayjs/validate';
 
+export interface TreeNode {
+  name: string;
+  path: string;
+  type: 'file' | 'directory';
+  children?: TreeNode[];
+}
+
 export class FrontendWorkflowRequestDTO {
   @ApiProperty({
     required: true,
@@ -17,4 +24,12 @@ export class FrontendWorkflowRequestDTO {
   })
   @Rule(RuleType.string().optional())
   productName?: string;
+
+  @ApiProperty({
+    required: false,
+    example: [],
+    description: 'src 目录树结构',
+  })
+  @Rule(RuleType.array().optional())
+  srcTree?: TreeNode[];
 }
