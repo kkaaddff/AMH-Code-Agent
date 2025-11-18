@@ -1,13 +1,13 @@
 import fs from 'fs';
 import path from 'pathe';
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { createTool } from '../tool';
-import { getModuleDirname } from '../utils/modulePaths';
 import { safeStringify } from '../utils/safeStringify';
 
 export type SpecRegistry = Record<string, string>;
 
-const THIS_DIR = getModuleDirname();
+const THIS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(THIS_DIR, '../..');
 const MOCK_SPEC_DIR = path.join(PACKAGE_ROOT, 'mock-specs');
 

@@ -2,14 +2,15 @@ import { execFile } from 'child_process';
 import createDebug from 'debug';
 import path from 'pathe';
 import { findActualExecutable } from 'spawn-rx';
+import { fileURLToPath } from 'url';
 import { isLocal } from './isLocal';
-import { getModuleDirname } from './modulePaths';
 
 const debug = createDebug('code agent core:utils:ripgrep');
 
-const _dirname = getModuleDirname();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const rootDir = isLocal() ? path.resolve(_dirname, '../../') : path.resolve(_dirname, '../');
+const rootDir = isLocal() ? path.resolve(__dirname, '../../') : path.resolve(__dirname, '../');
 
 function ripgrepPath() {
   const { cmd } = findActualExecutable('rg', []);

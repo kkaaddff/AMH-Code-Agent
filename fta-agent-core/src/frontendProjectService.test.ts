@@ -1,5 +1,6 @@
 import { config as loadEnv } from 'dotenv';
 import fs from 'fs';
+import { fileURLToPath } from 'node:url';
 import path from 'pathe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runFrontendProjectWorkflow } from './frontendProjectService';
@@ -7,18 +8,17 @@ import { createSpecReaderTool } from './tools/specReader';
 import { FileDraftStore } from './tools/fileDraft';
 import type { Usage } from './usage';
 import { flattenAnnotation, formatAnnotationSummary, type AnnotationNode } from './utils/annotation';
-import { getModuleDirname } from './utils/modulePaths';
 loadEnv({ path: path.join(process.cwd(), '.env') });
 
-const CURRENT_DIR = getModuleDirname();
-const PACKAGE_ROOT = path.resolve(CURRENT_DIR, '..');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PACKAGE_ROOT = path.resolve(__dirname, '..');
 
 // 推荐：输入给 LLM 的 JSON 一律压缩
 const rootAnnotation = JSON.stringify(
-  JSON.parse(fs.readFileSync(path.join(CURRENT_DIR, 'tests/fixtures/rootAnnotation.json'), 'utf-8'))
+  JSON.parse(fs.readFileSync(path.join(__dirname, 'tests/fixtures/rootAnnotation.json'), 'utf-8'))
 );
 const designDsl = JSON.stringify(
-  JSON.parse(fs.readFileSync(path.join(CURRENT_DIR, 'tests/fixtures/designDsl.json'), 'utf-8'))
+  JSON.parse(fs.readFileSync(path.join(__dirname, 'tests/fixtures/designDsl.json'), 'utf-8'))
 );
 
 const rootAnnotationSummary = formatAnnotationSummary(flattenAnnotation(JSON.parse(rootAnnotation) as AnnotationNode));
