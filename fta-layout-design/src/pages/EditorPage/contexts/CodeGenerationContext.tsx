@@ -82,8 +82,20 @@ export const codeGenerationActions = {
       const existing = previousItems.find((item) => item.id === todoId);
 
       let status: ThoughtChainItem['status'] = 'pending';
-      if (todo.status === 'completed') status = 'success';
-      else if (todo.status === 'in_progress') status = 'in_progress';
+      if (todo.status === 'completed') {
+        status = 'success';
+      } else if (todo.status === 'in_progress') {
+        status = 'in_progress';
+      }
+
+      let finishedAt: string | undefined;
+      if (existing?.finishedAt) {
+        finishedAt = existing.finishedAt;
+      } else if (status === 'success') {
+        finishedAt = now;
+      } else {
+        finishedAt = undefined;
+      }
 
       return {
         id: todoId,
@@ -91,7 +103,7 @@ export const codeGenerationActions = {
         status,
         content: todo.content || existing?.content || '',
         startedAt: existing?.startedAt || now,
-        finishedAt: status === 'success' ? now : undefined,
+        finishedAt,
         kind: 'task',
       };
     });
