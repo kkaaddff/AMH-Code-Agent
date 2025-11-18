@@ -19,7 +19,7 @@ export class HomeController {
     if (!baseURL) {
       throw new Error('Model gateway baseURL is not configured');
     }
-    return `${baseURL.replace(/\/$/, '')}/v1/chat/completions`;
+    return `${baseURL.replace(/\/$/, '')}/chat/completions`;
   }
 
   private getModelHeaders(): Record<string, string> {

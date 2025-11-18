@@ -172,7 +172,7 @@ export class FrontendWorkflowService {
             }
           : callbacks,
         apiKey: this.modelConfig.apiKey,
-        baseURL: this.modelConfig.baseURL + '/v1',
+        baseURL: this.modelConfig.baseURL,
       });
 
       const workflowEngineDuration = Date.now() - workflowEngineStart;
