@@ -578,10 +578,10 @@
   resolved "https://npm.amh-group.com/@eslint%2fjs/-/js-8.57.1.tgz#de633db3ec2ef6a3c89e2f19038063e8a122e2c2"
   integrity sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==
 
-"@fta/agent-core@0.0.1":
-  version "0.0.1"
-  resolved "https://npm.amh-group.com/@fta%2fagent-core/-/agent-core-0.0.1.tgz#ea79a8cc67b8a867d1839d3579800b730665812b"
-  integrity sha512-VTEn2yXD56kpqJceVvkvf1Yx6nMHm0DmE7m7xubKQP/yRTBtbNubZZczuv0tF+D7ovgnJTmiVi+vMG3f0ibgzw==
+"@fta/agent-core@0.0.4":
+  version "0.0.4"
+  resolved "https://npm.amh-group.com/@fta%2fagent-core/-/agent-core-0.0.4.tgz#3559dfb24a4de0853bd181857721a3450b6608db"
+  integrity sha512-YlPxsPv2+qpxv2Rkx5Is1WQRpaHvqGfhR3O6bsPUeDI9SwPASoLsTJIqF5rqgpBvRW7ftM2RlvdGO3QgiMA4zA==
   dependencies:
     "@ai-sdk/anthropic" "^2.0.41"
     "@ai-sdk/deepseek" "^1.0.27"
