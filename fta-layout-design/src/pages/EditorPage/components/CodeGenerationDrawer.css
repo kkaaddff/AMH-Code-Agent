@@ -1,0 +1,145 @@
+.code-generation-drawer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cg-drawer-title {
+  margin: 0;
+}
+
+.cg-drawer-subtitle {
+  font-size: 12px;
+}
+
+.cg-modal-warning {
+  margin-bottom: 0;
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+.cg-modal-icon {
+  color: #ff4d4f;
+}
+
+.cg-alert {
+  margin-bottom: 16px;
+}
+
+.cg-section-title {
+  margin-bottom: 12px;
+}
+
+.cg-todo-list {
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+.cg-todo-empty {
+  padding: 32px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.cg-todo-item {
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #fff;
+}
+
+.cg-todo-item-completed {
+  background-color: #f6ffed;
+}
+
+.cg-todo-item-in-progress {
+  background-color: #e6f7ff;
+}
+
+.cg-todo-item-row {
+  width: 100%;
+}
+
+.cg-todo-icon {
+  color: #d9d9d9;
+  font-size: 16px;
+  margin-top: 2px;
+}
+
+.cg-todo-icon.completed {
+  color: #52c41a;
+}
+
+.cg-todo-icon.in-progress {
+  color: #1890ff;
+}
+
+.cg-todo-item-content {
+  flex: 1;
+}
+
+.cg-todo-item-title {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.cg-todo-item-title.completed {
+  text-decoration: line-through;
+  color: #8c8c8c;
+}
+
+.cg-todo-item-title.default {
+  text-decoration: none;
+  color: #000;
+}
+
+.cg-todo-item-desc {
+  font-size: 12px;
+}
+
+.cg-todo-item-desc.completed {
+  text-decoration: line-through;
+}
+
+.cg-todo-item-desc.default {
+  text-decoration: none;
+}
+
+.cg-todo-item-time {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.cg-iteration-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.cg-iteration-container {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background-color: #fafafa;
+  min-height: 200px;
+  overflow: auto;
+  flex: 1;
+  margin-bottom: 16px;
+}
+
+.cg-iteration-content {
+  padding: 16px;
+}
+
+.cg-iteration-empty {
+  padding: 32px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.cg-iteration-empty-text {
+  font-size: 14px;
+}

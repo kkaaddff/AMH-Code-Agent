@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Inject, Post, Query } from '@midwayjs/decorator';
 import { Context } from '@midwayjs/web';
 import * as path from 'path';
+import { GetGitlabProjectIdRequest } from '../../dto/code-agent/req';
+import { GetGitlabProjectIdResponse } from '../../dto/code-agent/res';
 import {
-  ConvertPathRequest,
-  ConvertPathResponse,
   GetDSLDataResponse,
   ProcessDSLDataRequest,
   ProcessDSLDataResponse,
@@ -11,8 +11,6 @@ import {
   RedisSetRequest,
   RedisSetResponse,
 } from '../../dto/design-dsl';
-import { GetGitlabProjectIdRequest } from '../../dto/code-agent/req';
-import { GetGitlabProjectIdResponse } from '../../dto/code-agent/res';
 import { DesignDSLService } from '../../service/code-agent/design-dsl';
 import { GitlabService } from '../../service/code-agent/gitlab.service';
 import { DesignDSL } from '../../types/design-dsl';

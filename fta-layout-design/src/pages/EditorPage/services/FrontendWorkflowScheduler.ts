@@ -46,7 +46,6 @@ export class FrontendWorkflowScheduler {
   async execute(params: FrontendWorkflowParams, callbacks: FrontendWorkflowCallbacks = {}): Promise<void> {
     this.abortController = new AbortController();
     this.currentIteration = 0;
-    console.log('execute params', params);
 
     try {
       const response = await fetch(buildApiUrl('/code-agent/frontend-workflow'), {
@@ -56,8 +55,8 @@ export class FrontendWorkflowScheduler {
           Accept: 'text/event-stream',
         },
         body: JSON.stringify({
-          designDocId: '690ab433aed2d277ac31d6c7',
-          productName: 'FTA-Frontend',
+          designDocId: params.designDocId,
+          productName: params.productName || 'FTA-Frontend',
         }),
         signal: this.abortController.signal,
       });

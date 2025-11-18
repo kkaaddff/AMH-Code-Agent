@@ -599,7 +599,7 @@ export class ProjectService {
     // Get document reference
     const document = await this.documentReferenceEntity.findOne(
       {
-        _id: documentId,
+        id: documentId,
       },
       null,
       { lean: true }
@@ -609,7 +609,7 @@ export class ProjectService {
       return null;
     }
 
-    return document;
+    return document as DocumentReference;
   }
 
   /**

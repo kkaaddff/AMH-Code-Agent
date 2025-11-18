@@ -1,6 +1,7 @@
 import type { AnnotationNode } from '@fta/agent-core/dist/utils/annotation';
 import { modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { EntityModel } from '@midwayjs/typegoose';
+import { DesignDSL } from '../../types';
 
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'completed' | 'editing';
 
@@ -37,7 +38,7 @@ export class DocumentReference {
   lastSyncAt?: Date;
 
   @prop({ type: Object })
-  data?: Record<string, any>;
+  data?: DesignDSL;
 
   @prop({ type: Object })
   annotationData?: AnnotationNode | null;

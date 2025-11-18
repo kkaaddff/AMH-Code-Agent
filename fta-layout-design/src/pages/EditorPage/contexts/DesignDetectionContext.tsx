@@ -422,7 +422,7 @@ const fetchDesignDocumentDSLInternal = async (doc: DocumentReference): Promise<v
   target.error = null;
 
   try {
-    const response = await api.project.document.getContent({ documentId: doc._id });
+    const response = await api.project.document.getContent({ documentId: doc.id });
     const rawDslData: DesignDSL | undefined = response?.data?.data;
     if (!rawDslData) {
       throw new Error('没有获取到DSL数据');

@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { Streamdown } from 'streamdown';
 import { useSnapshot } from 'valtio/react';
 import { codeGenerationActions, codeGenerationStore } from '../contexts/CodeGenerationContext';
+import './CodeGenerationDrawer.css';
 
 const { Text, Title } = Typography;
 
@@ -25,11 +26,11 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ abortGenera
     if (generationStatus === 'generating') {
       Modal.confirm({
         title: '确认强制退出',
-        icon: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
+        icon: <ExclamationCircleOutlined className='cg-modal-icon' />,
         content: (
           <div>
             <p>代码生成正在进行中，强制退出将中断当前任务。</p>
-            <p style={{ marginBottom: 0, color: '#ff4d4f', fontWeight: 500 }}>此操作不可恢复，确定要退出吗？</p>
+            <p className='cg-modal-warning'>此操作不可恢复，确定要退出吗？</p>
           </div>
         ),
         okText: '强制退出',
@@ -54,7 +55,7 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ abortGenera
     return iterationItems
       .map((item) => {
         const content = (item.content || '').trim();
-        if (content === '') {
+        if (content === '' || content === '<think></think>') {
           return '';
         }
 
@@ -87,10 +88,10 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ abortGenera
     <Drawer
       title={
         <Space direction='vertical' size={4}>
-          <Title level={5} style={{ margin: 0 }}>
+          <Title level={5} className='cg-drawer-title'>
             代码生成
           </Title>
-          <Text type='secondary' style={{ fontSize: 12 }}>
+          <Text type='secondary' className='cg-drawer-subtitle'>
             根据模型调用实时追踪生成进度
           </Text>
         </Space>
@@ -100,151 +101,122 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ abortGenera
       open={isDrawerOpen}
       closable={{ placement: 'end' }}
       maskClosable={false}
+      styles={{ body: { overflow: 'hidden' } }}
       onClose={handleClose}>
-      {generationStatus === 'generating' && (
-        <Alert
-          message='  代码生成正在进行中，请耐心等待。'
-          type='info'
-          showIcon
-          icon={<LoadingOutlined spin />}
-          style={{ marginBottom: 16 }}
-        />
-      )}
-      {generationStatus === 'completed' && (
-        <Alert
-          message='代码生成完成'
-          description='代码生成已成功完成，您可以查看下方的运行日志了解详细信息。'
-          type='success'
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-      )}
-      {generationStatus === 'failed' && (
-        <Alert
-          message='代码生成失败'
-          description='代码生成过程中出现错误，请查看下方的运行日志了解详细信息，或重新尝试生成。'
-          type='error'
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-      )}
+      <div className='code-generation-drawer'>
+        {generationStatus === 'generating' && (
+          <Alert
+            message='  代码生成正在进行中，请耐心等待。'
+            type='info'
+            showIcon
+            icon={<LoadingOutlined spin />}
+            className='cg-alert'
+          />
+        )}
+        {generationStatus === 'completed' && (
+          <Alert
+            message='代码生成完成'
+            description='代码生成已成功完成，您可以查看下方的运行日志了解详细信息。'
+            type='success'
+            showIcon
+            className='cg-alert'
+          />
+        )}
+        {generationStatus === 'failed' && (
+          <Alert
+            message='代码生成失败'
+            description='代码生成过程中出现错误，请查看下方的运行日志了解详细信息，或重新尝试生成。'
+            type='error'
+            showIcon
+            className='cg-alert'
+          />
+        )}
 
-      {/* 上视图：TODO 列表 */}
-      <div style={{ marginBottom: 16 }}>
-        <Title level={5} style={{ marginBottom: 12 }}>
-          任务列表 ({todoItems.length})
-        </Title>
-        <div
-          style={{
-            maxHeight: '60vh',
-            overflow: 'auto',
-            border: '1px solid #f0f0f0',
-            borderRadius: 8,
-            backgroundColor: '#fafafa',
-          }}>
-          {todoItems.length > 0 ? (
-            <List
-              size='small'
-              dataSource={todoItems}
-              renderItem={(item) => {
-                const isCompleted = item.status === 'success';
-                const isInProgress = item.status === 'in_progress';
+        {/* 上视图：TODO 列表 */}
+        <div className='cg-section'>
+          <Title level={5} className='cg-section-title'>
+            任务列表 ({todoItems.length})
+          </Title>
+          <div className='cg-todo-list'>
+            {todoItems.length > 0 ? (
+              <List
+                size='small'
+                dataSource={todoItems}
+                renderItem={(item) => {
+                  const isCompleted = item.status === 'success';
+                  const isInProgress = item.status === 'in_progress';
+                  const itemClassName = [
+                    'cg-todo-item',
+                    isCompleted ? 'cg-todo-item-completed' : '',
+                    isInProgress ? 'cg-todo-item-in-progress' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
 
-                return (
-                  <List.Item
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: isCompleted ? '#f6ffed' : isInProgress ? '#e6f7ff' : '#fff',
-                      borderBottom: '1px solid #f0f0f0',
-                    }}>
-                    <Space align='start' size={8} style={{ width: '100%' }}>
-                      {isCompleted ? (
-                        <CheckSquareFilled style={{ color: '#52c41a', fontSize: 16, marginTop: 2 }} />
-                      ) : isInProgress ? (
-                        <LoadingOutlined spin style={{ color: '#1890ff', fontSize: 16, marginTop: 2 }} />
-                      ) : (
-                        <BorderOutlined style={{ color: '#d9d9d9', fontSize: 16, marginTop: 2 }} />
-                      )}
-                      <div style={{ flex: 1 }}>
-                        <Text
-                          style={{
-                            textDecoration: isCompleted ? 'line-through' : 'none',
-                            color: isCompleted ? '#8c8c8c' : '#000',
-                            display: 'block',
-                            marginBottom: 4,
-                          }}>
-                          {item.title}
-                        </Text>
-                        {item.content && item.content !== item.title && (
-                          <Text
-                            type='secondary'
-                            style={{
-                              fontSize: 12,
-                              textDecoration: isCompleted ? 'line-through' : 'none',
-                            }}>
-                            {item.content}
+                  return (
+                    <List.Item className={itemClassName}>
+                      <Space align='start' size={8} className='cg-todo-item-row'>
+                        {isCompleted ? (
+                          <CheckSquareFilled className='cg-todo-icon completed' />
+                        ) : isInProgress ? (
+                          <LoadingOutlined spin className='cg-todo-icon in-progress' />
+                        ) : (
+                          <BorderOutlined className='cg-todo-icon' />
+                        )}
+                        <div className='cg-todo-item-content'>
+                          <Text className={`cg-todo-item-title ${isCompleted ? 'completed' : 'default'}`}>
+                            {item.title}
+                          </Text>
+                          {item.content && item.content !== item.title && (
+                            <Text
+                              type='secondary'
+                              className={`cg-todo-item-desc ${isCompleted ? 'completed' : 'default'}`}>
+                              {item.content}
+                            </Text>
+                          )}
+                        </div>
+                        {item.finishedAt && (
+                          <Text type='secondary' className='cg-todo-item-time'>
+                            {new Date(item.finishedAt).toLocaleTimeString('zh-CN', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                            })}
                           </Text>
                         )}
-                      </div>
-                      {item.startedAt && (
-                        <Text type='secondary' style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
-                          {new Date(item.startedAt).toLocaleTimeString('zh-CN', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                          })}
-                        </Text>
-                      )}
-                    </Space>
-                  </List.Item>
-                );
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                padding: 32,
-                textAlign: 'center',
-                color: 'rgba(0, 0, 0, 0.45)',
-              }}>
-              {generationStatus === 'generating' ? '等待任务列表...' : '暂无任务'}
-            </div>
-          )}
+                      </Space>
+                    </List.Item>
+                  );
+                }}
+              />
+            ) : (
+              <div className='cg-todo-empty'>{generationStatus === 'generating' ? '等待任务列表...' : '暂无任务'}</div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <Divider />
+        <Divider />
 
-      {/* 下视图：迭代信息 */}
-      <div>
-        <Title level={5} style={{ marginBottom: 12 }}>
-          运行日志:
-        </Title>
-        <div
-          style={{
-            border: '1px solid #f0f0f0',
-            borderRadius: 8,
-            backgroundColor: '#fafafa',
-            minHeight: 200,
-            maxHeight: 'calc(40vh - 70px)',
-            overflow: 'auto',
-          }}>
-          {iterationMarkdown ? (
-            <div style={{ padding: 16 }}>
-              <Streamdown isAnimating={generationStatus === 'generating'}>{iterationMarkdown}</Streamdown>
-            </div>
-          ) : (
-            <div
-              style={{
-                padding: 32,
-                textAlign: 'center',
-                color: 'rgba(0, 0, 0, 0.45)',
-              }}>
-              <div style={{ fontSize: 14 }}>
-                {generationStatus === 'generating' ? '正在初始化代码生成...' : '暂无迭代记录，点击「生成代码」开始体验'}
+        {/* 下视图：迭代信息 */}
+        <div className='cg-iteration-section'>
+          <Title level={5} className='cg-section-title'>
+            运行日志:
+          </Title>
+          <div className='cg-iteration-container'>
+            {iterationMarkdown ? (
+              <div className='cg-iteration-content'>
+                <Streamdown isAnimating={generationStatus === 'generating'}>{iterationMarkdown}</Streamdown>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className='cg-iteration-empty'>
+                <div className='cg-iteration-empty-text'>
+                  {generationStatus === 'generating'
+                    ? '正在初始化代码生成...'
+                    : '暂无迭代记录，点击「生成代码」开始体验'}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Drawer>

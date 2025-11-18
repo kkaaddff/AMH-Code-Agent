@@ -2,7 +2,9 @@ import type { FrontendProjectWorkflowCallbacks } from '@fta/agent-core';
 import { Config, Inject, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import fs from 'fs';
 import path from 'path';
+import { DesignDSL } from '../../types';
 import { ModelGatewayConfig } from '../common/model-gateway';
+import { DesignDSLService } from './design-dsl';
 import { ProjectService } from './project';
 
 let agentCorePromise: Promise<typeof import('@fta/agent-core')> | null = null;
@@ -65,6 +67,9 @@ export class FrontendWorkflowService {
   @Config('modelGateway.default')
   private modelConfig: ModelGatewayConfig;
 
+  @Inject()
+  private designDSLService: DesignDSLService;
+
   /**
    * 准备工作目录路径
    */
@@ -103,6 +108,8 @@ export class FrontendWorkflowService {
         };
       }
 
+      const processedDSL = await this.designDSLService.processDesignDSL(dsl as DesignDSL);
+
       // 获取 annotation 摘要
       const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData));
 
@@ -123,7 +130,7 @@ export class FrontendWorkflowService {
       // 调用 workflow
       const result = await runFrontendProjectWorkflow({
         cwd,
-        designDsl: JSON.stringify(dsl),
+        designDsl: JSON.stringify(processedDSL),
         pageAnnotation: annotationSummary,
         productName: productName || 'FTA-Frontend',
         version: '0.0.0',
