@@ -83,6 +83,10 @@ export const API_ENDPOINTS = {
     load: '/code-agent/layout/load',
     preview: '/code-agent/layout/preview',
   },
+  // 模型指标
+  metrics: {
+    latest: '/code-agent/metrics',
+  },
 } as const;
 
 // 完整的API URL构建函数

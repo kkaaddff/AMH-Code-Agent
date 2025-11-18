@@ -496,6 +496,11 @@ export const api = {
     preview: (params: { projectId: string; version?: string }) =>
       ApiService.get(API_ENDPOINTS.layout.preview, { params: params }),
   },
+
+  // 模型指标
+  metrics: {
+    latest: <T = any>() => ApiService.get<T>(API_ENDPOINTS.metrics.latest),
+  },
 };
 
 // 导出默认实例

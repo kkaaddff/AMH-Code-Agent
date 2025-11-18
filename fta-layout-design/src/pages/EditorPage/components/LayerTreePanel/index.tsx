@@ -12,15 +12,18 @@ import {
   SaveOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { App, Button, Collapse, Form, Input, List, Modal, Space, Tag, Tree, Typography } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { App, Button, Collapse, Form, Input, List, Modal, Space, Tag, Tooltip, Tree, Typography } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { TDocumentKeys } from '../../constants';
+import { ModelMetricsSnapshot } from '@/types/modelMetrics';
 import { designDetectionActions, designDetectionStore, useDesignTreeData } from '../../contexts/DesignDetectionContext';
 import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
 import { extractDesignIdFromTopLevelKey, findTopLevelKey } from './utils';
+import { modelMetricsService } from '@/services/modelMetricsService';
 
 const { Title, Text } = Typography;
+type ModelStatus = 'busy' | 'idle' | 'unknown' | 'error';
 
 interface LayerTreePanelProps {
   onDeleteDocument: (type: keyof typeof TDocumentKeys, id: string) => void;
@@ -29,6 +32,34 @@ interface LayerTreePanelProps {
 }
 
 const showLine = { showLeafIcon: false };
+
+const evaluateModelStatus = (snapshot: ModelMetricsSnapshot | null): ModelStatus => {
+  if (!snapshot) {
+    return 'unknown';
+  }
+  const running = snapshot.numRequestsRunning ?? 0;
+  const waiting = snapshot.numRequestsWaiting ?? 0;
+  const kvUsage = snapshot.kvCacheUsagePerc ?? 0;
+
+  if (waiting > 0 || running > 0 || kvUsage >= 0.85) {
+    return 'busy';
+  }
+  return 'idle';
+};
+
+const formatPercent = (value?: number) => {
+  if (value === undefined || Number.isNaN(value)) {
+    return '未知';
+  }
+  return `${Math.round(value * 1000) / 10}%`;
+};
+
+const formatTimestamp = (value?: number) => {
+  if (!value) {
+    return '未采集';
+  }
+  return new Date(value).toLocaleTimeString();
+};
 
 const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSave, onGenerateCode }) => {
   const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
@@ -40,6 +71,9 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
   const [addDocType, setAddDocType] = useState<keyof typeof TDocumentKeys>('design');
   const [addDocForm] = Form.useForm();
   const [syncingStatus, setSyncingStatus] = useState<boolean>(false);
+  const [modelMetrics, setModelMetrics] = useState<ModelMetricsSnapshot | null>(null);
+  const [modelStatus, setModelStatus] = useState<ModelStatus>('unknown');
+  const [modelStatusMessage, setModelStatusMessage] = useState<string>('');
 
   const handleSyncDesignDocument = useCallback(
     async (doc: DocumentReference) => {
@@ -74,6 +108,44 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
     syncing: syncingStatus,
   });
 
+  useEffect(() => {
+    let isMounted = true;
+    let polling = false;
+
+    const pollMetrics = async () => {
+      if (polling) {
+        return;
+      }
+      polling = true;
+      try {
+        const response = await modelMetricsService.getLatest();
+        if (!isMounted) {
+          return;
+        }
+        const snapshot = response.data ?? null;
+        setModelMetrics(snapshot);
+        setModelStatus(evaluateModelStatus(snapshot));
+        const nextMessage = response.message && response.message !== 'Success' ? response.message : '';
+        setModelStatusMessage(nextMessage);
+      } catch (error: any) {
+        if (!isMounted) {
+          return;
+        }
+        setModelStatus('error');
+        setModelStatusMessage(error?.message ?? '无法获取模型指标');
+      } finally {
+        polling = false;
+      }
+    };
+
+    pollMetrics();
+    const timerId = window.setInterval(pollMetrics, 1000);
+    return () => {
+      isMounted = false;
+      clearInterval(timerId);
+    };
+  }, []);
+
   // 处理节点选择
   const handleDesignSelect = (selectedKeys: React.Key[]) => {
     if (selectedKeys.length === 0) {
@@ -95,6 +167,43 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
 
     designDetectionActions.selectAnnotation(nextSelectedKey, false);
   };
+
+  const modelStatusTag = useMemo(() => {
+    const colorMap: Record<ModelStatus, string> = {
+      busy: 'orange',
+      idle: 'green',
+      unknown: 'default',
+      error: 'red',
+    };
+    const textMap: Record<ModelStatus, string> = {
+      busy: '模型繁忙',
+      idle: '模型空闲',
+      unknown: '模型状态未知',
+      error: '模型状态异常',
+    };
+    const running = modelMetrics?.numRequestsRunning ?? 0;
+    const waiting = modelMetrics?.numRequestsWaiting ?? 0;
+    const kvUsage = modelMetrics?.kvCacheUsagePerc;
+
+    return (
+      <Tooltip
+        placement='topRight'
+        title={
+          <div style={{ maxWidth: 240 }}>
+            <div>{textMap[modelStatus]}</div>
+            <div>运行中请求：{running}</div>
+            <div>排队中请求：{waiting}</div>
+            <div>KV 缓存使用率：{formatPercent(kvUsage)}</div>
+            <div>最近采集时间：{formatTimestamp(modelMetrics?.fetchedAt)}</div>
+            {modelStatusMessage && <div>提示：{modelStatusMessage}</div>}
+          </div>
+        }>
+        <Tag color={colorMap[modelStatus]} style={{ marginInlineStart: 4 }}>
+          {textMap[modelStatus]}
+        </Tag>
+      </Tooltip>
+    );
+  }, [modelMetrics, modelStatus, modelStatusMessage]);
 
   // 处理展开/收起
   const handleDesignExpand = (expandedKeysValue: React.Key[]) => {
@@ -346,6 +455,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
           <Button size='small' icon={<ThunderboltOutlined />} onClick={onGenerateCode} style={{ minWidth: '120px' }}>
             生成代码
           </Button>
+          {modelStatusTag}
         </Space>
       </div>
 
