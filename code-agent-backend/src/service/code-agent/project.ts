@@ -595,16 +595,11 @@ export class ProjectService {
    */
   async getDocumentContent(data: GetDocumentContentRequest): Promise<DocumentReference> {
     const { documentId } = data;
-    const userId = this.resolveUserId();
-    if (!userId) {
-      throw new Error('用户 ID 不能为空');
-    }
 
     // Get document reference
     const document = await this.documentReferenceEntity.findOne(
       {
         _id: documentId,
-        userId,
       },
       null,
       { lean: true }
