@@ -217,7 +217,9 @@ export default (appInfo: EggAppInfo) => {
   config.modelGateway = {
     default: {
       baseURL: process.env.OPENAI_BASE_URL,
-      apiKey: btoa(process.env.OPENAI_API_KEY),
+      apiKey: process.env.OPENAI_BASE_URL?.includes('bigmodel')
+        ? process.env.OPENAI_API_KEY
+        : btoa(process.env.OPENAI_API_KEY),
       model: process.env.OPENAI_MODEL,
       timeout: process.env.MODEL_TIMEOUT ? Number(process.env.MODEL_TIMEOUT) : undefined,
       temperature: process.env.MODEL_TEMPERATURE ? Number(process.env.MODEL_TEMPERATURE) : undefined,
