@@ -726,8 +726,10 @@ export class ProjectService {
     }
 
     let resolvedGitId = 'empty';
-    if (params.gitUrl) {
+    try {
       resolvedGitId = await this.gitlabService.getGitlabProjectId(params.gitUrl);
+    } catch (error) {
+      console.warn('Failed to get GitLab project ID', params.gitUrl);
     }
 
     const timestamp = new Date();

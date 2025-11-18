@@ -138,11 +138,7 @@ const EditorPageContent: React.FC = () => {
   };
 
   const handleGenerateCode = async () => {
-    const { selectedDocument } = editorPageStoreSnapshot;
-    if (!selectedDocument?.id) {
-      message.error('请提供设计稿 ID 参数');
-      return;
-    }
+    await handleSave();
 
     if (codeGenerationStoreSnapshot.generationStatus === 'generating') {
       message.info('代码生成进行中，请稍候');
@@ -175,7 +171,7 @@ const EditorPageContent: React.FC = () => {
       // 执行 SSE 会话
       await scheduler.execute(
         {
-          designDocId: selectedDocument.id,
+          designDocId: selectedDocument!.id!,
           productName: 'FTA-Frontend',
         },
         {

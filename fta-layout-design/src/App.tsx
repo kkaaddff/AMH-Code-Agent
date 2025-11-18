@@ -15,12 +15,39 @@ function App() {
     const initUserInfo = async () => {
       try {
         if (!callService) {
-          // 如果是开发环境，直接跳过用户信息初始化
-          window.workspaceInfo = {
-            gitUrl: 'https://github.com/amh-group/fta-demo.git',
-            workdir: '/test/demo',
-            srcTree: [],
-          };
+          // 如果是开发环境，从环境变量读取配置
+
+          const devWorkspaceInfo = import.meta.env.VITE_DEV_WORKSPACE_INFO;
+          const devUserInfo = import.meta.env.VITE_DEV_USER_INFO;
+
+          window.workspaceInfo = devWorkspaceInfo
+            ? JSON.parse(devWorkspaceInfo)
+            : {
+                gitUrl: 'https://github.com/amh-group/fta-demo.git',
+                workdir: '/test/demo',
+                srcTree: [],
+              };
+
+          window.userInfo = devUserInfo
+            ? JSON.parse(devUserInfo)
+            : {
+                avatarUrl: 'https://img.yzcdn.cn/vant/cat.jpeg',
+                departmentId: 1,
+                departmentName: '测试部门',
+                departmentRole: 1,
+                gender: 1,
+                id: 1,
+                jobNumber: '1234567890',
+                name: '测试用户',
+                telephone: '1234567890',
+                userType: 1,
+                cookies: {
+                  ymmoa_online: '1234567890',
+                  ymmoa_passport: '1234567890',
+                  qa_passport: '1234567890',
+                  dev_passport: '1234567890',
+                },
+              };
           return;
         }
 
