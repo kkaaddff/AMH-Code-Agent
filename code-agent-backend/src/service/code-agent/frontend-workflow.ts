@@ -1,10 +1,26 @@
-import { runFrontendProjectWorkflow, type FrontendProjectWorkflowCallbacks } from '@fta/agent-core';
-import { flattenAnnotation, formatAnnotationSummary } from '@fta/agent-core/dist/utils/annotation';
+import type { FrontendProjectWorkflowCallbacks } from '@fta/agent-core';
 import { Config, Inject, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import fs from 'fs';
 import path from 'path';
 import { ModelGatewayConfig } from '../common/model-gateway';
 import { ProjectService } from './project';
+
+let agentCorePromise: Promise<typeof import('@fta/agent-core')> | null = null;
+let annotationUtilsPromise: Promise<typeof import('@fta/agent-core/dist/utils/annotation')> | null = null;
+
+const getAgentCore = () => {
+  if (!agentCorePromise) {
+    agentCorePromise = import('@fta/agent-core');
+  }
+  return agentCorePromise;
+};
+
+const getAnnotationUtils = () => {
+  if (!annotationUtilsPromise) {
+    annotationUtilsPromise = import('@fta/agent-core/dist/utils/annotation');
+  }
+  return annotationUtilsPromise;
+};
 
 // 读取 fta-specs 目录，生成 { 文件名: 文件绝对路径 } 的对象作为 specFiles
 const ftaSpecsDir = path.join(__dirname, 'fta-specs');
@@ -64,6 +80,11 @@ export class FrontendWorkflowService {
     const workflowStartTime = Date.now();
 
     console.log(`frontend-workflow: [${sessionId}] 🏭 开始执行前端工作流服务`);
+
+    const [{ runFrontendProjectWorkflow }, { flattenAnnotation, formatAnnotationSummary }] = await Promise.all([
+      getAgentCore(),
+      getAnnotationUtils(),
+    ]);
 
     try {
       // 获取 DSL 数据

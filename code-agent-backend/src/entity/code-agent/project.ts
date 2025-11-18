@@ -1,6 +1,6 @@
+import type { AnnotationNode } from '@fta/agent-core/dist/utils/annotation';
 import { modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { EntityModel } from '@midwayjs/typegoose';
-import { AnnotationNode } from '@fta/agent-core/dist/utils/annotation';
 
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'completed' | 'editing';
 
