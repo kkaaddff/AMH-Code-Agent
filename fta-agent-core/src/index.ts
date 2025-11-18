@@ -10,3 +10,8 @@ export type {
   FrontendProjectWorkflowResult,
   FrontendProjectWorkflowCallbacks,
 } from './frontendProjectService';
+export {
+  flattenAnnotation,
+  formatAnnotationSummary,
+  type AnnotationNode,
+} from './utils/annotation';

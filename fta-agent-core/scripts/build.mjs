@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
-import { access, cp, mkdir, rm } from 'node:fs/promises';
+import { access, cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,11 +15,17 @@ async function main() {
   console.log('> Cleaning dist folder');
   await rm(DIST_DIR, { recursive: true, force: true });
 
-  console.log('> Compiling TypeScript sources');
+  console.log('> Compiling TypeScript sources (ESM)');
   await runTsc();
+
+  console.log('> Compiling TypeScript sources (CJS)');
+  await runTscCjs();
 
   console.log('> Fixing import statements');
   await runCommand(process.execPath, [path.join(__dirname, 'fix-imports.mjs')]);
+
+  console.log('> Writing CJS package.json');
+  await writeCjsPackageJson();
 
   console.log('> Copying static assets');
   for (const dir of ASSET_DIRS) {
@@ -33,6 +39,18 @@ async function runTsc() {
   const require = createRequire(import.meta.url);
   const tscBin = require.resolve('typescript/lib/tsc.js');
   await runCommand(process.execPath, [tscBin, '-p', path.join(ROOT_DIR, 'tsconfig.json')]);
+}
+
+async function runTscCjs() {
+  const require = createRequire(import.meta.url);
+  const tscBin = require.resolve('typescript/lib/tsc.js');
+  await runCommand(process.execPath, [tscBin, '-p', path.join(ROOT_DIR, 'tsconfig.cjs.json')]);
+}
+
+async function writeCjsPackageJson() {
+  const pkgPath = path.join(DIST_DIR, 'cjs', 'package.json');
+  await mkdir(path.dirname(pkgPath), { recursive: true });
+  await writeFile(pkgPath, JSON.stringify({ type: 'commonjs' }, null, 2));
 }
 
 async function copyAssetDir(dirName) {

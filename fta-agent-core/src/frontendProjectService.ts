@@ -1,4 +1,3 @@
-import { fileURLToPath } from 'node:url';
 import path from 'pathe';
 import type { Config } from './config';
 import { Context } from './context';
@@ -15,6 +14,7 @@ import { Tools } from './tool';
 import { createFileDraftTool, FileDraftStore } from './tools/fileDraft';
 import { createSpecReaderTool, type SpecRegistry } from './tools/specReader';
 import { createInMemoryTodoStorage, createTodoTool } from './tools/todo';
+import { getModuleDirname } from './utils/modulePaths';
 import { randomUUID } from './utils/randomUUID';
 
 export type FrontendProjectWorkflowCallbacks = ProjectTaskCallbacks;
@@ -45,8 +45,8 @@ export type FrontendProjectWorkflowResult =
       error: Extract<LoopResult, { success: false }>['error'];
       files: FileDraftStore['drafts'];
     };
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rulesFilePath = path.join(__dirname, 'prompts/fta-project-spec-4agent.md');
+const CURRENT_DIR = getModuleDirname();
+const rulesFilePath = path.join(CURRENT_DIR, 'prompts/fta-project-spec-4agent.md');
 
 export async function runFrontendProjectWorkflow(
   opts: FrontendProjectWorkflowOptions

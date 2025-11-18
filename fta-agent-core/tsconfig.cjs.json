@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@ai-sdk/mcp/mcp-stdio": ["node_modules/@ai-sdk/mcp/dist/mcp-stdio/index.d.ts"]
+    },
+    // Allow TypeScript to transform ESM syntax to CommonJS when building the cjs output.
+    "verbatimModuleSyntax": false,
+    "outDir": "dist/cjs",
+    "declaration": false,
+    "noEmit": false
+  }
+}

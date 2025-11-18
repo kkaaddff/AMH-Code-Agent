@@ -1,4 +1,4 @@
-import type { AnnotationNode } from '@fta/agent-core/dist/utils/annotation';
+import type { AnnotationNode } from '@fta/agent-core';
 import { modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { EntityModel } from '@midwayjs/typegoose';
 

@@ -1,6 +1,6 @@
 {
   "name": "@fta/agent-core",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "homepage": "https://fta.amh-group.com/#/",
   "repository": {
     "type": "git",
@@ -14,6 +14,13 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "source": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
   "files": [
     "dist"
   ],

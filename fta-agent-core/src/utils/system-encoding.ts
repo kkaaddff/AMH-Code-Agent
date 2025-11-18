@@ -81,9 +81,7 @@ export function resetEncodingCache(): void {
  * @param buffer - Buffer to analyze if system detection fails
  * @returns The detected encoding or 'utf-8' as ultimate fallback
  */
-export async function getCachedEncodingForBuffer(
-  buffer: Buffer,
-): Promise<string> {
+export async function getCachedEncodingForBuffer(buffer: Buffer): Promise<string> {
   const systemEncoding = await getSystemEncodingCached();
 
   if (systemEncoding) {
@@ -180,9 +178,7 @@ function getWindowsEncoding(): SystemEncoding {
 
     return windowsCodePageToEncoding(codePage);
   } catch (error) {
-    console.warn(
-      `Windows encoding detection failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    console.warn(`Windows encoding detection failed: ${error instanceof Error ? error.message : String(error)}`);
     return null;
   }
 }
@@ -291,6 +287,3 @@ export function detectEncodingFromBuffer(buffer: Buffer): SystemEncoding {
     return null;
   }
 }
-
-// Maintain backward compatibility
-export const getSystemEncoding = getSystemEncodingSync;
