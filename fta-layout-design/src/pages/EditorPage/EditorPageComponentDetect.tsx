@@ -173,7 +173,7 @@ const EditorPageContent: React.FC = () => {
         {
           designDocId: selectedDocument!.id!,
           productName: 'FTA-Frontend',
-          srcTree: window.workspaceInfo?.srcTree || [],
+          srcTree: window.workspaceInfo?.srcTree || undefined,
         },
         {
           onIterationStart: (iteration) => {

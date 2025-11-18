@@ -28,7 +28,7 @@ export interface TreeNode {
 
 export type FrontendProjectWorkflowOptions = {
   designDsl: string;
-  srcTree?: TreeNode[];
+  srcTree?: TreeNode;
   pageAnnotation: string;
   productName: string;
   version: string;
@@ -61,26 +61,29 @@ const rulesFilePath = path.join(__dirname, 'prompts/fta-project-spec-4agent.md')
  * 只输出文件路径和空目录，中间目录通过路径自然体现
  * 空目录以 / 结尾标记
  */
-function formatTreeToCompactList(nodes: TreeNode[], basePath = ''): string {
+function formatTreeToCompactList(node: TreeNode, basePath = ''): string {
   const lines: string[] = [];
 
-  for (const node of nodes) {
-    const fullPath = basePath ? `${basePath}/${node.name}` : node.name;
+  function traverse(current: TreeNode, parentPath: string) {
+    const fullPath = parentPath ? `${parentPath}/${current.name}` : current.name;
 
-    if (node.type === 'directory') {
-      // 如果是空目录，输出并标记
-      if (!node.children || node.children.length === 0) {
+    if (current.type === 'directory') {
+      if (!current.children || current.children.length === 0) {
+        // 空目录直接加入
         lines.push(`${fullPath}/`);
       } else {
-        // 有子节点的目录不输出，通过子节点路径体现
-        lines.push(formatTreeToCompactList(node.children, fullPath));
+        // 递归子节点
+        for (const child of current.children) {
+          traverse(child, fullPath);
+        }
       }
     } else {
-      // 文件直接输出
+      // 文件直接加入
       lines.push(fullPath);
     }
   }
 
+  traverse(node, basePath);
   return lines.join('\n');
 }
 

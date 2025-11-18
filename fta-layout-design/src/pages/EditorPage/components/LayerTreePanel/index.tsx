@@ -138,11 +138,11 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
       }
     };
 
-    pollMetrics();
-    const timerId = window.setInterval(pollMetrics, 5000);
+    // pollMetrics();
+    // const timerId = window.setInterval(pollMetrics, 5000);
     return () => {
       isMounted = false;
-      clearInterval(timerId);
+      // clearInterval(timerId);
     };
   }, []);
 

@@ -25,7 +25,7 @@ function App() {
             : {
                 gitUrl: 'https://github.com/amh-group/fta-demo.git',
                 workdir: '/test/demo',
-                srcTree: [],
+                srcTree: null,
               };
 
           window.userInfo = devUserInfo
@@ -60,7 +60,7 @@ function App() {
         try {
           const projectPath = await callService('project', 'getProjectRootPath');
           const data = await callService('project', 'getProjectGitInfo');
-          const tree: TreeNode[] = await callService('common', 'getTreeData', { dir: projectPath + '/src', depth: 2 });
+          const tree: TreeNode = await callService('common', 'getTreeData', { dir: projectPath + '/src', depth: 2 });
 
           window.workspaceInfo = {
             gitUrl: data?.remoteUrl,

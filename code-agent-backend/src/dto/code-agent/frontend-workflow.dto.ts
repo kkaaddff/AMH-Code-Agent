@@ -27,9 +27,9 @@ export class FrontendWorkflowRequestDTO {
 
   @ApiProperty({
     required: false,
-    example: [],
+    example: undefined,
     description: 'src 目录树结构',
   })
-  @Rule(RuleType.array().optional())
-  srcTree?: TreeNode[];
+  @Rule(RuleType.object().optional())
+  srcTree?: TreeNode;
 }

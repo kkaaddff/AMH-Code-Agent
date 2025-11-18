@@ -46,7 +46,7 @@ export interface FrontendWorkflowOptions {
   sessionId: string;
   signal?: AbortSignal;
   callbacks?: FrontendProjectWorkflowCallbacks;
-  srcTree?: TreeNode[];
+  srcTree?: TreeNode;
 }
 
 export interface FrontendWorkflowResult {

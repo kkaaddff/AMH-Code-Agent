@@ -42,7 +42,7 @@ interface TreeNode {
 interface WorkspaceInfo {
   gitUrl?: string;
   workdir?: string;
-  srcTree?: TreeNode[]; // src 目录树结构（三层）
+  srcTree?: TreeNode; // src 目录树结构（三层）
 }
 
 // 扩展 Window 接口
