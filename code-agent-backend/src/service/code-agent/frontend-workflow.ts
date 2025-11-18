@@ -132,6 +132,7 @@ export class FrontendWorkflowService {
       // 调用 workflow
       const result = await runFrontendProjectWorkflow({
         cwd,
+        srcTree,
         designDsl: JSON.stringify(processedDSL),
         pageAnnotation: annotationSummary,
         productName: productName || 'FTA-Frontend',

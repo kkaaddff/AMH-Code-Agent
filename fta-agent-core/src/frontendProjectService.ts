@@ -19,8 +19,16 @@ import { randomUUID } from './utils/randomUUID';
 
 export type FrontendProjectWorkflowCallbacks = ProjectTaskCallbacks;
 
+export interface TreeNode {
+  name: string;
+  path: string;
+  type: 'file' | 'directory';
+  children?: TreeNode[];
+}
+
 export type FrontendProjectWorkflowOptions = {
   designDsl: string;
+  srcTree?: TreeNode[];
   pageAnnotation: string;
   productName: string;
   version: string;
@@ -47,6 +55,34 @@ export type FrontendProjectWorkflowResult =
     };
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rulesFilePath = path.join(__dirname, 'prompts/fta-project-spec-4agent.md');
+
+/**
+ * 将目录树转换为紧凑的路径列表格式
+ * 只输出文件路径和空目录，中间目录通过路径自然体现
+ * 空目录以 / 结尾标记
+ */
+function formatTreeToCompactList(nodes: TreeNode[], basePath = ''): string {
+  const lines: string[] = [];
+
+  for (const node of nodes) {
+    const fullPath = basePath ? `${basePath}/${node.name}` : node.name;
+
+    if (node.type === 'directory') {
+      // 如果是空目录，输出并标记
+      if (!node.children || node.children.length === 0) {
+        lines.push(`${fullPath}/`);
+      } else {
+        // 有子节点的目录不输出，通过子节点路径体现
+        lines.push(formatTreeToCompactList(node.children, fullPath));
+      }
+    } else {
+      // 文件直接输出
+      lines.push(fullPath);
+    }
+  }
+
+  return lines.join('\n');
+}
 
 export async function runFrontendProjectWorkflow(
   opts: FrontendProjectWorkflowOptions
@@ -86,7 +122,9 @@ export async function runFrontendProjectWorkflow(
     ${opts.pageAnnotation}
 
     # Design DSL
-    ${opts.designDsl}`;
+    ${opts.designDsl}
+
+    ${opts.srcTree ? `# 项目 src 目录结构\n${formatTreeToCompactList(opts.srcTree)}` : ''}`;
 
     const llmsContext = await LlmsContext.create({
       context,
