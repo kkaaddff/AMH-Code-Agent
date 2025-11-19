@@ -714,7 +714,10 @@ const ComponentPropertyPanelV2: React.FC = () => {
           </Form.Item>
 
           <Divider />
-
+          {/* Component Props */}
+          <Title level={5}>组件属性</Title>
+          {/* 动态属性字段 */}
+          {selectedAnnotation?.ftaComponent && renderDynamicPropertyFields(selectedAnnotation.ftaComponent)}
           {/* Layout Properties */}
           <Title level={5}>布局属性</Title>
 
@@ -802,13 +805,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
           </Form.Item>
 
           <Divider />
-
-          {/* Component Props */}
-          <Title level={5}>组件属性</Title>
-
-          <Form.Item label='Props (JSON)' name='props' help='以 JSON 格式输入组件的自定义属性'>
-            <TextArea rows={6} placeholder='例如: {"content": "按钮文字", "type": "primary"}' />
-          </Form.Item>
         </Form>
       </div>
 
