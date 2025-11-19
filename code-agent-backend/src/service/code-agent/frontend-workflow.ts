@@ -43,6 +43,7 @@ export interface FrontendWorkflowResult {
   sessionId: string;
   filesCount?: number;
   files?: Array<{ path: string; kind: string }>;
+  workflowLogPath?: string;
   error?: {
     message: string;
     name: string;
@@ -180,6 +181,7 @@ export class FrontendWorkflowService {
           success: true,
           sessionId,
           filesCount: result.files.length,
+          workflowLogPath: result.workflowLogPath,
           files: result.files.map((f) => ({
             path: f.path,
             kind: f.kind,
@@ -191,6 +193,7 @@ export class FrontendWorkflowService {
       return {
         success: false,
         sessionId,
+        workflowLogPath: result.workflowLogPath,
         error: result.error
           ? {
               message: result.error.message,

@@ -217,7 +217,7 @@ export default (appInfo: EggAppInfo) => {
   config.modelGateway = {
     default: {
       baseURL: process.env.OPENAI_BASE_URL,
-      apiKey: process.env.OPENAI_BASE_URL?.includes('bigmodel')
+      apiKey: ['bigmodel', 'volces'].some((provider) => process.env.OPENAI_BASE_URL?.includes(provider))
         ? process.env.OPENAI_API_KEY
         : btoa(process.env.OPENAI_API_KEY),
       model: process.env.OPENAI_MODEL,

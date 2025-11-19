@@ -1,39 +1,9 @@
 import { Body, Controller, Inject, Post } from '@midwayjs/decorator';
 import { Validate } from '@midwayjs/validate';
 import { Context } from '@midwayjs/web';
-import fs from 'fs';
-import path from 'path';
 import { v4 as uuid } from 'uuid';
 import { FrontendWorkflowRequestDTO } from '../../dto/code-agent/frontend-workflow.dto';
 import { FrontendWorkflowService } from '../../service/code-agent/frontend-workflow';
-
-/**
- * 日志路径生产相关辅助函数
- */
-function generateLogPaths() {
-  const logDir = path.join(process.cwd(), 'logs', 'api');
-  // 日志文件名包含当前从当天0点到现在的秒数
-  const now = new Date();
-  const dayStr = now.toISOString().split('T')[0];
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const secondsSinceZero = Math.floor((now.getTime() - startOfDay.getTime()) / 1000);
-  const logFile = path.join(logDir, `frontend-workflow-${dayStr}-${secondsSinceZero}.log`);
-  return { logDir, logFile };
-}
-
-function appendLogSegmentsFactory(logDir: string, logFile: string, sessionId: string) {
-  return (...entries: any[]) => {
-    try {
-      if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir, { recursive: true });
-      }
-      const logEntry = entries.map((entry) => JSON.stringify(entry)).join('\n') + '\n---\n';
-      fs.appendFileSync(logFile, logEntry, 'utf8');
-    } catch (logError) {
-      console.error(`frontend-workflow: [${sessionId}] ⚠️ 写入日志失败:`, logError);
-    }
-  };
-}
 
 @Controller('/code-agent')
 export class FrontendWorkflowController {
@@ -51,23 +21,6 @@ export class FrontendWorkflowController {
     // 生成会话ID并开始日志记录
     const sessionId = uuid();
     const startTime = Date.now();
-    // 使用辅助函数生产日志路径
-    const { logDir, logFile } = generateLogPaths();
-    // 使用辅助函数创建 appendLogSegments
-    const appendLogSegments = appendLogSegmentsFactory(logDir, logFile, sessionId);
-
-    appendLogSegments({
-      timestamp: new Date().toISOString(),
-      type: 'REQUEST',
-      direction: 'IN',
-      sessionId,
-      endpoint: '/code-agent/frontend-workflow',
-      payload: {
-        designDocId,
-        productName,
-        srcTree,
-      },
-    });
 
     console.log(`frontend-workflow: [${sessionId}] 🚀 前端工作流开始启动`);
     console.log(
@@ -92,14 +45,7 @@ export class FrontendWorkflowController {
     };
 
     const logSSEEvent = (event: string, data: any) => {
-      appendLogSegments({
-        timestamp: new Date().toISOString(),
-        type: 'SSE_EVENT',
-        direction: 'OUT',
-        sessionId,
-        event,
-        data,
-      });
+      console.log(`frontend-workflow: [${sessionId}] 📡 SSE事件: ${event}`);
     };
 
     // 创建 AbortController 用于处理客户端断开连接
@@ -255,15 +201,6 @@ export class FrontendWorkflowController {
         sessionId,
         timestamp: new Date().toISOString(),
       });
-      appendLogSegments({
-        timestamp: new Date().toISOString(),
-        type: 'COMPLETE',
-        direction: 'OUT',
-        sessionId,
-        event: 'complete',
-        executionTime: totalDuration,
-        result,
-      });
 
       console.log(`frontend-workflow: [${sessionId}] 📤 发送完成事件，关闭SSE连接`);
       res.end();
@@ -282,15 +219,6 @@ export class FrontendWorkflowController {
           executionTime: errorDuration,
           timestamp: new Date().toISOString(),
         });
-        appendLogSegments({
-          timestamp: new Date().toISOString(),
-          type: 'ABORT',
-          direction: 'OUT',
-          sessionId,
-          event: 'aborted',
-          executionTime: errorDuration,
-          reason: error?.message || 'aborted',
-        });
       } else {
         console.error(
           `frontend-workflow: [${sessionId}] ❌ 工作流执行失败 (执行${(errorDuration / 1000).toFixed(2)}秒后):`,
@@ -307,19 +235,6 @@ export class FrontendWorkflowController {
           sessionId,
           executionTime: errorDuration,
           timestamp: new Date().toISOString(),
-        });
-        appendLogSegments({
-          timestamp: new Date().toISOString(),
-          type: 'ERROR',
-          direction: 'OUT',
-          sessionId,
-          event: 'error',
-          executionTime: errorDuration,
-          error: {
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-          },
         });
       }
       res.end();
