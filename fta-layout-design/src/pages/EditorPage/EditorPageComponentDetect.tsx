@@ -318,19 +318,41 @@ const EditorPageContent: React.FC = () => {
     const hasExistingAnnotations = rootAnnotation && rootAnnotation.children?.length > 0;
 
     if (!hasExistingAnnotations) {
-      smartDetectionRef.current?.runDetection();
-      return;
+      modal.confirm({
+        title: '智能识别是什么？',
+        content: (
+          <div>
+            <div style={{ fontWeight: 500, marginBottom: 8 }}>
+              智能识别会自动分析设计稿，尝试识别页面结构和组件。该功能仍在持续优化中，存在如下局限与注意事项：
+            </div>
+            <ul style={{ paddingLeft: 20, marginBottom: 8 }}>
+              <li>识别结果仅供参考，可能需手动调整和确认。</li>
+              <li>复杂布局、非标准组件或图形类元素可能无法完整还原。</li>
+              <li>重复识别会覆盖现有标注，请谨慎操作。</li>
+              <li>如遇识别卡顿/失败，可刷新页面后重试。</li>
+            </ul>
+            <div>
+              <span>将对当前设计稿执行智能识别并生成标注数据，确认继续操作吗？</span>
+            </div>
+          </div>
+        ),
+        okText: '开始智能识别',
+        cancelText: '取消',
+        okType: 'primary',
+        centered: true,
+        onOk: () => smartDetectionRef.current?.runDetection(),
+      });
+    } else {
+      modal.confirm({
+        title: '确认重新执行智能识别？',
+        content: '当前设计稿已存在标注，重新识别可能产生重复或冲突，请确认是否继续。',
+        okText: '继续识别',
+        cancelText: '取消',
+        okType: 'danger',
+        centered: true,
+        onOk: () => smartDetectionRef.current?.runDetection(),
+      });
     }
-
-    modal.confirm({
-      title: '确认重新执行智能识别？',
-      content: '当前设计稿已存在标注，重新识别可能产生重复或冲突，请确认是否继续。',
-      okText: '继续识别',
-      cancelText: '取消',
-      okType: 'danger',
-      centered: true,
-      onOk: () => smartDetectionRef.current?.runDetection(),
-    });
   };
 
   // 智能识别状态变化回调
