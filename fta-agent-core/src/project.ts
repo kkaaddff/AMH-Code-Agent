@@ -240,8 +240,8 @@ async function runWithResolvedEnvironment(opts: ResolvedProjectTaskOptions) {
     },
   });
   const endTime = new Date();
-  if (result.success && result.data.history) {
-    opts.session.updateHistory(result.data.history);
+  if (result.success && result.history) {
+    opts.session.updateHistory(result.history);
   }
   return result;
 }

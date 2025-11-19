@@ -5,8 +5,8 @@ import { generateSystemPrompt } from './systemPrompt';
 
 type FrontendProjectPromptOptions = {
   specs: string[];
+  components: string[];
   promptFilePath?: string;
-
   cwd?: string;
 };
 
@@ -30,8 +30,17 @@ export function generateFrontendProjectPrompt(opts: FrontendProjectPromptOptions
     opts.specs.length > 0
       ? opts.specs.map((spec) => `- ${spec}`).join('\n')
       : '- (No shared specs. Confirm with the caller.)';
+
+  const componentList =
+    opts.components.length > 0
+      ? opts.components.map((component) => `- ${component}`).join('\n')
+      : '- (No FTA components. Confirm with the caller.)';
+
   const rawPrompt = fs.readFileSync(promptPath, 'utf-8');
-  const appendSystemPrompt = rawPrompt.replace('{{SPEC_LIST}}', specList).trim();
+  const appendSystemPrompt = rawPrompt
+    .replace('{{SPEC_LIST}}', specList)
+    .replace('{{FTA_COMPONENT_LIST}}', componentList)
+    .trim();
 
   return generateSystemPrompt({ appendSystemPrompt });
 }

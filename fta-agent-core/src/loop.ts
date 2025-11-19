@@ -38,12 +38,18 @@ async function exponentialBackoffWithCancellation(attempt: number, signal?: Abor
 export type LoopResult =
   | {
       success: true;
-      data: Record<string, any>;
+      data: {
+        text: string;
+        usage: Usage;
+        history: History;
+      };
       metadata: {
         turnsCount: number;
         toolCallsCount: number;
         duration: number;
       };
+      initialMessages: LanguageModelV2Message[];
+      history: History;
     }
   | {
       success: false;
@@ -52,6 +58,8 @@ export type LoopResult =
         message: string;
         details?: Record<string, any>;
       };
+      initialMessages: LanguageModelV2Message[];
+      history: History;
     };
 
 type StreamResultBase = {
@@ -124,6 +132,20 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
   const maxTurns = opts.maxTurns ?? DEFAULT_MAX_TURNS;
   const abortController = new AbortController();
 
+  const systemPromptMessage = {
+    role: 'system',
+    content: opts.systemPrompt || '',
+  } as LanguageModelV2Message;
+  const llmsContexts = opts.llmsContexts || [];
+  const llmsContextMessages = llmsContexts.map((llmsContext) => {
+    return {
+      role: 'system',
+      content: llmsContext,
+    } as LanguageModelV2Message;
+  });
+
+  const initialMessages = [systemPromptMessage, ...llmsContextMessages];
+
   const createCancelError = (): LoopResult => ({
     success: false,
     error: {
@@ -131,10 +153,13 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
       message: 'Operation was canceled',
       details: { turnsCount, history, usage: totalUsage },
     },
+    history,
+    initialMessages,
   });
 
   let shouldAtNormalize = true;
   let shouldThinking = true;
+
   while (true) {
     // Must use separate abortController to prevent ReadStream locking
     if (opts.signal?.aborted && !abortController.signal.aborted) {
@@ -157,6 +182,8 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
             usage: totalUsage,
           },
         },
+        initialMessages,
+        history,
       };
     }
     if (opts.autoCompact) {
@@ -167,22 +194,7 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
     }
     lastUsage.reset();
 
-    const systemPromptMessage = {
-      role: 'system',
-      content: opts.systemPrompt || '',
-    } as LanguageModelV2Message;
-    const llmsContexts = opts.llmsContexts || [];
-    const llmsContextMessages = llmsContexts.map((llmsContext) => {
-      return {
-        role: 'system',
-        content: llmsContext,
-      } as LanguageModelV2Message;
-    });
-    let prompt: LanguageModelV2Prompt = [
-      systemPromptMessage,
-      ...llmsContextMessages,
-      ...history.toLanguageV2Messages(),
-    ];
+    let prompt: LanguageModelV2Prompt = [...initialMessages, ...history.toLanguageV2Messages()];
 
     if (shouldAtNormalize) {
       // add file and directory contents for the last user prompt
@@ -338,6 +350,8 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
               retriesAttempted: retryCount,
             },
           },
+          initialMessages,
+          history,
         };
       }
     }
@@ -476,6 +490,8 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
               usage: totalUsage,
             },
           },
+          history,
+          initialMessages,
         };
       }
     }
@@ -507,5 +523,7 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
       toolCallsCount,
       duration,
     },
+    initialMessages,
+    history,
   };
 }

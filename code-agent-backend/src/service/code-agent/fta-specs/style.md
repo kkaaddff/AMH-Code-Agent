@@ -8,6 +8,9 @@
 2. **可维护性**：模块化、可复用的样式系统
 3. **可扩展性**：易于扩展和定制的设计令牌
 4. **IMPORTANT! 克制**：使用的 FTA 组件已经携带了大量的企业预设样式，请不要多组件进行过多的定制！
+5. **IMPORTANT! 强制**：当前布局系统只支持 `flex` 布局，当考虑使用 css 布局时**强制使用 flex**
+6. **IMPORTANT! 强制**：与 `React Native` 一致 `flex-direction` 默认为 `column`
+7. **IMPORTANT! 强制**：`View` 默认与 `div` 一致**不带有预设样式**，使用 `View` 进行布局时要设置合理的 `padding` 和 `margin` 来保持父子组件，兄弟组件的相对位置和间隙.
 
 ### 技术栈
 
@@ -15,27 +18,7 @@
 
 ## 最佳实践
 
-### 1. 性能优化
-
-```scss
-// 避免重复的属性声明
-.button {
-  // 好的做法：将通用属性放在一起
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-
-  // 变体样式
-  &.primary {
-    color: white;
-  }
-}
-```
-
-### 2. 命名规范
+### 1. 命名规范
 
 ```scss
 // 使用 BEM 命名规范

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'pathe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runFrontendProjectWorkflow } from './frontendProjectService';
+import { createComponentDocReaderTool } from './tools/componentDocReader';
 import { createSpecReaderTool } from './tools/specReader';
 import { FileDraftStore } from './tools/fileDraft';
 import type { Usage } from './usage';
@@ -155,6 +156,29 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
       expect(result.isError).toBeUndefined();
       // 校验 llmContent 返回内容包含目录规范的标题
       expect(result.llmContent).toContain('# 前端项目目录结构规范');
+    });
+  });
+
+  describe('ComponentDocReader tool', () => {
+    it('reads registered component docs from provided directories', async () => {
+      const tool = createComponentDocReaderTool({
+        docDirectories: [path.join(PACKAGE_ROOT, 'mock-specs')],
+        cwd: PACKAGE_ROOT,
+      });
+      const result = await tool.execute({ component_names: ['component'] });
+      expect(result.isError).toBeUndefined();
+      expect(result.llmContent).toContain('# 组件设计规范');
+    });
+
+    it('returns error when some components are missing while others succeed', async () => {
+      const tool = createComponentDocReaderTool({
+        docDirectories: [path.join(PACKAGE_ROOT, 'mock-specs')],
+        cwd: PACKAGE_ROOT,
+      });
+      const result = await tool.execute({ component_names: ['component', 'non-exist'] });
+      expect(result.isError).toBe(true);
+      expect(result.llmContent).toContain('未注册');
+      expect(result.llmContent).toContain('component');
     });
   });
 });

@@ -13,7 +13,7 @@ Built with React, TypeScript, and Taro framework for cross-platform development.
 ### Core Architecture
 
 - **Multi-platform support**: Uses Taro framework for cross-platform compilation
-- **TypeScript**: Strict typing with path aliases (`@/*` maps to `./src/*`)
+- **TypeScript**: Strict typing with path aliases (`src/*` maps to `./src/*`)
 - **Component-based**: React functional components with hooks pattern
 - **State management**: Redux for lightweight state management
 - **Styling**: SCSS modules for component-specific styling
@@ -45,7 +45,7 @@ Built with React, TypeScript, and Taro framework for cross-platform development.
 
 Each page follows this pattern:
 
-```
+```sh
 src/pages/[page-name]/
 ├── index.tsx           # Main page component
 ├── index.config.ts     # Page-specific config
@@ -54,6 +54,8 @@ src/pages/[page-name]/
 ├── hooks/             # Page-specific hooks
 └── service/           # Page-specific API calls
 ```
+
+**IMPORTANT**: Keep the entry `index.tsx` is concise enough, According to the **ANNOTATIONS** information reasonable split components, The `Header`, `Body` and `Footer` structures are preferred when possible.
 
 ### API Layer
 

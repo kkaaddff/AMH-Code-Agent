@@ -29,7 +29,6 @@ export function loadSpecsFromDirectories(directories: string[], cwd: string) {
       const absolutePath = path.join(absoluteDir, entry.name);
       const baseName = path.basename(entry.name, path.extname(entry.name));
       registry[baseName] = absolutePath;
-      registry[entry.name] = absolutePath;
     }
   }
   return registry;
@@ -63,10 +62,10 @@ export function createSpecReaderTool(opts: SpecReaderOptions) {
   return createTool({
     name: 'read_spec',
     description: `
-读取并返回预先注册的规范文档内容。使用该工具来了解目录架构、状态管理、页面设计、服务端约定等规范后再做决策。
+读取并返回预先注册的规范文档内容。使用该工具来了解目录架构、样式规范等规范后再做决策。
 `.trim(),
     parameters: z.object({
-      spec_name: z.string().describe('需要读取的规范名称（例如 directory, state, page, service 等）'),
+      spec_name: z.string().describe('需要读取的规范名称（例如 directory, style 等）'),
     }),
     getDescription: ({ params }) => {
       if (!params.spec_name) {
