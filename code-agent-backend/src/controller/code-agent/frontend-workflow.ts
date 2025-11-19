@@ -7,6 +7,34 @@ import { v4 as uuid } from 'uuid';
 import { FrontendWorkflowRequestDTO } from '../../dto/code-agent/frontend-workflow.dto';
 import { FrontendWorkflowService } from '../../service/code-agent/frontend-workflow';
 
+/**
+ * 日志路径生产相关辅助函数
+ */
+function generateLogPaths() {
+  const logDir = path.join(process.cwd(), 'logs', 'api');
+  // 日志文件名包含当前从当天0点到现在的秒数
+  const now = new Date();
+  const dayStr = now.toISOString().split('T')[0];
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const secondsSinceZero = Math.floor((now.getTime() - startOfDay.getTime()) / 1000);
+  const logFile = path.join(logDir, `frontend-workflow-${dayStr}-${secondsSinceZero}.log`);
+  return { logDir, logFile };
+}
+
+function appendLogSegmentsFactory(logDir: string, logFile: string, sessionId: string) {
+  return (...entries: any[]) => {
+    try {
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
+      const logEntry = entries.map((entry) => JSON.stringify(entry)).join('\n') + '\n---\n';
+      fs.appendFileSync(logFile, logEntry, 'utf8');
+    } catch (logError) {
+      console.error(`frontend-workflow: [${sessionId}] ⚠️ 写入日志失败:`, logError);
+    }
+  };
+}
+
 @Controller('/code-agent')
 export class FrontendWorkflowController {
   @Inject()
@@ -23,20 +51,10 @@ export class FrontendWorkflowController {
     // 生成会话ID并开始日志记录
     const sessionId = uuid();
     const startTime = Date.now();
-    const logDir = path.join(process.cwd(), 'logs', 'api');
-    const logFile = path.join(logDir, `frontend-workflow-${new Date().toISOString().split('T')[0]}.log`);
-
-    const appendLogSegments = (...entries: any[]) => {
-      try {
-        if (!fs.existsSync(logDir)) {
-          fs.mkdirSync(logDir, { recursive: true });
-        }
-        const logEntry = entries.map((entry) => JSON.stringify(entry)).join('\n') + '\n---\n';
-        fs.appendFileSync(logFile, logEntry, 'utf8');
-      } catch (logError) {
-        console.error(`frontend-workflow: [${sessionId}] ⚠️ 写入日志失败:`, logError);
-      }
-    };
+    // 使用辅助函数生产日志路径
+    const { logDir, logFile } = generateLogPaths();
+    // 使用辅助函数创建 appendLogSegments
+    const appendLogSegments = appendLogSegmentsFactory(logDir, logFile, sessionId);
 
     appendLogSegments({
       timestamp: new Date().toISOString(),

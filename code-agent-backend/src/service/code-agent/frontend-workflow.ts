@@ -25,7 +25,8 @@ const getAnnotationUtils = () => {
 };
 
 const ftaSpecsDir = path.join(__dirname, 'fta-specs');
-const ftaPromptsDir = path.join(__dirname, 'fta-prompts');
+const ftaPromptsPath = path.join(__dirname, 'fta-prompts', 'frontend-project.md');
+const ftaRulesPath = path.join(__dirname, 'fta-prompts', 'fta-project-spec-4agent.md');
 
 export interface FrontendWorkflowOptions {
   designDocId: string;
@@ -100,7 +101,7 @@ export class FrontendWorkflowService {
       const processedDSL = await this.designDSLService.processDesignDSL(dsl as DesignDSL);
 
       // 获取 annotation 摘要
-      const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData));
+      const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData.rootAnnotation));
 
       // 准备工作目录
 
@@ -125,7 +126,8 @@ export class FrontendWorkflowService {
         productName: productName || 'FTA-Frontend',
         version: '0.0.0',
         specDirectories: [ftaSpecsDir],
-        promptDirectory: ftaPromptsDir,
+        promptFilePath: ftaPromptsPath,
+        rulesFilePath: ftaRulesPath,
         configOverrides: {
           model: this.modelConfig.model,
           planModel: this.modelConfig.model,

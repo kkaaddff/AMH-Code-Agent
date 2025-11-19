@@ -4,6 +4,11 @@ import { EntityModel } from '@midwayjs/typegoose';
 import { DesignDSL } from '../../types';
 
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'completed' | 'editing';
+export interface AnnotationSnapshot {
+  rootAnnotation: AnnotationNode | null;
+  savedAt: number;
+  version: string;
+}
 
 @EntityModel()
 @modelOptions({
@@ -41,7 +46,7 @@ export class DocumentReference {
   data?: DesignDSL;
 
   @prop({ type: Object })
-  annotationData?: AnnotationNode | null;
+  annotationData?: AnnotationSnapshot;
 
   @prop({ required: true })
   createdAt: Date;
