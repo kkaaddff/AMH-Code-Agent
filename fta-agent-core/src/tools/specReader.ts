@@ -11,13 +11,53 @@ const THIS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(THIS_DIR, '../..');
 const MOCK_SPEC_DIR = path.join(PACKAGE_ROOT, 'mock-specs');
 
-export function createSpecReaderTool(opts: { specs: SpecRegistry; cwd: string }) {
-  const normalizedSpecs = Object.entries(opts.specs).reduce<Record<string, string>>((acc, [key, value]) => {
-    if (value) {
-      acc[key] = path.isAbsolute(value) ? value : path.resolve(opts.cwd, value);
+type SpecReaderOptions = {
+  specDirectories?: string[];
+  cwd: string;
+};
+
+export function loadSpecsFromDirectories(directories: string[], cwd: string) {
+  const registry: Record<string, string> = {};
+  for (const dir of directories) {
+    const absoluteDir = path.isAbsolute(dir) ? dir : path.resolve(cwd, dir);
+    if (!fs.existsSync(absoluteDir) || !fs.statSync(absoluteDir).isDirectory()) {
+      continue;
     }
-    return acc;
-  }, {});
+    const entries = fs.readdirSync(absoluteDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      const absolutePath = path.join(absoluteDir, entry.name);
+      const baseName = path.basename(entry.name, path.extname(entry.name));
+      registry[baseName] = absolutePath;
+      registry[entry.name] = absolutePath;
+    }
+  }
+  return registry;
+}
+
+function loadMockSpecsIfNeeded(registry: Record<string, string>) {
+  const shouldLoadMock = process.env.VITEST === 'true';
+  if (!shouldLoadMock) return;
+  if (!fs.existsSync(MOCK_SPEC_DIR)) {
+    return;
+  }
+  const entries = fs.readdirSync(MOCK_SPEC_DIR, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const absolutePath = path.join(MOCK_SPEC_DIR, entry.name);
+    const baseName = path.basename(entry.name, path.extname(entry.name));
+    if (!registry[baseName]) {
+      registry[baseName] = absolutePath;
+    }
+    if (!registry[entry.name]) {
+      registry[entry.name] = absolutePath;
+    }
+  }
+}
+
+export function createSpecReaderTool(opts: SpecReaderOptions) {
+  const normalizedSpecs = loadSpecsFromDirectories(opts.specDirectories ?? [], opts.cwd);
+
   loadMockSpecsIfNeeded(normalizedSpecs);
 
   return createTool({
@@ -72,24 +112,4 @@ export function createSpecReaderTool(opts: { specs: SpecRegistry; cwd: string })
       category: 'read',
     },
   });
-}
-
-function loadMockSpecsIfNeeded(registry: Record<string, string>) {
-  const shouldLoadMock = process.env.VITEST === 'true';
-  if (!shouldLoadMock) return;
-  if (!fs.existsSync(MOCK_SPEC_DIR)) {
-    return;
-  }
-  const entries = fs.readdirSync(MOCK_SPEC_DIR, { withFileTypes: true });
-  for (const entry of entries) {
-    if (!entry.isFile()) continue;
-    const absolutePath = path.join(MOCK_SPEC_DIR, entry.name);
-    const baseName = path.basename(entry.name, path.extname(entry.name));
-    if (!registry[baseName]) {
-      registry[baseName] = absolutePath;
-    }
-    if (!registry[entry.name]) {
-      registry[entry.name] = absolutePath;
-    }
-  }
 }

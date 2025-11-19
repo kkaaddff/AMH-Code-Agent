@@ -1,6 +1,8 @@
 import { Body, Controller, Inject, Post } from '@midwayjs/decorator';
-import { Context } from '@midwayjs/web';
 import { Validate } from '@midwayjs/validate';
+import { Context } from '@midwayjs/web';
+import fs from 'fs';
+import path from 'path';
 import { v4 as uuid } from 'uuid';
 import { FrontendWorkflowRequestDTO } from '../../dto/code-agent/frontend-workflow.dto';
 import { FrontendWorkflowService } from '../../service/code-agent/frontend-workflow';
@@ -21,6 +23,33 @@ export class FrontendWorkflowController {
     // 生成会话ID并开始日志记录
     const sessionId = uuid();
     const startTime = Date.now();
+    const logDir = path.join(process.cwd(), 'logs', 'api');
+    const logFile = path.join(logDir, `frontend-workflow-${new Date().toISOString().split('T')[0]}.log`);
+
+    const appendLogSegments = (...entries: any[]) => {
+      try {
+        if (!fs.existsSync(logDir)) {
+          fs.mkdirSync(logDir, { recursive: true });
+        }
+        const logEntry = entries.map((entry) => JSON.stringify(entry)).join('\n') + '\n---\n';
+        fs.appendFileSync(logFile, logEntry, 'utf8');
+      } catch (logError) {
+        console.error(`frontend-workflow: [${sessionId}] ⚠️ 写入日志失败:`, logError);
+      }
+    };
+
+    appendLogSegments({
+      timestamp: new Date().toISOString(),
+      type: 'REQUEST',
+      direction: 'IN',
+      sessionId,
+      endpoint: '/code-agent/frontend-workflow',
+      payload: {
+        designDocId,
+        productName,
+        srcTree,
+      },
+    });
 
     console.log(`frontend-workflow: [${sessionId}] 🚀 前端工作流开始启动`);
     console.log(
@@ -42,6 +71,17 @@ export class FrontendWorkflowController {
     const sendSSE = (event: string, data: any) => {
       const payload = JSON.stringify(data);
       res.write(`event: ${event}\ndata: ${payload}\n\n`);
+    };
+
+    const logSSEEvent = (event: string, data: any) => {
+      appendLogSegments({
+        timestamp: new Date().toISOString(),
+        type: 'SSE_EVENT',
+        direction: 'OUT',
+        sessionId,
+        event,
+        data,
+      });
     };
 
     // 创建 AbortController 用于处理客户端断开连接
@@ -86,6 +126,13 @@ export class FrontendWorkflowController {
               parentUuid: message.parentUuid,
               timestamp: message.timestamp,
             });
+            logSSEEvent('message', {
+              role: message.role,
+              content: message.content,
+              uuid: message.uuid,
+              parentUuid: message.parentUuid,
+              timestamp: message.timestamp,
+            });
           },
           onText: async (text) => {
             console.log(
@@ -94,6 +141,7 @@ export class FrontendWorkflowController {
               }`
             );
             sendSSE('text', { text });
+            logSSEEvent('text', { text });
           },
           onStreamResult: async (streamResult) => {
             const hasError = !!streamResult.error;
@@ -106,6 +154,17 @@ export class FrontendWorkflowController {
               console.error(`frontend-workflow: [${sessionId}] ❌ 流式结果错误:`, streamResult.error);
             }
             sendSSE('stream_result', {
+              requestId: streamResult.requestId,
+              model: streamResult.model?.model || null,
+              hasError,
+              error: streamResult.error
+                ? {
+                    message: streamResult.error.message,
+                    name: streamResult.error.name,
+                  }
+                : undefined,
+            });
+            logSSEEvent('stream_result', {
               requestId: streamResult.requestId,
               model: streamResult.model?.model || null,
               hasError,
@@ -132,6 +191,11 @@ export class FrontendWorkflowController {
               startTime: turn.startTime,
               endTime: turn.endTime,
             });
+            logSSEEvent('turn', {
+              usage: turn.usage,
+              startTime: turn.startTime,
+              endTime: turn.endTime,
+            });
           },
           onToolApprove: async (opts) => {
             const { toolUse, category } = opts;
@@ -139,6 +203,12 @@ export class FrontendWorkflowController {
               `frontend-workflow: [${sessionId}] 🔧 工具调用审批: toolName=${toolUse.name}, callId=${toolUse.callId}, category=${category}`
             );
             sendSSE('tool_approve', {
+              toolName: toolUse.name,
+              callId: toolUse.callId,
+              params: toolUse.params,
+              category,
+            });
+            logSSEEvent('tool_approve', {
               toolName: toolUse.name,
               callId: toolUse.callId,
               params: toolUse.params,
@@ -167,6 +237,15 @@ export class FrontendWorkflowController {
         sessionId,
         timestamp: new Date().toISOString(),
       });
+      appendLogSegments({
+        timestamp: new Date().toISOString(),
+        type: 'COMPLETE',
+        direction: 'OUT',
+        sessionId,
+        event: 'complete',
+        executionTime: totalDuration,
+        result,
+      });
 
       console.log(`frontend-workflow: [${sessionId}] 📤 发送完成事件，关闭SSE连接`);
       res.end();
@@ -185,6 +264,15 @@ export class FrontendWorkflowController {
           executionTime: errorDuration,
           timestamp: new Date().toISOString(),
         });
+        appendLogSegments({
+          timestamp: new Date().toISOString(),
+          type: 'ABORT',
+          direction: 'OUT',
+          sessionId,
+          event: 'aborted',
+          executionTime: errorDuration,
+          reason: error?.message || 'aborted',
+        });
       } else {
         console.error(
           `frontend-workflow: [${sessionId}] ❌ 工作流执行失败 (执行${(errorDuration / 1000).toFixed(2)}秒后):`,
@@ -201,6 +289,19 @@ export class FrontendWorkflowController {
           sessionId,
           executionTime: errorDuration,
           timestamp: new Date().toISOString(),
+        });
+        appendLogSegments({
+          timestamp: new Date().toISOString(),
+          type: 'ERROR',
+          direction: 'OUT',
+          sessionId,
+          event: 'error',
+          executionTime: errorDuration,
+          error: {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          },
         });
       }
       res.end();

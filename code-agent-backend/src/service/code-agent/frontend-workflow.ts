@@ -1,6 +1,5 @@
 import type { FrontendProjectWorkflowCallbacks } from '@fta/agent-core';
 import { Config, Inject, Provide, Scope, ScopeEnum } from '@midwayjs/core';
-import fs from 'fs';
 import path from 'path';
 import { DesignDSL } from '../../types';
 import { ModelGatewayConfig } from '../common/model-gateway';
@@ -25,20 +24,8 @@ const getAnnotationUtils = () => {
   return annotationUtilsPromise;
 };
 
-// 读取 fta-specs 目录，生成 { 文件名: 文件绝对路径 } 的对象作为 specFiles
 const ftaSpecsDir = path.join(__dirname, 'fta-specs');
-let specFiles: Record<string, string> = {};
-if (fs.existsSync(ftaSpecsDir) && fs.statSync(ftaSpecsDir).isDirectory()) {
-  const entries = fs.readdirSync(ftaSpecsDir, { withFileTypes: true });
-  specFiles = entries
-    .filter((entry) => entry.isFile())
-    .reduce<Record<string, string>>((acc, entry) => {
-      const fileName = entry.name;
-      const absolutePath = path.join(ftaSpecsDir, fileName);
-      acc[fileName.replace('.md', '')] = absolutePath;
-      return acc;
-    }, {});
-}
+const ftaPromptsDir = path.join(__dirname, 'fta-prompts');
 
 export interface FrontendWorkflowOptions {
   designDocId: string;
@@ -137,7 +124,8 @@ export class FrontendWorkflowService {
         pageAnnotation: annotationSummary,
         productName: productName || 'FTA-Frontend',
         version: '0.0.0',
-        specFiles,
+        specDirectories: [ftaSpecsDir],
+        promptDirectory: ftaPromptsDir,
         configOverrides: {
           model: this.modelConfig.model,
           planModel: this.modelConfig.model,

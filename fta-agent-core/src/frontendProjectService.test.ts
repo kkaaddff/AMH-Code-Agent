@@ -124,7 +124,8 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
     const result = await runFrontendProjectWorkflow({
       productName: 'frontendProjectTest',
       version: '0.0.0-test',
-      specFiles: {},
+      specDirectories: [path.join(PACKAGE_ROOT, 'mock-specs')],
+      promptFilePath: path.join(PACKAGE_ROOT, 'src/prompts/frontend-project.md'),
       configOverrides: {
         model: 'glm-4.6',
         planModel: 'glm-4.6',
@@ -147,7 +148,7 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
   describe('SpecReader tool mock registration', () => {
     it('reads mock specs directly when special env is enabled', async () => {
       const tool = createSpecReaderTool({
-        specs: {},
+        specDirectories: [path.join(PACKAGE_ROOT, 'mock-specs')],
         cwd: PACKAGE_ROOT,
       });
       const result = await tool.execute({ spec_name: 'directory' });

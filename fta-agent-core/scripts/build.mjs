@@ -10,6 +10,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DIST_DIR = path.join(ROOT_DIR, 'dist');
 const ASSET_DIRS = ['mock-specs'];
+const ASSET_FILES = [
+  path.join(ROOT_DIR, 'src/prompts/frontend-project.md'),
+  path.join(ROOT_DIR, 'src/prompts/fta-project-spec-4agent.md'),
+];
 
 async function main() {
   console.log('> Cleaning dist folder');
@@ -24,6 +28,9 @@ async function main() {
   console.log('> Copying static assets');
   for (const dir of ASSET_DIRS) {
     await copyAssetDir(dir);
+  }
+  for (const file of ASSET_FILES) {
+    await copyAssetFile(file);
   }
 
   console.log('> Build complete');
@@ -41,6 +48,14 @@ async function copyAssetDir(dirName) {
   const target = path.join(DIST_DIR, dirName);
   await mkdir(path.dirname(target), { recursive: true });
   await cp(source, target, { recursive: true, force: true });
+}
+
+async function copyAssetFile(filePath) {
+  if (!(await pathExists(filePath))) return;
+  const relative = path.relative(path.join(ROOT_DIR, 'src'), filePath);
+  const target = path.join(DIST_DIR, relative);
+  await mkdir(path.dirname(target), { recursive: true });
+  await cp(filePath, target, { force: true });
 }
 
 async function pathExists(targetPath) {

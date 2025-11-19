@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { fileURLToPath } from 'node:url';
 import path from 'pathe';
 import type { Config } from './config';
@@ -13,7 +14,7 @@ import { Session } from './session';
 import type { Tool } from './tool';
 import { Tools } from './tool';
 import { createFileDraftTool, FileDraftStore } from './tools/fileDraft';
-import { createSpecReaderTool, type SpecRegistry } from './tools/specReader';
+import { createSpecReaderTool, loadSpecsFromDirectories } from './tools/specReader';
 import { createInMemoryTodoStorage, createTodoTool } from './tools/todo';
 import { randomUUID } from './utils/randomUUID';
 
@@ -32,11 +33,12 @@ export type FrontendProjectWorkflowOptions = {
   pageAnnotation: string;
   productName: string;
   version: string;
-  specFiles: SpecRegistry;
+  specDirectories?: string[];
   cwd?: string;
   configOverrides?: Partial<Config>;
   callbacks?: FrontendProjectWorkflowCallbacks;
   rulesFilePath?: string;
+  promptFilePath?: string;
   apiKey: string;
   baseURL: string;
   todoStorageMode?: 'file' | 'memory';
@@ -54,7 +56,7 @@ export type FrontendProjectWorkflowResult =
       files: FileDraftStore['drafts'];
     };
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rulesFilePath = path.join(__dirname, 'prompts/fta-project-spec-4agent.md');
+const defaultRulesFilePath = path.join(__dirname, 'prompts/fta-project-spec-4agent.md');
 
 /**
  * 将目录树转换为紧凑的路径列表格式
@@ -87,6 +89,11 @@ function formatTreeToCompactList(node: TreeNode, basePath = ''): string {
   return lines.join('\n');
 }
 
+function resolveRulesFilePath(opts: { providedRulesPath?: string; cwd: string }) {
+  const candidate = opts.providedRulesPath || defaultRulesFilePath;
+  return candidate;
+}
+
 export async function runFrontendProjectWorkflow(
   opts: FrontendProjectWorkflowOptions
 ): Promise<FrontendProjectWorkflowResult> {
@@ -113,7 +120,7 @@ export async function runFrontendProjectWorkflow(
     const { todoReadTool, todoWriteTool } = createTodoTool(todoToolConfig);
 
     const specReaderTool = createSpecReaderTool({
-      specs: opts.specFiles,
+      specDirectories: opts.specDirectories,
       cwd: context.cwd,
     });
     const fileDraftTool = createFileDraftTool(fileDraftStore);
@@ -133,11 +140,18 @@ export async function runFrontendProjectWorkflow(
       context,
       sessionId: session.id,
       userPrompt: userInitPrompt,
-      rulesFilePath: opts.rulesFilePath ?? rulesFilePath,
+      rulesFilePath: resolveRulesFilePath({
+        providedRulesPath: opts.rulesFilePath,
+        cwd: context.cwd,
+      }),
     });
 
+    const specRegistry = loadSpecsFromDirectories(opts.specDirectories ?? [], context.cwd);
+
     const systemPrompt = generateFrontendProjectPrompt({
-      specs: Object.keys(opts.specFiles),
+      specs: Object.keys(specRegistry),
+      promptFilePath: opts.promptFilePath,
+      cwd: context.cwd,
     });
 
     const model = (await resolveModelWithContext(context.config.model, context, opts.apiKey, opts.baseURL)).model!;

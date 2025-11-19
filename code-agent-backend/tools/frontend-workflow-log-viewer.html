@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frontend Workflow Log Viewer</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --border: #e5e7eb;
+        --text: #111827;
+        --muted: #6b7280;
+        --accent: #2563eb;
+        --accent-soft: #dbeafe;
+        --danger: #dc2626;
+        --success: #16a34a;
+        --warning: #d97706;
+      }
+      body {
+        margin: 0;
+        font-family: 'SF Pro Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        max-width: 1080px;
+        margin: 24px auto 48px;
+        padding: 0 16px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 700;
+      }
+      p.description {
+        margin: 0 0 16px;
+        color: var(--muted);
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 6px 16px rgba(17, 24, 39, 0.06);
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+      .controls label {
+        font-weight: 600;
+      }
+      input[type='file'],
+      select {
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--text);
+      }
+      button {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        background: var(--panel);
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--text);
+        transition: all 0.15s ease;
+      }
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+        border: 1px solid var(--accent);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
+      }
+      .status {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        background: var(--panel);
+        min-height: 180px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .badge.in {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .badge.out {
+        background: #ecfdf3;
+        color: var(--success);
+      }
+      .badge.error {
+        background: #fee2e2;
+        color: var(--danger);
+      }
+      .timeline {
+        margin-top: 12px;
+        max-height: 260px;
+        overflow: auto;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+      .timeline-item {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .timeline-item:last-child {
+        border-bottom: none;
+      }
+      .timeline-item.active {
+        background: var(--accent-soft);
+      }
+      .timeline-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 700;
+      }
+      .timeline-meta {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      pre {
+        background: #0b1021;
+        color: #e5e7eb;
+        border-radius: 8px;
+        padding: 12px;
+        overflow: auto;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .hidden {
+        display: none;
+      }
+      @media (max-width: 900px) {
+        .split {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Frontend Workflow Log Viewer</h1>
+      <p class="description">
+        选择本地日志文件（支持直接从 <code>logs/api/frontend-workflow-*.log</code> 打开），按分段顺序一步步回放
+        IN/OUT 记录。无需依赖项目即可离线查看。
+      </p>
+
+      <div class="panel">
+        <div class="controls">
+          <div>
+            <label for="file-input">选择日志文件：</label>
+            <input id="file-input" type="file" accept=".log,.txt,.jsonl" />
+          </div>
+          <div>
+            <label for="session-select">Session：</label>
+            <select id="session-select" disabled>
+              <option value="__all">全部 Session</option>
+            </select>
+          </div>
+          <div>
+            <button id="prev-btn" disabled>⬅️ 上一步</button>
+            <button id="next-btn" disabled>➡️ 下一步</button>
+            <button id="play-btn" class="primary" disabled>▶ 自动播放</button>
+          </div>
+        </div>
+        <div id="status" class="status">等待选择日志文件...</div>
+
+        <div class="split">
+          <div class="card">
+            <div class="timeline-title">
+              <span>当前记录</span>
+              <span id="position" class="badge">0 / 0</span>
+            </div>
+            <div id="current-entry" class="status" style="margin-top: 8px;">
+              无记录
+            </div>
+            <pre id="entry-json" class="hidden"></pre>
+          </div>
+          <div class="card">
+            <div class="timeline-title">
+              <span>回放时间线</span>
+              <span class="badge">按日志分段</span>
+            </div>
+            <div id="timeline" class="timeline"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        const elements = {
+          fileInput: document.getElementById('file-input'),
+          sessionSelect: document.getElementById('session-select'),
+          status: document.getElementById('status'),
+          prev: document.getElementById('prev-btn'),
+          next: document.getElementById('next-btn'),
+          play: document.getElementById('play-btn'),
+          position: document.getElementById('position'),
+          current: document.getElementById('current-entry'),
+          json: document.getElementById('entry-json'),
+          timeline: document.getElementById('timeline'),
+        };
+
+        const state = {
+          entries: [],
+          filtered: [],
+          currentIndex: 0,
+          playing: false,
+          timer: null,
+        };
+
+        const badge = (entry) => {
+          if (entry.type === 'ERROR') return 'badge error';
+          return entry.direction === 'IN' ? 'badge in' : 'badge out';
+        };
+
+        const describeEntry = (entry) => {
+          const base = `[${entry.sessionId || 'unknown'}] ${entry.type || 'LOG'}`;
+          if (entry.event) return `${base} · ${entry.event}`;
+          if (entry.endpoint) return `${base} · ${entry.endpoint}`;
+          return base;
+        };
+
+        const setStatus = (text, tone = 'muted') => {
+          elements.status.textContent = text;
+          elements.status.style.color =
+            tone === 'error' ? 'var(--danger)' : tone === 'ok' ? 'var(--success)' : 'var(--muted)';
+        };
+
+        const updateControls = () => {
+          const hasData = state.filtered.length > 0;
+          elements.prev.disabled = !hasData;
+          elements.next.disabled = !hasData;
+          elements.play.disabled = !hasData;
+          elements.sessionSelect.disabled = !state.entries.length;
+          elements.position.textContent = `${hasData ? state.currentIndex + 1 : 0} / ${state.filtered.length}`;
+          elements.play.textContent = state.playing ? '⏸ 暂停' : '▶ 自动播放';
+        };
+
+        const renderCurrent = () => {
+          const entry = state.filtered[state.currentIndex];
+          if (!entry) {
+            elements.current.textContent = '无记录';
+            elements.json.classList.add('hidden');
+            updateControls();
+            return;
+          }
+
+          const badgeClass = badge(entry);
+          elements.current.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="${badgeClass}">${entry.direction || 'N/A'}</span>
+              <strong>${describeEntry(entry)}</strong>
+            </div>
+            <div style="margin-top:6px;color:var(--muted);font-size:12px;">
+              ${entry.timestamp || '无时间戳'}
+            </div>
+          `;
+          elements.json.textContent = JSON.stringify(entry, null, 2);
+          elements.json.classList.remove('hidden');
+          updateControls();
+        };
+
+        const renderTimeline = () => {
+          elements.timeline.innerHTML = '';
+          state.filtered.forEach((entry, idx) => {
+            const item = document.createElement('div');
+            item.className = 'timeline-item' + (idx === state.currentIndex ? ' active' : '');
+            item.innerHTML = `
+              <div class="timeline-title">
+                <span>${describeEntry(entry)}</span>
+                <span class="${badge(entry)}">${entry.direction || 'N/A'}</span>
+              </div>
+              <div class="timeline-meta">${entry.timestamp || ''}</div>
+            `;
+            item.onclick = () => {
+              state.currentIndex = idx;
+              renderCurrent();
+              renderTimeline();
+            };
+            elements.timeline.appendChild(item);
+          });
+        };
+
+        const parseLogText = (text) => {
+          const segments = text.split('---');
+          const entries = [];
+          segments.forEach((segment) => {
+            const lines = segment
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean);
+            lines.forEach((line) => {
+              try {
+                const parsed = JSON.parse(line);
+                entries.push(parsed);
+              } catch (err) {
+                console.warn('跳过无法解析的行:', line);
+              }
+            });
+          });
+          return entries;
+        };
+
+        const buildSessionOptions = () => {
+          const sessionIds = Array.from(new Set(state.entries.map((e) => e.sessionId).filter(Boolean)));
+          elements.sessionSelect.innerHTML = '<option value="__all">全部 Session</option>';
+          sessionIds.forEach((id) => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = id;
+            elements.sessionSelect.appendChild(option);
+          });
+        };
+
+        const applyFilter = () => {
+          const targetSession = elements.sessionSelect.value;
+          state.filtered =
+            targetSession && targetSession !== '__all'
+              ? state.entries.filter((e) => e.sessionId === targetSession)
+              : [...state.entries];
+          state.currentIndex = 0;
+          renderCurrent();
+          renderTimeline();
+          updateControls();
+          setStatus(`已加载 ${state.filtered.length} 条记录`, 'ok');
+        };
+
+        const handleFile = (file) => {
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const text = String(event.target?.result || '');
+            state.entries = parseLogText(text);
+            if (!state.entries.length) {
+              setStatus('没有可解析的日志记录，请确认文件内容。', 'error');
+              return;
+            }
+            buildSessionOptions();
+            applyFilter();
+          };
+          reader.readAsText(file);
+          setStatus(`正在读取 ${file.name} ...`);
+        };
+
+        const stopPlayback = () => {
+          state.playing = false;
+          if (state.timer) {
+            clearInterval(state.timer);
+            state.timer = null;
+          }
+          updateControls();
+        };
+
+        elements.fileInput.addEventListener('change', (e) => {
+          stopPlayback();
+          handleFile(e.target.files ? e.target.files[0] : null);
+        });
+
+        elements.sessionSelect.addEventListener('change', () => {
+          stopPlayback();
+          applyFilter();
+        });
+
+        elements.prev.addEventListener('click', () => {
+          if (state.currentIndex > 0) {
+            state.currentIndex -= 1;
+            renderCurrent();
+            renderTimeline();
+          }
+        });
+
+        elements.next.addEventListener('click', () => {
+          if (state.currentIndex < state.filtered.length - 1) {
+            state.currentIndex += 1;
+            renderCurrent();
+            renderTimeline();
+          }
+        });
+
+        elements.play.addEventListener('click', () => {
+          if (!state.filtered.length) return;
+          if (state.playing) {
+            stopPlayback();
+            return;
+          }
+          state.playing = true;
+          updateControls();
+          state.timer = setInterval(() => {
+            if (state.currentIndex >= state.filtered.length - 1) {
+              stopPlayback();
+              return;
+            }
+            state.currentIndex += 1;
+            renderCurrent();
+            renderTimeline();
+          }, 1000);
+        });
+
+        // 初始化
+        updateControls();
+      })();
+    </script>
+  </body>
+</html>

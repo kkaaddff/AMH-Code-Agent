@@ -12,11 +12,11 @@
 
 ```typescript
 interface ApiResponse<T> {
-  code: number;        // 业务状态码
-  message: string;     // 响应消息
-  data: T;            // 响应数据
-  timestamp: number;   // 时间戳
-  traceId?: string;   // 链路追踪 ID
+  code: number; // 业务状态码
+  message: string; // 响应消息
+  data: T; // 响应数据
+  timestamp: number; // 时间戳
+  traceId?: string; // 链路追踪 ID
 }
 
 interface ApiError {
@@ -82,11 +82,7 @@ const ERROR_CODE_MAP: ErrorCodeMap = {
 };
 
 class ApiError extends Error {
-  constructor(
-    public code: number,
-    message: string,
-    public details?: any
-  ) {
+  constructor(public code: number, message: string, public details?: any) {
     super(message);
     this.name = 'ApiError';
   }
@@ -181,9 +177,9 @@ export const userApi = new UserApi();
 
 ```typescript
 interface CacheConfig {
-  ttl: number;           // 生存时间（毫秒）
-  staleWhileRevalidate?: boolean;  // 过期后是否继续使用旧数据
-  key: string;           // 缓存键
+  ttl: number; // 生存时间（毫秒）
+  staleWhileRevalidate?: boolean; // 过期后是否继续使用旧数据
+  key: string; // 缓存键
 }
 
 class CacheManager {
@@ -269,18 +265,14 @@ class RequestBatcher {
 class RequestDeduplicator {
   private pendingRequests: Map<string, Promise<any>> = new Map();
 
-  async deduplicatedRequest<T>(
-    key: string,
-    request: () => Promise<T>
-  ): Promise<T> {
+  async deduplicatedRequest<T>(key: string, request: () => Promise<T>): Promise<T> {
     if (this.pendingRequests.has(key)) {
       return this.pendingRequests.get(key);
     }
 
-    const promise = request()
-      .finally(() => {
-        this.pendingRequests.delete(key);
-      });
+    const promise = request().finally(() => {
+      this.pendingRequests.delete(key);
+    });
 
     this.pendingRequests.set(key, promise);
     return promise;
@@ -301,9 +293,7 @@ class RequestDeduplicator {
 
 ```typescript
 const corsConfig = {
-  origin: process.env.NODE_ENV === 'production'
-    ? 'https://your-domain.com'
-    : 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'production' ? 'https://your-domain.com' : 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
