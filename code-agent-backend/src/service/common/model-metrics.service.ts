@@ -25,7 +25,7 @@ export class ModelMetricsService {
 
   @Init()
   async init(): Promise<void> {
-    if (['bigmodel', 'volces'].some((provider) => this.modelGatewayConfig?.baseURL.includes(provider))) {
+    if (['bigmodel', 'openrouter', 'volces'].some((provider) => this.modelGatewayConfig?.baseURL.includes(provider))) {
       return;
     }
     // 立即执行一次，确保缓存尽快可用

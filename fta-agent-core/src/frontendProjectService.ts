@@ -162,10 +162,10 @@ export async function runFrontendProjectWorkflow(
 
     const { todoReadTool, todoWriteTool } = createTodoTool(todoToolConfig);
 
-    const specReaderTool = createSpecReaderTool({
-      specDirectories: opts.specDirectories,
-      cwd: context.cwd,
-    });
+    // const specReaderTool = createSpecReaderTool({
+    //   specDirectories: opts.specDirectories,
+    //   cwd: context.cwd,
+    // });
 
     const componentDocReaderTool = createComponentDocReaderTool({
       docDirectories: opts.componentDocDirectories,
@@ -173,8 +173,8 @@ export async function runFrontendProjectWorkflow(
     });
 
     const fileDraftTool = createFileDraftTool(fileDraftStore);
-
-    const toolset: Tool[] = [todoReadTool, todoWriteTool, specReaderTool, componentDocReaderTool, fileDraftTool];
+    // specReaderTool,
+    const toolset: Tool[] = [todoReadTool, todoWriteTool, componentDocReaderTool, fileDraftTool];
     const toolsManager = new Tools(toolset);
 
     const userInitPrompt = `# Page Layout Annotation
@@ -313,7 +313,7 @@ export async function runFrontendProjectWorkflow(
           cwd: context.cwd,
           productName: opts.productName,
           version: opts.version,
-          specDirectories: opts.specDirectories,
+          // specDirectories: opts.specDirectories,
           componentDocDirectories: opts.componentDocDirectories,
           hasSrcTree: !!opts.srcTree,
         },
