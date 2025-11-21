@@ -10,22 +10,23 @@ export const parseColor = (color: string | undefined, styles: DSLStyles): string
   if (!color || !color.startsWith('paint_')) return color || 'rgba(0, 0, 0, 0)';
 
   const style = styles[color];
-  
+
   // 检查样式是否存在且 value 是数组
   if (style && Array.isArray(style.value) && style.value.length > 0) {
     const firstValue = style.value[0];
-    
+
     // 只有当 value[0] 是字符串时才作为颜色值返回
     if (typeof firstValue === 'string') {
-      return firstValue;
+      // 修复渐变色中可能出现的 NaN%
+      return firstValue.replace(/NaN%/g, '0%');
     }
-    
+
     // 如果是对象（比如图片），说明这不是颜色，返回默认透明色
     if (typeof firstValue === 'object' && firstValue !== null) {
       return 'rgba(0, 0, 0, 0)';
     }
   }
-  
+
   // 如果样式不存在或格式不正确，返回原始颜色值
   return color;
 };
@@ -117,9 +118,23 @@ export const parseTextStyle = (fontId: string, styles: DSLStyles): React.CSSProp
   if (fontInfo.decoration) textStyle.textDecoration = fontInfo.decoration;
 
   if (fontInfo.style) {
-    if (fontInfo.style.includes('黑') || fontInfo.style.includes('Bold')) {
+    let styleStr = fontInfo.style;
+    try {
+      // 尝试解析 JSON 格式的 style
+      // 例如: "{\"fontStyle\":\"Regular\",\"opsz\":\"auto\"}"
+      if (styleStr.startsWith('{')) {
+        const styleObj = JSON.parse(styleStr);
+        if (styleObj.fontStyle) {
+          styleStr = styleObj.fontStyle;
+        }
+      }
+    } catch (e) {
+      // 解析失败则使用原始字符串
+    }
+
+    if (styleStr.includes('黑') || styleStr.includes('Bold')) {
       textStyle.fontWeight = 'bold';
-    } else if (fontInfo.style.includes('中')) {
+    } else if (styleStr.includes('中')) {
       textStyle.fontWeight = '500';
     }
   }

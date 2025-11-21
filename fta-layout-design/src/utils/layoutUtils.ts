@@ -58,5 +58,12 @@ export const parseBorderStyle = (
  */
 export const parseEffectStyle = (effectId: string, styles: DSLStyles): React.CSSProperties => {
   const effect = styles[effectId];
-  return effect?.value ? {} : {};
+  if (!effect || !effect.value || effect.value.length === 0) return {};
+
+  // effect.value 是一个字符串数组，每个字符串是一个 shadow 定义
+  // 例如: ["0px 4px 20px 0px rgba(0, 0, 0, 0.06),"]
+  // 我们需要去掉末尾可能的逗号，并用逗号连接它们
+  const boxShadow = effect.value.map((shadow: string) => shadow.trim().replace(/,$/, '')).join(', ');
+
+  return { boxShadow };
 };

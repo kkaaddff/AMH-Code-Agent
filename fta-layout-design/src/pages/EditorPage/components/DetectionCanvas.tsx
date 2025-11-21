@@ -1071,7 +1071,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       <div ref={containerRef} style={styles.container}>
         <div style={styles.panWrapper}>
           <div style={styles.scaledContent}>
-            <div style={styles.dslWrapper}>
+            <div id='detection-dsl-wrapper-v2' style={styles.dslWrapper}>
               {/* Base DSL layer */}
               <DSLElement
                 node={rootNode}

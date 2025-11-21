@@ -23,6 +23,7 @@ export interface DSLBaseNode {
     rotate?: number;
   };
   opacity?: number | string;
+  mask?: string;
   children?: DSLNode[];
 }
 
