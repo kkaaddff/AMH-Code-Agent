@@ -111,20 +111,23 @@ export class MasterGoServiceV1 {
     const httpsAgent = new https.Agent({
       rejectUnauthorized: false,
     });
+    try {
+      const response = await axios.get(`${this.getBaseUrl()}/mcp/dsl`, {
+        timeout: 30000,
+        params: { fileId, layerId },
+        headers: this.getCommonHeader(),
+        httpsAgent,
+      });
+      const dslData = response.data;
 
-    const response = await axios.get(`${this.getBaseUrl()}/mcp/dsl`, {
-      timeout: 30000,
-      params: { fileId, layerId },
-      headers: this.getCommonHeader(),
-      httpsAgent,
-    });
-
-    const dslData = response.data;
-
-    return {
-      dsl: dslData,
-      componentDocumentLinks: this.extractComponentDocumentLinks(dslData),
-    };
+      return {
+        dsl: dslData,
+        componentDocumentLinks: this.extractComponentDocumentLinks(dslData),
+      };
+    } catch (error) {
+      debugger;
+      throw error;
+    }
   }
 
   /**
