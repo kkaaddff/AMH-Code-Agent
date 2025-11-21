@@ -1,11 +1,13 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Modal, Spin } from 'antd';
+import DSLElement from '@/components/DSLElement';
+import { DesignDSL, DSLNode } from '@/types/dsl';
+import { Button, Modal } from 'antd';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useSnapshot } from 'valtio';
-import { designDetectionStore } from '../contexts/DesignDetectionContext';
+import { designDetectionActions, designDetectionStore } from '../contexts/DesignDetectionContext';
 
-import { RENDERER_CONFIG, ORBIT_CONTROLS_CONFIG, COLOR_CONFIG } from '../constants/Three3DInspectConstants';
+import { COLOR_CONFIG, ORBIT_CONTROLS_CONFIG, RENDERER_CONFIG } from '../constants/Three3DInspectConstants';
 
 // Constants for the 3D scene
 const SCENE_CONFIG = {
@@ -103,6 +105,23 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
 
     return nodes;
   }, [dslData]);
+
+  // Construct temporary DSL data for the selected node to render in the side panel
+  const tmpDSLData: DesignDSL | null = useMemo(() => {
+    if (!selectedNode || !dslData) return null;
+
+    // Ensure the node is a valid DSLNode
+    // The rawNode from flatNodes should be the original DSL node object
+    const targetNode = selectedNode.rawNode as DSLNode;
+
+    return {
+      ...dslData,
+      dsl: {
+        ...dslData.dsl,
+        nodes: [targetNode],
+      },
+    };
+  }, [selectedNode, dslData]);
 
   // Create a texture for the ID label
   const createLabelTexture = (text: string) => {
@@ -414,7 +433,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       open={open}
       onCancel={onClose}
       title='DSL 3D Structure Inspector'
-      width={1400}
+      width={1500}
       footer={null}
       centered
       destroyOnHidden
@@ -439,50 +458,39 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
             width: 400,
             borderLeft: '1px solid #eee',
             background: '#fff',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}>
-          <div style={{ padding: '16px', borderBottom: '1px solid #eee', fontWeight: 'bold' }}>Selected Node Info</div>
-          <div style={{ display: 'flex', flexDirection: 'column', padding: '16px', overflow: 'hidden' }}>
-            {selectedNode ? (
-              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ color: '#999', fontSize: 12 }}>ID</div>
-                  <div style={{ fontSize: 16, fontWeight: 'bold' }}>{selectedNode.id}</div>
-                </div>
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ color: '#999', fontSize: 12 }}>Type</div>
-                  <div>{selectedNode.type}</div>
-                </div>
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ color: '#999', fontSize: 12 }}>Dimensions</div>
-                  <div>
-                    {selectedNode.width} x {selectedNode.height}
-                  </div>
-                </div>
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ color: '#999', fontSize: 12 }}>Position</div>
-                  <div>
-                    X: {selectedNode.x}, Y: {selectedNode.y}
-                  </div>
-                </div>
-                <div style={{ height: 'calc(100% - 300px)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                  <div style={{ color: '#999', fontSize: 12, marginBottom: 4 }}>Raw JSON</div>
-                  <pre
-                    style={{
-                      background: '#f5f5f5',
-                      padding: 8,
-                      borderRadius: 4,
-                      fontSize: 11,
-                      overflow: 'auto',
-                      flex: 1,
-                      margin: 0,
-                      minHeight: 0,
-                    }}>
-                    {JSON.stringify(selectedNode.rawNode, null, 2)}
-                  </pre>
-                </div>
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}>
+          <div
+            style={{
+              padding: '16px',
+              borderBottom: '1px solid #eee',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+            }}>
+            <span>Selected Node Preview</span>
+            {tmpDSLData?.dsl?.nodes?.[0]?.id ? (
+              <Button
+                size='small'
+                onClick={() => {
+                  if (tmpDSLData.dsl.nodes[0].hidden) {
+                    designDetectionActions.showDSLNodeById(tmpDSLData.dsl.nodes[0].id);
+                  } else {
+                    designDetectionActions.hideDSLNodeById(tmpDSLData.dsl.nodes[0].id);
+                  }
+                }}>
+                {tmpDSLData.dsl.nodes[0].hidden ? '显示节点' : '隐藏节点'}
+              </Button>
+            ) : null}
+          </div>
+          <div style={{ flex: 1, overflow: 'auto', padding: '16px', position: 'relative' }}>
+            {tmpDSLData ? (
+              <div style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}>
+                <DSLElement dslData={tmpDSLData} />
               </div>
             ) : (
               <div style={{ color: '#999', textAlign: 'center', marginTop: 40 }}>
