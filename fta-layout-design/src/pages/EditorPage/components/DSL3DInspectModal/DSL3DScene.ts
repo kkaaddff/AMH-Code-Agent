@@ -1,3 +1,4 @@
+import { DSLNode } from '@/types/dsl';
 import TWEEN from '@tweenjs/tween.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -18,7 +19,7 @@ export interface DSLNodeInfo {
   x: number;
   y: number;
   depth: number;
-  rawNode: any;
+  rawNode: DSLNode;
 }
 
 export interface DSL3DSceneOptions {
@@ -31,7 +32,7 @@ const SCENE_CONFIG = {
   WIREFRAME_COLOR: 0x1890ff,
   SELECTED_COLOR: 0xff4d4f,
   HOVER_COLOR: 0x40a9ff,
-  SELECTED_FILL_COLOR: 0xff7875,
+  SELECTED_FILL_COLOR: 0xd4380d,
   TEXT_COLOR: 0x000000,
   DEPTH_OFFSET: 150,
   BASE_SCALE: 0.01,
@@ -42,6 +43,7 @@ const ORBIT_CONTROLS_CONFIG = {
   DAMPING_FACTOR: 0.05,
   ROTATE_SPEED: 0.5,
   PAN_SPEED: 0.5,
+  FOV: 30,
 };
 
 export class DSL3DScene {
@@ -79,7 +81,7 @@ export class DSL3DScene {
     this.scene.background = new THREE.Color(0xffffff);
 
     // Camera
-    this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 10000);
+    this.camera = new THREE.PerspectiveCamera(ORBIT_CONTROLS_CONFIG.FOV, width / height, 0.1, 10000);
     this.camera.position.set(0, 0, 1000);
 
     // Renderer
@@ -217,8 +219,7 @@ export class DSL3DScene {
       this.selectedNodeId = info.id;
       if (this.options.onSelect) this.options.onSelect(info);
     } else {
-      this.selectedNodeId = null;
-      if (this.options.onSelect) this.options.onSelect(null);
+      return;
     }
     this.updateHighlights();
   };
@@ -240,6 +241,10 @@ export class DSL3DScene {
   };
 
   private onKeyDown = (event: KeyboardEvent) => {
+    if (event.code === 'Escape') {
+      this.clearSelection();
+      return;
+    }
     if (event.code === 'Space' && !this.isSpacePanning) {
       this.isSpacePanning = true;
       this.controls.mouseButtons = {
@@ -264,17 +269,51 @@ export class DSL3DScene {
     }
   };
 
+  private clearSelection() {
+    if (this.selectedNodeId !== null) {
+      this.selectedNodeId = null;
+      if (this.options.onSelect) this.options.onSelect(null);
+      this.updateHighlights();
+      this.renderer.domElement.style.cursor = this.hoveredNodeId ? 'pointer' : 'grab';
+    }
+  }
+
   private updateHighlights() {
+    const selectedInfo = this.selectedNodeId ? this.nodeComponentsMap.get(this.selectedNodeId)?.nodeInfo : null;
+    const descendantDepthMap = new Map<string, number>();
+
+    if (selectedInfo?.rawNode) {
+      const collectDescendants = (node: DSLNode, depth: number) => {
+        if (!node || !node.id) return;
+        descendantDepthMap.set(node.id, depth);
+
+        const children = Array.isArray(node.children)
+          ? node.children
+          : // : Array.isArray(node.layers) ? node.layers
+            [];
+
+        children.forEach((child) => collectDescendants(child, depth + 1));
+      };
+
+      collectDescendants(selectedInfo.rawNode, 0);
+    }
+
+    const baseSelectedColor = new THREE.Color(SCENE_CONFIG.SELECTED_FILL_COLOR);
+    const white = new THREE.Color(0xffffff);
+
     this.fillMeshes.forEach((mesh) => {
-      const info = mesh.userData.nodeInfo;
-      const isSelected = this.selectedNodeId === info.id;
-      const isHovered = this.hoveredNodeId === info.id;
-
       const material = mesh.material as THREE.MeshBasicMaterial;
+      const info = mesh.userData.nodeInfo as DSLNodeInfo;
+      const isHovered = this.hoveredNodeId === info.id;
+      const depth = descendantDepthMap.get(info.id);
 
-      if (isSelected) {
-        material.color.setHex(SCENE_CONFIG.SELECTED_FILL_COLOR);
-        material.opacity = 0.3;
+      if (depth !== undefined) {
+        const lightenFactor = Math.min(0.6, depth * 0.12); // 子节点越深越浅
+        const color = baseSelectedColor.clone().lerp(white, lightenFactor);
+        const opacity = Math.max(0.08, 0.3 - depth * 0.04);
+
+        material.color.copy(color);
+        material.opacity = opacity;
       } else if (isHovered) {
         material.color.setHex(SCENE_CONFIG.HOVER_COLOR);
         material.opacity = 0.2;
@@ -415,6 +454,7 @@ export class DSL3DScene {
         this.cameraInitialized = true;
       }
     });
+    this.updateHighlights();
   }
 
   private clearAllNodes() {

@@ -257,10 +257,9 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
           <div ref={containerRef} className='dsl-3d-inspect-modal__canvas' />
           <div className='dsl-3d-inspect-modal__hidden-toggle'>
             <Button
-              type='primary'
               icon={showHiddenPanel ? <DoubleRightOutlined /> : <DoubleLeftOutlined />}
               onClick={() => setShowHiddenPanel(!showHiddenPanel)}>
-              隐藏节点
+              隐藏节点 ( {hiddenNodes.length} )
             </Button>
           </div>
           {showHiddenPanel ? (
@@ -313,6 +312,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
           <div className='dsl-3d-inspect-modal__sidebar-section'>
             <div className='dsl-3d-inspect-modal__sidebar-header'>
               <span>当前节点预览</span>
+              <span>按 Esc 键取消选择</span>
               {tmpDSLData?.dsl?.nodes?.[0]?.id ? (
                 <Button
                   size='small'

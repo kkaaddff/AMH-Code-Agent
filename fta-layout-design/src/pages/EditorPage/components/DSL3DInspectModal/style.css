@@ -151,10 +151,25 @@
   padding: 16px;
   border-bottom: 1px solid #eee;
   font-weight: bold;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
+}
+
+.dsl-3d-inspect-modal__sidebar-header > :nth-child(1),
+.dsl-3d-inspect-modal__sidebar-header > :nth-child(2) {
+  justify-self: start;
+}
+
+.dsl-3d-inspect-modal__sidebar-header > :nth-child(2) {
+  color: #94a3b8;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dsl-3d-inspect-modal__sidebar-header > :nth-child(3) {
+  justify-self: end;
 }
 
 .dsl-3d-inspect-modal__sidebar-body {
