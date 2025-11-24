@@ -1,7 +1,7 @@
 import DSLElement from '@/components/DSLElement';
 import { DesignDSL, DSLNode } from '@/types/dsl';
-import { Button, Modal } from 'antd';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Button, Modal, Switch } from 'antd';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useSnapshot } from 'valtio';
@@ -38,6 +38,29 @@ interface DSLNodeInfo {
   rawNode: any;
 }
 
+const buildPreviewDSL = (node: DSLNode, dslData: DesignDSL | null): DesignDSL | null => {
+  if (!dslData) return null;
+
+  const cloneWithoutHidden = (current: DSLNode): DSLNode => {
+    const clonedChildren = current.children?.map((child) => cloneWithoutHidden(child));
+    const clonedLayers = (current as any).layers?.map((child: DSLNode) => cloneWithoutHidden(child));
+    return {
+      ...current,
+      hidden: false,
+      ...(clonedChildren ? { children: clonedChildren } : {}),
+      ...((current as any).layers ? { layers: clonedLayers } : {}),
+    };
+  };
+
+  return {
+    ...dslData,
+    dsl: {
+      ...dslData.dsl,
+      nodes: [cloneWithoutHidden(node)],
+    },
+  };
+};
+
 const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { dslData } = useSnapshot(designDetectionStore);
@@ -53,6 +76,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
   const isMouseDownRef = useRef(false);
 
   const [selectedNode, setSelectedNode] = useState<DSLNodeInfo | null>(null);
+  const [showHiddenPanel, setShowHiddenPanel] = useState(false);
 
   const flatNodes = useMemo(() => {
     if (!dslData) return [];
@@ -116,6 +140,64 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       },
     };
   }, [selectedNode, dslData]);
+
+  const hiddenNodes = useMemo(() => {
+    if (!dslData?.dsl?.nodes?.length) return [];
+
+    const nodes: DSLNode[] = [];
+    const traverse = (node: DSLNode) => {
+      if (node.hidden) {
+        nodes.push(node);
+      }
+      if (node.children?.length) {
+        node.children.forEach(traverse);
+      } else if ((node as any).layers?.length) {
+        (node as any).layers.forEach(traverse);
+      }
+    };
+
+    dslData.dsl.nodes.forEach((node) => traverse(node as DSLNode));
+    return nodes;
+  }, [dslData]);
+
+  const HiddenNodePreview: React.FC<{ dsl: DesignDSL | null }> = ({ dsl }) => {
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+    const [scale, setScale] = useState(1);
+
+    useLayoutEffect(() => {
+      const wrapper = wrapperRef.current;
+      const content = contentRef.current;
+      if (!wrapper || !content) return;
+
+      const measure = () => {
+        const { clientWidth: wrapperWidth, clientHeight: wrapperHeight } = wrapper;
+        if (!wrapperWidth || !wrapperHeight) return;
+        const rect = content.getBoundingClientRect();
+        const contentWidth = rect.width || 1;
+        const contentHeight = rect.height || 1;
+        const nextScale = Math.min(wrapperWidth / contentWidth, wrapperHeight / contentHeight, 1);
+        setScale(nextScale || 1);
+      };
+
+      measure();
+      const resizeObserver = new ResizeObserver(() => measure());
+      resizeObserver.observe(wrapper);
+      return () => resizeObserver.disconnect();
+    }, [dsl]);
+
+    return (
+      <div ref={wrapperRef} className='dsl-3d-inspect-modal__hidden-preview'>
+        <div
+          ref={contentRef}
+          className='dsl-3d-inspect-modal__hidden-preview-inner'
+          // style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+          style={{ transform: `scale(0.25)`, transformOrigin: 'top left' }}>
+          {dsl ? <DSLElement dslData={dsl} /> : null}
+        </div>
+      </div>
+    );
+  };
 
   const createLabelTexture = (text: string) => {
     const canvas = document.createElement('canvas');
@@ -503,6 +585,41 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       <div className='dsl-3d-inspect-modal__layout'>
         <div className='dsl-3d-inspect-modal__viewport' data-testid='dsl-3d-modal-container'>
           <div ref={containerRef} className='dsl-3d-inspect-modal__canvas' />
+          <div className='dsl-3d-inspect-modal__hidden-toggle'>
+            <Switch
+              checkedChildren='隐藏节点'
+              unCheckedChildren='隐藏节点'
+              checked={showHiddenPanel}
+              onChange={(checked) => setShowHiddenPanel(checked)}
+            />
+          </div>
+          {showHiddenPanel ? (
+            <div className='dsl-3d-inspect-modal__hidden-panel'>
+              {hiddenNodes.length === 0 ? (
+                <div className='dsl-3d-inspect-modal__hidden-empty'>暂无隐藏节点</div>
+              ) : (
+                <div className='dsl-3d-inspect-modal__hidden-grid'>
+                  {hiddenNodes.map((node) => {
+                    const previewDSL = buildPreviewDSL(node, dslData as DesignDSL);
+                    return (
+                      <div key={node.id} className='dsl-3d-inspect-modal__hidden-item'>
+                        <HiddenNodePreview dsl={previewDSL} />
+                        <div className='dsl-3d-inspect-modal__hidden-actions'>
+                          <div className='dsl-3d-inspect-modal__hidden-title'>{node.name || node.id}</div>
+                          <Button
+                            size='small'
+                            type='link'
+                            onClick={() => designDetectionActions.showDSLNodeById(node.id)}>
+                            撤销隐藏
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
 
         <div className='dsl-3d-inspect-modal__sidebar'>
