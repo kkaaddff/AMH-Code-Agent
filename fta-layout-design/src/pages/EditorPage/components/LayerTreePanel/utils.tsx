@@ -4,11 +4,14 @@ import { DataNode } from 'antd/es/tree';
 import { AnnotationNode } from '../../types/componentDetection';
 import { designDetectionActions } from '../../contexts/DesignDetectionContext';
 import { DocumentReference } from '@/types/project';
+type PartialExcept<T, K extends keyof T> = Partial<T> & Pick<T, K>;
 
-export const createRootAnnotationFromDesignDoc = (doc: DocumentReference): AnnotationNode | null => {
+export const createRootAnnotationFromDesignDoc = (
+  doc: PartialExcept<DocumentReference, 'id'>
+): AnnotationNode | null => {
   const now = Date.now();
   const rootNode = doc.data?.dsl?.nodes?.[0] ?? null;
-
+  debugger;
   if (!rootNode) {
     return null;
   }

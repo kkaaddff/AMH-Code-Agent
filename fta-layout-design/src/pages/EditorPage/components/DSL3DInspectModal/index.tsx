@@ -1,66 +1,75 @@
 import DSLElement from '@/components/DSLElement';
+import { apiServices } from '@/services';
 import { DesignDSL, DSLNode } from '@/types/dsl';
-import { Button, Modal } from 'antd';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons';
+import { App, Button, Modal } from 'antd';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio';
-import { ORBIT_CONTROLS_CONFIG } from '../../constants/Three3DInspectConstants';
 import { designDetectionActions, designDetectionStore } from '../../contexts/DesignDetectionContext';
+import { editorPageStore } from '../../contexts/EditorPageContext';
+import { DSL3DScene, DSLNodeInfo } from './DSL3DScene';
 
+import { DocumentReference } from '@/types/project';
 import './style.css';
-
-const SCENE_CONFIG = {
-  BG_COLOR: 0xf0f2f5,
-  WIREFRAME_COLOR: 0x1890ff,
-  SELECTED_COLOR: 0xff4d4f,
-  HOVER_COLOR: 0x40a9ff,
-  SELECTED_FILL_COLOR: 0xff7875,
-  TEXT_COLOR: 0x000000,
-  DEPTH_OFFSET: 150,
-  BASE_SCALE: 0.01,
-};
 
 interface DSL3DInspectModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-interface DSLNodeInfo {
-  id: string;
-  name?: string;
-  type: string;
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-  depth: number;
-  rawNode: any;
-}
+const buildPreviewDSL = (node: DSLNode, dslData: DesignDSL | null): DesignDSL | null => {
+  if (!dslData) return null;
+
+  const cloneWithoutHidden = (current: DSLNode): DSLNode => {
+    const clonedChildren = current.children?.map((child) => cloneWithoutHidden(child));
+    const clonedLayers = (current as any).layers?.map((child: DSLNode) => cloneWithoutHidden(child));
+    return {
+      ...current,
+      hidden: false,
+      ...(clonedChildren ? { children: clonedChildren } : {}),
+      ...((current as any).layers ? { layers: clonedLayers } : {}),
+    };
+  };
+
+  return {
+    ...dslData,
+    dsl: {
+      ...dslData.dsl,
+      nodes: [cloneWithoutHidden(node)],
+    },
+  };
+};
 
 const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) => {
+  const { message, modal } = App.useApp();
   const containerRef = useRef<HTMLDivElement>(null);
   const { dslData } = useSnapshot(designDetectionStore);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const controlsRef = useRef<OrbitControls | null>(null);
-  const requestRef = useRef<number | null>(null);
-
-  const hoverRef = useRef<string | null>(null);
-  const selectionRef = useRef<string | null>(null);
-  const isSpacePanningRef = useRef(false);
-  const isMouseDownRef = useRef(false);
+  const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
+  const sceneRef = useRef<DSL3DScene | null>(null);
 
   const [selectedNode, setSelectedNode] = useState<DSLNodeInfo | null>(null);
+  const [showHiddenPanel, setShowHiddenPanel] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const selectedDesignDocument = useMemo(() => {
+    if (!currentPage || selectedDocument?.type !== 'design') {
+      return null;
+    }
+    return currentPage.designDocuments.find((doc) => doc.id === selectedDocument.id) ?? null;
+  }, [currentPage, selectedDocument]);
 
   const flatNodes = useMemo(() => {
     if (!dslData) return [];
 
     const nodes: DSLNodeInfo[] = [];
 
-    const traverse = (node: any, depth: number, parentX: number, parentY: number) => {
+    const traverse = (node: DSLNode, depth: number, parentX: number, parentY: number) => {
       if (!node) return;
+
+      // 前置过滤：对于 hidden 或 mask 为 outline 的节点，直接跳过其本身及子节点
+      if (node.hidden || node.mask === 'outline') {
+        return;
+      }
 
       const layout = node.layoutStyle || {};
       const width = layout.width || 0;
@@ -82,20 +91,14 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       });
 
       if (node.children && Array.isArray(node.children)) {
-        node.children.forEach((child: any) => traverse(child, depth + 1, x, y));
-      } else if (node.layers && Array.isArray(node.layers)) {
-        node.layers.forEach((child: any) => traverse(child, depth + 1, x, y));
+        node.children.forEach((child) => traverse(child, depth + 1, x, y));
       }
     };
 
-    let rootNodes: any[] = [];
+    let rootNodes: DSLNode[] = [];
 
-    if (dslData && typeof dslData === 'object' && 'dsl' in dslData && (dslData as any).dsl?.nodes) {
-      rootNodes = (dslData as any).dsl.nodes;
-    } else if (Array.isArray(dslData)) {
-      rootNodes = dslData;
-    } else {
-      rootNodes = [dslData];
+    if (dslData && typeof dslData === 'object' && 'dsl' in dslData && (dslData as DesignDSL).dsl?.nodes) {
+      rootNodes = (dslData as DesignDSL).dsl.nodes;
     }
 
     rootNodes.forEach((item) => traverse(item, 0, 0, 0));
@@ -117,379 +120,180 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     };
   }, [selectedNode, dslData]);
 
-  const createLabelTexture = (text: string) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
+  const hiddenNodes = useMemo(() => {
+    if (!dslData?.dsl?.nodes?.length) return [];
 
-    const fontSize = 48;
-    const padding = 10;
-    ctx.font = `bold ${fontSize}px Arial`;
+    const nodes: DSLNode[] = [];
+    const traverse = (node: DSLNode) => {
+      if (node.hidden) {
+        nodes.push(node);
+      }
+      if (node.children?.length) {
+        node.children.forEach(traverse);
+      } else if ((node as any).layers?.length) {
+        (node as any).layers.forEach(traverse);
+      }
+    };
 
-    const textMetrics = ctx.measureText(text);
-    const width = textMetrics.width + padding * 2;
-    const height = fontSize + padding * 2;
+    dslData.dsl.nodes.forEach((node) => traverse(node as DSLNode));
+    return nodes;
+  }, [dslData]);
 
-    canvas.width = width;
-    canvas.height = height;
+  const HiddenNodePreview: React.FC<{ dsl: DesignDSL | null }> = ({ dsl }) => {
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+    const [scale, setScale] = useState(1);
 
-    ctx.clearRect(0, 0, width, height);
+    useLayoutEffect(() => {
+      const wrapper = wrapperRef.current;
+      const content = contentRef.current;
+      if (!wrapper || !content) return;
 
-    ctx.font = `bold ${fontSize}px Arial`;
-    ctx.fillStyle = '#000000';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, padding, height / 2);
+      const measure = () => {
+        const { clientWidth: wrapperWidth, clientHeight: wrapperHeight } = wrapper;
+        if (!wrapperWidth || !wrapperHeight) return;
+        const rect = content.getBoundingClientRect();
+        const contentWidth = rect.width || 1;
+        const contentHeight = rect.height || 1;
+        const nextScale = Math.min(wrapperWidth / contentWidth, wrapperHeight / contentHeight, 1);
+        setScale(nextScale || 1);
+      };
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-    return { texture, width, height, aspectRatio: width / height };
+      measure();
+      const resizeObserver = new ResizeObserver(() => measure());
+      resizeObserver.observe(wrapper);
+      return () => resizeObserver.disconnect();
+    }, [dsl]);
+
+    return (
+      <div ref={wrapperRef} className='dsl-3d-inspect-modal__hidden-preview'>
+        <div
+          ref={contentRef}
+          className='dsl-3d-inspect-modal__hidden-preview-inner'
+          style={{ transform: `scale(0.25)`, transformOrigin: 'top left' }}>
+          {dsl ? <DSLElement dslData={dsl} /> : null}
+        </div>
+      </div>
+    );
   };
 
+  // Initialize Scene
   useEffect(() => {
-    if (!open || flatNodes.length === 0) return;
+    if (open && !sceneRef.current) {
+      // Small timeout to ensure container has dimensions
 
-    if (rendererRef.current) {
-      rendererRef.current.dispose();
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-      }
+      setTimeout(() => {
+        if (!containerRef.current) return;
+        sceneRef.current = new DSL3DScene(containerRef.current, {
+          onSelect: (node) => setSelectedNode(node),
+          onHover: () => {
+            // Optional: handle hover state in React if needed,
+            // but currently we only use it for cursor style in the scene class
+          },
+        });
+        // Initial update
+        sceneRef.current.updateNodes(flatNodes);
+      }, 200);
     }
 
-    const initScene = () => {
-      if (!containerRef.current) return;
-
-      const width = containerRef.current.clientWidth;
-      const height = containerRef.current.clientHeight;
-
-      if (width === 0 || height === 0) return;
-
-      const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xffffff);
-      sceneRef.current = scene;
-
-      const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 10000);
-      camera.position.set(0, 0, 1000);
-      cameraRef.current = camera;
-
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(width, height);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.shadowMap.enabled = true;
-      renderer.domElement.style.cursor = 'grab';
-      containerRef.current.appendChild(renderer.domElement);
-      rendererRef.current = renderer;
-
-      const controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = ORBIT_CONTROLS_CONFIG.ENABLE_DAMPING;
-      controls.dampingFactor = ORBIT_CONTROLS_CONFIG.DAMPING_FACTOR;
-      controls.rotateSpeed = ORBIT_CONTROLS_CONFIG.ROTATE_SPEED;
-      controls.panSpeed = ORBIT_CONTROLS_CONFIG.PAN_SPEED * 2;
-      controls.screenSpacePanning = true;
-      controlsRef.current = controls;
-
-      const ambientLight = new THREE.AmbientLight(0xf0f0f0, 1.2);
-      scene.add(ambientLight);
-      const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
-      dirLight.position.set(10, 10, 10);
-      scene.add(dirLight);
-
-      const axesHelper = new THREE.AxesHelper(500);
-      scene.add(axesHelper);
-
-      const group = new THREE.Group();
-      const fillMeshes: THREE.Mesh[] = [];
-      const worldYPositions: number[] = [];
-
-      let minX = Infinity,
-        maxX = -Infinity,
-        minY = Infinity,
-        maxY = -Infinity;
-      flatNodes.forEach((node) => {
-        minX = Math.min(minX, node.x);
-        maxX = Math.max(maxX, node.x + node.width);
-        minY = Math.min(minY, node.y);
-        maxY = Math.max(maxY, node.y + node.height);
-      });
-
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
-
-      flatNodes.forEach((node) => {
-        const geometry = new THREE.BoxGeometry(node.width, node.height, 1);
-        const edges = new THREE.EdgesGeometry(geometry);
-        const material = new THREE.LineBasicMaterial({ color: SCENE_CONFIG.WIREFRAME_COLOR });
-        const wireframe = new THREE.LineSegments(edges, material);
-
-        const x = node.x - centerX + node.width / 2 + 375;
-        const y = -(node.y - centerY + node.height / 2);
-        const z = node.depth * SCENE_CONFIG.DEPTH_OFFSET;
-
-        wireframe.position.set(x, y, z);
-        wireframe.userData = { nodeInfo: node, type: 'wireframe' };
-        group.add(wireframe);
-        worldYPositions.push(y - node.height / 2);
-
-        const fillGeometry = new THREE.PlaneGeometry(node.width, node.height);
-        const fillMaterial = new THREE.MeshBasicMaterial({
-          color: SCENE_CONFIG.HOVER_COLOR,
-          transparent: true,
-          opacity: 0,
-          side: THREE.DoubleSide,
-          depthTest: false,
-        });
-        const fillMesh = new THREE.Mesh(fillGeometry, fillMaterial);
-        fillMesh.position.set(x, y, z);
-        fillMesh.userData = { nodeInfo: node, type: 'fill', originalOpacity: 0 };
-        group.add(fillMesh);
-        fillMeshes.push(fillMesh);
-
-        const labelData = createLabelTexture(node.id);
-        if (labelData) {
-          const labelHeight = 24;
-          const labelWidth = labelHeight * labelData.aspectRatio;
-
-          if (labelWidth <= node.width) {
-            const labelMaterial = new THREE.MeshBasicMaterial({
-              map: labelData.texture,
-              transparent: true,
-              side: THREE.DoubleSide,
-            });
-
-            const labelGeometry = new THREE.PlaneGeometry(labelWidth, labelHeight);
-            const labelMesh = new THREE.Mesh(labelGeometry, labelMaterial);
-
-            const padding = 4;
-            const labelX = x - node.width / 2 + labelWidth / 2 + padding;
-            const labelY = y + node.height / 2 - labelHeight / 2 - padding;
-
-            labelMesh.position.set(labelX, labelY, z + 1);
-            group.add(labelMesh);
-          }
-        }
-      });
-
-      scene.add(group);
-
-      const sceneSize = Math.max(maxX - minX, maxY - minY);
-      const maxDepth = flatNodes.reduce((max, n) => Math.max(max, n.depth), 0);
-      const depthSize = maxDepth * SCENE_CONFIG.DEPTH_OFFSET;
-
-      const canvas = renderer.domElement;
-      const aspect = canvas.width / canvas.height;
-      const fitHeight = Math.max(sceneSize, depthSize, 1200);
-      const fitWidth = fitHeight * aspect;
-
-      const groundSize = Math.max(4000, fitWidth * 2, fitHeight * 2);
-      const lowestY = worldYPositions.length ? Math.min(...worldYPositions) : -groundSize / 4;
-      const groundY = lowestY - 100;
-
-      const groundGeometry = new THREE.PlaneGeometry(groundSize, groundSize);
-      const groundMaterial = new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.18 });
-      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-      ground.rotation.x = -Math.PI / 2;
-      ground.position.set(0, groundY, 0);
-      ground.receiveShadow = true;
-      scene.add(ground);
-
-      const gridHelper = new THREE.GridHelper(6000, 50);
-      gridHelper.position.y = -199;
-      gridHelper.material.opacity = 0.25;
-      gridHelper.position.set(ground.position.x, groundY + 0.1, ground.position.z);
-      scene.add(gridHelper);
-
-      const fov = camera.fov * (Math.PI / 180);
-      const distance = Math.abs(fitHeight / (2 * Math.tan(fov / 2)));
-
-      camera.position.set(0, fitHeight * 0.6, distance * 1.5);
-      controls.target.set(0, 0, 0);
-      controls.update();
-
-      const raycaster = new THREE.Raycaster();
-      const mouse = new THREE.Vector2();
-
-      const updateHighlights = () => {
-        fillMeshes.forEach((mesh) => {
-          const info = mesh.userData.nodeInfo;
-          const isSelected = selectionRef.current === info.id;
-          const isHovered = hoverRef.current === info.id;
-
-          const material = mesh.material as THREE.MeshBasicMaterial;
-
-          if (isSelected) {
-            material.color.setHex(SCENE_CONFIG.SELECTED_FILL_COLOR);
-            material.opacity = 0.3;
-          } else if (isHovered) {
-            material.color.setHex(SCENE_CONFIG.HOVER_COLOR);
-            material.opacity = 0.2;
-          } else {
-            material.opacity = 0;
-          }
-          material.needsUpdate = true;
-        });
-      };
-
-      const onMouseMove = (event: MouseEvent) => {
-        if (isSpacePanningRef.current) {
-          renderer.domElement.style.cursor = 'move';
-          return;
-        }
-        const rect = renderer.domElement.getBoundingClientRect();
-        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(fillMeshes, false);
-
-        if (intersects.length > 0) {
-          const hit = intersects[0];
-          const info = hit.object.userData.nodeInfo;
-
-          if (hoverRef.current !== info.id) {
-            hoverRef.current = info.id;
-            updateHighlights();
-            renderer.domElement.style.cursor = 'pointer';
-          }
-        } else {
-          if (hoverRef.current !== null) {
-            hoverRef.current = null;
-            updateHighlights();
-            renderer.domElement.style.cursor = 'grab';
-          }
-        }
-      };
-
-      const onClick = (event: MouseEvent) => {
-        if (isSpacePanningRef.current) return;
-
-        const rect = renderer.domElement.getBoundingClientRect();
-        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(fillMeshes, false);
-
-        if (intersects.length > 0) {
-          const hit = intersects[0];
-          const info = hit.object.userData.nodeInfo;
-
-          selectionRef.current = info.id;
-          setSelectedNode(info);
-        } else {
-          selectionRef.current = null;
-          setSelectedNode(null);
-        }
-        updateHighlights();
-      };
-
-      const onMouseDown = () => {
-        isMouseDownRef.current = true;
-        if (isSpacePanningRef.current) {
-          renderer.domElement.style.cursor = 'move';
-        } else {
-          renderer.domElement.style.cursor = 'grabbing';
-        }
-      };
-
-      const onMouseUp = () => {
-        isMouseDownRef.current = false;
-        if (isSpacePanningRef.current) {
-          renderer.domElement.style.cursor = 'move';
-        } else {
-          renderer.domElement.style.cursor = hoverRef.current ? 'pointer' : 'grab';
-        }
-      };
-
-      const onKeyDown = (event: KeyboardEvent) => {
-        if (event.code === 'Space' && !isSpacePanningRef.current) {
-          isSpacePanningRef.current = true;
-          controls.mouseButtons = {
-            LEFT: THREE.MOUSE.PAN,
-            MIDDLE: THREE.MOUSE.DOLLY,
-            RIGHT: THREE.MOUSE.ROTATE,
-          } as any;
-
-          renderer.domElement.style.cursor = 'move';
-          event.preventDefault();
-        }
-      };
-
-      const onKeyUp = (event: KeyboardEvent) => {
-        if (event.code === 'Space') {
-          isSpacePanningRef.current = false;
-          controls.mouseButtons = {
-            LEFT: THREE.MOUSE.ROTATE,
-            MIDDLE: THREE.MOUSE.DOLLY,
-            RIGHT: THREE.MOUSE.PAN,
-          } as any;
-
-          renderer.domElement.style.cursor = hoverRef.current ? 'pointer' : 'grab';
-        }
-      };
-
-      renderer.domElement.addEventListener('mousemove', onMouseMove);
-      renderer.domElement.addEventListener('click', onClick);
-      renderer.domElement.addEventListener('mousedown', onMouseDown);
-      renderer.domElement.addEventListener('mouseup', onMouseUp);
-      window.addEventListener('keydown', onKeyDown);
-      window.addEventListener('keyup', onKeyUp);
-
-      const animate = () => {
-        requestRef.current = requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-      };
-      animate();
-
-      return () => {
-        renderer.domElement.removeEventListener('mousemove', onMouseMove);
-        renderer.domElement.removeEventListener('click', onClick);
-        renderer.domElement.removeEventListener('mousedown', onMouseDown);
-        renderer.domElement.removeEventListener('mouseup', onMouseUp);
-        window.removeEventListener('keydown', onKeyDown);
-        window.removeEventListener('keyup', onKeyUp);
-      };
-    };
-
-    setTimeout(() => {
-      initScene();
-    }, 100);
+    // Cleanup when modal closes (unmounts or open becomes false)
+    // Actually, we want to keep the scene instance if possible, but since the modal unmounts the DOM,
+    // we probably need to dispose it.
+    // The user requirement says: "threejs 实例只有在第一次创建页面时创建" (Threejs instance is created only when the page is first created)
+    // But this is a Modal. If the Modal is destroyed, the DOM is gone.
+    // If the Modal uses `destroyOnClose={false}` (or `destroyOnHidden` which is set to true in the original code), then the DOM might be gone.
+    // The original code has `destroyOnHidden`.
+    // If we want to persist the scene, we need to remove `destroyOnHidden` or manage the DOM manually.
+    // However, "第一次创建页面时创建" might mean "when the modal is first opened".
+    // Let's assume we should dispose it when the modal is closed to avoid memory leaks,
+    // BUT we should avoid re-creating it if the data changes while it's open.
 
     return () => {
-      if (requestRef.current !== null) cancelAnimationFrame(requestRef.current);
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-      }
-      if (sceneRef.current) {
-        sceneRef.current.traverse((object) => {
-          if (object instanceof THREE.Mesh || object instanceof THREE.LineSegments || object instanceof THREE.Sprite) {
-            if ((object as any).geometry) (object as any).geometry.dispose();
-            if ((object as any).material) (object as any).material.dispose();
-          }
-        });
+      if (!open && sceneRef.current) {
+        sceneRef.current.dispose();
+        sceneRef.current = null;
       }
     };
-  }, [open, flatNodes]);
+  }, [open]); // Only depend on open.
 
-  const handleClose = () => {
-    Modal.confirm({
-      title: '确认关闭',
-      content: '关闭 3D 结构预览前请确认。',
-      okText: '确认',
-      cancelText: '取消',
-      onOk: () => onClose(),
+  // Update Nodes when data changes
+  useEffect(() => {
+    if (sceneRef.current && open) {
+      sceneRef.current.updateNodes(flatNodes);
+    }
+  }, [flatNodes, open]);
+
+  const disposeScene = () => {
+    if (sceneRef.current) {
+      sceneRef.current.dispose();
+      sceneRef.current = null;
+    }
+  };
+
+  const refreshDesignDocument = async () => {
+    if (!selectedDesignDocument) return;
+    try {
+      await designDetectionActions.fetchDesignDocumentDSL(selectedDesignDocument as DocumentReference, { force: true });
+    } catch (error: any) {
+      message.error(error?.message ?? '更新 DSL 数据失败');
+    }
+  };
+
+  const finalizeClose = async () => {
+    disposeScene();
+    onClose();
+    await refreshDesignDocument();
+  };
+
+  const handleSaveAndClose = async () => {
+    if (saving) return;
+
+    setSaving(true);
+    try {
+      await apiServices.project.updateDocument({
+        id: selectedDesignDocument!.id,
+        data: dslData as DesignDSL,
+      });
+      message.success('DSL 已保存');
+      await finalizeClose();
+    } catch (error: any) {
+      message.error(error?.message ?? '保存 DSL 失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCloseWithoutSave = async () => {
+    await finalizeClose();
+  };
+
+  const handleDirectClose = () => {
+    modal.confirm({
+      title: '关闭 3D 结构预览',
+      content: '是否在关闭前保存 DSL？',
+      okText: '保存并关闭',
+      cancelText: '直接关闭',
+      centered: true,
+      onOk: () => handleSaveAndClose(),
+      onCancel: () => handleCloseWithoutSave(),
     });
   };
 
   return (
     <Modal
       open={open}
-      onCancel={handleClose}
+      onCancel={handleDirectClose}
       title={
         <div className='dsl-3d-inspect-modal__title'>
           <span>DSL 3D Structure Inspector</span>
-          <Button size='small' danger onClick={handleClose}>
-            关闭
-          </Button>
+          <div className='dsl-3d-inspect-modal__title-actions'>
+            <Button size='small' type='primary' loading={saving} onClick={handleSaveAndClose}>
+              保存并关闭
+            </Button>
+            <Button size='small' danger disabled={saving} onClick={handleDirectClose}>
+              直接关闭
+            </Button>
+          </div>
         </div>
       }
       width='100vw'
@@ -503,33 +307,85 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       <div className='dsl-3d-inspect-modal__layout'>
         <div className='dsl-3d-inspect-modal__viewport' data-testid='dsl-3d-modal-container'>
           <div ref={containerRef} className='dsl-3d-inspect-modal__canvas' />
+          <div className='dsl-3d-inspect-modal__hidden-toggle'>
+            <Button
+              icon={showHiddenPanel ? <DoubleRightOutlined /> : <DoubleLeftOutlined />}
+              onClick={() => setShowHiddenPanel(!showHiddenPanel)}>
+              隐藏节点 ( {hiddenNodes.length} )
+            </Button>
+          </div>
+          {showHiddenPanel ? (
+            <div className='dsl-3d-inspect-modal__hidden-panel'>
+              {hiddenNodes.length === 0 ? (
+                <div className='dsl-3d-inspect-modal__hidden-empty'>暂无隐藏节点</div>
+              ) : (
+                <div className='dsl-3d-inspect-modal__hidden-grid'>
+                  {hiddenNodes.map((node) => {
+                    const previewDSL = buildPreviewDSL(node, dslData as DesignDSL);
+                    return (
+                      <div key={node.id} className='dsl-3d-inspect-modal__hidden-item'>
+                        <HiddenNodePreview dsl={previewDSL} />
+                        <div className='dsl-3d-inspect-modal__hidden-actions'>
+                          <div className='dsl-3d-inspect-modal__hidden-title'>{node.name || node.id}</div>
+                          <Button
+                            size='small'
+                            type='link'
+                            onClick={() => designDetectionActions.toggleDSLNodeById(node.id)}>
+                            撤销隐藏
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
 
         <div className='dsl-3d-inspect-modal__sidebar'>
-          <div className='dsl-3d-inspect-modal__sidebar-header'>
-            <span>Selected Node Preview</span>
-            {tmpDSLData?.dsl?.nodes?.[0]?.id ? (
-              <Button
-                size='small'
-                onClick={() => {
-                  if (tmpDSLData.dsl.nodes[0].hidden) {
-                    designDetectionActions.showDSLNodeById(tmpDSLData.dsl.nodes[0].id);
-                  } else {
-                    designDetectionActions.hideDSLNodeById(tmpDSLData.dsl.nodes[0].id);
-                  }
-                }}>
-                {tmpDSLData.dsl.nodes[0].hidden ? '显示节点' : '隐藏节点'}
-              </Button>
-            ) : null}
+          <div className='dsl-3d-inspect-modal__sidebar-section'>
+            <div className='dsl-3d-inspect-modal__sidebar-header'>
+              <span>DSL 全局预览</span>
+            </div>
+            <div className='dsl-3d-inspect-modal__sidebar-body'>
+              {dslData ? (
+                <div className='dsl-3d-inspect-modal__preview-wrapper1'>
+                  <div className='dsl-3d-inspect-modal__preview1' style={{ transform: 'scale(0.5)' }}>
+                    <DSLElement dslData={dslData as DesignDSL} />
+                  </div>
+                </div>
+              ) : (
+                <div className='dsl-3d-inspect-modal__empty'>暂无 DSL 数据</div>
+              )}
+            </div>
           </div>
-          <div className='dsl-3d-inspect-modal__sidebar-body'>
-            {tmpDSLData ? (
-              <div className='dsl-3d-inspect-modal__preview'>
-                <DSLElement dslData={tmpDSLData} />
-              </div>
-            ) : (
-              <div className='dsl-3d-inspect-modal__empty'>Click on a wireframe box to view details</div>
-            )}
+
+          <div className='dsl-3d-inspect-modal__sidebar-section'>
+            <div className='dsl-3d-inspect-modal__sidebar-header'>
+              <span>当前节点预览</span>
+              <span>按 Esc 键取消选择</span>
+              {tmpDSLData?.dsl?.nodes?.[0]?.id ? (
+                <Button
+                  size='small'
+                  onClick={() => {
+                    designDetectionActions.toggleDSLNodeById(tmpDSLData.dsl.nodes[0].id);
+                  }}>
+                  显示/隐藏
+                </Button>
+              ) : null}
+            </div>
+            <div className='dsl-3d-inspect-modal__sidebar-body'>
+              {tmpDSLData ? (
+                <div className='dsl-3d-inspect-modal__preview-wrapper'>
+                  <div className='dsl-3d-inspect-modal__preview'>
+                    <DSLElement dslData={tmpDSLData} />
+                  </div>
+                </div>
+              ) : (
+                <div className='dsl-3d-inspect-modal__empty'>点击左侧线框查看节点详情</div>
+              )}
+            </div>
           </div>
         </div>
       </div>

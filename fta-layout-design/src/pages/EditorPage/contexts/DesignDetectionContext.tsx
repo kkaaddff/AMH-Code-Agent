@@ -21,6 +21,8 @@ import { saveAnnotationState } from '../utils/componentStorage';
 import { editorPageStore } from './EditorPageContext';
 import { convertToTreeData, createRootAnnotationFromDesignDoc } from '../components/LayerTreePanel/utils';
 
+type PartialExcept<T, K extends keyof T> = Partial<T> & Pick<T, K>;
+
 const { Text } = Typography;
 
 const VIRTUAL_ANNOTATION_PREFIX = 'virtual-annotation-';
@@ -398,7 +400,7 @@ const setDesignDslData = (designId: string, data: DesignDSL | null) => {
   target.dslData = data;
 };
 
-const updateDSLNodeHiddenState = (id: string, hidden: boolean) => {
+const updateDSLNodeHiddenState = (id: string) => {
   if (!id || !designDetectionStore.currentDesignId) {
     return;
   }
@@ -408,15 +410,15 @@ const updateDSLNodeHiddenState = (id: string, hidden: boolean) => {
     return;
   }
 
-  const toggleHidden = (node: DSLNode): boolean => {
+  const findAndToggleNode = (node: DSLNode): boolean => {
     if (node.id === id) {
-      node.hidden = hidden;
+      node.hidden = !node.hidden;
       return true;
     }
 
     if (node.children) {
       for (const child of node.children) {
-        if (toggleHidden(child)) {
+        if (findAndToggleNode(child)) {
           return true;
         }
       }
@@ -425,12 +427,13 @@ const updateDSLNodeHiddenState = (id: string, hidden: boolean) => {
     return false;
   };
 
-  designState.dslData.dsl.nodes.some((node) => toggleHidden(node));
+  designState.dslData.dsl.nodes.some((node) => findAndToggleNode(node));
 };
 
-const getDocumentVersionToken = (doc: DocumentReference) => doc.updatedAt || doc.lastSyncAt || doc.createdAt || '';
+const getDocumentVersionToken = (doc: PartialExcept<DocumentReference, 'id'>) =>
+  doc.updatedAt || doc.lastSyncAt || doc.createdAt || '';
 
-const shouldFetchDesignDocument = (doc: DocumentReference, force?: boolean): boolean => {
+const shouldFetchDesignDocument = (doc: PartialExcept<DocumentReference, 'id'>, force?: boolean): boolean => {
   if (force) {
     return true;
   }
@@ -445,7 +448,7 @@ const shouldFetchDesignDocument = (doc: DocumentReference, force?: boolean): boo
   return target.versionToken !== nextVersion;
 };
 
-const fetchDesignDocumentDSLInternal = async (doc: DocumentReference): Promise<void> => {
+const fetchDesignDocumentDSLInternal = async (doc: PartialExcept<DocumentReference, 'id'>): Promise<void> => {
   const versionToken = getDocumentVersionToken(doc);
   const target = ensureDesignDocumentState(doc.id);
   target.isLoading = true;
@@ -536,7 +539,7 @@ export const designDetectionActions = {
     }
   },
 
-  fetchDesignDocumentDSL: async (doc: DocumentReference, options?: { force?: boolean }) => {
+  fetchDesignDocumentDSL: async (doc: PartialExcept<DocumentReference, 'id'>, options?: { force?: boolean }) => {
     if (!doc?.id) return;
     if (!shouldFetchDesignDocument(doc, options?.force)) {
       return;
@@ -549,12 +552,8 @@ export const designDetectionActions = {
     designDetectionStore.designStoreMap[designId] = createEmptyDesignDocumentState();
   },
 
-  hideDSLNodeById: (id: string) => {
-    updateDSLNodeHiddenState(id, true);
-  },
-
-  showDSLNodeById: (id: string) => {
-    updateDSLNodeHiddenState(id, false);
+  toggleDSLNodeById: (id: string) => {
+    updateDSLNodeHiddenState(id);
   },
 
   // 创建标注
