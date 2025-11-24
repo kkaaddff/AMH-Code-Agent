@@ -1,7 +1,9 @@
 import assert from 'assert';
 import type { LanguageModelV2FunctionTool } from '@ai-sdk/provider';
+import type { JSONSchema7 } from 'json-schema';
 import path from 'pathe';
 import * as z from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { Context } from './context';
 import type { ImagePart, TextPart } from './message';
 import { resolveModelWithContext } from './model';
@@ -125,9 +127,16 @@ export class Tools {
 
   toLanguageV2Tools(): LanguageModelV2FunctionTool[] {
     return Object.entries(this.tools).map(([key, tool]) => {
-      // parameters of mcp tools is not zod object
       const isMCP = key.startsWith('mcp__');
-      const schema = isMCP ? tool.parameters : z.toJSONSchema(tool.parameters);
+      const schema: JSONSchema7 = (() => {
+        if (isMCP) {
+          return (tool.parameters as JSONSchema7) || {};
+        }
+        const jsonSchema = isZodSchema(tool.parameters)
+          ? zodToJsonSchema(tool.parameters as any, { target: 'jsonSchema7' })
+          : {};
+        return jsonSchema as JSONSchema7;
+      })();
       return {
         type: 'function',
         name: key,
@@ -179,14 +188,20 @@ export type ToolUseResult = {
   approved: boolean;
 };
 
-export interface Tool<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
+type ToolParams<TSchema> = TSchema extends z.ZodTypeAny ? z.output<TSchema> : any;
+
+export interface Tool<TSchema extends z.ZodTypeAny | JSONSchema7 = z.ZodTypeAny | JSONSchema7> {
   name: string;
   description: string;
-  getDescription?: ({ params, cwd }: { params: z.output<TSchema>; cwd: string }) => string;
+  getDescription?: ({ params, cwd }: { params: ToolParams<TSchema>; cwd: string }) => string;
   displayName?: string;
-  execute: (params: z.output<TSchema>) => Promise<ToolResult> | ToolResult;
+  execute: (params: ToolParams<TSchema>) => Promise<ToolResult> | ToolResult;
   approval?: ToolApprovalInfo;
-  parameters: TSchema;
+  parameters: TSchema | JSONSchema7;
+}
+
+function isZodSchema(value: unknown): value is z.ZodTypeAny {
+  return Boolean(value && typeof value === 'object' && '_def' in (value as Record<string, unknown>));
 }
 
 type ApprovalContext = {

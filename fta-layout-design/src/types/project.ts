@@ -1,5 +1,6 @@
-import { AnnotationNode } from '@/pages/EditorPage/types/componentDetection';
-import { DesignDSL, DSLData } from './dsl';
+import type { AnnotationSnapshot, DesignDSL } from '@fta/shared-types';
+
+export type { AnnotationSnapshot } from '@fta/shared-types';
 
 export interface Project {
   id: string;
@@ -134,11 +135,6 @@ export interface ProcessingHistoryItem {
 
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'editing' | 'completed' | 'failed';
 
-export interface AnnotationSnapshot {
-  rootAnnotation: AnnotationNode | null;
-  savedAt: number;
-  version: string;
-}
 export interface DocumentReference {
   /** ObjectId */
   _id: string;

@@ -3,6 +3,7 @@ import type { DesignDSL } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import {
   AppstoreOutlined,
+  DeploymentUnitOutlined,
   DownOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
@@ -17,6 +18,7 @@ import CodeGenerationDrawer from './components/CodeGenerationDrawer';
 import Component3DInspectModal from './components/Component3DInspectModal';
 import ComponentPropertyPanel from './components/ComponentPropertyPanel';
 import DetectionCanvas from './components/DetectionCanvas';
+import DSL3DInspectModal from './components/DSL3DInspectModal';
 import InteractionGuideOverlay from './components/InteractionGuideOverlay';
 import LayerTreePanel from './components/LayerTreePanel';
 import OpenAPIDataPanel from './components/OpenAPIDataPanel';
@@ -69,6 +71,7 @@ const EditorPageContent: React.FC = () => {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [is3DModalOpen, setIs3DModalOpen] = useState(false);
+  const [isDSL3DModalOpen, setIsDSL3DModalOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -481,6 +484,15 @@ const EditorPageContent: React.FC = () => {
                         3D 检视
                       </Button>
                       <Button
+                        type={isDSL3DModalOpen ? 'primary' : 'default'}
+                        size='small'
+                        icon={<DeploymentUnitOutlined />}
+                        onClick={() => setIsDSL3DModalOpen(true)}
+                        className='editor-page-button'
+                        data-testid='dsl-3d-button'>
+                        DSL 3D
+                      </Button>
+                      <Button
                         type={isGuideOpen ? 'primary' : 'default'}
                         size='small'
                         icon={<QuestionCircleOutlined />}
@@ -620,6 +632,7 @@ const EditorPageContent: React.FC = () => {
         onConfirm={handleAnnotationConfirmSubmit}
       />
       <Component3DInspectModal open={is3DModalOpen} onClose={() => setIs3DModalOpen(false)} />
+      <DSL3DInspectModal open={isDSL3DModalOpen} onClose={() => setIsDSL3DModalOpen(false)} />
       <InteractionGuideOverlay open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
       <CodeGenerationDrawer abortGeneration={abortGeneration} />
 

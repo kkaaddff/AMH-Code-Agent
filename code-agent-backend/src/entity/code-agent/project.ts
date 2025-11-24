@@ -1,14 +1,8 @@
-import type { AnnotationNode } from '@fta/agent-core/dist/utils/annotation';
+import type { AnnotationNode, AnnotationSnapshot, DesignDSL } from '@fta/shared-types';
 import { modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { EntityModel } from '@midwayjs/typegoose';
-import { DesignDSL } from '../../types';
 
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'completed' | 'editing';
-export interface AnnotationSnapshot {
-  rootAnnotation: AnnotationNode | null;
-  savedAt: number;
-  version: string;
-}
 
 @EntityModel()
 @modelOptions({

@@ -19,6 +19,18 @@ Generated artifacts (`dist/`, `logs/`, `run/`, `files-cache/`, `messages-replaye
 
 ---
 
+## Quickstart Rules
+
+- Yarn workspaces: install once via `yarn install` at repo root; run commands with `yarn workspace <name> <cmd>` or from the package dir.
+- Read `AGENTS.md` first; always set `workdir` and stay inside package directories when running commands.
+- Prefer `rg`/`rg --files` for searches; avoid destructive git operations.
+- Follow plan-tool usage (no single-step plans, update statuses as you progress).
+- Use package scripts instead of raw binaries; keep generated assets untracked.
+- Add brief comments only for non-obvious logic; match existing formatting.
+- Document manual verification when tests aren’t run and keep env secrets out of source.
+
+---
+
 ## 2. Repository Layout
 
 ```

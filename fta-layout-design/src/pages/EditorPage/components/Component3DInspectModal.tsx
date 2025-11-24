@@ -21,7 +21,7 @@ import {
   DEPTH_CALCULATION,
   LOADING_CONFIG,
   COLOR_CONFIG,
-} from '../constants/ThreeDInspectConstants';
+} from '../constants/Three3DInspectConstants';
 
 interface Component3DInspectModalProps {
   open: boolean;

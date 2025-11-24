@@ -1,6 +1,9 @@
-import { DSLNode } from '@/types/dsl';
+import type { DSLNode } from '@/types/dsl';
+import type { LayoutTreeNode } from '@/types/layout';
+import type { AnnotationNode } from '@fta/shared-types';
 import { LABEL_STYLES } from '../constants/CanvasConstant';
-import { LayoutTreeNode } from '@/types/layout';
+
+export type { AnnotationNode, LayoutProperties } from '@fta/shared-types';
 
 // 节点类型枚举
 export enum NodeType {
@@ -12,44 +15,6 @@ export enum NodeType {
 export interface SelectedNodeItem {
   id: string;
   type: NodeType;
-}
-
-// 布局属性
-export interface LayoutProperties {
-  width?: number;
-  height?: number;
-  position?: string;
-  flexDirection?: string;
-  alignItems?: string;
-  justifyContent?: string;
-  flex?: number;
-  gap?: number;
-  padding?: string;
-  margin?: string;
-  backgroundColor?: string;
-  borderRadius?: string;
-}
-
-// 标注节点结构
-export interface AnnotationNode {
-  id: string;
-  dslNodeId: string; // 对应的DSL节点ID
-  dslNode: DSLNode | null; // DSL节点引用
-  ftaComponent: string; // FTA组件类型
-  isRoot: boolean; // 是否为根节点
-  isMainPage: boolean; // 是否为主页面
-  isContainer: boolean; // 是否为容器组件
-  name?: string; // 组件实例名称
-  comment?: string; // 组件说明
-  children: AnnotationNode[]; // 子组件
-  absoluteX: number;
-  absoluteY: number;
-  width: number;
-  height: number;
-  layout?: LayoutProperties;
-  props?: Record<string, any>;
-  createdAt: number;
-  updatedAt: number;
 }
 
 // Context状态

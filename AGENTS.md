@@ -7,6 +7,15 @@
 - `fta-agent-core/` – TypeScript agent runtime powering NEOVATE CLI flows; wraps `AgentService`, run-loop/tooling, background task manager, MCP integration, and the `runFrontendProjectWorkflow` helper. See `fta-agent-core/docs/*.md` for lifecycle diagrams and workflow guidance.
 - Keep generated assets (`dist/`, `logs/`, `run/`, `files-cache/`, `output/`) untracked.
 
+## Workflow Basics
+- Use Yarn workspaces. Install deps once via `yarn install` at repo root; run scripts with `yarn workspace <name> <cmd>` or inside each package.
+- Always set `workdir` when running commands and stay inside package folders.
+- Prefer `rg`/`rg --files` for search; avoid destructive git commands.
+- Follow plan-tool rules (no single-step plans; update statuses as you go).
+- Use package scripts (`npm run …`, `yarn …`) over raw binaries; keep generated assets out of git.
+- Add concise comments only when logic is non-obvious; respect existing formatting.
+- Document manual verification when tests aren’t run; keep env secrets out of source.
+
 ## Backend Service (`code-agent-backend/`)
 - Entry: `bootstrap.js`/`start.sh`; dev server via `midway-bin dev --ts` on port 7001. Config lives in `src/config/*.ts`; runtime env comes from `.env` + Lion config center.
 - Structure: controllers in `src/controller/` (`design/*`, `code-agent/*`, `neovate`), DTOs under `src/dto/`, entities in `src/entity/`, services split by domain (`design`, `code-agent`, `common`, `oss`, `neovate-code`), queues in `src/queue/`, utilities in `src/utils/`, shared types in `src/types/`.
@@ -61,6 +70,13 @@
 - Backend: place Jest/Midway specs under `test/<feature>/*.test.ts`, boot services with `@midwayjs/mock`, and exercise controller DTO validation. Run `npm run cov` before merging and explain any coverage deltas.
 - Frontend: no automated suite today; when adding logic-heavy code, colocate Vitest + React Testing Library tests or document manual verification steps (UI flows exercised, API mocks used).
 - CLI: smoke-test `npm run parse` and `npm run replay` after changing parser/replayer logic; for live mode, document which endpoint you pointed at.
+
+## Troubleshooting
+- Backend boot issues: confirm Node 20.19.5, Mongo/Redis endpoints, `MODEL_*`/MasterGo envs, and existing `files-cache/`.
+- DSL import: verify `mastergo.baseUrl` + token and `MasterGoService.extractIdsFromUrl` parsing.
+- Queue/codegen: check Redis connectivity and outputs under `files-cache/design/codegen/`.
+- Frontend 4xx/5xx: validate `VITE_API_BASE_URL` and whether `VITE_ENABLE_MOCK` should be toggled.
+- Messages replayer live failures: double-check `MODEL_ENDPOINT`, `MODEL_API_KEY`, and timeout settings.
 
 ## Configuration & Security
 - Backend env: `MODEL_ENDPOINT`, `MODEL_API_KEY`, `MODEL_NAME`, `MODEL_TIMEOUT`, `MODEL_TEMPERATURE`, MasterGo token/URL (`src/config/config.default.ts`), Redis hosts, Mongo URIs, OSS credentials. Never hardcode secrets—pipe them through env or Lion configs. Inspect `files-cache/` and `run/*.json` before publish to ensure no sensitive data leaks.

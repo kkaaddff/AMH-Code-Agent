@@ -100,6 +100,7 @@ const DSLElement: React.FC<DSLElementProps> = ({ node, dslData, onSelect, onHove
     ...('overflow' in currentNode && currentNode.overflow
       ? { overflow: currentNode.overflow as React.CSSProperties['overflow'] }
       : {}),
+    ...('mask' in currentNode && currentNode.mask === 'outline' ? { overflow: 'hidden' } : {}),
     ...(isSelected ? SELECTION_STYLES.selected : isHovered ? SELECTION_STYLES.hovered : {}),
     boxSizing: 'border-box',
     cursor: onSelect ? 'pointer' : 'default',
@@ -168,6 +169,7 @@ const DSLElement: React.FC<DSLElementProps> = ({ node, dslData, onSelect, onHove
 
       let backgroundImageStyle: React.CSSProperties = {};
       let layerSpecificStyle: React.CSSProperties = {};
+      let isMaskImage = false;
 
       if (fillId && fillId.startsWith('paint_')) {
         const style = styles[fillId];
@@ -179,6 +181,11 @@ const DSLElement: React.FC<DSLElementProps> = ({ node, dslData, onSelect, onHove
             // 这是图像
             const imageUrl = parseImageUrl(fillId, styles);
             if (imageUrl) {
+              // 检查是否是遮罩图像（名称包含"蒙版"）
+              if (layerNode.name?.includes('蒙版') || layerNode.name?.includes('Mask')) {
+                isMaskImage = true;
+              }
+
               backgroundImageStyle = {
                 background: `url(${imageUrl})`,
                 backgroundSize: 'cover',
@@ -192,6 +199,11 @@ const DSLElement: React.FC<DSLElementProps> = ({ node, dslData, onSelect, onHove
           }
           // 如果是颜色，combinedStyle 中已经通过 parseColor 正确处理了，不需要额外设置
         }
+      }
+
+      // 如果是遮罩图像，不渲染（返回 null）
+      if (isMaskImage) {
+        return null;
       }
 
       const finalStyle: React.CSSProperties = {
@@ -258,6 +270,21 @@ const DSLElement: React.FC<DSLElementProps> = ({ node, dslData, onSelect, onHove
       return (
         <div style={combinedStyle} {...elementProps}>
           {renderChildren(frameNode.children)}
+        </div>
+      );
+    }
+
+    case 'GROUP': {
+      // GROUP 节点处理
+      // 如果 GROUP 名称包含"蒙版"，应该裁剪内容
+      const shouldClip =
+        currentNode.name?.includes('蒙版') || currentNode.name?.includes('mask') || currentNode.name?.includes('Mask');
+
+      const groupStyle = shouldClip ? { ...combinedStyle, overflow: 'hidden' as const } : combinedStyle;
+
+      return (
+        <div style={groupStyle} {...elementProps}>
+          {renderChildren((currentNode as any).children)}
         </div>
       );
     }

@@ -398,6 +398,36 @@ const setDesignDslData = (designId: string, data: DesignDSL | null) => {
   target.dslData = data;
 };
 
+const updateDSLNodeHiddenState = (id: string, hidden: boolean) => {
+  if (!id || !designDetectionStore.currentDesignId) {
+    return;
+  }
+
+  const designState = designDetectionStore.designStoreMap[designDetectionStore.currentDesignId];
+  if (!designState?.dslData?.dsl?.nodes?.length) {
+    return;
+  }
+
+  const toggleHidden = (node: DSLNode): boolean => {
+    if (node.id === id) {
+      node.hidden = hidden;
+      return true;
+    }
+
+    if (node.children) {
+      for (const child of node.children) {
+        if (toggleHidden(child)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  designState.dslData.dsl.nodes.some((node) => toggleHidden(node));
+};
+
 const getDocumentVersionToken = (doc: DocumentReference) => doc.updatedAt || doc.lastSyncAt || doc.createdAt || '';
 
 const shouldFetchDesignDocument = (doc: DocumentReference, force?: boolean): boolean => {
@@ -517,6 +547,14 @@ export const designDetectionActions = {
   resetDesignDocumentState: (designId: string) => {
     if (!designId) return;
     designDetectionStore.designStoreMap[designId] = createEmptyDesignDocumentState();
+  },
+
+  hideDSLNodeById: (id: string) => {
+    updateDSLNodeHiddenState(id, true);
+  },
+
+  showDSLNodeById: (id: string) => {
+    updateDSLNodeHiddenState(id, false);
   },
 
   // 创建标注

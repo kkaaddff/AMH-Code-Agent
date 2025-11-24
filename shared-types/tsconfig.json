@@ -1,20 +1,18 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "esnext",
+    "module": "ESNext",
     "moduleResolution": "bundler",
-    "declaration": true,
     "strict": true,
-    "noImplicitAny": false,
-    "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
     "outDir": "dist",
     "rootDir": "src",
+    "isolatedModules": true,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "types": ["node"]
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "src/server/**/*.ts"]
+  "include": ["src"]
 }

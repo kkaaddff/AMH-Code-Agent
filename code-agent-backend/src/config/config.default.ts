@@ -208,7 +208,7 @@ export default (appInfo: EggAppInfo) => {
    */
   config.mastergo = {
     baseUrl: 'https://mg.amh-group.com',
-    token: 'mg_27eea23a42b54a3dbd338ea9ce80ea52',
+    token: 'mg_f1d78b29ea4d4fbdb380e3e5b12fa6a2',
   };
 
   /**
