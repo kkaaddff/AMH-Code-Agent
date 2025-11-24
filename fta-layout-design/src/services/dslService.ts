@@ -38,7 +38,7 @@ export const dslService = {
    * 处理 DSL 数据（转换 PATH 为 LAYER 等）
    */
   async processDSL(data: { dsl: DSLData; convertPaths?: boolean; keepOriginalPaths?: boolean }) {
-    const response = await api.dsl.process(data);
-    return response.data as DesignDSL;
+    // const response = await api.dsl.process(data);
+    return data as DesignDSL;
   },
 };

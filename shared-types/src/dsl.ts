@@ -31,6 +31,8 @@ export interface DSLLayoutStyle {
   height?: number;
   relativeX?: number;
   relativeY?: number;
+  left?: number;
+  top?: number;
   rotate?: number;
 }
 

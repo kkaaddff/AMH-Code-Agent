@@ -28,6 +28,12 @@
   padding-bottom: 12px;
 }
 
+.dsl-3d-inspect-modal__title-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .dsl-3d-inspect-modal__layout {
   display: flex;
   height: 100%;

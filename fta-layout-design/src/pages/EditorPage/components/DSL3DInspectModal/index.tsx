@@ -1,12 +1,15 @@
 import DSLElement from '@/components/DSLElement';
+import { apiServices } from '@/services';
 import { DesignDSL, DSLNode } from '@/types/dsl';
-import { Button, Modal } from 'antd';
 import { DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons';
+import { App, Button, Modal } from 'antd';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { designDetectionActions, designDetectionStore } from '../../contexts/DesignDetectionContext';
+import { editorPageStore } from '../../contexts/EditorPageContext';
 import { DSL3DScene, DSLNodeInfo } from './DSL3DScene';
 
+import { DocumentReference } from '@/types/project';
 import './style.css';
 
 interface DSL3DInspectModalProps {
@@ -38,19 +41,29 @@ const buildPreviewDSL = (node: DSLNode, dslData: DesignDSL | null): DesignDSL | 
 };
 
 const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) => {
+  const { message, modal } = App.useApp();
   const containerRef = useRef<HTMLDivElement>(null);
   const { dslData } = useSnapshot(designDetectionStore);
+  const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
   const sceneRef = useRef<DSL3DScene | null>(null);
 
   const [selectedNode, setSelectedNode] = useState<DSLNodeInfo | null>(null);
   const [showHiddenPanel, setShowHiddenPanel] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const selectedDesignDocument = useMemo(() => {
+    if (!currentPage || selectedDocument?.type !== 'design') {
+      return null;
+    }
+    return currentPage.designDocuments.find((doc) => doc.id === selectedDocument.id) ?? null;
+  }, [currentPage, selectedDocument]);
 
   const flatNodes = useMemo(() => {
     if (!dslData) return [];
 
     const nodes: DSLNodeInfo[] = [];
 
-    const traverse = (node: any, depth: number, parentX: number, parentY: number) => {
+    const traverse = (node: DSLNode, depth: number, parentX: number, parentY: number) => {
       if (!node) return;
 
       // 前置过滤：对于 hidden 或 mask 为 outline 的节点，直接跳过其本身及子节点
@@ -78,20 +91,14 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       });
 
       if (node.children && Array.isArray(node.children)) {
-        node.children.forEach((child: any) => traverse(child, depth + 1, x, y));
-      } else if (node.layers && Array.isArray(node.layers)) {
-        node.layers.forEach((child: any) => traverse(child, depth + 1, x, y));
+        node.children.forEach((child) => traverse(child, depth + 1, x, y));
       }
     };
 
-    let rootNodes: any[] = [];
+    let rootNodes: DSLNode[] = [];
 
-    if (dslData && typeof dslData === 'object' && 'dsl' in dslData && (dslData as any).dsl?.nodes) {
-      rootNodes = (dslData as any).dsl.nodes;
-    } else if (Array.isArray(dslData)) {
-      rootNodes = dslData;
-    } else {
-      rootNodes = [dslData];
+    if (dslData && typeof dslData === 'object' && 'dsl' in dslData && (dslData as DesignDSL).dsl?.nodes) {
+      rootNodes = (dslData as DesignDSL).dsl.nodes;
     }
 
     rootNodes.forEach((item) => traverse(item, 0, 0, 0));
@@ -216,32 +223,77 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     }
   }, [flatNodes, open]);
 
-  const handleClose = () => {
-    Modal.confirm({
-      title: '确认关闭',
-      content: '关闭 3D 结构预览前请确认。',
-      okText: '确认',
-      cancelText: '取消',
-      onOk: () => {
-        if (sceneRef.current) {
-          sceneRef.current.dispose();
-          sceneRef.current = null;
-        }
-        onClose();
-      },
+  const disposeScene = () => {
+    if (sceneRef.current) {
+      sceneRef.current.dispose();
+      sceneRef.current = null;
+    }
+  };
+
+  const refreshDesignDocument = async () => {
+    if (!selectedDesignDocument) return;
+    try {
+      await designDetectionActions.fetchDesignDocumentDSL(selectedDesignDocument as DocumentReference, { force: true });
+    } catch (error: any) {
+      message.error(error?.message ?? '更新 DSL 数据失败');
+    }
+  };
+
+  const finalizeClose = async () => {
+    disposeScene();
+    onClose();
+    await refreshDesignDocument();
+  };
+
+  const handleSaveAndClose = async () => {
+    if (saving) return;
+
+    setSaving(true);
+    try {
+      await apiServices.project.updateDocument({
+        id: selectedDesignDocument!.id,
+        data: dslData as DesignDSL,
+      });
+      message.success('DSL 已保存');
+      await finalizeClose();
+    } catch (error: any) {
+      message.error(error?.message ?? '保存 DSL 失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCloseWithoutSave = async () => {
+    await finalizeClose();
+  };
+
+  const handleDirectClose = () => {
+    modal.confirm({
+      title: '关闭 3D 结构预览',
+      content: '是否在关闭前保存 DSL？',
+      okText: '保存并关闭',
+      cancelText: '直接关闭',
+      centered: true,
+      onOk: () => handleSaveAndClose(),
+      onCancel: () => handleCloseWithoutSave(),
     });
   };
 
   return (
     <Modal
       open={open}
-      onCancel={handleClose}
+      onCancel={handleDirectClose}
       title={
         <div className='dsl-3d-inspect-modal__title'>
           <span>DSL 3D Structure Inspector</span>
-          <Button size='small' danger onClick={handleClose}>
-            关闭
-          </Button>
+          <div className='dsl-3d-inspect-modal__title-actions'>
+            <Button size='small' type='primary' loading={saving} onClick={handleSaveAndClose}>
+              保存并关闭
+            </Button>
+            <Button size='small' danger disabled={saving} onClick={handleDirectClose}>
+              直接关闭
+            </Button>
+          </div>
         </div>
       }
       width='100vw'

@@ -380,7 +380,6 @@ export class DSL3DScene {
       this.clearAllNodes();
       return;
     }
-    console.log('Updating nodes:', nodes);
 
     let minX = Infinity,
       maxX = -Infinity,

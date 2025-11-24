@@ -21,6 +21,8 @@ import { saveAnnotationState } from '../utils/componentStorage';
 import { editorPageStore } from './EditorPageContext';
 import { convertToTreeData, createRootAnnotationFromDesignDoc } from '../components/LayerTreePanel/utils';
 
+type PartialExcept<T, K extends keyof T> = Partial<T> & Pick<T, K>;
+
 const { Text } = Typography;
 
 const VIRTUAL_ANNOTATION_PREFIX = 'virtual-annotation-';
@@ -428,9 +430,10 @@ const updateDSLNodeHiddenState = (id: string) => {
   designState.dslData.dsl.nodes.some((node) => findAndToggleNode(node));
 };
 
-const getDocumentVersionToken = (doc: DocumentReference) => doc.updatedAt || doc.lastSyncAt || doc.createdAt || '';
+const getDocumentVersionToken = (doc: PartialExcept<DocumentReference, 'id'>) =>
+  doc.updatedAt || doc.lastSyncAt || doc.createdAt || '';
 
-const shouldFetchDesignDocument = (doc: DocumentReference, force?: boolean): boolean => {
+const shouldFetchDesignDocument = (doc: PartialExcept<DocumentReference, 'id'>, force?: boolean): boolean => {
   if (force) {
     return true;
   }
@@ -445,7 +448,7 @@ const shouldFetchDesignDocument = (doc: DocumentReference, force?: boolean): boo
   return target.versionToken !== nextVersion;
 };
 
-const fetchDesignDocumentDSLInternal = async (doc: DocumentReference): Promise<void> => {
+const fetchDesignDocumentDSLInternal = async (doc: PartialExcept<DocumentReference, 'id'>): Promise<void> => {
   const versionToken = getDocumentVersionToken(doc);
   const target = ensureDesignDocumentState(doc.id);
   target.isLoading = true;
@@ -536,7 +539,7 @@ export const designDetectionActions = {
     }
   },
 
-  fetchDesignDocumentDSL: async (doc: DocumentReference, options?: { force?: boolean }) => {
+  fetchDesignDocumentDSL: async (doc: PartialExcept<DocumentReference, 'id'>, options?: { force?: boolean }) => {
     if (!doc?.id) return;
     if (!shouldFetchDesignDocument(doc, options?.force)) {
       return;
