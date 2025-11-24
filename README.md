@@ -74,11 +74,9 @@ amh_code_agent/
 git clone <repo_url>
 cd amh_code_agent
 ```
-Install dependencies per package:
+Install dependencies (Yarn workspace root):
 ```bash
-(cd code-agent-backend && npm install)
-(cd fta-layout-design && npm install)
-(cd messages-replayer && npm install)
+yarn install
 ```
 
 ### 2. Configure Environment
