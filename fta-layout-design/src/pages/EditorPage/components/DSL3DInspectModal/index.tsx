@@ -1,6 +1,7 @@
 import DSLElement from '@/components/DSLElement';
 import { DesignDSL, DSLNode } from '@/types/dsl';
-import { Button, Modal, Switch } from 'antd';
+import { Button, Modal } from 'antd';
+import { DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { designDetectionActions, designDetectionStore } from '../../contexts/DesignDetectionContext';
@@ -52,6 +53,11 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     const traverse = (node: any, depth: number, parentX: number, parentY: number) => {
       if (!node) return;
 
+      // 前置过滤：对于 hidden 或 mask 为 outline 的节点，直接跳过其本身及子节点
+      if (node.hidden || node.mask === 'outline') {
+        return;
+      }
+
       const layout = node.layoutStyle || {};
       const width = layout.width || 0;
       const height = layout.height || 0;
@@ -90,7 +96,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
 
     rootNodes.forEach((item) => traverse(item, 0, 0, 0));
 
-    return nodes.filter((node) => !node.rawNode.hidden && node.rawNode.mask !== 'outline');
+    return nodes;
   }, [dslData]);
 
   const tmpDSLData: DesignDSL | null = useMemo(() => {
@@ -250,12 +256,12 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
         <div className='dsl-3d-inspect-modal__viewport' data-testid='dsl-3d-modal-container'>
           <div ref={containerRef} className='dsl-3d-inspect-modal__canvas' />
           <div className='dsl-3d-inspect-modal__hidden-toggle'>
-            <Switch
-              checkedChildren='隐藏节点'
-              unCheckedChildren='隐藏节点'
-              checked={showHiddenPanel}
-              onChange={(checked) => setShowHiddenPanel(checked)}
-            />
+            <Button
+              type='primary'
+              icon={showHiddenPanel ? <DoubleRightOutlined /> : <DoubleLeftOutlined />}
+              onClick={() => setShowHiddenPanel(!showHiddenPanel)}>
+              隐藏节点
+            </Button>
           </div>
           {showHiddenPanel ? (
             <div className='dsl-3d-inspect-modal__hidden-panel'>
@@ -273,7 +279,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
                           <Button
                             size='small'
                             type='link'
-                            onClick={() => designDetectionActions.showDSLNodeById(node.id)}>
+                            onClick={() => designDetectionActions.toggleDSLNodeById(node.id)}>
                             撤销隐藏
                           </Button>
                         </div>
@@ -287,30 +293,47 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
         </div>
 
         <div className='dsl-3d-inspect-modal__sidebar'>
-          <div className='dsl-3d-inspect-modal__sidebar-header'>
-            <span>Selected Node Preview</span>
-            {tmpDSLData?.dsl?.nodes?.[0]?.id ? (
-              <Button
-                size='small'
-                onClick={() => {
-                  if (tmpDSLData.dsl.nodes[0].hidden) {
-                    designDetectionActions.showDSLNodeById(tmpDSLData.dsl.nodes[0].id);
-                  } else {
-                    designDetectionActions.hideDSLNodeById(tmpDSLData.dsl.nodes[0].id);
-                  }
-                }}>
-                {tmpDSLData.dsl.nodes[0].hidden ? '显示节点' : '隐藏节点'}
-              </Button>
-            ) : null}
+          <div className='dsl-3d-inspect-modal__sidebar-section'>
+            <div className='dsl-3d-inspect-modal__sidebar-header'>
+              <span>DSL 全局预览</span>
+            </div>
+            <div className='dsl-3d-inspect-modal__sidebar-body'>
+              {dslData ? (
+                <div className='dsl-3d-inspect-modal__preview-wrapper1'>
+                  <div className='dsl-3d-inspect-modal__preview1' style={{ transform: 'scale(0.5)' }}>
+                    <DSLElement dslData={dslData as DesignDSL} />
+                  </div>
+                </div>
+              ) : (
+                <div className='dsl-3d-inspect-modal__empty'>暂无 DSL 数据</div>
+              )}
+            </div>
           </div>
-          <div className='dsl-3d-inspect-modal__sidebar-body'>
-            {tmpDSLData ? (
-              <div className='dsl-3d-inspect-modal__preview'>
-                <DSLElement dslData={tmpDSLData} />
-              </div>
-            ) : (
-              <div className='dsl-3d-inspect-modal__empty'>Click on a wireframe box to view details</div>
-            )}
+
+          <div className='dsl-3d-inspect-modal__sidebar-section'>
+            <div className='dsl-3d-inspect-modal__sidebar-header'>
+              <span>当前节点预览</span>
+              {tmpDSLData?.dsl?.nodes?.[0]?.id ? (
+                <Button
+                  size='small'
+                  onClick={() => {
+                    designDetectionActions.toggleDSLNodeById(tmpDSLData.dsl.nodes[0].id);
+                  }}>
+                  显示/隐藏
+                </Button>
+              ) : null}
+            </div>
+            <div className='dsl-3d-inspect-modal__sidebar-body'>
+              {tmpDSLData ? (
+                <div className='dsl-3d-inspect-modal__preview-wrapper'>
+                  <div className='dsl-3d-inspect-modal__preview'>
+                    <DSLElement dslData={tmpDSLData} />
+                  </div>
+                </div>
+              ) : (
+                <div className='dsl-3d-inspect-modal__empty'>点击左侧线框查看节点详情</div>
+              )}
+            </div>
           </div>
         </div>
       </div>

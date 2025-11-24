@@ -398,7 +398,7 @@ const setDesignDslData = (designId: string, data: DesignDSL | null) => {
   target.dslData = data;
 };
 
-const updateDSLNodeHiddenState = (id: string, hidden: boolean) => {
+const updateDSLNodeHiddenState = (id: string) => {
   if (!id || !designDetectionStore.currentDesignId) {
     return;
   }
@@ -408,15 +408,15 @@ const updateDSLNodeHiddenState = (id: string, hidden: boolean) => {
     return;
   }
 
-  const toggleHidden = (node: DSLNode): boolean => {
+  const findAndToggleNode = (node: DSLNode): boolean => {
     if (node.id === id) {
-      node.hidden = hidden;
+      node.hidden = !node.hidden;
       return true;
     }
 
     if (node.children) {
       for (const child of node.children) {
-        if (toggleHidden(child)) {
+        if (findAndToggleNode(child)) {
           return true;
         }
       }
@@ -425,7 +425,7 @@ const updateDSLNodeHiddenState = (id: string, hidden: boolean) => {
     return false;
   };
 
-  designState.dslData.dsl.nodes.some((node) => toggleHidden(node));
+  designState.dslData.dsl.nodes.some((node) => findAndToggleNode(node));
 };
 
 const getDocumentVersionToken = (doc: DocumentReference) => doc.updatedAt || doc.lastSyncAt || doc.createdAt || '';
@@ -549,12 +549,8 @@ export const designDetectionActions = {
     designDetectionStore.designStoreMap[designId] = createEmptyDesignDocumentState();
   },
 
-  hideDSLNodeById: (id: string) => {
-    updateDSLNodeHiddenState(id, true);
-  },
-
-  showDSLNodeById: (id: string) => {
-    updateDSLNodeHiddenState(id, false);
+  toggleDSLNodeById: (id: string) => {
+    updateDSLNodeHiddenState(id);
   },
 
   // 创建标注
