@@ -168,16 +168,16 @@ const AssetManagement: React.FC = () => {
   const renderComponentCard = (component: Component, showActions: boolean = true) => (
     <Card
       key={component.id}
-      className="component-card"
+      className='component-card'
       hoverable
       cover={
-        <div className="component-preview" onClick={() => handlePreview(component)}>
+        <div className='component-preview' onClick={() => handlePreview(component)}>
           <img
             alt={component.name}
             src={component.preview}
             style={{ width: '100%', height: 200, objectFit: 'cover' }}
           />
-          <div className="preview-overlay">
+          <div className='preview-overlay'>
             <EyeOutlined style={{ fontSize: 24, color: 'rgb(255, 255, 255)' }} />
           </div>
         </div>
@@ -185,89 +185,88 @@ const AssetManagement: React.FC = () => {
       actions={
         showActions
           ? [
-              <Tooltip title="预览">
+              <Tooltip title='预览'>
                 <EyeOutlined onClick={() => handlePreview(component)} />
               </Tooltip>,
               component.author === '我' ? (
-                <Tooltip title="编辑">
+                <Tooltip title='编辑'>
                   <EditOutlined />
                 </Tooltip>
               ) : (
-                <Tooltip title="下载">
+                <Tooltip title='下载'>
                   <DownloadOutlined />
                 </Tooltip>
               ),
-              <Tooltip title="分享">
+              <Tooltip title='分享'>
                 <ShareAltOutlined />
               </Tooltip>,
               component.author === '我' ? (
-                <Tooltip title="删除">
+                <Tooltip title='删除'>
                   <DeleteOutlined />
                 </Tooltip>
               ) : (
-                <Tooltip title="收藏">
+                <Tooltip title='收藏'>
                   <HeartOutlined />
                 </Tooltip>
               ),
             ]
           : undefined
-      }
-    >
-      <div className="component-header">
-        <div className="component-info">
-          <Avatar size={32} className="component-avatar">
+      }>
+      <div className='component-header'>
+        <div className='component-info'>
+          <Avatar size={32} className='component-avatar'>
             {component.avatar}
           </Avatar>
           <div>
-            <Title level={5} className="component-name">
+            <Title level={5} className='component-name'>
               {component.name}
             </Title>
-            <Text type="secondary" className="component-author">
+            <Text type='secondary' className='component-author'>
               by {component.author}
             </Text>
           </div>
         </div>
-        {component.isPublic && <Badge status="success" text="公开" />}
+        {component.isPublic && <Badge status='success' text='公开' />}
       </div>
 
-      <Paragraph ellipsis={{ rows: 2 }} type="secondary" className="component-description">
+      <Paragraph ellipsis={{ rows: 2 }} type='secondary' className='component-description'>
         {component.description}
       </Paragraph>
 
-      <div className="component-tags">
+      <div className='component-tags'>
         {component.tags.slice(0, 3).map((tag, index) => (
-          <Tag key={index} color="rgb(0, 0, 255)">
+          <Tag key={index} color='rgb(0, 0, 255)'>
             {tag}
           </Tag>
         ))}
-        {component.tags.length > 3 && <Tag color="default">+{component.tags.length - 3}</Tag>}
+        {component.tags.length > 3 && <Tag color='default'>+{component.tags.length - 3}</Tag>}
       </div>
 
       <Divider style={{ margin: '12px 0' }} />
 
-      <div className="component-stats">
-        <Space split={<Divider type="vertical" />}>
+      <div className='component-stats'>
+        <Space split={<Divider type='vertical' />}>
           {component.downloads > 0 && (
             <Space size={4}>
               <DownloadOutlined />
-              <Text type="secondary">{component.downloads}</Text>
+              <Text type='secondary'>{component.downloads}</Text>
             </Space>
           )}
           {component.likes > 0 && (
             <Space size={4}>
               <HeartOutlined />
-              <Text type="secondary">{component.likes}</Text>
+              <Text type='secondary'>{component.likes}</Text>
             </Space>
           )}
           {component.rating > 0 && (
             <Space size={4}>
               <StarOutlined />
-              <Text type="secondary">{component.rating}</Text>
+              <Text type='secondary'>{component.rating}</Text>
             </Space>
           )}
           <Space size={4}>
             <ClockCircleOutlined />
-            <Text type="secondary">{component.lastUpdated}</Text>
+            <Text type='secondary'>{component.lastUpdated}</Text>
           </Space>
         </Space>
       </div>
@@ -289,13 +288,13 @@ const AssetManagement: React.FC = () => {
     const filteredComponents = filterComponents(myComponents);
 
     return (
-      <div className="my-components">
-        <div className="section-header">
+      <div className='my-components'>
+        <div className='section-header'>
           <div>
             <Title level={4}>我的组件</Title>
-            <Text type="secondary">管理您创建的业务组件</Text>
+            <Text type='secondary'>管理您创建的业务组件</Text>
           </div>
-          <Button type="primary" icon={<PlusOutlined />}>
+          <Button type='primary' icon={<PlusOutlined />}>
             上传新组件
           </Button>
         </div>
@@ -309,8 +308,8 @@ const AssetManagement: React.FC = () => {
             ))}
           </Row>
         ) : (
-          <Empty description="还没有组件，快去创建一个吧！" image={Empty.PRESENTED_IMAGE_SIMPLE}>
-            <Button type="primary" icon={<PlusOutlined />}>
+          <Empty description='还没有组件，快去创建一个吧！' image={Empty.PRESENTED_IMAGE_SIMPLE}>
+            <Button type='primary' icon={<PlusOutlined />}>
               上传新组件
             </Button>
           </Empty>
@@ -323,11 +322,11 @@ const AssetManagement: React.FC = () => {
     const filteredComponents = filterComponents(marketComponents);
 
     return (
-      <div className="marketplace">
-        <div className="section-header">
+      <div className='marketplace'>
+        <div className='section-header'>
           <div>
             <Title level={4}>资产市场</Title>
-            <Text type="secondary">发现和使用社区贡献的优质组件</Text>
+            <Text type='secondary'>发现和使用社区贡献的优质组件</Text>
           </div>
         </div>
 
@@ -340,26 +339,26 @@ const AssetManagement: React.FC = () => {
             ))}
           </Row>
         ) : (
-          <Empty description="没有找到匹配的组件" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty description='没有找到匹配的组件' image={Empty.PRESENTED_IMAGE_SIMPLE} />
         )}
       </div>
     );
   };
 
   return (
-    <div className="asset-management">
-      <div className="asset-header">
+    <div className='asset-management'>
+      <div className='asset-header'>
         <Title level={3}>资产管理</Title>
-        <Text type="secondary">管理和发现优质的业务组件</Text>
+        <Text type='secondary'>管理和发现优质的业务组件</Text>
       </div>
 
-      <div className="asset-filters">
-        <Row gutter={16} align="middle">
-          <Col flex="auto">
+      <div className='asset-filters'>
+        <Row gutter={16} align='middle'>
+          <Col flex='auto'>
             <Search
-              placeholder="搜索组件名称、描述或标签..."
+              placeholder='搜索组件名称、描述或标签...'
               allowClear
-              size="large"
+              size='large'
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -369,11 +368,10 @@ const AssetManagement: React.FC = () => {
             <Select
               value={categoryFilter}
               onChange={setCategoryFilter}
-              size="large"
+              size='large'
               style={{ width: 120 }}
-              suffixIcon={<FilterOutlined />}
-            >
-              <Option value="all">全部分类</Option>
+              suffixIcon={<FilterOutlined />}>
+              <Option value='all'>全部分类</Option>
               {categories.slice(1).map((category) => (
                 <Option key={category} value={category}>
                   {category}
@@ -387,7 +385,7 @@ const AssetManagement: React.FC = () => {
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}
-        className="asset-tabs"
+        className='asset-tabs'
         items={[
           {
             key: 'my-components',
@@ -418,18 +416,17 @@ const AssetManagement: React.FC = () => {
         onCancel={() => setIsModalVisible(false)}
         width={800}
         footer={[
-          <Button key="close" onClick={() => setIsModalVisible(false)}>
+          <Button key='close' onClick={() => setIsModalVisible(false)}>
             关闭
           </Button>,
           selectedComponent?.author !== '我' && (
-            <Button key="download" type="primary" icon={<DownloadOutlined />}>
+            <Button key='download' type='primary' icon={<DownloadOutlined />}>
               下载使用
             </Button>
           ),
-        ]}
-      >
+        ]}>
         {selectedComponent && (
-          <div className="component-detail">
+          <div className='component-detail'>
             <img
               src={selectedComponent.preview}
               alt={selectedComponent.name}
@@ -437,7 +434,7 @@ const AssetManagement: React.FC = () => {
             />
             <Paragraph>{selectedComponent.description}</Paragraph>
 
-            <div className="component-meta">
+            <div className='component-meta'>
               <Row gutter={16}>
                 <Col span={12}>
                   <Text strong>作者：</Text>
@@ -458,11 +455,11 @@ const AssetManagement: React.FC = () => {
               </Row>
             </div>
 
-            <div className="component-tags-detail">
+            <div className='component-tags-detail'>
               <Text strong>标签：</Text>
               <div style={{ marginTop: 8 }}>
                 {selectedComponent.tags.map((tag, index) => (
-                  <Tag key={index} color="rgb(0, 0, 255)">
+                  <Tag key={index} color='rgb(0, 0, 255)'>
                     {tag}
                   </Tag>
                 ))}

@@ -12,6 +12,8 @@ import type {
   ProjectListParams,
   ProjectListResponse,
   DocumentReference,
+  ProjectResolutionResult,
+  ProjectMatchSource,
 } from '@/types/project';
 import { projectMockService } from './mockProjectService';
 import { resolveRequest, shouldUseMock } from './baseService';
@@ -56,7 +58,7 @@ export const projectService = {
   /**
    * 获取项目列表
    */
-  async getProjects(params?: ProjectListParams): Promise<ProjectListResponse> {
+  async getProjects(params: ProjectListParams): Promise<ProjectListResponse> {
     return resolveRequest(
       shouldUseMock(),
       () => projectMockService.getProjects(params),
@@ -89,7 +91,7 @@ export const projectService = {
       shouldUseMock(),
       () => projectMockService.updateProject(id, data),
       async () => {
-        const response = await api.project.update(id, data);
+        const response = await api.project.update({ id, ...data });
         return response.data;
       }
     );
@@ -103,7 +105,7 @@ export const projectService = {
       shouldUseMock(),
       () => projectMockService.deleteProject(id),
       async () => {
-        const response = await api.project.delete(id);
+        const response = await api.project.delete({ id });
         return response.data;
       }
     );
@@ -117,7 +119,21 @@ export const projectService = {
       shouldUseMock(),
       () => projectMockService.getProjectDetail(id),
       async () => {
-        const response = await api.project.detail(id);
+        const response = await api.project.detail({ id });
+        return response.data;
+      }
+    );
+  },
+
+  /**
+   * 获取页面详情
+   */
+  async getPageDetail(pageId: string): Promise<Page> {
+    return resolveRequest(
+      shouldUseMock(),
+      () => projectMockService.getPageDetail(pageId),
+      async () => {
+        const response = await api.project.page.detail({ pageId });
         return response.data;
       }
     );
@@ -231,7 +247,7 @@ export const projectService = {
   /**
    * 更新文档内容
    */
-  async updateDocument(payload: Partial<DocumentReference>) {
+  async updateDocument(payload: Partial<DocumentReference> & { id: string }) {
     return resolveRequest(
       shouldUseMock(),
       () => projectMockService.updateDocument(payload),
@@ -240,5 +256,28 @@ export const projectService = {
         return response.data;
       }
     );
+  },
+
+  async resolveProjectContext(payload: { gitUrl?: string; workdir?: string }): Promise<ProjectResolutionResult> {
+    if (shouldUseMock()) {
+      return projectMockService.resolveProjectContext(payload);
+    }
+    const response = await api.project.internal.resolve(payload);
+    const data = response.data;
+    return {
+      matchedProject: (data?.matchedProject as Project) || null,
+      matchedBy: (data?.matchedBy as ProjectMatchSource) ?? null,
+      resolvedGitId: data?.resolvedGitId ?? null,
+      requestedWorkdir: data?.requestedWorkdir ?? null,
+      projects: (data?.projects as Project[]) || [],
+    };
+  },
+
+  async bindProjectContext(payload: { projectId: string; gitUrl?: string; workdir?: string }): Promise<Project> {
+    if (shouldUseMock()) {
+      return projectMockService.bindProjectContext(payload);
+    }
+    const response = await api.project.internal.bind(payload);
+    return response.data;
   },
 };

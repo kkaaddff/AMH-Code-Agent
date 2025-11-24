@@ -3,9 +3,10 @@ import { Modal, Spin } from 'antd';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import html2canvas from 'html2canvas';
+import { useSnapshot } from 'valtio';
 
-import { useComponentDetectionV2 } from '../contexts/ComponentDetectionContextV2';
-import type { AnnotationNode } from '../types/componentDetectionV2';
+import { calculateDSLNodeAbsolutePosition, designDetectionStore } from '../contexts/DesignDetectionContext';
+import type { AnnotationNode } from '../types/componentDetection';
 import {
   MODAL_CONFIG,
   SCENE_LAYOUT,
@@ -20,7 +21,7 @@ import {
   DEPTH_CALCULATION,
   LOADING_CONFIG,
   COLOR_CONFIG,
-} from '../constants/ThreeDInspectConstants';
+} from '../constants/Three3DInspectConstants';
 
 interface Component3DInspectModalProps {
   open: boolean;
@@ -71,7 +72,7 @@ const drawRoundedRect = (
 };
 
 const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open, onClose }) => {
-  const { rootAnnotation, calculateDSLNodeAbsolutePosition } = useComponentDetectionV2();
+  const { rootAnnotation } = useSnapshot(designDetectionStore);
   const containerRef = useRef<HTMLDivElement>(null);
   const textureCacheRef = useRef<Map<string, THREE.Texture>>(new Map());
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -84,7 +85,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
   const disposablesRef = useRef<Array<() => void>>([]);
   const [initializing, setInitializing] = useState(false);
 
-  const annotations = useMemo(() => collectAnnotations(rootAnnotation), [rootAnnotation]);
+  const annotations = useMemo(() => collectAnnotations(rootAnnotation as AnnotationNode), [rootAnnotation]);
 
   const resolveAnnotationMetrics = useCallback(
     (annotation: AnnotationNode) => {
@@ -291,7 +292,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
 
       // 首先计算场景相关变量
       const maxDepth = getMaxDepth(annotations);
-      const { width: rootWidthRaw, height: rootHeightRaw } = resolveAnnotationMetrics(rootAnnotation);
+      const { width: rootWidthRaw, height: rootHeightRaw } = resolveAnnotationMetrics(rootAnnotation as AnnotationNode);
       const rootWidth = Math.max(rootWidthRaw, SCENE_LAYOUT.MIN_WIDTH);
       const rootHeight = Math.max(rootHeightRaw, SCENE_LAYOUT.MIN_HEIGHT);
       const scale = SCENE_LAYOUT.BASE_WIDTH_UNITS / Math.max(rootWidth, SCENE_LAYOUT.MIN_WIDTH);
@@ -565,7 +566,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
       open={open}
       onCancel={onClose}
       footer={null}
-      title="3D 检视"
+      title='3D 检视'
       width={MODAL_CONFIG.WIDTH}
       centered
       /** 隐藏时销毁组件 （必须是这个属性不能乱改）*/
@@ -578,8 +579,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
           color: COLOR_CONFIG.MODAL_HEADER_TEXT,
         },
         body: { padding: 0 },
-      }}
-    >
+      }}>
       <div style={{ height: MODAL_CONFIG.HEIGHT, position: 'relative', background: COLOR_CONFIG.MODAL_BG }}>
         <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
         {initializing && (
@@ -593,9 +593,9 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
               background: `rgba(255, 255, 255, ${LOADING_CONFIG.BACKGROUND_OPACITY})`,
               pointerEvents: 'none',
               backdropFilter: LOADING_CONFIG.BACKDROP_BLUR,
-            }}
-          >
-            <Spin tip={LOADING_CONFIG.SPIN_TIP} />
+            }}>
+            <Spin size='large' />
+            <div style={{ marginTop: 16, color: '#999', fontSize: 14 }}>{LOADING_CONFIG.SPIN_TIP}</div>
           </div>
         )}
       </div>

@@ -1,0 +1,56 @@
+{
+  "name": "@fta/agent-core",
+  "version": "0.0.4",
+  "homepage": "https://fta.amh-group.com/#/",
+  "repository": {
+    "type": "git",
+    "url": "https://code.amh-group.com/MBFrontend/AI/amh-code-agent"
+  },
+  "bugs": {
+    "url": "https://code.amh-group.com/MBFrontend/AI/amh-code-agentissues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "source": "./src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node ./scripts/build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.41",
+    "@ai-sdk/deepseek": "^1.0.27",
+    "@ai-sdk/google": "^2.0.28",
+    "@ai-sdk/mcp": "^0.0.7",
+    "@ai-sdk/openai": "^2.0.62",
+    "@ai-sdk/provider": "^2.0.0",
+    "@ai-sdk/xai": "^2.0.31",
+    "@fta/shared-types": "0.0.1",
+    "chardet": "^2.1.1",
+    "bson": "^1.1.6",
+    "debug": "^4.4.3",
+    "defu": "^6.1.4",
+    "diff": "^8.0.2",
+    "glob": "^11.0.3",
+    "json-schema": "^0.4.0",
+    "pathe": "^2.0.3",
+    "spawn-rx": "^5.1.2",
+    "turndown": "^7.2.2",
+    "zod-to-json-schema": "^3.24.6",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "@types/node": "^20",
+    "@types/json-schema": "^7.0.15",
+    "@types/bson": "^4.2.4",
+    "@types/minimatch": "^6.0.0",
+    "dotenv": "^17.2.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.7"
+  }
+}

@@ -6,6 +6,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
+    "build": "echo 'messages-replayer'",
     "replay": "node src/index.js replay",
     "replay:live": "node src/index.js replay --mode=live",
     "parse": "node src/index.js parse"

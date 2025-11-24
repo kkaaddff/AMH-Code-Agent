@@ -34,7 +34,7 @@ export interface MessageContent {
  * 消息
  */
 export interface Message {
-  role: 'user' | 'assistant';
+  role: 'system' | 'user' | 'assistant';
   content: string | MessageContent[];
 }
 
@@ -53,13 +53,13 @@ export interface Tool {
 export interface RequestBody {
   model?: string;
   messages: Message[];
-  system?: MessageContent[];
+  temperature?: number;
   tools?: Tool[];
   betas?: string[];
   metadata?: any;
   max_tokens?: number;
   stream?: boolean;
-  thinking?: any;
+  chat_template_kwargs?: any;
 }
 
 /**

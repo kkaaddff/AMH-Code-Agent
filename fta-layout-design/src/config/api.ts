@@ -14,11 +14,11 @@ export const getEnvironment = (): Environment => {
 // API 基础配置
 export const API_CONFIG = {
   development: {
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:7001',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     timeout: Number(import.meta.env.VITE_REQUEST_TIMEOUT) || 30000,
   },
   production: {
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://qa-fta-snapshot.amh-group.com',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     timeout: Number(import.meta.env.VITE_REQUEST_TIMEOUT) || 30000,
   },
 };
@@ -38,10 +38,15 @@ export const API_ENDPOINTS = {
     update: '/code-agent/project/update',
     delete: '/code-agent/project/delete',
     detail: '/code-agent/project/detail',
+    internal: {
+      resolve: '/code-agent/project/internal/resolve',
+      bind: '/code-agent/project/internal/bind',
+    },
     page: {
       create: '/code-agent/project/page/create',
       update: '/code-agent/project/page/update',
       delete: '/code-agent/project/page/delete',
+      detail: '/code-agent/project/page/detail',
     },
     document: {
       updateStatus: '/code-agent/project/document/status',
@@ -55,6 +60,7 @@ export const API_ENDPOINTS = {
     upload: '/code-agent/dsl/upload',
     parse: '/code-agent/dsl/parse',
     export: '/code-agent/dsl/export',
+    process: '/code-agent/dsl/process',
   },
   // 组件识别相关
   component: {
@@ -76,6 +82,10 @@ export const API_ENDPOINTS = {
     save: '/code-agent/layout/save',
     load: '/code-agent/layout/load',
     preview: '/code-agent/layout/preview',
+  },
+  // 模型指标
+  metrics: {
+    latest: '/code-agent/metrics',
   },
 } as const;
 

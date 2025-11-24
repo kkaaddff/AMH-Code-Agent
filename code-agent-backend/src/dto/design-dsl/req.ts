@@ -1,12 +1,13 @@
-import { ApiProperty } from '@midwayjs/swagger'
+import { ApiProperty } from '@midwayjs/swagger';
+import { DSLData } from '../../types/design-dsl';
 
-export class ProcessDesignDSLRequest {
+export class ProcessDSLDataRequest {
   @ApiProperty({
-    example: 'search-result',
-    description: 'DSL文件的名称或标识',
-    required: false,
+    example: {},
+    description: '原始 DSLData JSON 数据',
+    required: true,
   })
-  public name?: string
+  public dsl: DSLData;
 
   @ApiProperty({
     example: true,
@@ -14,7 +15,7 @@ export class ProcessDesignDSLRequest {
     required: false,
     default: true,
   })
-  public convertPaths?: boolean
+  public convertPaths?: boolean;
 
   @ApiProperty({
     example: false,
@@ -22,7 +23,7 @@ export class ProcessDesignDSLRequest {
     required: false,
     default: false,
   })
-  public keepOriginalPaths?: boolean
+  public keepOriginalPaths?: boolean;
 }
 
 export class ConvertPathRequest {
@@ -31,21 +32,21 @@ export class ConvertPathRequest {
     description: '填充样式ID',
     required: true,
   })
-  public fillStyle: string
+  public fillStyle: string;
 
   @ApiProperty({
     example: 'M0 24C0 10.7452 10.7452 0 24 0...',
     description: 'SVG路径数据',
     required: true,
   })
-  public pathData: string
+  public pathData: string;
 
   @ApiProperty({
     example: 'circle-icon',
     description: '图标名称',
     required: false,
   })
-  public iconName?: string
+  public iconName?: string;
 }
 
 export class RedisSetRequest {
@@ -54,19 +55,19 @@ export class RedisSetRequest {
     description: 'Redis缓存键',
     required: true,
   })
-  public key: string
+  public key: string;
 
   @ApiProperty({
     example: 'https://example.com/temp/icon.png',
     description: 'Redis缓存值',
     required: true,
   })
-  public value: string
+  public value: string;
 
   @ApiProperty({
     example: 3600,
     description: '缓存过期时间（秒）',
     required: false,
   })
-  public ttlSeconds?: number
+  public ttlSeconds?: number;
 }

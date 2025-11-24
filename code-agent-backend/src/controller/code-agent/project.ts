@@ -1,24 +1,29 @@
-import { Body, Controller, Get, Inject, Post, Query } from '@midwayjs/decorator'
-import { Context } from '@midwayjs/web'
+import { Body, Controller, Get, Inject, Post, Query } from '@midwayjs/decorator';
+import { Context } from '@midwayjs/web';
 import {
+  BindProjectContextRequest,
   CreatePageRequest,
   CreateProjectRequest,
   DeletePageRequest,
   DeleteProjectRequest,
   GetDocumentContentRequest,
+  GetPageDetailRequest,
   GetProjectDetailRequest,
   ProjectListRequest,
+  ResolveProjectContextRequest,
   SyncDocumentRequest,
   UpdateDocumentStatusRequest,
   UpdatePageRequest,
   UpdateProjectRequest,
-} from '../../dto/code-agent/req'
+} from '../../dto/code-agent/req';
 import {
+  BindProjectContextResponse,
   CreatePageResponse,
   CreateProjectResponse,
   DeletePageResponse,
   DeleteProjectResponse,
   GetDocumentContentResponse,
+  PageDetailResponse,
   ProjectDetailResponse,
   ProjectListResponse,
   SyncDocumentResponse,
@@ -26,17 +31,18 @@ import {
   UpdateDocumentStatusResponse,
   UpdatePageResponse,
   UpdateProjectResponse,
-} from '../../dto/code-agent/res'
-import { DocumentReference } from '../../entity/code-agent'
-import { ProjectService } from '../../service/code-agent/project'
+  ResolveProjectContextResponse,
+} from '../../dto/code-agent/res';
+import { DocumentReference } from '../../entity/code-agent';
+import { ProjectService } from '../../service/code-agent/project';
 
 @Controller('/code-agent/project')
 export class ProjectController {
   @Inject()
-  private ctx: Context
+  private ctx: Context;
 
   @Inject()
-  private projectService: ProjectService
+  private projectService: ProjectService;
 
   /**
    * 获取项目列表
@@ -44,11 +50,38 @@ export class ProjectController {
   @Get('/list')
   async getProjects(@Query() query: ProjectListRequest): Promise<ProjectListResponse> {
     try {
-      const { projects, total } = await this.projectService.getProjects(query)
-      return new ProjectListResponse(projects, total, query.page || 1, query.size || 10)
+      const { projects, total } = await this.projectService.getProjects(query);
+      return new ProjectListResponse(projects, total, query.page || 1, query.size || 10);
     } catch (error) {
-      this.ctx.status = 500
-      throw error
+      this.ctx.status = 500;
+      throw error;
+    }
+  }
+
+  @Post('/internal/resolve')
+  async resolveProjectContext(@Body() body: ResolveProjectContextRequest): Promise<ResolveProjectContextResponse> {
+    try {
+      const data = await this.projectService.resolveProjectContext(body);
+      return new ResolveProjectContextResponse({
+        matchedProject: data.matchedProject || null,
+        matchedBy: data.matchedBy,
+        requestedWorkdir: data.requestedWorkdir,
+        projects: data.projects,
+      });
+    } catch (error) {
+      this.ctx.status = 400;
+      throw error;
+    }
+  }
+
+  @Post('/internal/bind')
+  async bindProjectContext(@Body() body: BindProjectContextRequest): Promise<BindProjectContextResponse> {
+    try {
+      const project = await this.projectService.bindProjectContext(body);
+      return new BindProjectContextResponse(project);
+    } catch (error) {
+      this.ctx.status = 400;
+      throw error;
     }
   }
 
@@ -58,11 +91,11 @@ export class ProjectController {
   @Post('/create')
   async createProject(@Body() body: CreateProjectRequest): Promise<CreateProjectResponse> {
     try {
-      const project = await this.projectService.createProject(body)
-      return new CreateProjectResponse(project)
+      const project = await this.projectService.createProject(body);
+      return new CreateProjectResponse(project);
     } catch (error) {
-      this.ctx.status = 400
-      throw error
+      this.ctx.status = 400;
+      throw error;
     }
   }
 
@@ -72,11 +105,11 @@ export class ProjectController {
   @Post('/update')
   async updateProject(@Body() body: { id: string } & UpdateProjectRequest): Promise<UpdateProjectResponse> {
     try {
-      const project = await this.projectService.updateProject(body.id, body)
-      return new UpdateProjectResponse(project)
+      const project = await this.projectService.updateProject(body.id, body);
+      return new UpdateProjectResponse(project);
     } catch (error) {
-      this.ctx.status = 400
-      throw error
+      this.ctx.status = 400;
+      throw error;
     }
   }
 
@@ -86,11 +119,11 @@ export class ProjectController {
   @Post('/delete')
   async deleteProject(@Body() body: DeleteProjectRequest): Promise<DeleteProjectResponse> {
     try {
-      await this.projectService.deleteProject(body)
-      return new DeleteProjectResponse()
+      await this.projectService.deleteProject(body);
+      return new DeleteProjectResponse();
     } catch (error) {
-      this.ctx.status = 400
-      throw error
+      this.ctx.status = 400;
+      throw error;
     }
   }
 
@@ -100,11 +133,11 @@ export class ProjectController {
   @Get('/detail')
   async getProjectDetail(@Query() query: GetProjectDetailRequest): Promise<ProjectDetailResponse> {
     try {
-      const project = await this.projectService.getProjectDetail(query)
-      return new ProjectDetailResponse(project)
+      const project = await this.projectService.getProjectDetail(query);
+      return new ProjectDetailResponse(project);
     } catch (error) {
-      this.ctx.status = 404
-      throw error
+      this.ctx.status = 404;
+      throw error;
     }
   }
 
@@ -114,11 +147,11 @@ export class ProjectController {
   @Post('/page/create')
   async createPage(@Body() body: CreatePageRequest): Promise<CreatePageResponse> {
     try {
-      const project = await this.projectService.createPage(body)
-      return new CreatePageResponse(project)
+      const project = await this.projectService.createPage(body);
+      return new CreatePageResponse(project);
     } catch (error) {
-      this.ctx.status = 400
-      throw error
+      this.ctx.status = 400;
+      throw error;
     }
   }
 
@@ -128,11 +161,11 @@ export class ProjectController {
   @Post('/page/update')
   async updatePage(@Body() body: UpdatePageRequest): Promise<UpdatePageResponse> {
     try {
-      const project = await this.projectService.updatePage(body)
-      return new UpdatePageResponse(project)
+      const project = await this.projectService.updatePage(body);
+      return new UpdatePageResponse(project);
     } catch (error) {
-      this.ctx.status = 400
-      throw error
+      this.ctx.status = 400;
+      throw error;
     }
   }
 
@@ -142,11 +175,25 @@ export class ProjectController {
   @Post('/page/delete')
   async deletePage(@Body() body: DeletePageRequest): Promise<DeletePageResponse> {
     try {
-      const project = await this.projectService.deletePage(body)
-      return new DeletePageResponse(project)
+      const project = await this.projectService.deletePage(body);
+      return new DeletePageResponse(project);
     } catch (error) {
-      this.ctx.status = 400
-      throw error
+      this.ctx.status = 400;
+      throw error;
+    }
+  }
+
+  /**
+   * 获取页面详情
+   */
+  @Get('/page/detail')
+  async getPageDetail(@Query() query: GetPageDetailRequest): Promise<PageDetailResponse> {
+    try {
+      const page = await this.projectService.findPage(query);
+      return new PageDetailResponse(page);
+    } catch (error) {
+      this.ctx.status = 404;
+      throw error;
     }
   }
 
@@ -156,11 +203,11 @@ export class ProjectController {
   @Post('/document/status')
   async updateDocumentStatus(@Body() body: UpdateDocumentStatusRequest): Promise<UpdateDocumentStatusResponse> {
     try {
-      const project = await this.projectService.updateDocumentStatus(body)
-      return new UpdateDocumentStatusResponse(project)
+      const project = await this.projectService.updateDocumentStatus(body);
+      return new UpdateDocumentStatusResponse(project);
     } catch (error) {
-      this.ctx.status = 400
-      throw error
+      this.ctx.status = 400;
+      throw error;
     }
   }
 
@@ -170,11 +217,11 @@ export class ProjectController {
   @Post('/document/sync')
   async syncDocument(@Body() body: SyncDocumentRequest): Promise<SyncDocumentResponse> {
     try {
-      const project = await this.projectService.syncDocument(body)
-      return new SyncDocumentResponse(project)
+      const project = await this.projectService.syncDocument(body);
+      return new SyncDocumentResponse(project);
     } catch (error) {
-      this.ctx.status = 400
-      throw error
+      this.ctx.status = 400;
+      throw error;
     }
   }
 
@@ -184,11 +231,11 @@ export class ProjectController {
   @Post('/document/update')
   async updateDocument(@Body() body: DocumentReference): Promise<UpdateDocumentResponse> {
     try {
-      const document = await this.projectService.updateDocument(body)
-      return new UpdateDocumentResponse(document)
+      const document = await this.projectService.updateDocument(body);
+      return new UpdateDocumentResponse(document);
     } catch (error) {
-      this.ctx.status = 400
-      throw error
+      this.ctx.status = 400;
+      throw error;
     }
   }
 
@@ -198,11 +245,11 @@ export class ProjectController {
   @Get('/document/content')
   async getDocumentContent(@Query() query: GetDocumentContentRequest): Promise<GetDocumentContentResponse> {
     try {
-      const content = await this.projectService.getDocumentContent(query)
-      return new GetDocumentContentResponse(content)
+      const content = await this.projectService.getDocumentContent(query);
+      return new GetDocumentContentResponse(content);
     } catch (error) {
-      this.ctx.status = 404
-      throw error
+      this.ctx.status = 404;
+      throw error;
     }
   }
 }

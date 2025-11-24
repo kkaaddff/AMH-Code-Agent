@@ -3591,6 +3591,211 @@
     "sourcePath": "basic/icon.md",
     "type": "基础原子组件"
   },
+  "Image": {
+    "component": "Image",
+    "properties": [
+      {
+        "name": "src",
+        "label": "图片资源地址",
+        "type": "string",
+        "defaultValue": "(必选)",
+        "description": "类型: string，支持网络和本地图片"
+      },
+      {
+        "name": "mode",
+        "label": "图片裁剪、缩放模式",
+        "type": "select",
+        "defaultValue": "'scaleToFill'",
+        "options": [
+          {
+            "label": "scaleToFill - 拉伸填充",
+            "value": "scaleToFill"
+          },
+          {
+            "label": "aspectFit - 等比完整显示",
+            "value": "aspectFit"
+          },
+          {
+            "label": "aspectFill - 等比填充显示",
+            "value": "aspectFill"
+          },
+          {
+            "label": "widthFix - 固定宽度",
+            "value": "widthFix"
+          },
+          {
+            "label": "heightFix - 固定高度",
+            "value": "heightFix"
+          },
+          {
+            "label": "top - 显示顶部区域",
+            "value": "top"
+          },
+          {
+            "label": "bottom - 显示底部区域",
+            "value": "bottom"
+          },
+          {
+            "label": "center - 显示中间区域",
+            "value": "center"
+          },
+          {
+            "label": "left - 显示左侧区域",
+            "value": "left"
+          },
+          {
+            "label": "right - 显示右侧区域",
+            "value": "right"
+          },
+          {
+            "label": "top left - 显示左上角",
+            "value": "top left"
+          },
+          {
+            "label": "top right - 显示右上角",
+            "value": "top right"
+          },
+          {
+            "label": "bottom left - 显示左下角",
+            "value": "bottom left"
+          },
+          {
+            "label": "bottom right - 显示右下角",
+            "value": "bottom right"
+          }
+        ],
+        "description": "类型: ImageMode"
+      },
+      {
+        "name": "lazyLoad",
+        "label": "是否懒加载图片",
+        "type": "boolean",
+        "defaultValue": false,
+        "description": "类型: boolean"
+      },
+      {
+        "name": "width",
+        "label": "图片宽度",
+        "type": "string",
+        "description": "类型: number | string"
+      },
+      {
+        "name": "height",
+        "label": "图片高度",
+        "type": "string",
+        "description": "类型: number | string"
+      },
+      {
+        "name": "style",
+        "label": "内联样式",
+        "type": "string",
+        "description": "类型: ImageStyle"
+      },
+      {
+        "name": "className",
+        "label": "样式类名",
+        "type": "string",
+        "description": "类型: string"
+      },
+      {
+        "name": "id",
+        "label": "组件唯一标识",
+        "type": "string",
+        "description": "类型: string"
+      },
+      {
+        "name": "testID",
+        "label": "测试 ID",
+        "type": "string",
+        "description": "类型: string"
+      },
+      {
+        "name": "onLoad",
+        "label": "图片加载成功回调",
+        "type": "string",
+        "description": "类型: (event: ImageLoadEvent) => void"
+      },
+      {
+        "name": "onError",
+        "label": "图片加载失败回调",
+        "type": "string",
+        "description": "类型: (event: ImageErrorEvent) => void"
+      },
+      {
+        "name": "onClick",
+        "label": "点击图片事件",
+        "type": "string",
+        "description": "类型: (event: ITouchEvent) => void"
+      },
+      {
+        "name": "onLongPress",
+        "label": "长按图片事件",
+        "type": "string",
+        "description": "类型: (event: ITouchEvent) => void"
+      },
+      {
+        "name": "onTouchStart",
+        "label": "触摸开始事件",
+        "type": "string",
+        "description": "类型: (event: ITouchEvent) => void"
+      },
+      {
+        "name": "onTouchMove",
+        "label": "触摸移动事件",
+        "type": "string",
+        "description": "类型: (event: ITouchEvent) => void"
+      },
+      {
+        "name": "onTouchEnd",
+        "label": "触摸结束事件",
+        "type": "string",
+        "description": "类型: (event: ITouchEvent) => void"
+      },
+      {
+        "name": "onTouchCancel",
+        "label": "触摸取消事件",
+        "type": "string",
+        "description": "类型: (event: ITouchEvent) => void"
+      },
+      {
+        "name": "hoverClass",
+        "label": "按下时的样式类",
+        "type": "string",
+        "defaultValue": "'none'",
+        "description": "类型: string"
+      },
+      {
+        "name": "hoverStyle",
+        "label": "按下时的样式（RN）",
+        "type": "string",
+        "description": "类型: CSSProperties"
+      },
+      {
+        "name": "hoverStartTime",
+        "label": "按压出现点击态延迟(ms)",
+        "type": "number",
+        "defaultValue": 50,
+        "description": "类型: number"
+      },
+      {
+        "name": "hoverStayTime",
+        "label": "松开后点击态保留时长(ms)",
+        "type": "number",
+        "defaultValue": 400,
+        "description": "类型: number"
+      },
+      {
+        "name": "hoverStopPropagation",
+        "label": "阻止祖先节点出现点击态",
+        "type": "boolean",
+        "defaultValue": false,
+        "description": "类型: boolean"
+      }
+    ],
+    "summary": "图片展示组件，支持多种缩放模式、懒加载与触摸事件处理。",
+    "sourcePath": "display/image.md",
+    "type": "基础原子组件"
+  },
   "ImageBackground": {
     "component": "ImageBackground",
     "properties": [

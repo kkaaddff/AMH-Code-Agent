@@ -6,6 +6,7 @@ import type {
   Project,
   ProjectListParams,
   ProjectListResponse,
+  ProjectResolutionResult,
   SyncStatus,
 } from '@/types/project';
 
@@ -30,6 +31,7 @@ const createDocumentReferences = (urls: string[] = []): DocumentReference[] => {
   return (urls || [])
     .filter((url) => Boolean(url))
     .map((url, index) => ({
+      _id: generateId(''),
       id: generateId('doc'),
       url,
       name: deriveDocumentName(url, `文档-${index + 1}`),
@@ -37,6 +39,8 @@ const createDocumentReferences = (urls: string[] = []): DocumentReference[] => {
       progress: 0,
       createdAt: now,
       updatedAt: now,
+      userId: 'user_mock_1',
+      gitId: 'git_mock_1',
     }));
 };
 
@@ -53,6 +57,7 @@ const mergeDocumentReferences = (existing: DocumentReference[] = [], urls: strin
         };
       }
       return {
+        _id: generateId('doc'),
         id: generateId('doc'),
         url,
         name: deriveDocumentName(url, `文档-${index + 1}`),
@@ -60,6 +65,8 @@ const mergeDocumentReferences = (existing: DocumentReference[] = [], urls: strin
         progress: 0,
         createdAt: now,
         updatedAt: now,
+        userId: 'user_mock_1',
+        gitId: 'git_mock_1',
       };
     });
 };
@@ -80,6 +87,9 @@ let mockProjects: Project[] = [
     members: 6,
     tags: ['MasterGo', 'DSL', 'Demo'],
     avatar: '📁',
+    workdirs: ['/mock/projects/fta-demo'],
+    userId: 'user_mock_1',
+    gitId: 'git_mock_1',
     pages: [
       {
         id: 'page_mock_1',
@@ -95,6 +105,8 @@ let mockProjects: Project[] = [
         designDocuments: createDocumentReferences(['https://MasterGo.com/login']),
         prdDocuments: createDocumentReferences(['https://docs.company.com/prd/login']),
         openapiDocuments: createDocumentReferences(['https://api.company.com/openapi/login.json']),
+        userId: 'user_mock_1',
+        gitId: 'git_mock_1',
       },
     ],
   },
@@ -111,7 +123,10 @@ let mockProjects: Project[] = [
     members: 4,
     tags: ['中台', '管理后台'],
     avatar: '🛒',
+    workdirs: ['/mock/projects/mid-platform'],
     pages: [],
+    userId: 'user_mock_2',
+    gitId: 'git_mock_2',
   },
 ];
 
@@ -170,6 +185,8 @@ const buildPagePayload = (projectId: string, formData: CreatePageForm): Page => 
     designDocuments: createDocumentReferences(formData.designUrls),
     prdDocuments: createDocumentReferences(formData.prdUrls),
     openapiDocuments: createDocumentReferences(formData.openapiUrls),
+    userId: 'user_mock_1',
+    gitId: 'git_mock_1',
   };
 };
 
@@ -206,6 +223,9 @@ export const projectMockService = {
       tags: formData.tags || [],
       avatar: formData.avatar || '📁',
       pages: [],
+      workdirs: [],
+      userId: 'user_mock_1',
+      gitId: 'git_mock_1',
     };
     mockProjects = [...mockProjects, newProject];
     return deepClone(newProject);
@@ -234,6 +254,18 @@ export const projectMockService = {
   async getProjectDetail(id: string) {
     await delay();
     return deepClone(findProject(id));
+  },
+
+  async getPageDetail(pageId: string) {
+    await delay();
+    // 遍历所有项目查找页面
+    for (const project of mockProjects) {
+      const page = project.pages.find((p) => p.id === pageId);
+      if (page) {
+        return deepClone(page);
+      }
+    }
+    throw new Error('页面不存在');
   },
 
   async createPage(projectId: string, formData: CreatePageForm) {
@@ -320,6 +352,7 @@ export const projectMockService = {
     const type = collectionKey === 'designDocuments' ? 'design' : collectionKey === 'prdDocuments' ? 'prd' : 'openapi';
 
     return {
+      _id: document._id,
       id: document.id,
       url: document.url,
       name: document.name || '文档内容',
@@ -331,6 +364,8 @@ export const projectMockService = {
       updatedAt: document.updatedAt,
       annotationData: document.annotationData,
       data: document.data,
+      userId: document.userId,
+      gitId: document.gitId,
     };
   },
 
@@ -354,6 +389,50 @@ export const projectMockService = {
     document.updatedAt = timestamp;
     project.updatedAt = timestamp;
 
+    return deepClone(project);
+  },
+
+  async resolveProjectContext(payload: {
+    userId?: string;
+    gitUrl?: string;
+    workdir?: string;
+  }): Promise<ProjectResolutionResult> {
+    await delay();
+    const normalizedWorkdir = payload.workdir?.trim() || null;
+    const scopedProjects = mockProjects.filter((project) => !payload.userId || project.userId === payload.userId);
+    const matchedRaw =
+      scopedProjects.find((project) => {
+        if (!normalizedWorkdir) {
+          return false;
+        }
+        return project.workdirs?.includes(normalizedWorkdir) || project.gitId === normalizedWorkdir;
+      }) ||
+      scopedProjects[0] ||
+      null;
+    const projects = deepClone(scopedProjects);
+    const matchedProject = matchedRaw ? projects.find((project) => project.id === matchedRaw.id) || null : null;
+    return {
+      matchedProject: matchedProject || null,
+      matchedBy: matchedProject ? (normalizedWorkdir ? 'workdir' : 'gitId') : null,
+      resolvedGitId: null,
+      requestedWorkdir: normalizedWorkdir,
+      projects,
+    };
+  },
+
+  async bindProjectContext(payload: { projectId: string; workdir?: string; gitUrl?: string }): Promise<Project> {
+    await delay();
+    const project = findProject(payload.projectId);
+    const normalizedWorkdir = payload.workdir?.trim();
+    if (normalizedWorkdir) {
+      const workdirSet = new Set(project.workdirs || []);
+      workdirSet.add(normalizedWorkdir);
+      project.workdirs = Array.from(workdirSet);
+    }
+    if (payload.gitUrl) {
+      project.gitId = payload.gitUrl;
+    }
+    project.updatedAt = new Date().toISOString();
     return deepClone(project);
   },
 };

@@ -10,4 +10,4 @@ export const mongoose = {
       pass: '123456',
     },
   },
-}
+};

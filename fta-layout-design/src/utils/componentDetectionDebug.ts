@@ -36,6 +36,11 @@ const isLoggingEnabled = (): boolean => {
   return false;
 };
 
+/**
+ * 输出组件识别调试日志，需在调试模式开启后才会生效。
+ * @param event 日志事件名称
+ * @param payload 可选的附加数据
+ */
 export const componentDetectionDebugLog = (event: string, payload?: unknown) => {
   if (!isLoggingEnabled()) {
     return;
@@ -48,6 +53,9 @@ export const componentDetectionDebugLog = (event: string, payload?: unknown) => 
   }
 };
 
+/**
+ * 确保浏览器环境中注册调试开关，方便随时启用或关闭日志。
+ */
 export const ensureComponentDetectionDebugToggle = () => {
   if (typeof window === 'undefined') return;
   if (typeof window.__toggleComponentDetectionDebug === 'function') return;

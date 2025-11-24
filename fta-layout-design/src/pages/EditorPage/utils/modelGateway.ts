@@ -1,5 +1,5 @@
-const MODEL_GATEWAY_ENDPOINT = 'http://localhost:7001/model-gateway';
-const MODEL_GATEWAY_SYNC_ENDPOINT = 'http://localhost:7001/model-gateway-sync';
+const MODEL_GATEWAY_ENDPOINT = import.meta.env.VITE_API_BASE_URL + '/model-gateway';
+const MODEL_GATEWAY_SYNC_ENDPOINT = import.meta.env.VITE_API_BASE_URL + '/model-gateway-sync';
 
 export interface StreamModelGatewayTodo {
   id?: string;
@@ -186,14 +186,26 @@ const extractEventsFromPayload = (payload: any): StreamModelGatewayEvent[] => {
   return [];
 };
 
+/**
+ * 调用模型网关的流式接口，逐块接收模型输出。
+ * @param body 请求体内容，可为对象或字符串
+ * @param onChunk 每次收到事件片段时的回调
+ * @param onComplete 流结束后的回调
+ * @returns 异步执行的 Promise
+ */
 export const streamModelGateway = async ({ body, onChunk, onComplete }: StreamModelGatewayOptions): Promise<void> => {
+  const requestPayload = JSON.stringify({
+    ...body,
+    stream: true,
+  });
+
   const response = await fetch(MODEL_GATEWAY_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream',
     },
-    body: typeof body === 'string' ? body : JSON.stringify(body),
+    body: requestPayload,
   });
 
   if (!response.ok) {
@@ -268,14 +280,21 @@ export const streamModelGateway = async ({ body, onChunk, onComplete }: StreamMo
   }
 };
 
+/**
+ * 调用模型网关的同步接口，一次性获取模型输出。
+ * @param body 请求体内容，可为对象或字符串
+ * @returns 模型返回的事件数组
+ */
 export const syncModelGateway = async ({ body }: SyncModelGatewayOptions): Promise<StreamModelGatewayEvent[]> => {
+  const requestPayload = JSON.stringify(body);
+
   const response = await fetch(MODEL_GATEWAY_SYNC_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
-    body: typeof body === 'string' ? body : JSON.stringify(body),
+    body: requestPayload,
   });
 
   if (!response.ok) {

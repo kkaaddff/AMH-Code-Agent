@@ -36,7 +36,3 @@ const groupByType = () => {
 };
 
 export const FTA_COMPONENTS = groupByType();
-
-export const ALL_FTA_COMPONENTS = Array.from(new Set(Object.values(FTA_COMPONENTS).flat()));
-
-export const FTA_COMPONENT_CATEGORIES = Object.keys(FTA_COMPONENTS);

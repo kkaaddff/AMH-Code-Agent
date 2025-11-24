@@ -1,0 +1,114 @@
+import fs from 'fs';
+import path from 'pathe';
+import { fileURLToPath } from 'node:url';
+import { z } from 'zod';
+import { createTool } from '../tool';
+import { safeStringify } from '../utils/safeStringify';
+
+export type SpecRegistry = Record<string, string>;
+
+const THIS_DIR = path.dirname(fileURLToPath(import.meta.url));
+const PACKAGE_ROOT = path.resolve(THIS_DIR, '../..');
+const MOCK_SPEC_DIR = path.join(PACKAGE_ROOT, 'mock-specs');
+
+type SpecReaderOptions = {
+  specDirectories?: string[];
+  cwd: string;
+};
+
+export function loadSpecsFromDirectories(directories: string[], cwd: string) {
+  const registry: Record<string, string> = {};
+  for (const dir of directories) {
+    const absoluteDir = path.isAbsolute(dir) ? dir : path.resolve(cwd, dir);
+    if (!fs.existsSync(absoluteDir) || !fs.statSync(absoluteDir).isDirectory()) {
+      continue;
+    }
+    const entries = fs.readdirSync(absoluteDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      const absolutePath = path.join(absoluteDir, entry.name);
+      const baseName = path.basename(entry.name, path.extname(entry.name));
+      registry[baseName] = absolutePath;
+    }
+  }
+  return registry;
+}
+
+function loadMockSpecsIfNeeded(registry: Record<string, string>) {
+  const shouldLoadMock = process.env.VITEST === 'true';
+  if (!shouldLoadMock) return;
+  if (!fs.existsSync(MOCK_SPEC_DIR)) {
+    return;
+  }
+  const entries = fs.readdirSync(MOCK_SPEC_DIR, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const absolutePath = path.join(MOCK_SPEC_DIR, entry.name);
+    const baseName = path.basename(entry.name, path.extname(entry.name));
+    if (!registry[baseName]) {
+      registry[baseName] = absolutePath;
+    }
+    if (!registry[entry.name]) {
+      registry[entry.name] = absolutePath;
+    }
+  }
+}
+
+export function createSpecReaderTool(opts: SpecReaderOptions) {
+  const normalizedSpecs = loadSpecsFromDirectories(opts.specDirectories ?? [], opts.cwd);
+
+  loadMockSpecsIfNeeded(normalizedSpecs);
+
+  return createTool({
+    name: 'read_spec',
+    description: `
+读取并返回预先注册的规范文档内容。使用该工具来了解目录架构、样式规范等规范后再做决策。
+`.trim(),
+    parameters: z.object({
+      spec_name: z.string().describe('需要读取的规范名称（例如 directory, style 等）'),
+    }),
+    getDescription: ({ params }) => {
+      if (!params.spec_name) {
+        return '读取指定规范文档';
+      }
+      return `读取规范：${params.spec_name}`;
+    },
+    execute: async ({ spec_name }) => {
+      const filePath = normalizedSpecs[spec_name];
+      if (!filePath) {
+        console.log(`🚩 规范 "${spec_name}" 的文件路径：${filePath}，未注册到 specFiles 中`);
+        return {
+          isError: true,
+          llmContent: `规范 "${spec_name}" 未注册。可用规范：${Object.keys(normalizedSpecs).join(', ') || '无'}`,
+        };
+      }
+      if (!fs.existsSync(filePath)) {
+        console.log(`🚩 规范 "${spec_name}" 的文件不存在：${filePath}`);
+        return {
+          isError: true,
+          llmContent: `规范 "${spec_name}" 的文件不存在：${filePath}`,
+        };
+      }
+      try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        console.log(`🚩 规范 "${spec_name}" 的文件存在：${filePath}`);
+        return {
+          llmContent: safeStringify({
+            spec: spec_name,
+            path: filePath,
+            content,
+          }),
+          returnDisplay: `已读取规范 ${spec_name}`,
+        };
+      } catch (error: any) {
+        return {
+          isError: true,
+          llmContent: `读取规范 "${spec_name}" 失败：${error.message}`,
+        };
+      }
+    },
+    approval: {
+      category: 'read',
+    },
+  });
+}

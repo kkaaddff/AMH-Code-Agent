@@ -23,3 +23,9 @@ run/
 **/files-cache/qrcode/*.png
 temp/
 front-end-requirements
+mock-temp
+
+.env*
+!.env.example
+
+build-dev.sh

@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontend Workflow Log Viewer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --border: #e5e7eb;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --warning: #d97706;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'SF Pro Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      width: calc(100% - 48px);
+      margin: 24px auto 48px;
+      padding: 0 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    p.description {
+      margin: 0 0 16px;
+      color: var(--muted);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 6px 16px rgba(17, 24, 39, 0.06);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .controls label {
+      font-weight: 600;
+    }
+
+    input[type='file'],
+    select {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--text);
+    }
+
+    button {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: var(--panel);
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text);
+      transition: all 0.15s ease;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border: 1px solid var(--accent);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
+    }
+
+    .status {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .section-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .collapsible {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .collapsible summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      user-select: none;
+    }
+
+    .collapsible summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .collapsible[open] summary span[aria-hidden='true'] {
+      transform: rotate(180deg);
+    }
+
+    .collapsible summary span[aria-hidden='true'] {
+      transition: transform 0.2s ease;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .card,
+    .collapsible-body {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      background: var(--panel);
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge.in {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .badge.out {
+      background: #ecfdf3;
+      color: var(--success);
+    }
+
+    .badge.tool {
+      background: #fdf2f8;
+      color: #be185d;
+    }
+
+    .badge.error {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .badge.neutral {
+      background: #f3f4f6;
+      color: var(--muted);
+    }
+
+    .current-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      min-height: 240px;
+    }
+
+    .timeline {
+      margin-top: 12px;
+      max-height: 360px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+    }
+
+    .timeline-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+
+    .timeline-item.active {
+      background: var(--accent-soft);
+    }
+
+    .timeline-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .timeline-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .timeline-snippet {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--text);
+      opacity: 0.9;
+      line-height: 1.4;
+    }
+
+    .timeline-empty {
+      padding: 48px 0;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    pre {
+      background: #0b1021;
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.5;
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      flex: 1;
+    }
+
+    .entry-details {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .detail-line {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .detail-key {
+      min-width: 96px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .info-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #f8fafc;
+    }
+
+    .info-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .info-value {
+      font-size: 14px;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .context-grid {
+      margin-top: 6px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+    }
+
+    .context-item {
+      background: #f4f6fb;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .context-row {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 8px;
+      background: #fdfcff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .context-row-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .context-row pre {
+      background: #0b1021;
+      color: #e5e7eb;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 11px;
+      margin: 0;
+      white-space: pre-wrap;
+    }
+
+    .message-list,
+    .message-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .message-item,
+    .bubble {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      background: #f9fafb;
+    }
+
+    .bubble.assistant {
+      background: #eef2ff;
+      border-color: #c7d2fe;
+    }
+
+    .bubble.user {
+      background: #ecfccb;
+      border-color: #bef264;
+    }
+
+    .bubble.tool {
+      background: #fff7ed;
+      border-color: #fed7aa;
+    }
+
+    .role-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    details {
+      background: #f4f6fb;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .empty-state {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .step-controls {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .step-controls input[type='range'] {
+      flex: 1;
+      accent-color: var(--accent);
+      min-width: 200px;
+    }
+
+    .step-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .step-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .step-label {
+      min-width: 120px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .step-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: #e0e7ff;
+      color: #312e81;
+      font-size: 11px;
+      margin-right: 6px;
+      font-weight: 700;
+    }
+
+    .drawer-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 20;
+    }
+
+    .drawer-mask.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(420px, 90vw);
+      height: 100vh;
+      background: var(--panel);
+      box-shadow: -10px 0 24px rgba(15, 23, 42, 0.18);
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .drawer-body {
+      padding: 16px;
+      overflow: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .artifact-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: var(--panel);
+    }
+
+    .artifact-path {
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .artifact-meta {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+      .split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Frontend Workflow Log Viewer</h1>
+    <p class="description">
+      选择新版 JSON 会话日志（如 <code>logs/api/frontend-workflow-*.json</code>）或旧版 JSONL 记录（如
+      <code>files-cache/frontend-projects/&lt;sessionId&gt;/workflow.log</code>），离线回放整个前端工作流。
+      支持初始提示固定展示、逐步回放历史记录、以及在抽屉中查看生成产物。
+    </p>
+
+    <div class="panel">
+      <div class="controls">
+        <div>
+          <label for="file-input">选择日志文件：</label>
+          <input id="file-input" type="file" accept=".log,.txt,.jsonl,.json" />
+        </div>
+        <div>
+          <label for="session-select">Session：</label>
+          <select id="session-select" disabled>
+            <option value="__all">全部 Session</option>
+          </select>
+        </div>
+        <button id="artifacts-btn" disabled>📁 查看产物</button>
+      </div>
+      <div id="status" class="status">等待选择日志文件...</div>
+
+      <div class="section-stack">
+        <details id="session-collapsible" class="collapsible" open>
+          <summary>
+            <span class="section-title">会话概览</span>
+            <span aria-hidden="true">▼</span>
+          </summary>
+          <div class="collapsible-body">
+            <div id="session-info" class="entry-details">
+              <div class="empty-state">请选择 Session 查看上下文</div>
+            </div>
+          </div>
+        </details>
+        <details id="initial-collapsible" class="collapsible" open>
+          <summary>
+            <span class="section-title">Initial Messages</span>
+            <span aria-hidden="true">▼</span>
+          </summary>
+          <div class="collapsible-body">
+            <div id="initial-messages" class="message-list">
+              <div class="empty-state">暂无初始提示</div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step-controls">
+        <div class="section-title">步骤回放</div>
+        <div class="step-actions">
+          <input id="step-slider" type="range" min="0" max="0" value="0" disabled />
+          <div class="step-meta">
+            <div id="step-label" class="step-label">0 / 0</div>
+            <div class="step-buttons">
+              <button id="prev-btn" disabled>⬅️ 上一步</button>
+              <button id="next-btn" disabled>➡️ 下一步</button>
+              <button id="play-btn" class="primary" disabled>▶ 自动播放</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="card">
+          <div class="timeline-title">
+            <span>当前记录</span>
+            <span id="position" class="badge neutral">0 / 0</span>
+          </div>
+          <div class="current-body">
+            <div id="current-entry" class="status" style="margin-top: 8px;">
+              无记录
+            </div>
+            <pre id="entry-json" class="hidden"></pre>
+          </div>
+        </div>
+        <div class="card">
+          <div class="timeline-title">
+            <span>回放时间线</span>
+            <span class="badge neutral">按步骤回放</span>
+          </div>
+          <div id="timeline" class="timeline">
+            <div class="timeline-empty">暂无记录</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="drawer-mask" class="drawer-mask"></div>
+  <aside id="artifact-drawer" class="drawer" aria-label="生成产物抽屉">
+    <div class="drawer-header">
+      <strong>生成产物</strong>
+      <button id="drawer-close" aria-label="关闭">关闭</button>
+    </div>
+    <div id="artifact-list" class="drawer-body">
+      <div class="empty-state">请选择 Session 查看产物</div>
+    </div>
+  </aside>
+
+  <script>
+    (() => {
+      const elements = {
+        fileInput: document.getElementById('file-input'),
+        sessionSelect: document.getElementById('session-select'),
+        status: document.getElementById('status'),
+        prev: document.getElementById('prev-btn'),
+        next: document.getElementById('next-btn'),
+        play: document.getElementById('play-btn'),
+        position: document.getElementById('position'),
+        current: document.getElementById('current-entry'),
+        json: document.getElementById('entry-json'),
+        timeline: document.getElementById('timeline'),
+        sessionInfo: document.getElementById('session-info'),
+        initialMessages: document.getElementById('initial-messages'),
+        artifactsBtn: document.getElementById('artifacts-btn'),
+        drawer: document.getElementById('artifact-drawer'),
+        drawerMask: document.getElementById('drawer-mask'),
+        drawerClose: document.getElementById('drawer-close'),
+        artifactList: document.getElementById('artifact-list'),
+        slider: document.getElementById('step-slider'),
+        stepLabel: document.getElementById('step-label'),
+      };
+
+      const state = {
+        entries: [],
+        filtered: [],
+        meta: {},
+        currentIndex: 0,
+        playing: false,
+        timer: null,
+        activeSessionId: null,
+      };
+
+      const escapeHTML = (value) =>
+        String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+
+      const formatJSON = (value) => escapeHTML(JSON.stringify(value, null, 2));
+
+      const formatDate = (value) => {
+        if (!value) return 'N/A';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleString();
+      };
+
+      const formatDuration = (start, end) => {
+        const startTime = Date.parse(start || '');
+        const endTime = Date.parse(end || '');
+        if (Number.isNaN(startTime) || Number.isNaN(endTime) || endTime < startTime) return '--';
+        const diff = endTime - startTime;
+        const seconds = Math.round(diff / 1000);
+        if (seconds < 60) return `${seconds}s`;
+        const minutes = Math.floor(seconds / 60);
+        const remain = seconds % 60;
+        return `${minutes}m ${remain}s`;
+      };
+
+      const formatContextValue = (value, multiline = false) => {
+        if (value == null) return multiline ? '' : '--';
+        if (Array.isArray(value)) return multiline ? value.join('\n') : value.join(', ');
+        if (typeof value === 'object') return multiline ? JSON.stringify(value, null, 2) : JSON.stringify(value);
+        return String(value);
+      };
+
+      const badge = (entry) => {
+        const type = (entry.type || '').toLowerCase();
+        const direction = (entry.direction || '').toUpperCase();
+        const role = (entry.role || '').toLowerCase();
+        if (type === 'error' || type === 'workflow_error') return 'badge error';
+        if (direction === 'IN') return 'badge in';
+        if (direction === 'OUT') return 'badge out';
+        if (role === 'user') return 'badge in';
+        if (role === 'assistant') return 'badge out';
+        if (role === 'tool') return 'badge tool';
+        return 'badge neutral';
+      };
+
+      const describeEntry = (entry) => {
+        if (!entry) return '未知记录';
+        const session = entry.sessionId || 'unknown';
+        const type = entry.type || 'LOG';
+        const role = entry.role ? entry.role.toUpperCase() : '';
+        let base = `[${session}] ${role || type}`;
+        if (entry.event) base += ` · ${entry.event}`;
+        else if (entry.stage) base += ` · ${entry.stage}`;
+        else if (entry.requestId) base += ` · ${entry.requestId}`;
+        return base;
+      };
+
+      const normalizeSegments = (content) => {
+        if (content == null) return [];
+        if (typeof content === 'string') return [{ type: 'text', text: content }];
+        if (Array.isArray(content)) {
+          return content.map((segment) => {
+            if (!segment || typeof segment !== 'object') return { type: 'text', text: String(segment) };
+            const normalizedType = (segment.type || '').replace(/-/g, '_');
+            if (normalizedType === 'text') return { type: 'text', text: segment.text || '' };
+            if (normalizedType === 'tool_use') {
+              return {
+                type: 'tool_use',
+                name: segment.name || segment.toolName || segment.id,
+                input: segment.input,
+                callId: segment.id || segment.toolCallId,
+              };
+            }
+            if (normalizedType === 'tool_result') {
+              return {
+                type: 'tool_result',
+                name: segment.toolName || segment.name,
+                result: segment.result,
+                output: segment.output,
+                input: segment.input,
+                callId: segment.toolCallId,
+                content: segment.content,
+              };
+            }
+            return { type: 'raw', value: segment };
+          });
+        }
+        if (typeof content === 'object') return [{ type: 'raw', value: content }];
+        return [{ type: 'text', text: String(content) }];
+      };
+
+      const renderSegments = (entry) => {
+        const segments = normalizeSegments(entry.content ?? entry.text);
+        if (!segments.length) return '<div class="empty-state">该消息没有可展示内容</div>';
+        return segments
+          .map((segment) => {
+            if (segment.type === 'text') {
+              const roleClass = (entry.role || 'assistant').toLowerCase();
+              return `<div class="bubble ${roleClass}"><pre>${escapeHTML(segment.text || '')}</pre></div>`;
+            }
+            if (segment.type === 'tool_use') {
+              return `
+                <details open>
+                  <summary>工具调用：${escapeHTML(segment.name || '未命名')} ${segment.callId ? `(ID: ${escapeHTML(segment.callId)})` : ''}</summary>
+                  ${segment.input ? `<pre>${formatJSON(segment.input)}</pre>` : '<div class="empty-state">无输入参数</div>'}
+                </details>
+              `;
+            }
+            if (segment.type === 'tool_result') {
+              const resultBody = segment.result || segment.output || segment.content;
+              return `
+                <details open>
+                  <summary>工具返回：${escapeHTML(segment.name || '未命名')} ${segment.callId ? `(ID: ${escapeHTML(segment.callId)})` : ''}</summary>
+                  ${resultBody ? `<pre>${formatJSON(resultBody)}</pre>` : '<div class="empty-state">无返回结果</div>'}
+                </details>
+              `;
+            }
+            return `
+              <details>
+                <summary>原始结构</summary>
+                <pre>${formatJSON(segment.value)}</pre>
+              </details>
+            `;
+          })
+          .join('');
+      };
+
+      const renderEntryDetails = (entry) => {
+        if (!entry) return '';
+        if (entry.type === 'message') {
+          return `
+            <div class="entry-details">
+              <div class="detail-line"><span class="pill">${escapeHTML(entry.role || 'message')}</span></div>
+              ${renderSegments(entry)}
+            </div>
+          `;
+        }
+
+        if (entry.type === 'model_call') {
+          const modelName = entry.model?.model?.id || entry.model?.model || entry.model?.id || '未知模型';
+          return `
+            <div class="entry-details">
+              <div class="detail-line"><span class="detail-key">模型</span><span class="pill">${escapeHTML(modelName)}</span></div>
+              <div class="detail-line"><span class="detail-key">Request ID</span><code>${escapeHTML(entry.requestId || 'N/A')}</code></div>
+              <details open>
+                <summary>Prompt &amp; 请求体</summary>
+                <pre>${formatJSON({ prompt: entry.data?.prompt || entry.prompt, request: entry.data?.request || entry.request, tools: entry.data?.tools || entry.tools })}</pre>
+              </details>
+              <details>
+                <summary>响应元数据</summary>
+                <pre>${formatJSON(entry.data?.response || entry.response || {})}</pre>
+              </details>
+              ${entry.data?.error || entry.error ? `<details open><summary>错误</summary><pre>${formatJSON(entry.data?.error || entry.error)}</pre></details>` : ''}
+            </div>
+          `;
+        }
+
+        if (entry.type === 'model_result') {
+          return `
+            <div class="entry-details">
+              <div class="detail-line"><span class="detail-key">Request ID</span><code>${escapeHTML(entry.requestId || 'N/A')}</code></div>
+              <details open>
+                <summary>合成文本</summary>
+                <pre>${escapeHTML(entry.data?.text || entry.text || '')}</pre>
+              </details>
+            </div>
+          `;
+        }
+
+        if (entry.type === 'model_chunk') {
+          const chunk = entry.data?.chunk || entry.chunk;
+          return `
+            <div class="entry-details">
+              <div class="detail-line"><span class="detail-key">Request ID</span><code>${escapeHTML(entry.requestId || 'N/A')}</code></div>
+              <div class="detail-line"><span class="detail-key">chunk.type</span><span class="pill">${escapeHTML(chunk?.type || 'unknown')}</span></div>
+              <details>
+                <summary>Chunk 内容</summary>
+                <pre>${formatJSON(chunk || {})}</pre>
+              </details>
+            </div>
+          `;
+        }
+
+        return `<div class="entry-details"><details open><summary>原始记录</summary><pre>${formatJSON(entry)}</pre></details></div>`;
+      };
+
+      const setStatus = (text, tone = 'muted') => {
+        elements.status.textContent = text;
+        elements.status.style.color =
+          tone === 'error' ? 'var(--danger)' : tone === 'ok' ? 'var(--success)' : 'var(--muted)';
+      };
+
+      const getActiveSessionMeta = () => {
+        if (!state.activeSessionId) return null;
+        return state.meta[state.activeSessionId] || null;
+      };
+
+      const updateControls = () => {
+        const hasData = state.filtered.length > 0;
+        elements.prev.disabled = !hasData || state.currentIndex === 0;
+        elements.next.disabled = !hasData || state.currentIndex >= state.filtered.length - 1;
+        elements.play.disabled = !hasData;
+        elements.sessionSelect.disabled = !state.entries.length && !Object.keys(state.meta).length;
+        elements.position.textContent = `${hasData ? state.currentIndex + 1 : 0} / ${state.filtered.length}`;
+        elements.play.textContent = state.playing ? '⏸ 暂停' : '▶ 自动播放';
+        elements.slider.disabled = !hasData;
+        if (hasData) {
+          elements.slider.min = 1;
+          elements.slider.max = state.filtered.length;
+          elements.slider.value = state.currentIndex + 1;
+          elements.stepLabel.textContent = `第 ${state.currentIndex + 1} / ${state.filtered.length} 步`;
+        } else {
+          elements.slider.value = 0;
+          elements.stepLabel.textContent = '0 / 0';
+        }
+      };
+
+      const getEntrySnippet = (entry) => {
+        if (!entry) return '';
+        const text = entry.text || normalizeSegments(entry.content).find((segment) => segment.type === 'text' && segment.text)?.text;
+        if (!text) return '';
+        return text.replace(/[\n\r]+/g, ' ').slice(0, 120);
+      };
+
+      const renderCurrent = () => {
+        const entry = state.filtered[state.currentIndex];
+        if (!entry) {
+          elements.current.textContent = '无记录';
+          elements.json.classList.add('hidden');
+          updateControls();
+          return;
+        }
+
+        const badgeClass = badge(entry);
+        const directionLabel = entry.direction || entry.role || entry.type || 'N/A';
+        elements.current.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span class="${badgeClass}">${escapeHTML(directionLabel)}</span>
+            <strong>${escapeHTML(describeEntry(entry))}</strong>
+          </div>
+          <div style="margin-top:6px;color:var(--muted);font-size:12px;">
+            ${escapeHTML(entry.timestamp || '无时间戳')}
+          </div>
+          ${renderEntryDetails(entry)}
+        `;
+        // elements.json.textContent = JSON.stringify(entry, null, 2);
+        elements.json.classList.remove('hidden');
+        updateControls();
+      };
+
+      const renderTimeline = () => {
+        if (!state.filtered.length) {
+          elements.timeline.innerHTML = '<div class="timeline-empty">暂无记录</div>';
+          return;
+        }
+        elements.timeline.innerHTML = '';
+        state.filtered.forEach((entry, idx) => {
+          const item = document.createElement('div');
+          item.className = 'timeline-item' + (idx === state.currentIndex ? ' active' : '');
+          const snippet = getEntrySnippet(entry);
+          item.innerHTML = `
+            <div class="timeline-title">
+              <span><span class="step-pill">${idx + 1}</span>${escapeHTML(describeEntry(entry))}</span>
+              <span class="${badge(entry)}">${escapeHTML(entry.direction || entry.role || '记录')}</span>
+            </div>
+            <div class="timeline-meta">${escapeHTML(entry.timestamp || '')}</div>
+            ${snippet ? `<div class="timeline-snippet">${escapeHTML(snippet)}...</div>` : ''}
+          `;
+          item.onclick = () => {
+            state.currentIndex = idx;
+            stopPlayback();
+            renderCurrent();
+            renderTimeline();
+          };
+          elements.timeline.appendChild(item);
+        });
+      };
+
+      const renderSessionInfo = () => {
+        const meta = getActiveSessionMeta();
+        if (!meta) {
+          elements.sessionInfo.innerHTML = '<div class="empty-state">请选择 Session 查看上下文</div>';
+          return;
+        }
+        const infoEntries = [
+          { label: 'Session', value: meta.sessionId || '' },
+          { label: '开始', value: formatDate(meta.startedAt) },
+          { label: '结束', value: formatDate(meta.finishedAt) },
+          { label: '耗时', value: formatDuration(meta.startedAt, meta.finishedAt) },
+        ];
+        const contextEntries = Object.entries(meta.context || {});
+        const specialKeys = new Set(['cwd', 'specDirectories']);
+        const regularContext = contextEntries.filter(([key]) => !specialKeys.has(key));
+        const cwdValue = meta.context?.cwd;
+        const specDirsValue = meta.context?.specDirectories;
+        const contextSections = [];
+        if (regularContext.length) {
+          contextSections.push(
+            `<div class="context-grid">${regularContext
+              .map(
+                ([key, value]) => `
+                  <div class="context-item">
+                    <div class="info-label">${escapeHTML(key)}</div>
+                    <div class="info-value">${escapeHTML(formatContextValue(value))}</div>
+                  </div>
+                `
+              )
+              .join('')}</div>`
+          );
+        }
+        if (cwdValue != null) {
+          contextSections.push(`
+            <div class="context-row">
+              <div class="context-row-label">cwd</div>
+              <pre>${escapeHTML(formatContextValue(cwdValue, true) || '无数据')}</pre>
+            </div>
+          `);
+        }
+        if (specDirsValue != null) {
+          contextSections.push(`
+            <div class="context-row">
+              <div class="context-row-label">specDirectories</div>
+              <pre>${escapeHTML(formatContextValue(specDirsValue, true) || '无数据')}</pre>
+            </div>
+          `);
+        }
+
+        elements.sessionInfo.innerHTML = `
+          <div class="info-grid">
+            ${infoEntries
+              .map(
+                ({ label, value }) => `
+                  <div class="info-card">
+                    <div class="info-label">${escapeHTML(label)}</div>
+                    <div class="info-value">${escapeHTML(value || '--')}</div>
+                  </div>
+                `
+              )
+              .join('')}
+          </div>
+          ${
+            contextSections.length
+              ? contextSections.join('')
+              : '<div class="empty-state" style="margin-top:8px;">暂无上下文字段</div>'
+          }
+        `;
+      };
+
+      const renderInitialMessages = () => {
+        const meta = getActiveSessionMeta();
+        const messages = meta?.initialMessages || [];
+        if (!messages.length) {
+          elements.initialMessages.innerHTML = '<div class="empty-state">暂无初始提示</div>';
+          return;
+        }
+        elements.initialMessages.innerHTML = messages
+          .map(
+            (msg, idx) => `
+              <div class="message-item">
+                <div style="display:flex;justify-content:space-between;align-items:center;"> 
+                  <span class="role-tag">${escapeHTML(msg.role || 'system')}</span>
+                  <span style="font-size:12px;color:var(--muted);">#${idx + 1}</span>
+                </div>
+                <pre>${escapeHTML(
+                  typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content, null, 2)
+                )}</pre>
+              </div>
+            `
+          )
+          .join('');
+      };
+
+      const renderArtifacts = () => {
+        const meta = getActiveSessionMeta();
+        const files = meta?.files || [];
+        elements.artifactsBtn.disabled = !files.length;
+        elements.artifactsBtn.textContent = files.length ? `📁 查看产物 (${files.length})` : '📁 查看产物';
+        if (!files.length) {
+          elements.artifactList.innerHTML = '<div class="empty-state">当前 Session 暂无产物</div>';
+          closeDrawer();
+          return;
+        }
+        elements.artifactList.innerHTML = files
+          .map(
+            (file, idx) => `
+              <div class="artifact-item">
+                <div class="artifact-path">${idx + 1}. ${escapeHTML(file.path || '未知路径')}</div>
+                <div class="artifact-meta">
+                  <span class="pill">${escapeHTML(file.kind || '文件')}</span>
+                  ${file.description ? `<span>${escapeHTML(file.description)}</span>` : ''}
+                  ${Array.isArray(file.tags) ? file.tags.map((tag) => `<span class="role-tag">${escapeHTML(tag)}</span>`).join('') : ''}
+                </div>
+              </div>
+            `
+          )
+          .join('');
+      };
+
+      const stopPlayback = () => {
+        state.playing = false;
+        if (state.timer) {
+          clearInterval(state.timer);
+          state.timer = null;
+        }
+        updateControls();
+      };
+
+      const openDrawer = () => {
+        if (elements.artifactsBtn.disabled) return;
+        elements.drawer.classList.add('open');
+        elements.drawerMask.classList.add('visible');
+      };
+
+      const closeDrawer = () => {
+        elements.drawer.classList.remove('open');
+        elements.drawerMask.classList.remove('visible');
+      };
+
+      const parseWorkflowJson = (text) => {
+        try {
+          const parsed = JSON.parse(text);
+          if (!parsed) return null;
+          const sessions = Array.isArray(parsed) ? parsed : [parsed];
+          if (!sessions.every((session) => session && typeof session === 'object' && session.history)) return null;
+          const meta = {};
+          const entries = [];
+          sessions.forEach((session, idx) => {
+            const sessionId = session.sessionId || `session-${idx + 1}`;
+            meta[sessionId] = {
+              sessionId,
+              startedAt: session.startedAt || '',
+              finishedAt: session.finishedAt || '',
+              context: session.context || {},
+              initialMessages: session.initialMessages || [],
+              files: session.files || [],
+            };
+            (session.history || []).forEach((entry, entryIdx) => {
+              if (entry && typeof entry === 'object') {
+                entries.push({ ...entry, sessionId: entry.sessionId || sessionId, __step: entryIdx + 1 });
+              }
+            });
+          });
+          return { entries, meta };
+        } catch (err) {
+          return null;
+        }
+      };
+
+      const parseLegacyLog = (text) => {
+        const entries = [];
+        const lines = text
+          .split('\n')
+          .map((l) => l.trim())
+          .filter(Boolean);
+        lines.forEach((line) => {
+          try {
+            const parsed = JSON.parse(line);
+            if (parsed && typeof parsed === 'object') entries.push(parsed);
+          } catch (err) {
+            // ignore
+          }
+        });
+        if (entries.length) return { entries, meta: {} };
+        const segments = text.split('---');
+        segments.forEach((segment) => {
+          const segLines = segment
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean);
+          segLines.forEach((line) => {
+            try {
+              const parsed = JSON.parse(line);
+              if (parsed && typeof parsed === 'object') entries.push(parsed);
+            } catch (_err) {
+              // ignore
+            }
+          });
+        });
+        return { entries, meta: {} };
+      };
+
+      const parseLogText = (text) => {
+        const trimmed = text.trim();
+        if (!trimmed) return { entries: [], meta: {} };
+        const workflow = parseWorkflowJson(trimmed);
+        if (workflow) return workflow;
+        return parseLegacyLog(trimmed);
+      };
+
+      const buildSessionOptions = () => {
+        const sessionIds = new Set(Object.keys(state.meta));
+        state.entries.forEach((entry) => entry.sessionId && sessionIds.add(entry.sessionId));
+        const sorted = Array.from(sessionIds);
+        sorted.sort();
+        elements.sessionSelect.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '__all';
+        defaultOption.textContent = '全部 Session';
+        elements.sessionSelect.appendChild(defaultOption);
+        sorted.forEach((id) => {
+          const option = document.createElement('option');
+          option.value = id;
+          option.textContent = id;
+          elements.sessionSelect.appendChild(option);
+        });
+        return sorted.length === 1 ? sorted[0] : '__all';
+      };
+
+      const applyFilter = () => {
+        const targetSession = elements.sessionSelect.value;
+        state.activeSessionId = targetSession && targetSession !== '__all' ? targetSession : null;
+        state.filtered = state.activeSessionId
+          ? state.entries.filter((entry) => entry.sessionId === state.activeSessionId)
+          : [...state.entries];
+        state.currentIndex = 0;
+        renderCurrent();
+        renderTimeline();
+        renderSessionInfo();
+        renderInitialMessages();
+        renderArtifacts();
+        updateControls();
+        const scopeText = state.activeSessionId ? `Session ${state.activeSessionId}` : '全部记录';
+        setStatus(`已加载 ${state.filtered.length} 条记录（${scopeText}）`, state.filtered.length ? 'ok' : 'muted');
+      };
+
+      const handleFile = (file) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const text = String(event.target?.result || '');
+          const parsed = parseLogText(text);
+          state.entries = parsed.entries || [];
+          state.meta = parsed.meta || {};
+          if (!state.entries.length && !Object.keys(state.meta).length) {
+            setStatus('没有可解析的日志记录，请确认文件内容。', 'error');
+            return;
+          }
+          const defaultSession = buildSessionOptions();
+          elements.sessionSelect.value = defaultSession;
+          applyFilter();
+        };
+        reader.readAsText(file);
+        setStatus(`正在读取 ${file.name} ...`);
+      };
+
+      elements.fileInput.addEventListener('change', (e) => {
+        stopPlayback();
+        handleFile(e.target.files ? e.target.files[0] : null);
+      });
+
+      elements.sessionSelect.addEventListener('change', () => {
+        stopPlayback();
+        applyFilter();
+      });
+
+      elements.prev.addEventListener('click', () => {
+        if (state.currentIndex > 0) {
+          state.currentIndex -= 1;
+          stopPlayback();
+          renderCurrent();
+          renderTimeline();
+        }
+      });
+
+      elements.next.addEventListener('click', () => {
+        if (state.currentIndex < state.filtered.length - 1) {
+          state.currentIndex += 1;
+          stopPlayback();
+          renderCurrent();
+          renderTimeline();
+        }
+      });
+
+      elements.play.addEventListener('click', () => {
+        if (!state.filtered.length) return;
+        if (state.playing) {
+          stopPlayback();
+          return;
+        }
+        state.playing = true;
+        updateControls();
+        state.timer = setInterval(() => {
+          if (state.currentIndex >= state.filtered.length - 1) {
+            stopPlayback();
+            return;
+          }
+          state.currentIndex += 1;
+          renderCurrent();
+          renderTimeline();
+        }, 1000);
+      });
+
+      elements.slider.addEventListener('input', (event) => {
+        if (!state.filtered.length) return;
+        const nextIndex = Math.max(0, Math.min(state.filtered.length - 1, Number(event.target.value) - 1));
+        state.currentIndex = nextIndex;
+        stopPlayback();
+        renderCurrent();
+        renderTimeline();
+      });
+
+      elements.artifactsBtn.addEventListener('click', openDrawer);
+      elements.drawerClose.addEventListener('click', closeDrawer);
+      elements.drawerMask.addEventListener('click', closeDrawer);
+
+      updateControls();
+    })();
+  </script>
+</body>
+
+</html>

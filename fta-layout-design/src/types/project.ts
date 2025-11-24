@@ -1,5 +1,6 @@
-import { AnnotationNode } from '@/pages/EditorPage/types/componentDetectionV2';
-import { DSLData } from './dsl';
+import type { AnnotationSnapshot, DesignDSL } from '@fta/shared-types';
+
+export type { AnnotationSnapshot } from '@fta/shared-types';
 
 export interface Project {
   id: string;
@@ -15,11 +16,16 @@ export interface Project {
   tags: string[];
   avatar?: string;
   pages: Page[];
+  userId: string;
+  gitId: string;
+  workdirs: string[];
 }
 
 export interface ProjectListParams {
   page?: number;
   size?: number;
+  userId?: string;
+  gitId?: string;
 }
 
 export interface ProjectListResponse {
@@ -27,6 +33,16 @@ export interface ProjectListResponse {
   total: number;
   page: number;
   size: number;
+}
+
+export type ProjectMatchSource = 'gitId' | 'workdir' | null;
+
+export interface ProjectResolutionResult {
+  matchedProject: Project | null;
+  matchedBy: ProjectMatchSource;
+  resolvedGitId: string | null;
+  requestedWorkdir: string | null;
+  projects: Project[];
 }
 
 export interface Page {
@@ -44,6 +60,8 @@ export interface Page {
   designDocuments: DocumentReference[]; // 设计稿文档列表
   prdDocuments: DocumentReference[]; // PRD文档列表
   openapiDocuments: DocumentReference[]; // OpenAPI文档列表
+  userId: string;
+  gitId: string;
 }
 
 export interface DesignSpec {
@@ -117,12 +135,10 @@ export interface ProcessingHistoryItem {
 
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'editing' | 'completed' | 'failed';
 
-export interface AnnotationSnapshot {
-  rootAnnotation: AnnotationNode | null;
-  savedAt: number;
-  version: string;
-}
 export interface DocumentReference {
+  /** ObjectId */
+  _id: string;
+  /** doc_idxxx*/
   id: string;
   url: string;
   name?: string;
@@ -134,7 +150,10 @@ export interface DocumentReference {
   createdAt: string;
   updatedAt: string;
   annotationData?: AnnotationSnapshot;
-  data?: DSLData;
+  data?: DesignDSL;
+  pageId?: string;
+  userId: string;
+  gitId: string;
 }
 
 export interface SyncHistoryItem {

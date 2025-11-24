@@ -9,10 +9,20 @@ const DOCUMENT_STATUS_TEXT_MAP = {
 
 export type DocumentStatus = keyof typeof DOCUMENT_STATUS_TEXT_MAP;
 
+/**
+ * 根据状态标识返回对应的中文展示文案。
+ * @param status 文档状态码
+ * @returns 中文状态描述
+ */
 export const getDocumentStatusText = (status: string): string => {
   return DOCUMENT_STATUS_TEXT_MAP[status as DocumentStatus] ?? '未知';
 };
 
+/**
+ * 根据状态标识返回标签颜色类型。
+ * @param status 文档状态码
+ * @returns 对应的颜色类型字符串
+ */
 export const getDocumentStatusColor = (status: string) => {
   switch (status) {
     case 'pending':
@@ -39,6 +49,11 @@ export interface DocumentActionConfig {
   action: 'sync' | 'edit';
 }
 
+/**
+ * 基于状态返回按钮配置，用于控制操作文案与类型。
+ * @param status 文档状态码
+ * @returns 文档操作按钮配置，若无匹配则返回 null
+ */
 export const getDocumentActionConfig = (status: string): DocumentActionConfig | null => {
   const actionConfigs: Record<string, DocumentActionConfig> = {
     pending: {

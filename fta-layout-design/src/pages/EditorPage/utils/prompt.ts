@@ -1,4 +1,4 @@
-import { AnnotationNode } from '../types/componentDetectionV2';
+import { AnnotationNode } from '../types/componentDetection';
 
 interface AnnotationNodeSummary {
   id: string;
@@ -11,6 +11,11 @@ interface AnnotationNodeSummary {
   height?: number;
 }
 
+/**
+ * 将标注节点概要信息格式化为易读的多行文本。
+ * @param nodes 标注节点概要列表
+ * @returns 适合传给模型的文本摘要
+ */
 export function formatAnnotationSummary(nodes: AnnotationNodeSummary[]): string {
   if (!nodes.length) {
     return '当前标注树为空，模型需要自行根据设计描述补充组件结构。';
@@ -34,6 +39,11 @@ export function formatAnnotationSummary(nodes: AnnotationNodeSummary[]): string 
   return lines.join('\n');
 }
 
+/**
+ * 将标注树拍平为节点概要列表，保留层级信息。
+ * @param root 根标注节点
+ * @returns 拍平后的节点概要数组
+ */
 export function flattenAnnotation(root?: AnnotationNode): AnnotationNodeSummary[] {
   if (!root || typeof root !== 'object') {
     return [];
@@ -48,10 +58,7 @@ export function flattenAnnotation(root?: AnnotationNode): AnnotationNodeSummary[
     summaries.push({
       id: String(node.id ?? node.dslNodeId ?? `node-${summaries.length}`),
       name: typeof node.name === 'string' && node.name.length ? node.name : undefined,
-      component:
-        typeof node.ftaComponent === 'string' && node.ftaComponent.length
-          ? node.ftaComponent
-          : undefined,
+      component: typeof node.ftaComponent === 'string' && node.ftaComponent.length ? node.ftaComponent : undefined,
       isContainer: Boolean(node.isContainer),
       depth,
       childCount: children.length,

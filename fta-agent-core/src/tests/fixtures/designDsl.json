@@ -1,0 +1,4060 @@
+{
+  "dsl": {
+    "styles": {
+      "paint_1:0131": {
+        "value": ["#F5F5F5"],
+        "token": "灰阶/全局背景 #F5F5F5"
+      },
+      "paint_1:890": {
+        "value": ["#FFFFFF"],
+        "token": "灰阶/纯白 #FFFFFF"
+      },
+      "font_1:976": {
+        "value": {
+          "family": "PingFang SC",
+          "size": 36,
+          "style": "中黑体",
+          "decoration": "none",
+          "case": "none",
+          "lineHeight": "50",
+          "letterSpacing": "auto"
+        },
+        "token": "中黑/36px 导航标题"
+      },
+      "paint_1:0078": {
+        "value": ["rgba(255, 255, 255, 0.1)"]
+      },
+      "paint_1:0080": {
+        "value": ["rgba(255, 255, 255, 0.6)"]
+      },
+      "effect_1:995": {
+        "value": []
+      },
+      "paint_1:0285": {
+        "value": ["#CCCCCC"],
+        "token": "灰阶/禁用 #CCCCCC"
+      },
+      "font_1:0284": {
+        "value": {
+          "family": "PingFang SC",
+          "size": 28,
+          "style": "常规体",
+          "decoration": "none",
+          "case": "none",
+          "lineHeight": "40",
+          "letterSpacing": "auto"
+        },
+        "token": "常规/28px 正文"
+      },
+      "paint_1:0470": {
+        "value": ["#666666"],
+        "token": "灰阶/常规 #666666"
+      },
+      "paint_1:01446": {
+        "value": [
+          {
+            "url": "https://mg.amh-group.com/mastergo-default/88642146392973/88654546891508/710b4cc77ab27343166e5b04e896da65.jpg",
+            "filters": ""
+          }
+        ],
+        "token": "头像/司机/3"
+      },
+      "paint_1:796": {
+        "value": ["#1A1A1A"],
+        "token": "灰阶/重要 #1A1A1A"
+      },
+      "paint_1:03565": {
+        "value": ["#FFF0E6"],
+        "token": "品牌/10.背景"
+      },
+      "paint_1:0020": {
+        "value": ["#FF7000"],
+        "token": "品牌/5.默认 #FF7000"
+      },
+      "font_1:6184": {
+        "value": {
+          "family": "PingFang SC",
+          "size": 20,
+          "style": "常规体",
+          "decoration": "none",
+          "case": "none",
+          "lineHeight": "28",
+          "letterSpacing": "auto"
+        },
+        "token": "常规/20px 标签"
+      },
+      "paint_1:0414": {
+        "value": ["#F9F9F9"],
+        "token": "灰阶/次级背景 #F9F9F9"
+      },
+      "font_1:0821": {
+        "value": {
+          "family": "PingFang SC",
+          "size": 24,
+          "style": "常规体",
+          "decoration": "none",
+          "case": "none",
+          "lineHeight": "34",
+          "letterSpacing": "auto"
+        },
+        "token": "常规/24px 辅助"
+      },
+      "paint_1:01454": {
+        "value": [
+          {
+            "url": "https://mg.amh-group.com/mastergo-default/88642146392973/88654546891508/0dd686894c9af729504f50069b15f3e8.jpg",
+            "filters": ""
+          }
+        ],
+        "token": "头像/司机/1"
+      },
+      "paint_1:01450": {
+        "value": [
+          {
+            "url": "https://mg.amh-group.com/mastergo-default/88642146392973/88654546891508/c14225c47d74a5a0012c53928b6560b1.jpg",
+            "filters": ""
+          }
+        ],
+        "token": "头像/司机/2"
+      },
+      "paint_1:6185": {
+        "value": ["#1A6FFF"],
+        "token": "信息/默认 #1A6FFF"
+      },
+      "paint_1:00458": {
+        "value": [
+          {
+            "url": "https://mg.amh-group.com/mastergo-default/88642146392973/88654546891508/cc0bfc7e0f0b7259e09f8037aab99d89.jpg",
+            "filters": ""
+          }
+        ],
+        "token": "头像/司机/4"
+      },
+      "font_1:2202": {
+        "value": {
+          "family": "PingFang SC",
+          "size": 22,
+          "style": "常规体",
+          "decoration": "none",
+          "case": "none",
+          "lineHeight": "30",
+          "letterSpacing": "auto"
+        },
+        "token": "常规/22px 辅助"
+      },
+      "effect_31:8106": {
+        "value": []
+      },
+      "paint_26:6104": {
+        "value": ["#FFE2CC"],
+        "token": "品牌/9"
+      },
+      "paint_1:060": {
+        "value": ["#FFFFFF"]
+      },
+      "font_20:4508": {
+        "value": {
+          "family": "Alibaba PuHuiTi 2.0",
+          "size": 20,
+          "style": "65 Medium",
+          "decoration": "none",
+          "case": "none",
+          "lineHeight": "28",
+          "letterSpacing": "auto"
+        }
+      },
+      "paint_1:71425": {
+        "value": [
+          {
+            "url": "https://imagecdn.ymm56.com/design-dsl/path/4a0f2261405dc310beae810e2d076415940b1df28654528bf33cfe1092b4aa36.png",
+            "filters": ""
+          }
+        ],
+        "token": "转换的SVG图像/Combined Shape"
+      },
+      "paint_1:16957": {
+        "value": [
+          {
+            "url": "https://imagecdn.ymm56.com/design-dsl/path/f037a66a605c14250d2b9513f9f068a48e2cf886279a1f86127d25369289ee65.png",
+            "filters": ""
+          }
+        ],
+        "token": "转换的SVG图像/Combined Shape"
+      },
+      "paint_1:88455": {
+        "value": [
+          {
+            "url": "https://imagecdn.ymm56.com/design-dsl/path/41fffb64baf45657a033f550cba0558b03e27a557aac2fa09f85e057a9f8467e.png",
+            "filters": ""
+          }
+        ],
+        "token": "转换的SVG图像/Fill 43"
+      },
+      "paint_1:76323": {
+        "value": [
+          {
+            "url": "https://imagecdn.ymm56.com/design-dsl/path/458f8e2e386071bede02250a2a594695b72d99f8e7a4473c8c993d3ee49d334a.png",
+            "filters": ""
+          }
+        ],
+        "token": "转换的SVG图像/形状结合"
+      },
+      "paint_1:39316": {
+        "value": [
+          {
+            "url": "https://imagecdn.ymm56.com/design-dsl/path/458f8e2e386071bede02250a2a594695b72d99f8e7a4473c8c993d3ee49d334a.png",
+            "filters": ""
+          }
+        ],
+        "token": "转换的SVG图像/形状结合"
+      },
+      "paint_1:08565": {
+        "value": [
+          {
+            "url": "https://imagecdn.ymm56.com/design-dsl/path/458f8e2e386071bede02250a2a594695b72d99f8e7a4473c8c993d3ee49d334a.png",
+            "filters": ""
+          }
+        ],
+        "token": "转换的SVG图像/形状结合"
+      },
+      "paint_1:36664": {
+        "value": [
+          {
+            "url": "https://imagecdn.ymm56.com/design-dsl/path/458f8e2e386071bede02250a2a594695b72d99f8e7a4473c8c993d3ee49d334a.png",
+            "filters": ""
+          }
+        ],
+        "token": "转换的SVG图像/形状结合"
+      }
+    },
+    "nodes": [
+      {
+        "type": "FRAME",
+        "id": "1309:9769",
+        "name": "我的运力池",
+        "layoutStyle": {
+          "width": 720,
+          "height": 1560,
+          "relativeX": 0,
+          "relativeY": 0
+        },
+        "fill": "paint_1:0131",
+        "children": [
+          {
+            "type": "INSTANCE",
+            "id": "1309:00332",
+            "layoutStyle": {
+              "width": 720,
+              "height": 144,
+              "relativeX": 0,
+              "relativeY": 0
+            },
+            "componentInfo": {
+              "properties": {
+                "颜色": "深色",
+                "类型": "iOS"
+              }
+            },
+            "children": [
+              {
+                "type": "INSTANCE",
+                "id": "1309:00332/1:0068",
+                "layoutStyle": {
+                  "width": 720,
+                  "height": 48,
+                  "relativeX": 0,
+                  "relativeY": 0
+                },
+                "flexShrink": 1,
+                "componentInfo": {
+                  "properties": {
+                    "切换颜色": "是",
+                    "切换尺寸": "否"
+                  }
+                },
+                "children": [
+                  {
+                    "type": "FRAME",
+                    "id": "1309:00332/1:0068/1:0068/1:886",
+                    "name": "容器 2",
+                    "layoutStyle": {
+                      "width": 696,
+                      "height": 28,
+                      "relativeX": 12,
+                      "relativeY": 10
+                    },
+                    "flexGrow": 1,
+                    "children": [
+                      {
+                        "type": "GROUP",
+                        "id": "1309:00332/1:0068/1:0068/1:901",
+                        "name": "YMM",
+                        "layoutStyle": {
+                          "width": 97.88,
+                          "height": 17.14,
+                          "relativeX": 36,
+                          "relativeY": 5.43
+                        },
+                        "children": [
+                          {
+                            "type": "LAYER",
+                            "id": "1309:00332/1:0068/1:0068/1:906",
+                            "name": "Combined Shape",
+                            "layoutStyle": {
+                              "width": 32,
+                              "height": 8,
+                              "relativeX": 65.88,
+                              "relativeY": 4.14
+                            },
+                            "fill": "paint_1:71425"
+                          },
+                          {
+                            "type": "GROUP",
+                            "id": "1309:00332/1:0068/1:0068/1:902",
+                            "name": "Carrier",
+                            "layoutStyle": {
+                              "width": 58.13,
+                              "height": 17.14,
+                              "relativeX": 0,
+                              "relativeY": 0
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:903",
+                                "name": "路径",
+                                "layoutStyle": {
+                                  "width": 16.34,
+                                  "height": 17.14,
+                                  "relativeX": 0,
+                                  "relativeY": 0
+                                },
+                                "path": []
+                              },
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:905",
+                                "name": "路径",
+                                "layoutStyle": {
+                                  "width": 18.31,
+                                  "height": 17.14,
+                                  "relativeX": 18.14,
+                                  "relativeY": 0
+                                },
+                                "path": []
+                              },
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:904",
+                                "name": "路径",
+                                "layoutStyle": {
+                                  "width": 18.31,
+                                  "height": 17.14,
+                                  "relativeX": 39.82,
+                                  "relativeY": 0
+                                },
+                                "path": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "GROUP",
+                        "id": "1309:00332/1:0068/1:0068/1:910",
+                        "name": "时间",
+                        "layoutStyle": {
+                          "width": 100.7,
+                          "height": 17.81,
+                          "relativeX": 298,
+                          "relativeY": 5
+                        },
+                        "children": [
+                          {
+                            "type": "GROUP",
+                            "id": "1309:00332/1:0068/1:0068/1:916",
+                            "name": "12:00",
+                            "layoutStyle": {
+                              "width": 57.74,
+                              "height": 17.81,
+                              "relativeX": 42.96,
+                              "relativeY": 0
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:917",
+                                "name": "路径",
+                                "layoutStyle": {
+                                  "width": 6.72,
+                                  "height": 17.14,
+                                  "relativeX": 0,
+                                  "relativeY": 0.34
+                                },
+                                "path": []
+                              },
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:918",
+                                "name": "路径",
+                                "layoutStyle": {
+                                  "width": 11.95,
+                                  "height": 17.47,
+                                  "relativeX": 10.1,
+                                  "relativeY": 0
+                                },
+                                "path": []
+                              },
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:922",
+                                "name": "形状",
+                                "layoutStyle": {
+                                  "width": 3.77,
+                                  "height": 12.55,
+                                  "relativeX": 24.7,
+                                  "relativeY": 4.97
+                                },
+                                "path": []
+                              },
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:919",
+                                "name": "形状",
+                                "layoutStyle": {
+                                  "width": 12.53,
+                                  "height": 17.81,
+                                  "relativeX": 30.82,
+                                  "relativeY": 0
+                                },
+                                "path": []
+                              },
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:925",
+                                "name": "形状",
+                                "layoutStyle": {
+                                  "width": 12.53,
+                                  "height": 17.81,
+                                  "relativeX": 45.22,
+                                  "relativeY": 0
+                                },
+                                "path": []
+                              }
+                            ]
+                          },
+                          {
+                            "type": "GROUP",
+                            "id": "1309:00332/1:0068/1:0068/1:911",
+                            "name": "Carrier",
+                            "layoutStyle": {
+                              "width": 36.29,
+                              "height": 17.14,
+                              "relativeX": 0,
+                              "relativeY": 0.34
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:913",
+                                "name": "形状",
+                                "layoutStyle": {
+                                  "width": 16.3,
+                                  "height": 17.14,
+                                  "relativeX": 0,
+                                  "relativeY": 0
+                                },
+                                "path": []
+                              },
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:912",
+                                "name": "路径",
+                                "layoutStyle": {
+                                  "width": 18.31,
+                                  "height": 17.14,
+                                  "relativeX": 17.98,
+                                  "relativeY": 0
+                                },
+                                "path": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "GROUP",
+                        "id": "1309:00332/1:0068/1:0068/1:887",
+                        "name": "状态",
+                        "layoutStyle": {
+                          "width": 112,
+                          "height": 27,
+                          "relativeX": 556,
+                          "relativeY": 0.5
+                        },
+                        "children": [
+                          {
+                            "type": "GROUP",
+                            "id": "1309:00332/1:0068/1:0068/1:893",
+                            "name": "Battery",
+                            "layoutStyle": {
+                              "width": 17,
+                              "height": 27,
+                              "relativeX": 95,
+                              "relativeY": 0
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:894",
+                                "name": "Rectangle 2",
+                                "layoutStyle": {
+                                  "width": 17,
+                                  "height": 27,
+                                  "relativeX": 0,
+                                  "relativeY": 0
+                                },
+                                "opacity": 0.1,
+                                "path": []
+                              },
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:897",
+                                "name": "Rectangle 7",
+                                "layoutStyle": {
+                                  "width": 17,
+                                  "height": 13,
+                                  "relativeX": 0,
+                                  "relativeY": 14
+                                },
+                                "path": []
+                              }
+                            ]
+                          },
+                          {
+                            "type": "GROUP",
+                            "id": "1309:00332/1:0068/1:0068/1:898",
+                            "name": "Signal ",
+                            "layoutStyle": {
+                              "width": 24,
+                              "height": 24,
+                              "relativeX": 46,
+                              "relativeY": 1
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:899",
+                                "name": "Rectangle 8",
+                                "layoutStyle": {
+                                  "width": 24,
+                                  "height": 24,
+                                  "relativeX": 0,
+                                  "relativeY": 0
+                                },
+                                "opacity": 0.1,
+                                "path": []
+                              },
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:900",
+                                "name": "Rectangle 9",
+                                "layoutStyle": {
+                                  "width": 12,
+                                  "height": 12,
+                                  "relativeX": 0,
+                                  "relativeY": 12
+                                },
+                                "path": []
+                              }
+                            ]
+                          },
+                          {
+                            "type": "GROUP",
+                            "id": "1309:00332/1:0068/1:0068/1:888",
+                            "name": "wifi",
+                            "layoutStyle": {
+                              "width": 28,
+                              "height": 23.89,
+                              "relativeX": 0,
+                              "relativeY": 1.11
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:892",
+                                "name": "Triangle 1",
+                                "layoutStyle": {
+                                  "width": 28,
+                                  "height": 23.89,
+                                  "relativeX": 0,
+                                  "relativeY": 23.89
+                                },
+                                "opacity": 0.1,
+                                "path": []
+                              },
+                              {
+                                "type": "PATH",
+                                "id": "1309:00332/1:0068/1:0068/1:889",
+                                "name": "Triangle 2",
+                                "layoutStyle": {
+                                  "width": 20,
+                                  "height": 16.92,
+                                  "relativeX": 4,
+                                  "relativeY": 6.97
+                                },
+                                "path": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "componentId": "1:0068"
+              },
+              {
+                "type": "FRAME",
+                "id": "1309:00332/1:0069",
+                "name": "导航栏",
+                "layoutStyle": {
+                  "width": 720,
+                  "height": 96,
+                  "relativeX": 0,
+                  "relativeY": 48
+                },
+                "flexShrink": 1,
+                "children": [
+                  {
+                    "type": "TEXT",
+                    "id": "1309:00332/1:0071",
+                    "name": "标题",
+                    "layoutStyle": {
+                      "width": 180,
+                      "height": 50,
+                      "relativeX": 270,
+                      "relativeY": 23
+                    },
+                    "text": [
+                      {
+                        "text": "我的运力池",
+                        "font": "font_1:976"
+                      }
+                    ],
+                    "textColor": [
+                      {
+                        "start": 0,
+                        "end": 5,
+                        "color": "paint_1:890"
+                      }
+                    ],
+                    "textAlign": "center",
+                    "textMode": "single-line"
+                  },
+                  {
+                    "type": "GROUP",
+                    "id": "1309:00332/1:0075",
+                    "name": "➤胶囊",
+                    "layoutStyle": {
+                      "width": 174,
+                      "height": 64,
+                      "relativeX": 514,
+                      "relativeY": 16
+                    },
+                    "children": [
+                      {
+                        "type": "GROUP",
+                        "id": "1309:00332/1:0076",
+                        "name": "Wechatsystem default @3x Copy 9",
+                        "layoutStyle": {
+                          "width": 174,
+                          "height": 64,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "children": [
+                          {
+                            "type": "LAYER",
+                            "id": "1309:00332/1:0077",
+                            "name": "Rectangle 2",
+                            "layoutStyle": {
+                              "width": 174,
+                              "height": 64,
+                              "relativeX": 0,
+                              "relativeY": 0
+                            },
+                            "borderRadius": "32px",
+                            "fill": "paint_1:0078",
+                            "strokeColor": "paint_1:0080",
+                            "strokeType": "solid",
+                            "strokeAlign": "outside",
+                            "strokeWidth": "1px",
+                            "effect": "effect_1:995"
+                          },
+                          {
+                            "type": "LAYER",
+                            "id": "1309:00332/1:0082",
+                            "name": "Rectangle 3",
+                            "layoutStyle": {
+                              "width": 1,
+                              "height": 37,
+                              "relativeX": 87,
+                              "relativeY": 13
+                            },
+                            "fill": "paint_1:0080"
+                          },
+                          {
+                            "type": "GROUP",
+                            "id": "1309:00332/1:0083",
+                            "name": "Group 2",
+                            "layoutStyle": {
+                              "width": 34,
+                              "height": 34,
+                              "relativeX": 113.33,
+                              "relativeY": 14.67
+                            },
+                            "children": [
+                              {
+                                "type": "LAYER",
+                                "id": "1309:00332/1:0084",
+                                "name": "Combined Shape",
+                                "layoutStyle": {
+                                  "width": 34,
+                                  "height": 34,
+                                  "relativeX": 0,
+                                  "relativeY": 0
+                                },
+                                "fill": "paint_1:16957"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "LAYER",
+                            "id": "1309:00332/1:0089",
+                            "name": "Fill 43",
+                            "layoutStyle": {
+                              "width": 37,
+                              "height": 13,
+                              "relativeX": 27,
+                              "relativeY": 26
+                            },
+                            "fill": "paint_1:88455"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "componentId": "1:0067"
+          },
+          {
+            "type": "FRAME",
+            "id": "1309:9802",
+            "name": "容器 83",
+            "layoutStyle": {
+              "width": 720,
+              "height": 184,
+              "relativeX": 0,
+              "relativeY": 144
+            },
+            "children": [
+              {
+                "type": "INSTANCE",
+                "id": "1309:00390",
+                "layoutStyle": {
+                  "width": 720,
+                  "height": 104,
+                  "relativeX": 0,
+                  "relativeY": 0
+                },
+                "children": [
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:00390/1:0324",
+                    "name": "搜索框",
+                    "layoutStyle": {
+                      "width": 672,
+                      "height": 72,
+                      "relativeX": 24,
+                      "relativeY": 16
+                    },
+                    "flexGrow": 1,
+                    "componentInfo": {
+                      "properties": {
+                        "状态": "默认"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "INSTANCE",
+                        "id": "1309:00390/1:0324/1:0287",
+                        "layoutStyle": {
+                          "width": 36,
+                          "height": 36,
+                          "relativeX": 24,
+                          "relativeY": 18
+                        },
+                        "children": [
+                          {
+                            "type": "PATH",
+                            "id": "1309:00390/1:0324/1:0287/1:0274",
+                            "name": "形状结合",
+                            "layoutStyle": {
+                              "width": 32.17,
+                              "height": 31.6,
+                              "relativeX": 1.92,
+                              "relativeY": 2.2
+                            },
+                            "path": []
+                          }
+                        ],
+                        "componentId": "1:0324/1:0287"
+                      },
+                      {
+                        "type": "TEXT",
+                        "id": "1309:00390/1:0324/1:0280",
+                        "name": "搜索关键词",
+                        "layoutStyle": {
+                          "width": 576,
+                          "height": 40,
+                          "relativeX": 72,
+                          "relativeY": 16
+                        },
+                        "flexGrow": 1,
+                        "text": [
+                          {
+                            "text": "请输入司机姓名/车牌号",
+                            "font": "font_1:0284"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 11,
+                            "color": "paint_1:0285"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "ellipsis"
+                      }
+                    ],
+                    "componentId": "1:0324"
+                  }
+                ],
+                "componentId": "1:0317"
+              },
+              {
+                "type": "INSTANCE",
+                "id": "1309:24421",
+                "layoutStyle": {
+                  "width": 720,
+                  "height": 80,
+                  "relativeX": 0,
+                  "relativeY": 104
+                },
+                "componentInfo": {
+                  "componentSetDescription": "Dropdown 下拉菜单",
+                  "componentSetDocumentLink": ["https://fta.amh-group.com/xrun#/components/form/dropdown"],
+                  "properties": {
+                    "数量": "3"
+                  }
+                },
+                "children": [
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:24421/1309:10284",
+                    "name": "元件/选项 1",
+                    "layoutStyle": {
+                      "width": 240,
+                      "height": 80,
+                      "relativeX": 0,
+                      "relativeY": 0
+                    },
+                    "flexGrow": 1,
+                    "componentInfo": {
+                      "properties": {
+                        "选中": "否"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "TEXT",
+                        "id": "1309:24421/1309:10284/1309:10257",
+                        "name": "选项",
+                        "layoutStyle": {
+                          "width": 112,
+                          "height": 40,
+                          "relativeX": 48,
+                          "relativeY": 20
+                        },
+                        "text": [
+                          {
+                            "text": "智能排序",
+                            "font": "font_1:0284"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 4,
+                            "color": "paint_1:0470"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "single-line"
+                      },
+                      {
+                        "type": "INSTANCE",
+                        "id": "1309:24421/1309:10284/1309:10256",
+                        "layoutStyle": {
+                          "width": 24,
+                          "height": 24,
+                          "relativeX": 168,
+                          "relativeY": 28
+                        },
+                        "children": [
+                          {
+                            "type": "PATH",
+                            "id": "1309:24421/1309:10284/1309:10256/1309:10256/1309:10252",
+                            "name": "形状结合",
+                            "layoutStyle": {
+                              "width": 10.5,
+                              "height": 19.5,
+                              "relativeX": 2.25,
+                              "relativeY": 17.25,
+                              "rotate": -90
+                            },
+                            "path": []
+                          }
+                        ],
+                        "componentId": "1309:10256"
+                      }
+                    ],
+                    "componentId": "1309:10255"
+                  },
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:24421/1309:10289",
+                    "name": "元件/选项 2",
+                    "layoutStyle": {
+                      "width": 240,
+                      "height": 80,
+                      "relativeX": 240,
+                      "relativeY": 0
+                    },
+                    "flexGrow": 1,
+                    "componentInfo": {
+                      "properties": {
+                        "选中": "否"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "TEXT",
+                        "id": "1309:24421/1309:10289/1309:10289/1309:10257",
+                        "name": "选项",
+                        "layoutStyle": {
+                          "width": 84,
+                          "height": 40,
+                          "relativeX": 62,
+                          "relativeY": 20
+                        },
+                        "text": [
+                          {
+                            "text": "选项二",
+                            "font": "font_1:0284"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 3,
+                            "color": "paint_1:0470"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "single-line"
+                      },
+                      {
+                        "type": "INSTANCE",
+                        "id": "1309:24421/1309:10289/1309:10289/1309:10256",
+                        "layoutStyle": {
+                          "width": 24,
+                          "height": 24,
+                          "relativeX": 154,
+                          "relativeY": 28
+                        },
+                        "children": [
+                          {
+                            "type": "PATH",
+                            "id": "1309:24421/1309:10289/1309:10289/1309:10256/1309:10289/1309:10256/1309:10256/1309:10252",
+                            "name": "形状结合",
+                            "layoutStyle": {
+                              "width": 10.5,
+                              "height": 19.5,
+                              "relativeX": 2.25,
+                              "relativeY": 17.25,
+                              "rotate": -90
+                            },
+                            "path": []
+                          }
+                        ],
+                        "componentId": "1309:10256"
+                      }
+                    ],
+                    "componentId": "1309:10289"
+                  },
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:24421/1309:10279",
+                    "name": "元件/选项 3",
+                    "layoutStyle": {
+                      "width": 240,
+                      "height": 80,
+                      "relativeX": 480,
+                      "relativeY": 0
+                    },
+                    "flexGrow": 1,
+                    "componentInfo": {
+                      "properties": {
+                        "选中": "否"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "TEXT",
+                        "id": "1309:24421/1309:10279/1309:10279/1309:10257",
+                        "name": "选项",
+                        "layoutStyle": {
+                          "width": 84,
+                          "height": 40,
+                          "relativeX": 62,
+                          "relativeY": 20
+                        },
+                        "text": [
+                          {
+                            "text": "选项三",
+                            "font": "font_1:0284"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 3,
+                            "color": "paint_1:0470"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "single-line"
+                      },
+                      {
+                        "type": "INSTANCE",
+                        "id": "1309:24421/1309:10279/1309:10279/1309:10256",
+                        "layoutStyle": {
+                          "width": 24,
+                          "height": 24,
+                          "relativeX": 154,
+                          "relativeY": 28
+                        },
+                        "children": [
+                          {
+                            "type": "PATH",
+                            "id": "1309:24421/1309:10279/1309:10279/1309:10256/1309:10279/1309:10256/1309:10256/1309:10252",
+                            "name": "形状结合",
+                            "layoutStyle": {
+                              "width": 10.5,
+                              "height": 19.5,
+                              "relativeX": 2.25,
+                              "relativeY": 17.25,
+                              "rotate": -90
+                            },
+                            "path": []
+                          }
+                        ],
+                        "componentId": "1309:10256"
+                      }
+                    ],
+                    "componentId": "1309:10279"
+                  }
+                ],
+                "componentId": "1309:10278"
+              }
+            ],
+            "flexContainerInfo": {
+              "flexDirection": "column",
+              "mainSizing": "auto",
+              "crossSizing": "auto"
+            }
+          },
+          {
+            "type": "FRAME",
+            "id": "1309:9831",
+            "name": "容器 71",
+            "layoutStyle": {
+              "width": 672,
+              "height": 328,
+              "relativeX": 24,
+              "relativeY": 352
+            },
+            "fill": "paint_1:890",
+            "children": [
+              {
+                "type": "FRAME",
+                "id": "1309:9853",
+                "name": "1.卡片-呼叫卡片",
+                "layoutStyle": {
+                  "width": 624,
+                  "height": 80,
+                  "relativeX": 24,
+                  "relativeY": 24
+                },
+                "flexShrink": 1,
+                "children": [
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:00050",
+                    "layoutStyle": {
+                      "width": 80,
+                      "height": 80,
+                      "relativeX": 0,
+                      "relativeY": 0
+                    },
+                    "componentInfo": {
+                      "properties": {
+                        "尺寸": "80*80px",
+                        "切换圆形": "否",
+                        "切换默认": "否"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "LAYER",
+                        "id": "1309:00050/1:5909",
+                        "name": "矩形 24",
+                        "layoutStyle": {
+                          "width": 80,
+                          "height": 80,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "borderRadius": "12px",
+                        "fill": "paint_1:01446"
+                      }
+                    ],
+                    "componentId": "1:5906"
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9855",
+                    "name": "容器 2",
+                    "layoutStyle": {
+                      "width": 464,
+                      "height": 80,
+                      "relativeX": 96,
+                      "relativeY": 0
+                    },
+                    "flexGrow": 1,
+                    "flexShrink": 1,
+                    "children": [
+                      {
+                        "type": "TEXT",
+                        "id": "1309:9857",
+                        "name": "姓名",
+                        "layoutStyle": {
+                          "width": 464,
+                          "height": 44,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "flexGrow": 1,
+                        "flexShrink": 1,
+                        "text": [
+                          {
+                            "text": "夏师傅 | 苏A6***G | 9.6米/平板",
+                            "font": "font_1:0284"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 23,
+                            "color": "paint_1:796"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "fixed"
+                      },
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9856",
+                        "name": "容器 68",
+                        "layoutStyle": {
+                          "width": 440,
+                          "height": 28,
+                          "relativeX": 0,
+                          "relativeY": 52
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00312",
+                            "layoutStyle": {
+                              "width": 111,
+                              "height": 28,
+                              "relativeX": 0,
+                              "relativeY": 0
+                            },
+                            "fill": "paint_1:03565",
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "成功-绿色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:00312/1:6554",
+                                "name": "成功",
+                                "layoutStyle": {
+                                  "width": 99,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "通话次数 4",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 6,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6552"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:24601",
+                            "name": "1.通用/1.常规标签 4",
+                            "layoutStyle": {
+                              "width": 116,
+                              "height": 28,
+                              "relativeX": 119,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "提示-橙色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:24601/1:6323",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 104,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "好评率98%",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 6,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6319"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:24606",
+                            "name": "1.通用/1.常规标签 5",
+                            "layoutStyle": {
+                              "width": 115,
+                              "height": 28,
+                              "relativeX": 243,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "提示-橙色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:24606/1:6323",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 103,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "交易数 999",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 7,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6319"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00242",
+                            "name": "1.通用/1.常规标签 3",
+                            "layoutStyle": {
+                              "width": 74,
+                              "height": 28,
+                              "relativeX": 366,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "线性",
+                                "状态": "提示-橙色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:00242/1:6298",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 40,
+                                  "height": 28,
+                                  "relativeX": 28,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "标签",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 2,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6295"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "column",
+                      "mainSizing": "fixed",
+                      "crossSizing": "fixed",
+                      "gap": "8px"
+                    }
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9860",
+                    "name": "电话",
+                    "layoutStyle": {
+                      "width": 48,
+                      "height": 48,
+                      "relativeX": 576,
+                      "relativeY": 16
+                    },
+                    "interactive": [
+                      {
+                        "type": "navigation",
+                        "targetLayerId": "1309:9891"
+                      }
+                    ],
+                    "children": [
+                      {
+                        "type": "LAYER",
+                        "id": "1309:9862",
+                        "name": "形状结合",
+                        "layoutStyle": {
+                          "width": 48,
+                          "height": 48,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "fill": "paint_1:76323"
+                      }
+                    ]
+                  }
+                ],
+                "flexContainerInfo": {
+                  "flexDirection": "row",
+                  "alignItems": "center",
+                  "mainSizing": "fixed",
+                  "crossSizing": "auto",
+                  "gap": "16px"
+                },
+                "borderRadius": "16px"
+              },
+              {
+                "type": "FRAME",
+                "id": "1309:9833",
+                "name": "容器 70",
+                "layoutStyle": {
+                  "width": 624,
+                  "height": 184,
+                  "relativeX": 24,
+                  "relativeY": 120
+                },
+                "flexShrink": 1,
+                "fill": "paint_1:0414",
+                "children": [
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9845",
+                    "name": "元件/描述文本 2",
+                    "layoutStyle": {
+                      "width": 592,
+                      "height": 68,
+                      "relativeX": 16,
+                      "relativeY": 16
+                    },
+                    "flexShrink": 1,
+                    "children": [
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9849",
+                        "name": "容器 69",
+                        "layoutStyle": {
+                          "width": 128,
+                          "height": 34,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:24627",
+                            "layoutStyle": {
+                              "width": 24,
+                              "height": 24,
+                              "relativeX": 0,
+                              "relativeY": 5
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:24627/1309:11134",
+                                "name": "形状结合",
+                                "layoutStyle": {
+                                  "width": 20.5,
+                                  "height": 20,
+                                  "relativeX": 1.75,
+                                  "relativeY": 2
+                                },
+                                "path": []
+                              }
+                            ],
+                            "componentId": "1309:11133"
+                          },
+                          {
+                            "type": "TEXT",
+                            "id": "1309:9850",
+                            "name": "常跑城市",
+                            "layoutStyle": {
+                              "width": 96,
+                              "height": 34,
+                              "relativeX": 32,
+                              "relativeY": 0
+                            },
+                            "text": [
+                              {
+                                "text": "常跑线路",
+                                "font": "font_1:0821"
+                              }
+                            ],
+                            "textColor": [
+                              {
+                                "start": 0,
+                                "end": 4,
+                                "color": "paint_1:0470"
+                              }
+                            ],
+                            "textAlign": "left",
+                            "textMode": "single-line"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "alignItems": "center",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      },
+                      {
+                        "type": "TEXT",
+                        "id": "1309:9846",
+                        "name": "上海市，苏州市",
+                        "layoutStyle": {
+                          "width": 448,
+                          "height": 68,
+                          "relativeX": 144,
+                          "relativeY": 0
+                        },
+                        "flexGrow": 1,
+                        "text": [
+                          {
+                            "text": "上海-南京，苏州-上海，呼和浩特-南宁，鄂尔多斯-哈尔滨，张家界-石家庄",
+                            "font": "font_1:0821"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 36,
+                            "color": "paint_1:796"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "auto-height"
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "row",
+                      "mainSizing": "fixed",
+                      "crossSizing": "auto",
+                      "gap": "16px"
+                    }
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9835",
+                    "name": "元件/描述文本 1",
+                    "layoutStyle": {
+                      "width": 592,
+                      "height": 68,
+                      "relativeX": 16,
+                      "relativeY": 100
+                    },
+                    "flexShrink": 1,
+                    "children": [
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9840",
+                        "name": "容器 69",
+                        "layoutStyle": {
+                          "width": 128,
+                          "height": 34,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00036",
+                            "layoutStyle": {
+                              "width": 24,
+                              "height": 24,
+                              "relativeX": 0,
+                              "relativeY": 5
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:00036/1:6175",
+                                "name": "形状结合",
+                                "layoutStyle": {
+                                  "width": 18,
+                                  "height": 22.01,
+                                  "relativeX": 3,
+                                  "relativeY": 0.5
+                                },
+                                "path": []
+                              }
+                            ],
+                            "componentId": "1:6174"
+                          },
+                          {
+                            "type": "TEXT",
+                            "id": "1309:9841",
+                            "name": "最新定位",
+                            "layoutStyle": {
+                              "width": 96,
+                              "height": 34,
+                              "relativeX": 32,
+                              "relativeY": 0
+                            },
+                            "text": [
+                              {
+                                "text": "最新定位",
+                                "font": "font_1:0821"
+                              }
+                            ],
+                            "textColor": [
+                              {
+                                "start": 0,
+                                "end": 4,
+                                "color": "paint_1:0470"
+                              }
+                            ],
+                            "textAlign": "left",
+                            "textMode": "single-line"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "alignItems": "center",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      },
+                      {
+                        "type": "TEXT",
+                        "id": "1309:9836",
+                        "name": "苏州市 吴江区 2023-11-08 12:00:00 距我21km",
+                        "layoutStyle": {
+                          "width": 448,
+                          "height": 68,
+                          "relativeX": 144,
+                          "relativeY": 0
+                        },
+                        "flexGrow": 1,
+                        "text": [
+                          {
+                            "text": "苏州市 吴江区 2023-11-08 12:00:00\n距我21km",
+                            "font": "font_1:0821"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 34,
+                            "color": "paint_1:796"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "auto-height"
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "row",
+                      "mainSizing": "fixed",
+                      "crossSizing": "auto",
+                      "gap": "16px"
+                    }
+                  }
+                ],
+                "flexContainerInfo": {
+                  "flexDirection": "column",
+                  "mainSizing": "auto",
+                  "crossSizing": "fixed",
+                  "gap": "16px",
+                  "padding": "16px"
+                },
+                "overflow": "hidden",
+                "borderRadius": "16px"
+              }
+            ],
+            "flexContainerInfo": {
+              "flexDirection": "column",
+              "mainSizing": "auto",
+              "crossSizing": "fixed",
+              "gap": "16px",
+              "padding": "24px"
+            },
+            "overflow": "hidden",
+            "borderRadius": "16px"
+          },
+          {
+            "type": "FRAME",
+            "id": "1309:9803",
+            "name": "容器 73",
+            "layoutStyle": {
+              "width": 672,
+              "height": 294,
+              "relativeX": 24,
+              "relativeY": 1070
+            },
+            "fill": "paint_1:890",
+            "children": [
+              {
+                "type": "FRAME",
+                "id": "1309:9823",
+                "name": "1.卡片-呼叫卡片",
+                "layoutStyle": {
+                  "width": 624,
+                  "height": 80,
+                  "relativeX": 24,
+                  "relativeY": 24
+                },
+                "flexShrink": 1,
+                "children": [
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:00049",
+                    "layoutStyle": {
+                      "width": 80,
+                      "height": 80,
+                      "relativeX": 0,
+                      "relativeY": 0
+                    },
+                    "componentInfo": {
+                      "properties": {
+                        "尺寸": "80*80px",
+                        "切换圆形": "否",
+                        "切换默认": "否"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "LAYER",
+                        "id": "1309:00049/1:5909",
+                        "name": "矩形 24",
+                        "layoutStyle": {
+                          "width": 80,
+                          "height": 80,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "borderRadius": "12px",
+                        "fill": "paint_1:01454"
+                      }
+                    ],
+                    "componentId": "1:5906"
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9824",
+                    "name": "容器 2",
+                    "layoutStyle": {
+                      "width": 464,
+                      "height": 80,
+                      "relativeX": 96,
+                      "relativeY": 0
+                    },
+                    "flexGrow": 1,
+                    "flexShrink": 1,
+                    "children": [
+                      {
+                        "type": "TEXT",
+                        "id": "1309:9826",
+                        "name": "姓名",
+                        "layoutStyle": {
+                          "width": 464,
+                          "height": 44,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "flexGrow": 1,
+                        "flexShrink": 1,
+                        "text": [
+                          {
+                            "text": "夏师傅 | 苏A6***G | 9.6米/平板",
+                            "font": "font_1:0284"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 23,
+                            "color": "paint_1:796"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "fixed"
+                      },
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9825",
+                        "name": "容器 68",
+                        "layoutStyle": {
+                          "width": 464,
+                          "height": 28,
+                          "relativeX": 0,
+                          "relativeY": 52
+                        },
+                        "flexShrink": 1,
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00307",
+                            "layoutStyle": {
+                              "width": 111,
+                              "height": 28,
+                              "relativeX": 0,
+                              "relativeY": 0
+                            },
+                            "fill": "paint_1:03565",
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "成功-绿色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:00307/1:6554",
+                                "name": "成功",
+                                "layoutStyle": {
+                                  "width": 99,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "通话次数 4",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 6,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6552"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:26552",
+                            "name": "1.通用/1.常规标签 4",
+                            "layoutStyle": {
+                              "width": 116,
+                              "height": 28,
+                              "relativeX": 119,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "提示-橙色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:26552/1:6323",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 104,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "好评率98%",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 6,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6319"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:26557",
+                            "name": "1.通用/1.常规标签 5",
+                            "layoutStyle": {
+                              "width": 115,
+                              "height": 28,
+                              "relativeX": 243,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "提示-橙色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:26557/1:6323",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 103,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "交易数 999",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 7,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6319"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:26719",
+                            "name": "1.通用/1.常规标签 3",
+                            "layoutStyle": {
+                              "width": 74,
+                              "height": 28,
+                              "relativeX": 366,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "线性",
+                                "状态": "提示-橙色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:26719/1:6298",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 40,
+                                  "height": 28,
+                                  "relativeX": 28,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "标签",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 2,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6295"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "mainSizing": "fixed",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "column",
+                      "mainSizing": "fixed",
+                      "crossSizing": "fixed",
+                      "gap": "8px"
+                    }
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9829",
+                    "name": "电话",
+                    "layoutStyle": {
+                      "width": 48,
+                      "height": 48,
+                      "relativeX": 576,
+                      "relativeY": 16
+                    },
+                    "children": [
+                      {
+                        "type": "LAYER",
+                        "id": "1309:9830",
+                        "name": "形状结合",
+                        "layoutStyle": {
+                          "width": 48,
+                          "height": 48,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "fill": "paint_1:39316"
+                      }
+                    ]
+                  }
+                ],
+                "flexContainerInfo": {
+                  "flexDirection": "row",
+                  "alignItems": "center",
+                  "mainSizing": "fixed",
+                  "crossSizing": "auto",
+                  "gap": "16px"
+                }
+              },
+              {
+                "type": "FRAME",
+                "id": "1309:25780",
+                "name": "容器 70",
+                "layoutStyle": {
+                  "width": 624,
+                  "height": 150,
+                  "relativeX": 24,
+                  "relativeY": 120
+                },
+                "flexShrink": 1,
+                "fill": "paint_1:0414",
+                "children": [
+                  {
+                    "type": "FRAME",
+                    "id": "1309:25788",
+                    "name": "元件/描述文本 2",
+                    "layoutStyle": {
+                      "width": 592,
+                      "height": 68,
+                      "relativeX": 16,
+                      "relativeY": 16
+                    },
+                    "flexShrink": 1,
+                    "children": [
+                      {
+                        "type": "FRAME",
+                        "id": "1309:25793",
+                        "name": "容器 69",
+                        "layoutStyle": {
+                          "width": 128,
+                          "height": 34,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:25798",
+                            "layoutStyle": {
+                              "width": 24,
+                              "height": 24,
+                              "relativeX": 0,
+                              "relativeY": 5
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:25798/1309:11134",
+                                "name": "形状结合",
+                                "layoutStyle": {
+                                  "width": 20.5,
+                                  "height": 20,
+                                  "relativeX": 1.75,
+                                  "relativeY": 2
+                                },
+                                "path": []
+                              }
+                            ],
+                            "componentId": "1309:11133"
+                          },
+                          {
+                            "type": "TEXT",
+                            "id": "1309:25794",
+                            "name": "常跑线路",
+                            "layoutStyle": {
+                              "width": 96,
+                              "height": 34,
+                              "relativeX": 32,
+                              "relativeY": 0
+                            },
+                            "text": [
+                              {
+                                "text": "常跑线路",
+                                "font": "font_1:0821"
+                              }
+                            ],
+                            "textColor": [
+                              {
+                                "start": 0,
+                                "end": 4,
+                                "color": "paint_1:0470"
+                              }
+                            ],
+                            "textAlign": "left",
+                            "textMode": "single-line"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "alignItems": "center",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      },
+                      {
+                        "type": "TEXT",
+                        "id": "1309:25789",
+                        "name": "上海-南京，苏州-上海，呼和浩特-南宁，鄂尔多斯-哈尔滨，张家界-石家庄",
+                        "layoutStyle": {
+                          "width": 448,
+                          "height": 68,
+                          "relativeX": 144,
+                          "relativeY": 0
+                        },
+                        "flexGrow": 1,
+                        "text": [
+                          {
+                            "text": "上海-南京，苏州-上海，呼和浩特-南宁，鄂尔多斯-哈尔滨，张家界-石家庄",
+                            "font": "font_1:0821"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 36,
+                            "color": "paint_1:796"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "auto-height"
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "row",
+                      "mainSizing": "fixed",
+                      "crossSizing": "auto",
+                      "gap": "16px"
+                    }
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:25782",
+                    "name": "元件/描述文本 1",
+                    "layoutStyle": {
+                      "width": 592,
+                      "height": 34,
+                      "relativeX": 16,
+                      "relativeY": 100
+                    },
+                    "flexShrink": 1,
+                    "children": [
+                      {
+                        "type": "FRAME",
+                        "id": "1309:25783",
+                        "name": "容器 69",
+                        "layoutStyle": {
+                          "width": 272,
+                          "height": 34,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:25799",
+                            "layoutStyle": {
+                              "width": 24,
+                              "height": 24,
+                              "relativeX": 0,
+                              "relativeY": 5
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:25799/1:6175",
+                                "name": "形状结合",
+                                "layoutStyle": {
+                                  "width": 18,
+                                  "height": 22.01,
+                                  "relativeX": 3,
+                                  "relativeY": 0.5
+                                },
+                                "path": []
+                              }
+                            ],
+                            "componentId": "1:6174"
+                          },
+                          {
+                            "type": "TEXT",
+                            "id": "1309:25784",
+                            "name": "正在努力获取定位中…",
+                            "layoutStyle": {
+                              "width": 240,
+                              "height": 34,
+                              "relativeX": 32,
+                              "relativeY": 0
+                            },
+                            "text": [
+                              {
+                                "text": "正在努力获取定位中…",
+                                "font": "font_1:0821"
+                              }
+                            ],
+                            "textColor": [
+                              {
+                                "start": 0,
+                                "end": 10,
+                                "color": "paint_1:0470"
+                              }
+                            ],
+                            "textAlign": "left",
+                            "textMode": "single-line"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "alignItems": "center",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "row",
+                      "mainSizing": "fixed",
+                      "crossSizing": "auto",
+                      "gap": "16px"
+                    }
+                  }
+                ],
+                "flexContainerInfo": {
+                  "flexDirection": "column",
+                  "mainSizing": "auto",
+                  "crossSizing": "fixed",
+                  "gap": "16px",
+                  "padding": "16px"
+                },
+                "overflow": "hidden",
+                "borderRadius": "16px"
+              }
+            ],
+            "flexContainerInfo": {
+              "flexDirection": "column",
+              "mainSizing": "auto",
+              "crossSizing": "fixed",
+              "gap": "16px",
+              "padding": "24px"
+            },
+            "overflow": "hidden",
+            "borderRadius": "16px"
+          },
+          {
+            "type": "FRAME",
+            "id": "1309:9863",
+            "name": "容器 84",
+            "layoutStyle": {
+              "width": 672,
+              "height": 294,
+              "relativeX": 24,
+              "relativeY": 1452
+            },
+            "fill": "paint_1:890",
+            "children": [
+              {
+                "type": "FRAME",
+                "id": "1309:9883",
+                "name": "1.卡片-呼叫卡片",
+                "layoutStyle": {
+                  "width": 624,
+                  "height": 80,
+                  "relativeX": 24,
+                  "relativeY": 24
+                },
+                "flexShrink": 1,
+                "children": [
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:00051",
+                    "layoutStyle": {
+                      "width": 80,
+                      "height": 80,
+                      "relativeX": 0,
+                      "relativeY": 0
+                    },
+                    "componentInfo": {
+                      "properties": {
+                        "尺寸": "80*80px",
+                        "切换圆形": "否",
+                        "切换默认": "否"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "LAYER",
+                        "id": "1309:00051/1:5909",
+                        "name": "矩形 24",
+                        "layoutStyle": {
+                          "width": 80,
+                          "height": 80,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "borderRadius": "12px",
+                        "fill": "paint_1:01450"
+                      }
+                    ],
+                    "componentId": "1:5906"
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9884",
+                    "name": "容器 2",
+                    "layoutStyle": {
+                      "width": 464,
+                      "height": 76,
+                      "relativeX": 96,
+                      "relativeY": 2
+                    },
+                    "flexGrow": 1,
+                    "children": [
+                      {
+                        "type": "TEXT",
+                        "id": "1309:9885",
+                        "name": "姓名",
+                        "layoutStyle": {
+                          "width": 464,
+                          "height": 40,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "flexShrink": 1,
+                        "text": [
+                          {
+                            "text": "夏师傅 | 苏A6***G | 9.6米/平板",
+                            "font": "font_1:0284"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 23,
+                            "color": "paint_1:796"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "auto-height"
+                      },
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9888",
+                        "name": "容器 68",
+                        "layoutStyle": {
+                          "width": 271,
+                          "height": 28,
+                          "relativeX": 0,
+                          "relativeY": 48
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00317",
+                            "layoutStyle": {
+                              "width": 111,
+                              "height": 28,
+                              "relativeX": 0,
+                              "relativeY": 0
+                            },
+                            "fill": "paint_1:03565",
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "成功-绿色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:00317/1:6554",
+                                "name": "成功",
+                                "layoutStyle": {
+                                  "width": 99,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "通话次数 4",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 6,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6552"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00277",
+                            "layoutStyle": {
+                              "width": 72,
+                              "height": 28,
+                              "relativeX": 119,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "其他-蓝色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:00277/1:6180",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 60,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "有诚信",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 3,
+                                    "color": "paint_1:6185"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6176"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00282",
+                            "name": "1.通用/1.常规标签 1",
+                            "layoutStyle": {
+                              "width": 72,
+                              "height": 28,
+                              "relativeX": 199,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "其他-蓝色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:00282/1:6180",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 60,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "带雨布",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 3,
+                                    "color": "paint_1:6185"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6176"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "column",
+                      "mainSizing": "auto",
+                      "crossSizing": "fixed",
+                      "gap": "8px"
+                    }
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9889",
+                    "name": "电话",
+                    "layoutStyle": {
+                      "width": 48,
+                      "height": 48,
+                      "relativeX": 576,
+                      "relativeY": 16
+                    },
+                    "children": [
+                      {
+                        "type": "LAYER",
+                        "id": "1309:9890",
+                        "name": "形状结合",
+                        "layoutStyle": {
+                          "width": 48,
+                          "height": 48,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "fill": "paint_1:08565"
+                      }
+                    ]
+                  }
+                ],
+                "flexContainerInfo": {
+                  "flexDirection": "row",
+                  "alignItems": "center",
+                  "mainSizing": "fixed",
+                  "crossSizing": "auto",
+                  "gap": "16px"
+                }
+              },
+              {
+                "type": "FRAME",
+                "id": "1309:9865",
+                "name": "容器 70",
+                "layoutStyle": {
+                  "width": 624,
+                  "height": 150,
+                  "relativeX": 24,
+                  "relativeY": 120
+                },
+                "flexShrink": 1,
+                "fill": "paint_1:0414",
+                "children": [
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9875",
+                    "name": "元件/描述文本 2",
+                    "layoutStyle": {
+                      "width": 592,
+                      "height": 34,
+                      "relativeX": 16,
+                      "relativeY": 16
+                    },
+                    "flexShrink": 1,
+                    "children": [
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9879",
+                        "name": "容器 69",
+                        "layoutStyle": {
+                          "width": 128,
+                          "height": 34,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00012",
+                            "layoutStyle": {
+                              "width": 24,
+                              "height": 24,
+                              "relativeX": 0,
+                              "relativeY": 5
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:00012/1:13622",
+                                "name": "形状结合",
+                                "layoutStyle": {
+                                  "width": 22,
+                                  "height": 19,
+                                  "relativeX": 1,
+                                  "relativeY": 2.5
+                                },
+                                "path": []
+                              }
+                            ],
+                            "componentId": "1:13621"
+                          },
+                          {
+                            "type": "TEXT",
+                            "id": "1309:9880",
+                            "name": "常跑城市",
+                            "layoutStyle": {
+                              "width": 96,
+                              "height": 34,
+                              "relativeX": 32,
+                              "relativeY": 0
+                            },
+                            "text": [
+                              {
+                                "text": "常跑城市",
+                                "font": "font_1:0821"
+                              }
+                            ],
+                            "textColor": [
+                              {
+                                "start": 0,
+                                "end": 4,
+                                "color": "paint_1:0470"
+                              }
+                            ],
+                            "textAlign": "left",
+                            "textMode": "single-line"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "alignItems": "center",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      },
+                      {
+                        "type": "TEXT",
+                        "id": "1309:9876",
+                        "name": "上海市，苏州市",
+                        "layoutStyle": {
+                          "width": 448,
+                          "height": 34,
+                          "relativeX": 144,
+                          "relativeY": 0
+                        },
+                        "flexGrow": 1,
+                        "text": [
+                          {
+                            "text": "上海市，苏州市",
+                            "font": "font_1:0821"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 7,
+                            "color": "paint_1:796"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "auto-height"
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "row",
+                      "mainSizing": "fixed",
+                      "crossSizing": "auto",
+                      "gap": "16px"
+                    }
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9867",
+                    "name": "元件/描述文本 1",
+                    "layoutStyle": {
+                      "width": 592,
+                      "height": 68,
+                      "relativeX": 16,
+                      "relativeY": 66
+                    },
+                    "flexShrink": 1,
+                    "children": [
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9868",
+                        "name": "容器 69",
+                        "layoutStyle": {
+                          "width": 128,
+                          "height": 34,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00038",
+                            "layoutStyle": {
+                              "width": 24,
+                              "height": 24,
+                              "relativeX": 0,
+                              "relativeY": 5
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:00038/1:6175",
+                                "name": "形状结合",
+                                "layoutStyle": {
+                                  "width": 18,
+                                  "height": 22.01,
+                                  "relativeX": 3,
+                                  "relativeY": 0.5
+                                },
+                                "path": []
+                              }
+                            ],
+                            "componentId": "1:6174"
+                          },
+                          {
+                            "type": "TEXT",
+                            "id": "1309:9869",
+                            "name": "最新定位",
+                            "layoutStyle": {
+                              "width": 96,
+                              "height": 34,
+                              "relativeX": 32,
+                              "relativeY": 0
+                            },
+                            "text": [
+                              {
+                                "text": "最新定位",
+                                "font": "font_1:0821"
+                              }
+                            ],
+                            "textColor": [
+                              {
+                                "start": 0,
+                                "end": 4,
+                                "color": "paint_1:0470"
+                              }
+                            ],
+                            "textAlign": "left",
+                            "textMode": "single-line"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "alignItems": "center",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      },
+                      {
+                        "type": "TEXT",
+                        "id": "1309:9872",
+                        "name": "苏州市 吴江区 2023-11-08 12:00 距我21km",
+                        "layoutStyle": {
+                          "width": 448,
+                          "height": 68,
+                          "relativeX": 144,
+                          "relativeY": 0
+                        },
+                        "flexGrow": 1,
+                        "text": [
+                          {
+                            "text": "苏州市 吴江区 2023-11-08 12:00\n距我21km",
+                            "font": "font_1:0821"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 31,
+                            "color": "paint_1:796"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "auto-height"
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "row",
+                      "mainSizing": "fixed",
+                      "crossSizing": "auto",
+                      "gap": "16px"
+                    }
+                  }
+                ],
+                "flexContainerInfo": {
+                  "flexDirection": "column",
+                  "mainSizing": "auto",
+                  "crossSizing": "fixed",
+                  "gap": "16px",
+                  "padding": "16px"
+                },
+                "overflow": "hidden",
+                "borderRadius": "16px"
+              }
+            ],
+            "flexContainerInfo": {
+              "flexDirection": "column",
+              "mainSizing": "auto",
+              "crossSizing": "fixed",
+              "gap": "16px",
+              "padding": "24px"
+            },
+            "overflow": "hidden",
+            "borderRadius": "16px"
+          },
+          {
+            "type": "FRAME",
+            "id": "1309:9771",
+            "name": "容器 72",
+            "layoutStyle": {
+              "width": 672,
+              "height": 390,
+              "relativeX": 24,
+              "relativeY": 696
+            },
+            "fill": "paint_1:890",
+            "children": [
+              {
+                "type": "FRAME",
+                "id": "1309:9788",
+                "name": "1.卡片-呼叫卡片",
+                "layoutStyle": {
+                  "width": 624,
+                  "height": 176,
+                  "relativeX": 24,
+                  "relativeY": 24
+                },
+                "flexShrink": 1,
+                "children": [
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:00048",
+                    "layoutStyle": {
+                      "width": 80,
+                      "height": 80,
+                      "relativeX": 0,
+                      "relativeY": 0
+                    },
+                    "componentInfo": {
+                      "properties": {
+                        "尺寸": "80*80px",
+                        "切换圆形": "否",
+                        "切换默认": "否"
+                      }
+                    },
+                    "children": [
+                      {
+                        "type": "LAYER",
+                        "id": "1309:00048/1:5909",
+                        "name": "矩形 24",
+                        "layoutStyle": {
+                          "width": 80,
+                          "height": 80,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "borderRadius": "12px",
+                        "fill": "paint_1:00458"
+                      }
+                    ],
+                    "componentId": "1:5906"
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9789",
+                    "name": "容器 2",
+                    "layoutStyle": {
+                      "width": 464,
+                      "height": 176,
+                      "relativeX": 96,
+                      "relativeY": 0
+                    },
+                    "flexGrow": 1,
+                    "children": [
+                      {
+                        "type": "TEXT",
+                        "id": "1309:9792",
+                        "name": "姓名",
+                        "layoutStyle": {
+                          "width": 464,
+                          "height": 80,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "flexShrink": 1,
+                        "text": [
+                          {
+                            "text": "刘师傅 | 苏A6***V | 13米/平板 字段超出折行展示",
+                            "font": "font_1:0284"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 31,
+                            "color": "paint_1:796"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "auto-height"
+                      },
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9790",
+                        "name": "容器 68",
+                        "layoutStyle": {
+                          "width": 358,
+                          "height": 28,
+                          "relativeX": 0,
+                          "relativeY": 84
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00302",
+                            "layoutStyle": {
+                              "width": 111,
+                              "height": 28,
+                              "relativeX": 0,
+                              "relativeY": 0
+                            },
+                            "fill": "paint_1:03565",
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "成功-绿色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:00302/1:6554",
+                                "name": "成功",
+                                "layoutStyle": {
+                                  "width": 99,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "通话次数 4",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 6,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6552"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:26159",
+                            "name": "1.通用/1.常规标签 4",
+                            "layoutStyle": {
+                              "width": 116,
+                              "height": 28,
+                              "relativeX": 119,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "提示-橙色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:26159/1:6323",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 104,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "好评率98%",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 6,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6319"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:26154",
+                            "name": "1.通用/1.常规标签 5",
+                            "layoutStyle": {
+                              "width": 115,
+                              "height": 28,
+                              "relativeX": 243,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "提示-橙色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:26154/1:6323",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 103,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "交易数 999",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 7,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6319"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      },
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9791",
+                        "name": "容器 69",
+                        "layoutStyle": {
+                          "width": 434,
+                          "height": 28,
+                          "relativeX": 0,
+                          "relativeY": 116
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00257",
+                            "layoutStyle": {
+                              "width": 213,
+                              "height": 28,
+                              "relativeX": 0,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "其他-蓝色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:00257/1:6180",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 201,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "标签最多展示14个字符",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 11,
+                                    "color": "paint_1:6185"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6176"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:25988",
+                            "layoutStyle": {
+                              "width": 213,
+                              "height": 28,
+                              "relativeX": 221,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "其他-蓝色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:25988/1:6180",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 201,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "标签最多展示14个字符",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 11,
+                                    "color": "paint_1:6185"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6176"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      },
+                      {
+                        "type": "FRAME",
+                        "id": "1309:26221",
+                        "name": "容器 70",
+                        "layoutStyle": {
+                          "width": 295,
+                          "height": 28,
+                          "relativeX": 0,
+                          "relativeY": 148
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:26222",
+                            "layoutStyle": {
+                              "width": 213,
+                              "height": 28,
+                              "relativeX": 0,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "面性-浅色",
+                                "状态": "其他-蓝色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:26222/1:6180",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 201,
+                                  "height": 28,
+                                  "relativeX": 6,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "标签最多展示14个字符",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 11,
+                                    "color": "paint_1:6185"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6176"
+                          },
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:26389",
+                            "name": "1.通用/1.常规标签 3",
+                            "layoutStyle": {
+                              "width": 74,
+                              "height": 28,
+                              "relativeX": 221,
+                              "relativeY": 0
+                            },
+                            "componentInfo": {
+                              "properties": {
+                                "类型": "线性",
+                                "状态": "提示-橙色",
+                                "尺寸": "小"
+                              }
+                            },
+                            "children": [
+                              {
+                                "type": "TEXT",
+                                "id": "1309:26389/1:6298",
+                                "name": "标签",
+                                "layoutStyle": {
+                                  "width": 40,
+                                  "height": 28,
+                                  "relativeX": 28,
+                                  "relativeY": 0
+                                },
+                                "text": [
+                                  {
+                                    "text": "标签",
+                                    "font": "font_1:6184"
+                                  }
+                                ],
+                                "textColor": [
+                                  {
+                                    "start": 0,
+                                    "end": 2,
+                                    "color": "paint_1:0020"
+                                  }
+                                ],
+                                "textAlign": "left",
+                                "textMode": "single-line"
+                              }
+                            ],
+                            "componentId": "1:6295"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "column",
+                      "mainSizing": "auto",
+                      "crossSizing": "fixed",
+                      "gap": "4px"
+                    }
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9795",
+                    "name": "电话",
+                    "layoutStyle": {
+                      "width": 48,
+                      "height": 48,
+                      "relativeX": 576,
+                      "relativeY": 0
+                    },
+                    "children": [
+                      {
+                        "type": "LAYER",
+                        "id": "1309:9797",
+                        "name": "形状结合",
+                        "layoutStyle": {
+                          "width": 48,
+                          "height": 48,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "fill": "paint_1:36664"
+                      }
+                    ]
+                  }
+                ],
+                "flexContainerInfo": {
+                  "flexDirection": "row",
+                  "mainSizing": "fixed",
+                  "crossSizing": "auto",
+                  "gap": "16px"
+                }
+              },
+              {
+                "type": "FRAME",
+                "id": "1309:9773",
+                "name": "容器 70",
+                "layoutStyle": {
+                  "width": 624,
+                  "height": 150,
+                  "relativeX": 24,
+                  "relativeY": 216
+                },
+                "flexShrink": 1,
+                "fill": "paint_1:0414",
+                "children": [
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9775",
+                    "name": "元件/描述文本 2",
+                    "layoutStyle": {
+                      "width": 592,
+                      "height": 68,
+                      "relativeX": 16,
+                      "relativeY": 16
+                    },
+                    "flexShrink": 1,
+                    "children": [
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9776",
+                        "name": "容器 69",
+                        "layoutStyle": {
+                          "width": 128,
+                          "height": 34,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:25750",
+                            "layoutStyle": {
+                              "width": 24,
+                              "height": 24,
+                              "relativeX": 0,
+                              "relativeY": 5
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:25750/1309:11134",
+                                "name": "形状结合",
+                                "layoutStyle": {
+                                  "width": 20.5,
+                                  "height": 20,
+                                  "relativeX": 1.75,
+                                  "relativeY": 2
+                                },
+                                "path": []
+                              }
+                            ],
+                            "componentId": "1309:11133"
+                          },
+                          {
+                            "type": "TEXT",
+                            "id": "1309:9777",
+                            "name": "常跑城市",
+                            "layoutStyle": {
+                              "width": 96,
+                              "height": 34,
+                              "relativeX": 32,
+                              "relativeY": 0
+                            },
+                            "text": [
+                              {
+                                "text": "常跑线路",
+                                "font": "font_1:0821"
+                              }
+                            ],
+                            "textColor": [
+                              {
+                                "start": 0,
+                                "end": 4,
+                                "color": "paint_1:0470"
+                              }
+                            ],
+                            "textAlign": "left",
+                            "textMode": "single-line"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "alignItems": "center",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      },
+                      {
+                        "type": "TEXT",
+                        "id": "1309:9780",
+                        "name": "上海市，苏州市",
+                        "layoutStyle": {
+                          "width": 448,
+                          "height": 68,
+                          "relativeX": 144,
+                          "relativeY": 0
+                        },
+                        "flexGrow": 1,
+                        "text": [
+                          {
+                            "text": "上海-南京，苏州-上海，呼和浩特-南宁，鄂尔多斯-哈尔滨，张家界-石家庄",
+                            "font": "font_1:0821"
+                          }
+                        ],
+                        "textColor": [
+                          {
+                            "start": 0,
+                            "end": 36,
+                            "color": "paint_1:796"
+                          }
+                        ],
+                        "textAlign": "left",
+                        "textMode": "auto-height"
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "row",
+                      "mainSizing": "fixed",
+                      "crossSizing": "auto",
+                      "gap": "16px"
+                    }
+                  },
+                  {
+                    "type": "FRAME",
+                    "id": "1309:9783",
+                    "name": "元件/描述文本 1",
+                    "layoutStyle": {
+                      "width": 592,
+                      "height": 34,
+                      "relativeX": 16,
+                      "relativeY": 100
+                    },
+                    "flexShrink": 1,
+                    "children": [
+                      {
+                        "type": "FRAME",
+                        "id": "1309:9784",
+                        "name": "容器 69",
+                        "layoutStyle": {
+                          "width": 272,
+                          "height": 34,
+                          "relativeX": 0,
+                          "relativeY": 0
+                        },
+                        "children": [
+                          {
+                            "type": "INSTANCE",
+                            "id": "1309:00034",
+                            "layoutStyle": {
+                              "width": 24,
+                              "height": 24,
+                              "relativeX": 0,
+                              "relativeY": 5
+                            },
+                            "children": [
+                              {
+                                "type": "PATH",
+                                "id": "1309:00034/1:6175",
+                                "name": "形状结合",
+                                "layoutStyle": {
+                                  "width": 18,
+                                  "height": 22.01,
+                                  "relativeX": 3,
+                                  "relativeY": 0.5
+                                },
+                                "path": []
+                              }
+                            ],
+                            "componentId": "1:6174"
+                          },
+                          {
+                            "type": "TEXT",
+                            "id": "1309:9785",
+                            "name": "正在努力获取定位中…",
+                            "layoutStyle": {
+                              "width": 240,
+                              "height": 34,
+                              "relativeX": 32,
+                              "relativeY": 0
+                            },
+                            "text": [
+                              {
+                                "text": "正在努力获取定位中…",
+                                "font": "font_1:0821"
+                              }
+                            ],
+                            "textColor": [
+                              {
+                                "start": 0,
+                                "end": 10,
+                                "color": "paint_1:0470"
+                              }
+                            ],
+                            "textAlign": "left",
+                            "textMode": "single-line"
+                          }
+                        ],
+                        "flexContainerInfo": {
+                          "flexDirection": "row",
+                          "alignItems": "center",
+                          "mainSizing": "auto",
+                          "crossSizing": "auto",
+                          "gap": "8px"
+                        }
+                      }
+                    ],
+                    "flexContainerInfo": {
+                      "flexDirection": "row",
+                      "mainSizing": "fixed",
+                      "crossSizing": "auto",
+                      "gap": "16px"
+                    }
+                  }
+                ],
+                "flexContainerInfo": {
+                  "flexDirection": "column",
+                  "mainSizing": "auto",
+                  "crossSizing": "fixed",
+                  "gap": "16px",
+                  "padding": "16px"
+                },
+                "overflow": "hidden",
+                "borderRadius": "16px"
+              }
+            ],
+            "flexContainerInfo": {
+              "flexDirection": "column",
+              "mainSizing": "auto",
+              "crossSizing": "fixed",
+              "gap": "16px",
+              "padding": "24px"
+            },
+            "overflow": "hidden",
+            "borderRadius": "16px"
+          },
+          {
+            "type": "FRAME",
+            "id": "1309:53750",
+            "name": "常规",
+            "layoutStyle": {
+              "width": 720,
+              "height": 96,
+              "relativeX": 0,
+              "relativeY": 1464
+            },
+            "fill": "paint_1:890",
+            "children": [
+              {
+                "type": "INSTANCE",
+                "id": "1309:53751",
+                "name": "组件 2",
+                "layoutStyle": {
+                  "width": 180,
+                  "height": 96,
+                  "relativeX": 0,
+                  "relativeY": 0
+                },
+                "flexGrow": 1,
+                "componentInfo": {
+                  "properties": {
+                    "选中": "true"
+                  }
+                },
+                "children": [
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:53751/1:2203",
+                    "layoutStyle": {
+                      "width": 48,
+                      "height": 48,
+                      "relativeX": 66,
+                      "relativeY": 8
+                    },
+                    "children": [
+                      {
+                        "type": "PATH",
+                        "id": "1309:53751/1:2203/1:2482",
+                        "name": "形状结合",
+                        "layoutStyle": {
+                          "width": 42.13,
+                          "height": 40,
+                          "relativeX": 2.95,
+                          "relativeY": 4
+                        },
+                        "path": []
+                      }
+                    ],
+                    "componentId": "1:2481"
+                  },
+                  {
+                    "type": "TEXT",
+                    "id": "1309:53751/1:2198",
+                    "name": "标签名称",
+                    "layoutStyle": {
+                      "width": 110,
+                      "height": 30,
+                      "relativeX": 35,
+                      "relativeY": 58
+                    },
+                    "text": [
+                      {
+                        "text": "我的运力池",
+                        "font": "font_1:2202"
+                      }
+                    ],
+                    "textColor": [
+                      {
+                        "start": 0,
+                        "end": 5,
+                        "color": "paint_1:0020"
+                      }
+                    ],
+                    "textAlign": "center",
+                    "textMode": "single-line"
+                  }
+                ],
+                "componentId": "1:2197"
+              },
+              {
+                "type": "INSTANCE",
+                "id": "1309:53761",
+                "name": "组件 5",
+                "layoutStyle": {
+                  "width": 180,
+                  "height": 96,
+                  "relativeX": 180,
+                  "relativeY": 0
+                },
+                "flexGrow": 1,
+                "componentInfo": {
+                  "properties": {
+                    "选中": "false"
+                  }
+                },
+                "children": [
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:53761/1:2209",
+                    "layoutStyle": {
+                      "width": 48,
+                      "height": 48,
+                      "relativeX": 66,
+                      "relativeY": 8
+                    },
+                    "children": [
+                      {
+                        "type": "PATH",
+                        "id": "1309:53761/1:2209/1309:53729",
+                        "name": "形状结合",
+                        "layoutStyle": {
+                          "width": 40,
+                          "height": 39,
+                          "relativeX": 4,
+                          "relativeY": 4
+                        },
+                        "path": []
+                      }
+                    ],
+                    "componentId": "1309:53728"
+                  },
+                  {
+                    "type": "TEXT",
+                    "id": "1309:53761/1:2205",
+                    "name": "标签名称",
+                    "layoutStyle": {
+                      "width": 88,
+                      "height": 30,
+                      "relativeX": 46,
+                      "relativeY": 58
+                    },
+                    "text": [
+                      {
+                        "text": "熟车发货",
+                        "font": "font_1:2202"
+                      }
+                    ],
+                    "textColor": [
+                      {
+                        "start": 0,
+                        "end": 4,
+                        "color": "paint_1:0470"
+                      }
+                    ],
+                    "textAlign": "center",
+                    "textMode": "single-line"
+                  }
+                ],
+                "componentId": "1:2204"
+              },
+              {
+                "type": "INSTANCE",
+                "id": "1309:53756",
+                "name": "组件 3",
+                "layoutStyle": {
+                  "width": 180,
+                  "height": 96,
+                  "relativeX": 360,
+                  "relativeY": 0
+                },
+                "flexGrow": 1,
+                "componentInfo": {
+                  "properties": {
+                    "选中": "false"
+                  }
+                },
+                "children": [
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:53756/1:2209",
+                    "layoutStyle": {
+                      "width": 48,
+                      "height": 48,
+                      "relativeX": 66,
+                      "relativeY": 8
+                    },
+                    "children": [
+                      {
+                        "type": "PATH",
+                        "id": "1309:53756/1:2209/1:2475",
+                        "name": "形状结合",
+                        "layoutStyle": {
+                          "width": 40,
+                          "height": 39,
+                          "relativeX": 4,
+                          "relativeY": 4
+                        },
+                        "path": []
+                      }
+                    ],
+                    "componentId": "1:2474"
+                  },
+                  {
+                    "type": "TEXT",
+                    "id": "1309:53756/1:2205",
+                    "name": "标签名称",
+                    "layoutStyle": {
+                      "width": 88,
+                      "height": 30,
+                      "relativeX": 46,
+                      "relativeY": 58
+                    },
+                    "text": [
+                      {
+                        "text": "我的货源",
+                        "font": "font_1:2202"
+                      }
+                    ],
+                    "textColor": [
+                      {
+                        "start": 0,
+                        "end": 4,
+                        "color": "paint_1:0470"
+                      }
+                    ],
+                    "textAlign": "center",
+                    "textMode": "single-line"
+                  }
+                ],
+                "componentId": "1:2204"
+              },
+              {
+                "type": "INSTANCE",
+                "id": "1309:53766",
+                "name": "组件 4",
+                "layoutStyle": {
+                  "width": 180,
+                  "height": 96,
+                  "relativeX": 540,
+                  "relativeY": 0
+                },
+                "flexGrow": 1,
+                "componentInfo": {
+                  "properties": {
+                    "选中": "false"
+                  }
+                },
+                "children": [
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:53766/1:2209",
+                    "layoutStyle": {
+                      "width": 48,
+                      "height": 48,
+                      "relativeX": 66,
+                      "relativeY": 8
+                    },
+                    "children": [
+                      {
+                        "type": "PATH",
+                        "id": "1309:53766/1:2209/1:2468",
+                        "name": "形状结合",
+                        "layoutStyle": {
+                          "width": 37.87,
+                          "height": 40,
+                          "relativeX": 5.03,
+                          "relativeY": 4
+                        },
+                        "path": []
+                      }
+                    ],
+                    "componentId": "1:2467"
+                  },
+                  {
+                    "type": "TEXT",
+                    "id": "1309:53766/1:2205",
+                    "name": "标签名称",
+                    "layoutStyle": {
+                      "width": 88,
+                      "height": 30,
+                      "relativeX": 46,
+                      "relativeY": 58
+                    },
+                    "text": [
+                      {
+                        "text": "个人中心",
+                        "font": "font_1:2202"
+                      }
+                    ],
+                    "textColor": [
+                      {
+                        "start": 0,
+                        "end": 4,
+                        "color": "paint_1:0470"
+                      }
+                    ],
+                    "textAlign": "center",
+                    "textMode": "single-line"
+                  }
+                ],
+                "componentId": "1:2204"
+              }
+            ],
+            "flexContainerInfo": {
+              "flexDirection": "row",
+              "mainSizing": "fixed",
+              "crossSizing": "fixed"
+            }
+          },
+          {
+            "type": "FRAME",
+            "id": "1309:9798",
+            "name": "4.人工客服 1",
+            "layoutStyle": {
+              "width": 120,
+              "height": 120,
+              "relativeX": 588,
+              "relativeY": 1144
+            },
+            "children": [
+              {
+                "type": "FRAME",
+                "id": "1309:9799",
+                "name": "添加熟车",
+                "layoutStyle": {
+                  "width": 96,
+                  "height": 96,
+                  "relativeX": 12,
+                  "relativeY": 4
+                },
+                "children": [
+                  {
+                    "type": "LAYER",
+                    "id": "1309:9801",
+                    "name": "矩形 25",
+                    "layoutStyle": {
+                      "width": 96,
+                      "height": 96,
+                      "relativeX": 0,
+                      "relativeY": 0
+                    },
+                    "borderRadius": "100px",
+                    "fill": "paint_1:890",
+                    "strokeColor": "paint_26:6104",
+                    "strokeType": "solid",
+                    "strokeAlign": "outside",
+                    "strokeWidth": "2px"
+                  },
+                  {
+                    "type": "INSTANCE",
+                    "id": "1309:00072",
+                    "layoutStyle": {
+                      "width": 48,
+                      "height": 48,
+                      "relativeX": 24,
+                      "relativeY": 24
+                    },
+                    "children": [
+                      {
+                        "type": "PATH",
+                        "id": "1309:00072/20:4378",
+                        "name": "形状结合",
+                        "layoutStyle": {
+                          "width": 41.08,
+                          "height": 39.78,
+                          "relativeX": 3.46,
+                          "relativeY": 4.46
+                        },
+                        "path": []
+                      }
+                    ],
+                    "componentId": "20:4377"
+                  }
+                ],
+                "effect": "effect_31:8106"
+              },
+              {
+                "type": "INSTANCE",
+                "id": "1309:00054",
+                "layoutStyle": {
+                  "width": 108,
+                  "height": 32,
+                  "relativeX": 6,
+                  "relativeY": 88
+                },
+                "children": [
+                  {
+                    "type": "TEXT",
+                    "id": "1309:00054/20:4504",
+                    "name": "按钮",
+                    "layoutStyle": {
+                      "width": 108,
+                      "height": 28,
+                      "relativeX": 0,
+                      "relativeY": 2
+                    },
+                    "flexGrow": 1,
+                    "text": [
+                      {
+                        "text": "添加熟车",
+                        "font": "font_20:4508"
+                      }
+                    ],
+                    "textColor": [
+                      {
+                        "start": 0,
+                        "end": 4,
+                        "color": "paint_1:060"
+                      }
+                    ],
+                    "textAlign": "center",
+                    "textMode": "auto-height"
+                  }
+                ],
+                "componentId": "20:4502"
+              }
+            ]
+          }
+        ],
+        "overflow": "hidden"
+      }
+    ],
+    "components": []
+  },
+  "componentDocumentLinks": ["https://fta.amh-group.com/xrun#/components/form/dropdown"]
+}

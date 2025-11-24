@@ -1,24 +1,24 @@
-import { ApiProperty } from '@midwayjs/swagger'
+import { ApiProperty } from '@midwayjs/swagger';
 
 // Common Response Types
 export class BaseResponse<T = any> {
   @ApiProperty({ description: '是否成功' })
-  success: boolean
+  success: boolean;
 
   @ApiProperty({ description: '响应数据' })
-  data?: T
+  data?: T;
 
   @ApiProperty({ description: '响应消息' })
-  message?: string
+  message?: string;
 
   @ApiProperty({ description: '响应代码' })
-  code?: number
+  code?: number;
 
   constructor(data?: T, success: boolean = true, message?: string, code?: number) {
-    this.success = success
-    this.data = data
-    this.message = message
-    this.code = code
+    this.success = success;
+    this.data = data;
+    this.message = message;
+    this.code = code;
   }
 }
 
@@ -26,18 +26,22 @@ export class PaginatedResponse<T = any> extends BaseResponse {
   @ApiProperty({
     description: '分页数据',
     properties: {
-      list: { type: 'array', description: '数据列表', items: { type: 'object' } },
+      list: {
+        type: 'array',
+        description: '数据列表',
+        items: { type: 'object' },
+      },
       total: { type: 'number', description: '总数量' },
       page: { type: 'number', description: '当前页码' },
       size: { type: 'number', description: '每页数量' },
     },
   })
   data: {
-    list: T[]
-    total: number
-    page: number
-    size: number
-  }
+    list: T[];
+    total: number;
+    page: number;
+    size: number;
+  };
 
   constructor(list: T[], total: number, page: number, size: number) {
     super({
@@ -45,101 +49,158 @@ export class PaginatedResponse<T = any> extends BaseResponse {
       total,
       page,
       size,
-    })
+    });
     this.data = {
       list,
       total,
       page,
       size,
-    }
+    };
   }
 }
 
 // Simple project type for Swagger (avoiding entity references)
 interface SimpleProject {
-  id: string
-  name: string
-  description?: string
-  gitRepository?: string
-  manager: string
-  status: string
-  progress: number
-  members: number
-  tags: string[]
-  avatar: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  name: string;
+  description?: string;
+  gitRepository?: string;
+  manager: string;
+  status: string;
+  progress: number;
+  members: number;
+  tags: string[];
+  avatar: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  userId: string;
+  gitId: string;
+  workdirs: string[];
 }
 
 // Project Response Types
 export class ProjectListResponse extends PaginatedResponse<SimpleProject> {
   constructor(list: SimpleProject[] | any[], total: number, page: number, size: number) {
-    super(list as SimpleProject[], total, page, size)
+    super(list as SimpleProject[], total, page, size);
   }
 }
 
 export class ProjectDetailResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
-    super(project as SimpleProject, true, 'Project retrieved successfully')
+    super(project as SimpleProject, true, 'Project retrieved successfully');
   }
 }
 
 export class CreateProjectResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
-    super(project as SimpleProject, true, 'Project created successfully')
+    super(project as SimpleProject, true, 'Project created successfully');
   }
 }
 
 export class UpdateProjectResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
-    super(project as SimpleProject, true, 'Project updated successfully')
+    super(project as SimpleProject, true, 'Project updated successfully');
   }
 }
 
 export class DeleteProjectResponse extends BaseResponse<boolean> {
   constructor() {
-    super(true, true, 'Project deleted successfully')
+    super(true, true, 'Project deleted successfully');
   }
 }
 
 export class CreatePageResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
-    super(project as SimpleProject, true, 'Page created successfully')
+    super(project as SimpleProject, true, 'Page created successfully');
   }
 }
 
 export class UpdatePageResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
-    super(project as SimpleProject, true, 'Page updated successfully')
+    super(project as SimpleProject, true, 'Page updated successfully');
   }
 }
 
 export class DeletePageResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
-    super(project as SimpleProject, true, 'Page deleted successfully')
+    super(project as SimpleProject, true, 'Page deleted successfully');
+  }
+}
+
+// Simple page type for Swagger
+interface SimplePage {
+  id: string;
+  projectId?: string;
+  name: string;
+  routePath: string;
+  description?: string;
+  designUrls?: string[];
+  prdUrls?: string[];
+  openapiUrls?: string[];
+  documents?: any[];
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  gitId: string;
+}
+
+export class PageDetailResponse extends BaseResponse<SimplePage> {
+  constructor(page: SimplePage | any) {
+    super(page as SimplePage, true, 'Page retrieved successfully');
   }
 }
 
 export class UpdateDocumentStatusResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
-    super(project as SimpleProject, true, 'Document status updated successfully')
+    super(project as SimpleProject, true, 'Document status updated successfully');
   }
 }
 
 export class SyncDocumentResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
-    super(project as SimpleProject, true, 'Document synced successfully')
+    super(project as SimpleProject, true, 'Document synced successfully');
   }
 }
 
 export class GetDocumentContentResponse extends BaseResponse<any> {
   constructor(content: any) {
-    super(content, true, 'Document content retrieved successfully')
+    super(content, true, 'Document content retrieved successfully');
   }
 }
 
 export class UpdateDocumentResponse extends BaseResponse<SimpleProject> {
   constructor(project: SimpleProject | any) {
-    super(project as SimpleProject, true, 'Document updated successfully')
+    super(project as SimpleProject, true, 'Document updated successfully');
+  }
+}
+
+export class ResolveProjectContextResponse extends BaseResponse<{
+  matchedProject?: SimpleProject | null;
+  matchedBy?: 'gitId' | 'workdir' | null;
+  resolvedGitId?: string | null;
+  requestedWorkdir?: string | null;
+  projects: SimpleProject[];
+}> {
+  constructor(payload: {
+    matchedProject?: SimpleProject | null;
+    matchedBy?: 'gitId' | 'workdir' | null;
+    resolvedGitId?: string | null;
+    requestedWorkdir?: string | null;
+    projects: SimpleProject[];
+  }) {
+    super(payload, true, 'Project context resolved successfully');
+  }
+}
+
+export class BindProjectContextResponse extends BaseResponse<SimpleProject> {
+  constructor(project: SimpleProject | any) {
+    super(project as SimpleProject, true, 'Project binding updated successfully');
+  }
+}
+
+// GitLab Response Types
+export class GetGitlabProjectIdResponse extends BaseResponse<{ gitId: string }> {
+  constructor(gitId: string) {
+    super({ gitId }, true, 'GitLab project ID retrieved successfully');
   }
 }

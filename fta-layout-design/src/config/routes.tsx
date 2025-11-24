@@ -2,11 +2,13 @@ import type { RouteConfig } from '@/types/router';
 import { Navigate } from 'react-router-dom';
 
 import Layout from '@/components/Layout';
-import EditorPageComponentDetectV2 from '@/pages/EditorPage/EditorPageComponentDetectV2';
-import EditorPageLayout from '@/pages/EditorPage/EditorPageLayout';
+import { IndexHtmlRedirect } from '@/components/IndexHtmlRedirect';
+import EditorPageComponentDetect from '@/pages/EditorPage/EditorPageComponentDetect';
 import HomePage from '@/pages/HomePage';
 import RequirementPage from '@/pages/RequirementPage';
 import TechnicalPage from '@/pages/TechnicalPage';
+import { MarkdownPage } from '@/pages/MarkdownPage';
+import InternalProjectPage from '@/pages/InternalProjectPage';
 
 /**
  * 路由配置
@@ -14,8 +16,18 @@ import TechnicalPage from '@/pages/TechnicalPage';
  */
 export const routes: RouteConfig[] = [
   {
+    path: '/index.html',
+    element: <IndexHtmlRedirect />,
+    withLayout: true, // 重定向路由不需要 Layout
+  },
+  {
     path: '/',
-    element: <HomePage />,
+    element: <InternalProjectPage />,
+    withLayout: true,
+  },
+  {
+    path: '/markdown',
+    element: <MarkdownPage />,
     withLayout: true,
   },
   {
@@ -30,20 +42,20 @@ export const routes: RouteConfig[] = [
   },
   {
     path: '/editor',
-    element: <Navigate to="/editor/component-detect-v2" replace />,
+    element: <Navigate to='/editor/component-detect-v2' replace />,
     withLayout: false, // 重定向路由不需要 Layout
     children: [
       {
         path: 'component-detect-v2',
         withLayout: true,
-        element: <EditorPageComponentDetectV2 />,
-      },
-      {
-        path: 'layout',
-        withLayout: true,
-        element: <EditorPageLayout />,
+        element: <EditorPageComponentDetect />,
       },
     ],
+  },
+  {
+    path: '/internal/projects',
+    element: <InternalProjectPage />,
+    withLayout: true,
   },
 ];
 

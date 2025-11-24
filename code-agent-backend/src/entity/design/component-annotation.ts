@@ -1,8 +1,8 @@
-import { ApiProperty } from '@midwayjs/swagger'
-import { EntityModel } from '@midwayjs/typegoose'
-import { index, modelOptions, prop, Severity } from '@typegoose/typegoose'
+import { ApiProperty } from '@midwayjs/swagger';
+import { EntityModel } from '@midwayjs/typegoose';
+import { index, modelOptions, prop, Severity } from '@typegoose/typegoose';
 
-export type DesignAnnotationStatus = 'active' | 'archived'
+export type DesignAnnotationStatus = 'active' | 'archived';
 
 @modelOptions({
   schemaOptions: {
@@ -18,43 +18,55 @@ export type DesignAnnotationStatus = 'active' | 'archived'
 @EntityModel()
 export class DesignComponentAnnotationEntity {
   @ApiProperty({ type: 'string', description: '标注记录 ID' })
-  public _id?: string
+  public _id?: string;
 
   @ApiProperty({ type: 'string', description: '设计稿 ID' })
   @prop({ required: true })
-  public designId: string
+  public designId: string;
 
   @ApiProperty({ example: 1, description: '标注版本号，自增' })
   @prop({ required: true })
-  public version: number
+  public version: number;
 
   @ApiProperty({ description: '根节点标注树结构' })
   @prop({ type: () => Object, required: true })
-  public rootAnnotation: Record<string, unknown>
+  public rootAnnotation: Record<string, unknown>;
 
   @ApiProperty({ description: '展开节点 ID 列表', type: [String] })
   @prop({ type: () => [String], default: [] })
-  public expandedKeys: string[]
+  public expandedKeys: string[];
 
   @ApiProperty({ example: '1.0.0', description: '标注协议版本号' })
   @prop()
-  public schemaVersion?: string
+  public schemaVersion?: string;
 
-  @ApiProperty({ example: 'active', enum: ['active', 'archived'], description: '状态' })
+  @ApiProperty({
+    example: 'active',
+    enum: ['active', 'archived'],
+    description: '状态',
+  })
   @prop({ default: 'active' })
-  public status: DesignAnnotationStatus
+  public status: DesignAnnotationStatus;
 
   @ApiProperty({ example: 'Y0001234', description: '创建人' })
   @prop({ required: true })
-  public createdBy: string
+  public createdBy: string;
 
   @ApiProperty({ example: 'Y0001234', description: '最后修改人' })
   @prop()
-  public updatedBy?: string
+  public updatedBy?: string;
+
+  @ApiProperty({ example: 'user_123', description: '所属用户 ID' })
+  @prop({ required: true })
+  public userId: string;
+
+  @ApiProperty({ example: 'git_123', description: 'Git 仓库 ID', default: 'empty' })
+  @prop({ required: true, default: 'empty' })
+  public gitId: string;
 
   @ApiProperty({ type: 'string', description: '创建时间' })
-  public createdAt?: Date
+  public createdAt?: Date;
 
   @ApiProperty({ type: 'string', description: '更新时间' })
-  public updatedAt?: Date
+  public updatedAt?: Date;
 }

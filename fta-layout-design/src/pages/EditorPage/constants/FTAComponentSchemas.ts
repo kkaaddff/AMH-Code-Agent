@@ -77,8 +77,9 @@ function toComponentSchema(name: string, raw: RawComponentSchema): ComponentSche
 }
 
 // 将原始 JSON 映射为内部使用的 Schema 结构
-const mappedEntries = Object.entries(rawSchemas as Record<string, RawComponentSchema>)
-  .map(([key, value]) => [key, toComponentSchema(key, value)] as const);
+const mappedEntries = Object.entries(rawSchemas as Record<string, RawComponentSchema>).map(
+  ([key, value]) => [key, toComponentSchema(key, value)] as const
+);
 
 // 注入默认schema占位，便于兜底
 const defaultSchema: ComponentSchema = { component: '_default', properties: [] };

@@ -9,6 +9,7 @@ export { dslService } from './dslService';
 export { componentService } from './componentService';
 export { requirementService } from './requirementService';
 export { layoutService } from './layoutService';
+export { modelMetricsService } from './modelMetricsService';
 
 // 导出基础服务功能
 export { BaseAPIService, resolveRequest, shouldUseMock } from './baseService';
@@ -19,6 +20,7 @@ import { dslService } from './dslService';
 import { componentService } from './componentService';
 import { requirementService } from './requirementService';
 import { layoutService } from './layoutService';
+import { modelMetricsService } from './modelMetricsService';
 
 export const apiServices = {
   project: projectService,
@@ -26,4 +28,5 @@ export const apiServices = {
   component: componentService,
   requirement: requirementService,
   layout: layoutService,
+  modelMetrics: modelMetricsService,
 };

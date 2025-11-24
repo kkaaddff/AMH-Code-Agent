@@ -1,22 +1,24 @@
-import { ILifeCycle, IMidwayContainer } from '@midwayjs/core'
-import { App, Configuration } from '@midwayjs/decorator'
-import { Application } from '@midwayjs/web'
-import { join } from 'path'
-import * as dotenv from 'dotenv'
+import { ILifeCycle, IMidwayContainer } from '@midwayjs/core';
+import { App, Configuration } from '@midwayjs/decorator';
+import { Application } from '@midwayjs/web';
+import { join } from 'path';
+import * as dotenv from 'dotenv';
 
-import * as crossDomain from '@midwayjs/cross-domain'
+import * as crossDomain from '@midwayjs/cross-domain';
 // import * as staticFile from '@midwayjs/static-file'
-import * as swagger from '@midwayjs/swagger'
-import * as task from '@midwayjs/task'
-import * as redis from '@midwayjs/redis'
-import * as bull from '@midwayjs/bull'
-import * as typegoose from '@midwayjs/typegoose'
-import * as lion from '@fta/server-middleware-lion'
-import * as upload from '@midwayjs/upload'
-import * as egg from '@midwayjs/web'
+import * as swagger from '@midwayjs/swagger';
+import * as task from '@midwayjs/task';
+import * as redis from '@midwayjs/redis';
+import * as bull from '@midwayjs/bull';
+import * as typegoose from '@midwayjs/typegoose';
+import * as lion from '@fta/server-middleware-lion';
+import * as upload from '@midwayjs/upload';
+import * as egg from '@midwayjs/web';
+import { ModelMetricsService } from './service/common/model-metrics.service';
+import { AuthMiddleware } from './middleware/auth';
 
 // load .env file in process.cwd
-dotenv.config()
+dotenv.config();
 
 @Configuration({
   // imports 的顺序很重要 egg必须在第一个～
@@ -40,9 +42,13 @@ dotenv.config()
 })
 export class ContainerLifeCycle implements ILifeCycle {
   @App()
-  app: Application
+  app: Application;
 
-  async onReady() {}
+  async onReady(container: IMidwayContainer) {
+    this.app.useMiddleware(AuthMiddleware);
+    // 预热模型指标服务，确保单例在启动阶段即开始轮询
+    await container.getAsync(ModelMetricsService);
+  }
 
   async onServerReady(container: IMidwayContainer) {}
 }
