@@ -5,19 +5,19 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useSnapshot } from 'valtio';
-import { designDetectionActions, designDetectionStore } from '../contexts/DesignDetectionContext';
+import { ORBIT_CONTROLS_CONFIG } from '../../constants/Three3DInspectConstants';
+import { designDetectionActions, designDetectionStore } from '../../contexts/DesignDetectionContext';
 
-import { COLOR_CONFIG, ORBIT_CONTROLS_CONFIG, RENDERER_CONFIG } from '../constants/Three3DInspectConstants';
+import './style.css';
 
-// Constants for the 3D scene
 const SCENE_CONFIG = {
   BG_COLOR: 0xf0f2f5,
   WIREFRAME_COLOR: 0x1890ff,
   SELECTED_COLOR: 0xff4d4f,
-  HOVER_COLOR: 0x40a9ff, // Light blue for hover
-  SELECTED_FILL_COLOR: 0xff7875, // Light red for selection
+  HOVER_COLOR: 0x40a9ff,
+  SELECTED_FILL_COLOR: 0xff7875,
   TEXT_COLOR: 0x000000,
-  DEPTH_OFFSET: 150, // Increased layer spacing
+  DEPTH_OFFSET: 150,
   BASE_SCALE: 0.01,
 };
 
@@ -47,15 +47,14 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
   const controlsRef = useRef<OrbitControls | null>(null);
   const requestRef = useRef<number | null>(null);
 
-  // Track hover/selection state for 3D objects
   const hoverRef = useRef<string | null>(null);
   const selectionRef = useRef<string | null>(null);
+  const isSpacePanningRef = useRef(false);
+  const isMouseDownRef = useRef(false);
 
   const [selectedNode, setSelectedNode] = useState<DSLNodeInfo | null>(null);
 
-  // Flatten the DSL tree into a list of renderable items with absolute positions
   const flatNodes = useMemo(() => {
-    console.log('DSL3DInspectModal: Recalculating flatNodes', { dslDataPresent: !!dslData });
     if (!dslData) return [];
 
     const nodes: DSLNodeInfo[] = [];
@@ -67,7 +66,6 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       const width = layout.width || 0;
       const height = layout.height || 0;
 
-      // Calculate absolute position
       const x = parentX + (layout.relativeX || layout.left || 0);
       const y = parentY + (layout.relativeY || layout.top || 0);
 
@@ -90,7 +88,6 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       }
     };
 
-    // Handle DesignDSL structure (wrapper object)
     let rootNodes: any[] = [];
 
     if (dslData && typeof dslData === 'object' && 'dsl' in dslData && (dslData as any).dsl?.nodes) {
@@ -106,12 +103,9 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     return nodes;
   }, [dslData]);
 
-  // Construct temporary DSL data for the selected node to render in the side panel
   const tmpDSLData: DesignDSL | null = useMemo(() => {
     if (!selectedNode || !dslData) return null;
 
-    // Ensure the node is a valid DSLNode
-    // The rawNode from flatNodes should be the original DSL node object
     const targetNode = selectedNode.rawNode as DSLNode;
 
     return {
@@ -123,7 +117,6 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     };
   }, [selectedNode, dslData]);
 
-  // Create a texture for the ID label
   const createLabelTexture = (text: string) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -140,10 +133,8 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     canvas.width = width;
     canvas.height = height;
 
-    // Transparent background
     ctx.clearRect(0, 0, width, height);
 
-    // Text
     ctx.font = `bold ${fontSize}px Arial`;
     ctx.fillStyle = '#000000';
     ctx.textBaseline = 'middle';
@@ -157,9 +148,6 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
   useEffect(() => {
     if (!open || flatNodes.length === 0) return;
 
-    console.log('DSL3DInspectModal: Initializing scene...', { open, flatNodesLength: flatNodes.length });
-
-    // Cleanup previous scene
     if (rendererRef.current) {
       rendererRef.current.dispose();
       if (containerRef.current) {
@@ -175,47 +163,43 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
 
       if (width === 0 || height === 0) return;
 
-      // Setup Scene
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(RENDERER_CONFIG.CLEAR_COLOR);
+      scene.background = new THREE.Color(0xffffff);
       sceneRef.current = scene;
 
-      // Setup Camera
       const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 10000);
       camera.position.set(0, 0, 1000);
       cameraRef.current = camera;
 
-      // Setup Renderer
       const renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(width, height);
       renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.shadowMap.enabled = true;
+      renderer.domElement.style.cursor = 'grab';
       containerRef.current.appendChild(renderer.domElement);
       rendererRef.current = renderer;
 
-      // Setup Controls
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = ORBIT_CONTROLS_CONFIG.ENABLE_DAMPING;
       controls.dampingFactor = ORBIT_CONTROLS_CONFIG.DAMPING_FACTOR;
       controls.rotateSpeed = ORBIT_CONTROLS_CONFIG.ROTATE_SPEED;
-      controls.panSpeed = ORBIT_CONTROLS_CONFIG.PAN_SPEED;
+      controls.panSpeed = ORBIT_CONTROLS_CONFIG.PAN_SPEED * 2;
+      controls.screenSpacePanning = true;
       controlsRef.current = controls;
 
-      // Lights
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      const ambientLight = new THREE.AmbientLight(0xf0f0f0, 1.2);
       scene.add(ambientLight);
       const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
       dirLight.position.set(10, 10, 10);
       scene.add(dirLight);
 
-      // Coordinate System
       const axesHelper = new THREE.AxesHelper(500);
       scene.add(axesHelper);
 
-      // Build Meshes
       const group = new THREE.Group();
       const fillMeshes: THREE.Mesh[] = [];
+      const worldYPositions: number[] = [];
 
-      // Calculate center
       let minX = Infinity,
         maxX = -Infinity,
         minY = Infinity,
@@ -231,14 +215,11 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       const centerY = (minY + maxY) / 2;
 
       flatNodes.forEach((node) => {
-        // 1. Wireframe Box
         const geometry = new THREE.BoxGeometry(node.width, node.height, 1);
         const edges = new THREE.EdgesGeometry(geometry);
         const material = new THREE.LineBasicMaterial({ color: SCENE_CONFIG.WIREFRAME_COLOR });
         const wireframe = new THREE.LineSegments(edges, material);
 
-        // Position
-        // Offset X by 375 as requested
         const x = node.x - centerX + node.width / 2 + 375;
         const y = -(node.y - centerY + node.height / 2);
         const z = node.depth * SCENE_CONFIG.DEPTH_OFFSET;
@@ -246,31 +227,27 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
         wireframe.position.set(x, y, z);
         wireframe.userData = { nodeInfo: node, type: 'wireframe' };
         group.add(wireframe);
+        worldYPositions.push(y - node.height / 2);
 
-        // 2. Fill Mesh (for hover/click highlight)
-        // Use PlaneGeometry to fill the face
         const fillGeometry = new THREE.PlaneGeometry(node.width, node.height);
         const fillMaterial = new THREE.MeshBasicMaterial({
           color: SCENE_CONFIG.HOVER_COLOR,
           transparent: true,
-          opacity: 0, // Invisible by default
+          opacity: 0,
           side: THREE.DoubleSide,
-          depthTest: false, // Ensure it renders on top/with wireframe without z-fighting issues if offset slightly
+          depthTest: false,
         });
         const fillMesh = new THREE.Mesh(fillGeometry, fillMaterial);
-        fillMesh.position.set(x, y, z); // Same position
+        fillMesh.position.set(x, y, z);
         fillMesh.userData = { nodeInfo: node, type: 'fill', originalOpacity: 0 };
         group.add(fillMesh);
         fillMeshes.push(fillMesh);
 
-        // 3. ID Label (Planar Mesh)
         const labelData = createLabelTexture(node.id);
         if (labelData) {
-          // Fixed height for label, width based on aspect ratio
           const labelHeight = 24;
           const labelWidth = labelHeight * labelData.aspectRatio;
 
-          // Check if label fits inside the node width
           if (labelWidth <= node.width) {
             const labelMaterial = new THREE.MeshBasicMaterial({
               map: labelData.texture,
@@ -281,15 +258,10 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
             const labelGeometry = new THREE.PlaneGeometry(labelWidth, labelHeight);
             const labelMesh = new THREE.Mesh(labelGeometry, labelMaterial);
 
-            // Position: Inside Top-Left corner
-            // Box center is (x,y). Top-left of box is (x - w/2, y + h/2).
-            // Label center needs to be offset from that.
             const padding = 4;
             const labelX = x - node.width / 2 + labelWidth / 2 + padding;
             const labelY = y + node.height / 2 - labelHeight / 2 - padding;
 
-            // Ensure z is slightly above the fill mesh to avoid z-fighting if they are coplanar
-            // But fill mesh has depthTest: false so it shouldn't matter much, but let's be safe
             labelMesh.position.set(labelX, labelY, z + 1);
             group.add(labelMesh);
           }
@@ -298,19 +270,40 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
 
       scene.add(group);
 
-      // Adjust camera
       const sceneSize = Math.max(maxX - minX, maxY - minY);
       const maxDepth = flatNodes.reduce((max, n) => Math.max(max, n.depth), 0);
       const depthSize = maxDepth * SCENE_CONFIG.DEPTH_OFFSET;
-      const fitHeight = Math.max(sceneSize, depthSize);
+
+      const canvas = renderer.domElement;
+      const aspect = canvas.width / canvas.height;
+      const fitHeight = Math.max(sceneSize, depthSize, 1200);
+      const fitWidth = fitHeight * aspect;
+
+      const groundSize = Math.max(4000, fitWidth * 2, fitHeight * 2);
+      const lowestY = worldYPositions.length ? Math.min(...worldYPositions) : -groundSize / 4;
+      const groundY = lowestY - 100;
+
+      const groundGeometry = new THREE.PlaneGeometry(groundSize, groundSize);
+      const groundMaterial = new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.18 });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.set(0, groundY, 0);
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      const gridHelper = new THREE.GridHelper(6000, 50);
+      gridHelper.position.y = -199;
+      gridHelper.material.opacity = 0.25;
+      gridHelper.position.set(ground.position.x, groundY + 0.1, ground.position.z);
+      scene.add(gridHelper);
+
       const fov = camera.fov * (Math.PI / 180);
       const distance = Math.abs(fitHeight / (2 * Math.tan(fov / 2)));
 
-      camera.position.z = distance * 1.5;
-      controls.target.set(0, 0, depthSize / 2);
+      camera.position.set(0, fitHeight * 0.6, distance * 1.5);
+      controls.target.set(0, 0, 0);
       controls.update();
 
-      // Interaction
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
@@ -336,39 +329,38 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       };
 
       const onMouseMove = (event: MouseEvent) => {
+        if (isSpacePanningRef.current) {
+          renderer.domElement.style.cursor = 'move';
+          return;
+        }
         const rect = renderer.domElement.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         raycaster.setFromCamera(mouse, camera);
-        // Intersect with fill meshes for easier hit testing
         const intersects = raycaster.intersectObjects(fillMeshes, false);
 
         if (intersects.length > 0) {
-          // Sort by distance (default) but also prioritize front layers if needed
-          // Actually raycaster sorts by distance automatically.
           const hit = intersects[0];
           const info = hit.object.userData.nodeInfo;
 
           if (hoverRef.current !== info.id) {
             hoverRef.current = info.id;
             updateHighlights();
-            // Change cursor
             renderer.domElement.style.cursor = 'pointer';
           }
         } else {
           if (hoverRef.current !== null) {
             hoverRef.current = null;
             updateHighlights();
-            renderer.domElement.style.cursor = 'default';
+            renderer.domElement.style.cursor = 'grab';
           }
         }
       };
 
       const onClick = (event: MouseEvent) => {
-        // If we have a hover, that's our click target (since mouse move updates hover)
-        // But we should double check raycast to be sure (or just use hoverRef)
-        // Let's re-raycast to be safe and consistent
+        if (isSpacePanningRef.current) return;
+
         const rect = renderer.domElement.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -383,17 +375,64 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
           selectionRef.current = info.id;
           setSelectedNode(info);
         } else {
-          // Clicked empty space
           selectionRef.current = null;
           setSelectedNode(null);
         }
         updateHighlights();
       };
 
+      const onMouseDown = () => {
+        isMouseDownRef.current = true;
+        if (isSpacePanningRef.current) {
+          renderer.domElement.style.cursor = 'move';
+        } else {
+          renderer.domElement.style.cursor = 'grabbing';
+        }
+      };
+
+      const onMouseUp = () => {
+        isMouseDownRef.current = false;
+        if (isSpacePanningRef.current) {
+          renderer.domElement.style.cursor = 'move';
+        } else {
+          renderer.domElement.style.cursor = hoverRef.current ? 'pointer' : 'grab';
+        }
+      };
+
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (event.code === 'Space' && !isSpacePanningRef.current) {
+          isSpacePanningRef.current = true;
+          controls.mouseButtons = {
+            LEFT: THREE.MOUSE.PAN,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.ROTATE,
+          } as any;
+
+          renderer.domElement.style.cursor = 'move';
+          event.preventDefault();
+        }
+      };
+
+      const onKeyUp = (event: KeyboardEvent) => {
+        if (event.code === 'Space') {
+          isSpacePanningRef.current = false;
+          controls.mouseButtons = {
+            LEFT: THREE.MOUSE.ROTATE,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.PAN,
+          } as any;
+
+          renderer.domElement.style.cursor = hoverRef.current ? 'pointer' : 'grab';
+        }
+      };
+
       renderer.domElement.addEventListener('mousemove', onMouseMove);
       renderer.domElement.addEventListener('click', onClick);
+      renderer.domElement.addEventListener('mousedown', onMouseDown);
+      renderer.domElement.addEventListener('mouseup', onMouseUp);
+      window.addEventListener('keydown', onKeyDown);
+      window.addEventListener('keyup', onKeyUp);
 
-      // Animation Loop
       const animate = () => {
         requestRef.current = requestAnimationFrame(animate);
         controls.update();
@@ -401,10 +440,13 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       };
       animate();
 
-      // Cleanup function for this effect
       return () => {
         renderer.domElement.removeEventListener('mousemove', onMouseMove);
         renderer.domElement.removeEventListener('click', onClick);
+        renderer.domElement.removeEventListener('mousedown', onMouseDown);
+        renderer.domElement.removeEventListener('mouseup', onMouseUp);
+        window.removeEventListener('keydown', onKeyDown);
+        window.removeEventListener('keyup', onKeyUp);
       };
     };
 
@@ -428,50 +470,43 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     };
   }, [open, flatNodes]);
 
+  const handleClose = () => {
+    Modal.confirm({
+      title: '确认关闭',
+      content: '关闭 3D 结构预览前请确认。',
+      okText: '确认',
+      cancelText: '取消',
+      onOk: () => onClose(),
+    });
+  };
+
   return (
     <Modal
       open={open}
-      onCancel={onClose}
-      title='DSL 3D Structure Inspector'
-      width={1500}
+      onCancel={handleClose}
+      title={
+        <div className='dsl-3d-inspect-modal__title'>
+          <span>DSL 3D Structure Inspector</span>
+          <Button size='small' danger onClick={handleClose}>
+            关闭
+          </Button>
+        </div>
+      }
+      width='100vw'
       footer={null}
-      centered
+      centered={false}
       destroyOnHidden
-      styles={{
-        content: { background: COLOR_CONFIG.MODAL_CONTENT_BG },
-        header: {
-          background: COLOR_CONFIG.MODAL_HEADER_BG,
-          borderBottom: `1px solid ${COLOR_CONFIG.MODAL_HEADER_BORDER}`,
-          color: COLOR_CONFIG.MODAL_HEADER_TEXT,
-        },
-        body: { padding: 0, height: '80vh', overflow: 'hidden' },
-      }}>
-      <div style={{ display: 'flex', height: '100%', background: COLOR_CONFIG.MODAL_BG }}>
-        {/* 3D Viewport */}
-        <div style={{ flex: 1, position: 'relative' }} data-testid='dsl-3d-modal-container'>
-          <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      closable={false}
+      maskClosable={false}
+      keyboard={false}
+      rootClassName='dsl-3d-inspect-modal'>
+      <div className='dsl-3d-inspect-modal__layout'>
+        <div className='dsl-3d-inspect-modal__viewport' data-testid='dsl-3d-modal-container'>
+          <div ref={containerRef} className='dsl-3d-inspect-modal__canvas' />
         </div>
 
-        {/* Side Panel */}
-        <div
-          style={{
-            width: 400,
-            borderLeft: '1px solid #eee',
-            background: '#fff',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
-          <div
-            style={{
-              padding: '16px',
-              borderBottom: '1px solid #eee',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8,
-            }}>
+        <div className='dsl-3d-inspect-modal__sidebar'>
+          <div className='dsl-3d-inspect-modal__sidebar-header'>
             <span>Selected Node Preview</span>
             {tmpDSLData?.dsl?.nodes?.[0]?.id ? (
               <Button
@@ -487,15 +522,13 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
               </Button>
             ) : null}
           </div>
-          <div style={{ flex: 1, overflow: 'auto', padding: '16px', position: 'relative' }}>
+          <div className='dsl-3d-inspect-modal__sidebar-body'>
             {tmpDSLData ? (
-              <div style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}>
+              <div className='dsl-3d-inspect-modal__preview'>
                 <DSLElement dslData={tmpDSLData} />
               </div>
             ) : (
-              <div style={{ color: '#999', textAlign: 'center', marginTop: 40 }}>
-                Click on a wireframe box to view details
-              </div>
+              <div className='dsl-3d-inspect-modal__empty'>Click on a wireframe box to view details</div>
             )}
           </div>
         </div>

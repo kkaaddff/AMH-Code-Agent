@@ -1,7 +1,7 @@
 import type { FrontendProjectWorkflowCallbacks } from '@fta/agent-core';
 import { Config, Inject, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import path from 'path';
-import { DesignDSL } from '../../types';
+import { DesignDSL, DesignNode } from '../../types';
 import { ModelGatewayConfig } from '../common/model-gateway';
 import { DesignDSLService } from './design-dsl';
 import { ProjectService } from './project';
@@ -102,6 +102,13 @@ export class FrontendWorkflowService {
       }
 
       const processedDSL = await this.designDSLService.processDesignDSL(dsl as DesignDSL);
+      const filteredDSL = {
+        ...processedDSL,
+        dsl: {
+          ...processedDSL.dsl,
+          nodes: this.filterVisibleNodes(processedDSL.dsl.nodes),
+        },
+      };
 
       // 获取 annotation 摘要
       const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData.rootAnnotation));
@@ -124,7 +131,7 @@ export class FrontendWorkflowService {
       const result = await runFrontendProjectWorkflow({
         cwd,
         srcTree,
-        designDsl: JSON.stringify(processedDSL),
+        designDsl: JSON.stringify(filteredDSL),
         pageAnnotation: annotationSummary,
         productName: productName || 'FTA-Frontend',
         version: '0.0.0',
@@ -224,5 +231,19 @@ export class FrontendWorkflowService {
         },
       };
     }
+  }
+
+  private filterVisibleNodes(nodes: DesignNode[]): DesignNode[] {
+    return nodes
+      .filter((node) => !node.hidden && node.mask !== 'outline')
+      .map((node) => {
+        if (node.children?.length) {
+          return {
+            ...node,
+            children: this.filterVisibleNodes(node.children),
+          };
+        }
+        return node;
+      });
   }
 }
