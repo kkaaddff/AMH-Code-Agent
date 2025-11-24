@@ -67,6 +67,10 @@ export class DSL3DScene {
   private selectedNodeId: string | null = null;
 
   private isSpacePanning: boolean = false;
+  private isMouseDown: boolean = false;
+  private hasDragged: boolean = false;
+  private lastMousePosition: { x: number; y: number } | null = null;
+  private readonly dragThreshold = 5;
 
   constructor(container: HTMLElement, options: DSL3DSceneOptions = {}) {
     console.log('DSL3DScene constructor ====');
@@ -171,6 +175,14 @@ export class DSL3DScene {
   };
 
   private onMouseMove = (event: MouseEvent) => {
+    if (this.isMouseDown && this.lastMousePosition) {
+      const deltaX = event.clientX - this.lastMousePosition.x;
+      const deltaY = event.clientY - this.lastMousePosition.y;
+      if (!this.hasDragged && Math.hypot(deltaX, deltaY) > this.dragThreshold) {
+        this.hasDragged = true;
+      }
+    }
+
     if (this.isSpacePanning) {
       this.renderer.domElement.style.cursor = 'move';
       return;
@@ -204,6 +216,10 @@ export class DSL3DScene {
 
   private onClick = (event: MouseEvent) => {
     if (this.isSpacePanning) return;
+    if (this.hasDragged) {
+      this.hasDragged = false;
+      return;
+    }
 
     const rect = this.renderer.domElement.getBoundingClientRect();
     this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -224,7 +240,10 @@ export class DSL3DScene {
     this.updateHighlights();
   };
 
-  private onMouseDown = () => {
+  private onMouseDown = (event: MouseEvent) => {
+    this.isMouseDown = true;
+    this.hasDragged = false;
+    this.lastMousePosition = { x: event.clientX, y: event.clientY };
     if (this.isSpacePanning) {
       this.renderer.domElement.style.cursor = 'move';
     } else {
@@ -233,6 +252,8 @@ export class DSL3DScene {
   };
 
   private onMouseUp = () => {
+    this.isMouseDown = false;
+    this.lastMousePosition = null;
     if (this.isSpacePanning) {
       this.renderer.domElement.style.cursor = 'move';
     } else {
