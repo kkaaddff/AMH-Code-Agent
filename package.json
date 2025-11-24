@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "packageManager": "yarn@1.22.22",
   "workspaces": [
+    "shared-types",
     "code-agent-backend",
     "fta-layout-design",
-    "fta-agent-core",
-    "messages-replayer"
+    "fta-agent-core"
   ],
   "scripts": {
     "bootstrap": "yarn install",

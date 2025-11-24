@@ -29,6 +29,7 @@
     "@ai-sdk/openai": "^2.0.62",
     "@ai-sdk/provider": "^2.0.0",
     "@ai-sdk/xai": "^2.0.31",
+    "@fta/shared-types": "0.0.1",
     "chardet": "^2.1.1",
     "bson": "^1.1.6",
     "debug": "^4.4.3",

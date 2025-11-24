@@ -16,6 +16,7 @@
     "@emoji-mart/data": "^1.2.1",
     "@floating-ui/react": "^0.26.22",
     "@fta/workstation-connector": "^2.1.41",
+    "@fta/shared-types": "0.0.1",
     "@lexical/code": "^0.35.0",
     "@lexical/react": "^0.35.0",
     "@lexical/selection": "^0.35.0",
