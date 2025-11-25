@@ -350,9 +350,9 @@ export class DSL3DScene {
       const depth = descendantDepthMap.get(info.id);
 
       if (depth !== undefined) {
-        const lightenFactor = Math.min(0.6, depth * 0.12); // 子节点越深越浅
+        const lightenFactor = Math.min(0.8, depth * 0.12); // 子节点越深越浅
         const color = baseSelectedColor.clone().lerp(white, lightenFactor);
-        const opacity = Math.max(0.08, 0.3 - depth * 0.04);
+        const opacity = Math.max(0.08, 0.5 - depth * 0.04);
 
         material.color.copy(color);
         material.opacity = opacity;
