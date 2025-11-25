@@ -11,7 +11,7 @@ export const createRootAnnotationFromDesignDoc = (
 ): AnnotationNode | null => {
   const now = Date.now();
   const rootNode = doc.data?.dsl?.nodes?.[0] ?? null;
-  debugger;
+
   if (!rootNode) {
     return null;
   }
