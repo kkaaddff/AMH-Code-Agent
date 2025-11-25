@@ -18,8 +18,6 @@ export const createRootAnnotationFromDesignDoc = (
   const rootAnnotationId = `design-root-${doc.id}`;
   const rootAnnotation: AnnotationNode = doc.annotationData?.rootAnnotation ?? {
     id: rootAnnotationId,
-    dslNodeId: rootNode.id,
-    dslNode: rootNode,
     ftaComponent: 'View',
     name: 'Component',
     isRoot: true,

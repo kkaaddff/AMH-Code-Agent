@@ -1,9 +1,5 @@
-import type { DSLNode } from './dsl';
-
 export interface AnnotationNode {
   id: string;
-  dslNodeId: string;
-  dslNode: DSLNode | null;
   ftaComponent: string;
   isRoot: boolean;
   isMainPage: boolean;

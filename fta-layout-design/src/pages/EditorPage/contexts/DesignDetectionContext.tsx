@@ -76,7 +76,7 @@ const findAnnotationById = (id: string): AnnotationNode | null => {
 // 通过DSL节点ID查找标注
 const findAnnotationByDSLNodeId = (dslNodeId: string): AnnotationNode | null => {
   const search = (node: AnnotationNode): AnnotationNode | null => {
-    if (node.dslNodeId === dslNodeId) return node;
+    if (node.id === dslNodeId) return node;
     for (const child of node.children) {
       const found = search(child);
       if (found) return found;
@@ -372,7 +372,7 @@ export const designDetectionStore = proxy<DesignDetectionState>({
     }
     this.designStoreMap[this.currentDesignId].dslData = value;
   },
-  showAllBorders: false,
+  showAllBorders: true,
   selectedNodeIds: [],
   get dslRootNode() {
     if (!this.currentDesignId) {
@@ -579,14 +579,14 @@ export const designDetectionActions = {
       (additionalProps && additionalProps.force === false);
 
     if (shouldCheckDuplicate) {
-      const existingAnnotation = designDetectionStore.annotations.find((a) => a.dslNodeId === dslNode.id);
+      const existingAnnotation = designDetectionStore.annotations.find((a) => a.id === dslNode.id);
       if (existingAnnotation) {
         console.warn('This DSL node is already annotated');
         return false;
       }
     } else {
       // 强制创建，删除重复标注
-      const existingAnnotation = designDetectionStore.annotations.find((a) => a.dslNodeId === dslNode.id);
+      const existingAnnotation = designDetectionStore.annotations.find((a) => a.id === dslNode.id);
       if (existingAnnotation) {
         designDetectionActions.deleteAnnotation(existingAnnotation.id, {
           docId: designDetectionStore.currentDesignId!,
@@ -609,7 +609,7 @@ export const designDetectionActions = {
 
     const descendantDSLIdSet = collectDescendantDSLIds(dslNode);
     const descendantAnnotations = designDetectionStore.annotations.filter((annotation) =>
-      descendantDSLIdSet.has(annotation.dslNodeId)
+      descendantDSLIdSet.has(annotation.id)
     );
 
     const hasAnnotatedChildren = descendantAnnotations.length > 0;
@@ -660,7 +660,7 @@ export const designDetectionActions = {
         const remainingChildren: AnnotationNode[] = [];
 
         node.children.forEach((child) => {
-          if (descendantDSLIdSet.has(child.dslNodeId)) {
+          if (descendantDSLIdSet.has(child.id)) {
             detached.push(child);
             return;
           }
@@ -688,8 +688,6 @@ export const designDetectionActions = {
 
     const newAnnotation: AnnotationNode = {
       id: annotationId,
-      dslNodeId: dslNode.id,
-      dslNode,
       ftaComponent,
       name: additionalProps?.name,
       comment: additionalProps?.comment,
@@ -728,7 +726,6 @@ export const designDetectionActions = {
 
     const rootWithInsertion = insertAnnotation(updatedRoot);
     const sortedRootAnnotation = sortAnnotationChildren(rootWithInsertion);
-    // const flattenedAnnotations = flattenAnnotationTree(sortedRootAnnotation);
 
     const expandedKeysSet = new Set(designDetectionStore.expandedKeys);
     expandedKeysSet.add(parent.id);
@@ -1218,7 +1215,6 @@ export const designDetectionActions = {
 
     const createNewAnnotation = (
       dslNodeId: string,
-      dslNode: DSLNode | null,
       absoluteX: number,
       absoluteY: number,
       width: number,
@@ -1227,8 +1223,6 @@ export const designDetectionActions = {
       comment?: string
     ): AnnotationNode => ({
       id: dslNodeId,
-      dslNodeId,
-      dslNode,
       ftaComponent,
       name: undefined,
       comment,
@@ -1253,7 +1247,6 @@ export const designDetectionActions = {
       const absolutePos = calculateDSLNodeAbsolutePosition(containingNode);
       newAnnotation = createNewAnnotation(
         containingNode.id,
-        containingNode,
         absolutePos.x,
         absolutePos.y,
         containingNode.layoutStyle?.width || 0,
@@ -1269,7 +1262,6 @@ export const designDetectionActions = {
       const virtualAnnotationId = `${VIRTUAL_ANNOTATION_PREFIX}${now}-${Math.random().toString(36).slice(2, 8)}`;
       newAnnotation = createNewAnnotation(
         virtualAnnotationId,
-        null,
         minX,
         minY,
         maxX - minX,

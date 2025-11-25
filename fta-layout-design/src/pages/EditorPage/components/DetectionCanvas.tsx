@@ -4,9 +4,11 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSnapshot } from 'valtio';
 import { COLORS, DASH_PATTERNS, DRAW_STYLES, LABEL_STYLES, SCALE_CONFIG } from '../constants/CanvasConstant';
 import {
+  calculateDSLNodeAbsolutePosition,
   designDetectionActions,
   designDetectionStore,
   findAnnotationByDSLNodeId,
+  findDSLNodeById,
 } from '../contexts/DesignDetectionContext';
 import { AnnotationNode, LabelInstruction, NodeType } from '../types/componentDetection';
 import {
@@ -14,9 +16,7 @@ import {
   drawBorder,
   drawGridBackground,
   findNodeAtPosition,
-  findNodeById,
   getCanvasPoint,
-  getNodeAbsolutePosition,
   getNodeBounds,
   getSelectionBounds,
   isItemInSelection,
@@ -185,13 +185,6 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
   const findNodeAtPositionMemo = (x: number, y: number) => findNodeAtPosition(x, y, rootNode);
 
-  const getNodeAbsolutePositionMemo = useCallback(
-    (node: DSLNode) => getNodeAbsolutePosition(rootNode, node),
-    [rootNode]
-  );
-
-  const findNodeByIdMemo = useCallback((id: string) => findNodeById(rootNode, id), [rootNode]);
-
   const effectiveScale = useMemo(() => (scale === 0 ? 1 : scale), [scale]);
 
   const horizontalPadding = useMemo(() => {
@@ -251,19 +244,19 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
     // 判断优先级
     if (hoveredAnnotation && hoveredDSLNode) {
-      if (hoveredAnnotation.isContainer && hoveredDSLNode.id !== hoveredAnnotation.dslNodeId) {
-        return { type: 'dsl', target: hoveredDSLNode, annotation: null };
+      if (hoveredAnnotation.isContainer && hoveredDSLNode.id !== hoveredAnnotation.id) {
+        return { type: 'dsl', target: hoveredDSLNode };
       } else {
-        return { type: 'annotation', target: hoveredAnnotation, dslNode: null };
+        return { type: 'annotation', target: hoveredAnnotation };
       }
     }
 
     if (hoveredAnnotation) {
-      return { type: 'annotation', target: hoveredAnnotation, dslNode: null };
+      return { type: 'annotation', target: hoveredAnnotation };
     }
 
     if (hoveredDSLNode) {
-      return { type: 'dsl', target: hoveredDSLNode, annotation: null };
+      return { type: 'dsl', target: hoveredDSLNode };
     }
 
     return null;
@@ -323,7 +316,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
     // 2. 绘制hover的DSL节点
     if (hoveredDSLNode) {
       if (hoveredDSLNode) {
-        const bounds = getNodeAbsolutePositionMemo(hoveredDSLNode as DSLNode);
+        const bounds = calculateDSLNodeAbsolutePosition(hoveredDSLNode as DSLNode);
         const nodeWidth = hoveredDSLNode.layoutStyle?.width || 0;
         const nodeHeight = hoveredDSLNode.layoutStyle?.height || 0;
         drawBorder(ctx, bounds.x, bounds.y, nodeWidth, nodeHeight, {
@@ -338,9 +331,9 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
     const selectedDSLNodeIdsList = selectedNodeIds.filter((item) => item.type === NodeType.DSL).map((item) => item.id);
 
     selectedDSLNodeIdsList.forEach((nodeId) => {
-      const selectedNode = findNodeByIdMemo(nodeId);
+      const selectedNode = findDSLNodeById(nodeId);
       if (selectedNode) {
-        const bounds = getNodeAbsolutePositionMemo(selectedNode);
+        const bounds = calculateDSLNodeAbsolutePosition(selectedNode);
         const nodeWidth = selectedNode.layoutStyle?.width || 0;
         const nodeHeight = selectedNode.layoutStyle?.height || 0;
         drawBorder(ctx, bounds.x, bounds.y, nodeWidth, nodeHeight, {
@@ -452,30 +445,25 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
     isSelecting,
     horizontalPadding,
     verticalPadding,
-    findNodeByIdMemo,
-    getNodeAbsolutePositionMemo,
   ]);
 
   // 辅助函数：检查节点A是否是节点B的祖先（父、祖父等）
-  const isAncestorOf = useCallback(
-    (ancestorId: string, descendantId: string): boolean => {
-      if (ancestorId === descendantId) return false;
+  const isAncestorOf = (ancestorId: string, descendantId: string): boolean => {
+    if (ancestorId === descendantId) return false;
 
-      const ancestorNode = findNodeByIdMemo(ancestorId);
-      if (!ancestorNode) return false;
+    const ancestorNode = findDSLNodeById(ancestorId);
+    if (!ancestorNode) return false;
 
-      const checkDescendant = (node: DSLNode): boolean => {
-        if (node.id === descendantId) return true;
-        if (node.children) {
-          return node.children.some((child) => checkDescendant(child));
-        }
-        return false;
-      };
+    const checkDescendant = (node: DSLNode): boolean => {
+      if (node.id === descendantId) return true;
+      if (node.children) {
+        return node.children.some((child) => checkDescendant(child));
+      }
+      return false;
+    };
 
-      return checkDescendant(ancestorNode);
-    },
-    [findNodeByIdMemo]
-  );
+    return checkDescendant(ancestorNode);
+  };
 
   // 辅助函数：检查annotation A是否包含annotation B
   const isAnnotationContaining = useCallback((containerAnnotation: any, innerAnnotation: any): boolean => {
@@ -522,7 +510,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
             const otherAnnotation = annotations.find((a) => a.id === other.id);
             if (otherAnnotation) {
               // 检查DSL节点是否是annotation对应DSL节点的后代
-              if (isAncestorOf(otherAnnotation.dslNodeId, item.id)) {
+              if (isAncestorOf(otherAnnotation.id, item.id)) {
                 isInner = true;
                 break;
               }
@@ -532,7 +520,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
             const itemAnnotation = annotations.find((a) => a.id === item.id);
             if (itemAnnotation) {
               // 检查annotation对应的DSL节点是否是other DSL节点的后代
-              if (isAncestorOf(other.id, itemAnnotation.dslNodeId)) {
+              if (isAncestorOf(other.id, itemAnnotation.id)) {
                 isInner = true;
                 break;
               }
@@ -660,9 +648,9 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       // 多选模式下的父子关系检查
       if (multiSelect && selectedNodeIds.length > 0) {
         const clickedItem = clickedAnnotation
-          ? { type: 'annotation' as const, id: clickedAnnotation.id, dslNodeId: clickedAnnotation.dslNodeId }
+          ? { type: 'annotation' as const, id: clickedAnnotation.id }
           : clickedDSLNode
-          ? { type: 'dsl' as const, id: clickedDSLNode.id, dslNodeId: clickedDSLNode.id }
+          ? { type: 'dsl' as const, id: clickedDSLNode.id }
           : null;
 
         if (clickedItem) {
@@ -673,18 +661,18 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
           for (const selectedId of selectedNodeIds) {
             const selectedItemDslNodeId =
               selectedId.type === NodeType.ANNOTATION
-                ? annotations.find((a) => a.id === selectedId.id)?.dslNodeId
+                ? annotations.find((a) => a.id === selectedId.id)?.id
                 : selectedId.id;
 
             if (!selectedItemDslNodeId) continue;
 
             // 检查点击项是否是已选项的祖先（父级）
-            if (isAncestorOf(clickedItem.dslNodeId, selectedItemDslNodeId)) {
+            if (isAncestorOf(clickedItem.id, selectedItemDslNodeId)) {
               // 点击了父级，需要移除这个子级
               itemsToRemove.push(selectedId.id);
             }
             // 检查点击项是否是已选项的后代（子级）
-            else if (isAncestorOf(selectedItemDslNodeId, clickedItem.dslNodeId)) {
+            else if (isAncestorOf(selectedItemDslNodeId, clickedItem.id)) {
               // 点击了子级，但已经选中了父级，不允许选中子级
               return;
             }
@@ -698,7 +686,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
               if (annotation) {
                 designDetectionActions.selectAnnotation(id, true); // 取消选中
               } else {
-                const node = findNodeByIdMemo(id);
+                const node = findDSLNodeById(id);
                 if (node) {
                   designDetectionActions.selectDSLNode(node, true); // 取消选中
                 }
@@ -729,21 +717,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       // 4. 点击空白区域，取消选择
       designDetectionActions.clearSelection();
     },
-    [
-      annotations,
-      effectiveScale,
-      getInteractionTarget,
-      findAnnotationByDSLNodeId,
-      findNodeByIdMemo,
-      isShiftPressed,
-      selectedNodeIds,
-      isAncestorOf,
-      horizontalPadding,
-      verticalPadding,
-      isSpacePressed,
-      commitPanOffset,
-      stopPanning,
-    ]
+    [annotations, effectiveScale, isShiftPressed, selectedNodeIds, horizontalPadding, verticalPadding, isSpacePressed]
   );
 
   // 处理鼠标移动

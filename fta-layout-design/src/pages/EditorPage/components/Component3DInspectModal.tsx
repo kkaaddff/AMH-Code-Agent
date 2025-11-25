@@ -1,27 +1,27 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Spin } from 'antd';
+import html2canvas from 'html2canvas';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import html2canvas from 'html2canvas';
 import { useSnapshot } from 'valtio';
 
-import { calculateDSLNodeAbsolutePosition, designDetectionStore } from '../contexts/DesignDetectionContext';
-import type { AnnotationNode } from '../types/componentDetection';
 import {
-  MODAL_CONFIG,
-  SCENE_LAYOUT,
-  RENDERER_CONFIG,
   CAMERA_CONFIG,
-  ORBIT_CONTROLS_CONFIG,
-  LIGHTING_CONFIG,
-  PANEL_MATERIAL_CONFIG,
-  EDGE_CONFIG,
-  LABEL_3D_CONFIG,
-  HTML2CANVAS_CONFIG,
-  DEPTH_CALCULATION,
-  LOADING_CONFIG,
   COLOR_CONFIG,
+  DEPTH_CALCULATION,
+  EDGE_CONFIG,
+  HTML2CANVAS_CONFIG,
+  LABEL_3D_CONFIG,
+  LIGHTING_CONFIG,
+  LOADING_CONFIG,
+  MODAL_CONFIG,
+  ORBIT_CONTROLS_CONFIG,
+  PANEL_MATERIAL_CONFIG,
+  RENDERER_CONFIG,
+  SCENE_LAYOUT,
 } from '../constants/Three3DInspectConstants';
+import { designDetectionStore } from '../contexts/DesignDetectionContext';
+import type { AnnotationNode } from '../types/componentDetection';
 
 interface Component3DInspectModalProps {
   open: boolean;
@@ -88,17 +88,8 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
   const annotations = useMemo(() => collectAnnotations(rootAnnotation as AnnotationNode), [rootAnnotation]);
 
   const resolveAnnotationMetrics = (annotation: AnnotationNode) => {
-    const width = annotation.width || annotation.dslNode?.layoutStyle?.width || 0;
-    const height = annotation.height || annotation.dslNode?.layoutStyle?.height || 0;
-    if (annotation.dslNode) {
-      const absolute = calculateDSLNodeAbsolutePosition(annotation.dslNode);
-      return {
-        width,
-        height,
-        absoluteX: absolute.x,
-        absoluteY: absolute.y,
-      };
-    }
+    const width = annotation.width || 0;
+    const height = annotation.height || 0;
     return {
       width,
       height,
@@ -109,15 +100,8 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
 
   // 从 DetectionCanvas 获取已渲染的 DSLElement DOM 节点
   const getDSLElementFromCanvas = (annotation: AnnotationNode): HTMLElement | null => {
-    if (!annotation.dslNode) {
-      return null;
-    }
-
-    // 在整个文档中查找对应的 DSLElement
-    // DSLElement 渲染 data-dsl-id 属性来标识对应的 DSL 节点
-    const dslElement = document.querySelector(`[data-dsl-id="${annotation.dslNode.id}"]`) as HTMLElement;
-
-    return dslElement;
+    console.log('annotation', annotation.id);
+    return null;
   };
 
   // 创建用于捕获的容器，复制原始 DSLElement 的样式和内容
@@ -208,7 +192,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
 
     const ensureTexture = async (annotation: AnnotationNode): Promise<THREE.Texture | null> => {
       const { width, height } = resolveAnnotationMetrics(annotation);
-      if (!annotation.dslNode || width <= 0 || height <= 0) {
+      if (!annotation.id || width <= 0 || height <= 0) {
         return null;
       }
 
@@ -473,7 +457,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
             labelCtx.textAlign = 'center';
             labelCtx.textBaseline = 'middle';
             labelCtx.fillText(
-              item.node.name || item.node.ftaComponent || item.node.dslNodeId,
+              item.node.name || item.node.ftaComponent || item.node.id,
               labelWidth / 2,
               labelHeight / 2
             );

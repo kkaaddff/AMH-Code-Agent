@@ -8,7 +8,7 @@ import {
   QuestionCircleOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { App as AntApp, App, Button, Dropdown, Layout, Spin, Typography } from 'antd';
+import { App as AntApp, App, Button, Dropdown, Layout, Spin, Switch, Typography } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio/react';
 import AnnotationConfirmModal from './components/AnnotationConfirmModal';
@@ -425,6 +425,38 @@ const EditorPageContent: React.FC = () => {
                       组件标注编辑器
                     </Title>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Button
+                        type='primary'
+                        size='small'
+                        icon={<DeploymentUnitOutlined />}
+                        onClick={() => setIsDSL3DModalOpen(true)}
+                        className='editor-page-button'
+                        data-testid='dsl-3d-button'>
+                        设计稿优化
+                      </Button>
+
+                      <Switch
+                        checked={componentDetectionStoreSnapshot.showAllBorders}
+                        onChange={toggleShowAllBorders}
+                        checkedChildren={
+                          <>
+                            <EyeOutlined /> 显示框线
+                          </>
+                        }
+                        unCheckedChildren={
+                          <>
+                            <EyeInvisibleOutlined /> 隐藏框线
+                          </>
+                        }
+                      />
+                      <Button
+                        type={is3DModalOpen ? 'primary' : 'default'}
+                        size='small'
+                        icon={<AppstoreOutlined />}
+                        onClick={() => setIs3DModalOpen(true)}
+                        className='editor-page-button'>
+                        3D 检视
+                      </Button>
                       <div
                         role='button'
                         tabIndex={isSmartDetecting ? -1 : 0}
@@ -440,33 +472,6 @@ const EditorPageContent: React.FC = () => {
                         <ThunderboltOutlined />
                         <span>{isSmartDetecting ? '智能识别中...' : '智能识别'}</span>
                       </div>
-                      <Button
-                        size='small'
-                        type={componentDetectionStoreSnapshot.showAllBorders ? 'primary' : 'default'}
-                        icon={
-                          componentDetectionStoreSnapshot.showAllBorders ? <EyeOutlined /> : <EyeInvisibleOutlined />
-                        }
-                        onClick={toggleShowAllBorders}
-                        className='editor-page-button'>
-                        框线
-                      </Button>
-                      <Button
-                        type={is3DModalOpen ? 'primary' : 'default'}
-                        size='small'
-                        icon={<AppstoreOutlined />}
-                        onClick={() => setIs3DModalOpen(true)}
-                        className='editor-page-button'>
-                        3D 检视
-                      </Button>
-                      <Button
-                        type={isDSL3DModalOpen ? 'primary' : 'default'}
-                        size='small'
-                        icon={<DeploymentUnitOutlined />}
-                        onClick={() => setIsDSL3DModalOpen(true)}
-                        className='editor-page-button'
-                        data-testid='dsl-3d-button'>
-                        DSL 3D
-                      </Button>
                       <Button
                         type={isGuideOpen ? 'primary' : 'default'}
                         size='small'

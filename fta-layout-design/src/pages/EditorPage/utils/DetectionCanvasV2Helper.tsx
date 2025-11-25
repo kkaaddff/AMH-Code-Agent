@@ -59,6 +59,43 @@ export const useContainerSize = <T extends HTMLElement>(ref: { current: T | null
   return size;
 };
 
+function deepSortObject(obj: Record<string, any>): Record<string, any> {
+  if (Array.isArray(obj)) {
+    return obj.map(deepSortObject);
+  } else if (obj && typeof obj === 'object') {
+    const sortedKeys = Object.keys(obj).sort();
+    const result: any = {};
+    for (const key of sortedKeys) {
+      result[key] = deepSortObject(obj[key]);
+    }
+    return result;
+  }
+  return obj;
+}
+
+// 简易哈希实现（可替换为更强hash），这里用 DJB2 算法
+function hashString(str: string): string {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) + hash + str.charCodeAt(i);
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36);
+}
+
+/**
+ * 创建稳定的节点 ID 生成器，通过对 node 取递归有序的 stringify 后再哈希，保证每次生成一致。
+ * 根 ID 用于区分不同页面。
+ */
+export const createStableNodeIdGenerator = (rootNodeId: string, node: DSLNode) => {
+  // 对 node 递归 sort key 和 stringify，再 hash
+  const sorted = deepSortObject(node);
+  const jsonStr = JSON.stringify(sorted);
+  const hash = hashString(jsonStr);
+
+  return `${rootNodeId}::${hash}`;
+};
+
 /**
  * 计算 DSL 节点的绝对边界。
  * @param node 目标 DSL 节点。
@@ -104,46 +141,6 @@ export const findNodeAtPosition = (x: number, y: number, node: DSLNode, parentX 
 };
 
 /**
- * 获取指定 DSL 节点相对于根节点的绝对坐标。
- * @param rootNode DSL 树的根节点。
- * @param targetNode 目标 DSL 节点。
- * @returns 节点的绝对坐标（x、y）。
- */
-export const getNodeAbsolutePosition = (rootNode: DSLNode, targetNode: DSLNode): { x: number; y: number } => {
-  const traverse = (node: DSLNode, parentX = 0, parentY = 0): { x: number; y: number } | null => {
-    const bounds = getNodeBounds(node, parentX, parentY);
-    if (node.id === targetNode.id) return { x: bounds.x, y: bounds.y };
-
-    if (node.children) {
-      for (const child of node.children) {
-        const result = traverse(child, bounds.x, bounds.y);
-        if (result) return result;
-      }
-    }
-    return null;
-  };
-
-  return traverse(rootNode) || { x: 0, y: 0 };
-};
-
-/**
- * 按 ID 在 DSL 树中查找节点。
- * @param node 当前遍历的节点。
- * @param id 目标节点的唯一 ID。
- * @returns 匹配的 DSL 节点，未找到返回 null。
- */
-export const findNodeById = (node: DSLNode, id: string): DSLNode | null => {
-  if (node.id === id) return node;
-  if (node.children) {
-    for (const child of node.children) {
-      const found = findNodeById(child, id);
-      if (found) return found;
-    }
-  }
-  return null;
-};
-
-/**
  * 计算框选区域的标准化边界。
  * @param box 框选开始点与当前点的坐标集合。
  * @returns 框选的位置信息以及方向标记。
@@ -179,13 +176,13 @@ export const isItemInSelection = (
 };
 
 /**
- * 在 Canvas 上绘制带样式的矩形边框。
+ * 在 Canvas 上绘制可选圆角的带样式矩形边框。
  * @param ctx Canvas 2D 上下文。
  * @param x 起始 X 坐标。
  * @param y 起始 Y 坐标。
  * @param width 矩形宽度。
  * @param height 矩形高度。
- * @param style 绘制样式（颜色、线宽、虚线样式、阴影）。
+ * @param style 绘制样式（颜色、线宽、虚线样式、阴影、圆角半径）。
  */
 export const drawBorder = (
   ctx: CanvasRenderingContext2D,
@@ -193,8 +190,11 @@ export const drawBorder = (
   y: number,
   width: number,
   height: number,
-  style: { color: string; width: number; dash?: number[]; shadow?: boolean }
+  style: { color: string; width: number; dash?: number[]; shadow?: boolean; radius?: number }
 ) => {
+  if (width <= 0 || height <= 0) {
+    return;
+  }
   ctx.strokeStyle = style.color;
   ctx.lineWidth = style.width;
 
@@ -207,7 +207,24 @@ export const drawBorder = (
     ctx.shadowColor = style.color;
   }
 
-  ctx.strokeRect(x, y, width, height);
+  // 支持可选的圆角绘制
+  if (style.radius && style.radius > 0) {
+    const r = Math.min(style.radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.stroke();
+  } else {
+    ctx.strokeRect(x, y, width, height);
+  }
 
   ctx.setLineDash([]);
   ctx.shadowBlur = 0;
