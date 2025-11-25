@@ -130,19 +130,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
         ftaComponent: selectedAnnotation.ftaComponent,
         name: selectedAnnotation.name || '',
         comment: selectedAnnotation.comment || '',
-        // Layout properties
-        width: selectedAnnotation.layout?.width || selectedAnnotation.width,
-        height: selectedAnnotation.layout?.height || selectedAnnotation.height,
-        position: selectedAnnotation.layout?.position || 'relative',
-        flexDirection: selectedAnnotation.layout?.flexDirection,
-        alignItems: selectedAnnotation.layout?.alignItems,
-        justifyContent: selectedAnnotation.layout?.justifyContent,
-        flex: selectedAnnotation.layout?.flex,
-        gap: selectedAnnotation.layout?.gap,
-        padding: selectedAnnotation.layout?.padding,
-        margin: selectedAnnotation.layout?.margin,
-        backgroundColor: selectedAnnotation.layout?.backgroundColor,
-        borderRadius: selectedAnnotation.layout?.borderRadius,
         // Props
         props: JSON.stringify(selectedAnnotation.props || {}, null, 2),
         // 数据模型绑定
@@ -190,20 +177,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
         ftaComponent: values.ftaComponent,
         name: values.name,
         comment: values.comment,
-        layout: {
-          width: values.width,
-          height: values.height,
-          position: values.position,
-          flexDirection: values.flexDirection,
-          alignItems: values.alignItems,
-          justifyContent: values.justifyContent,
-          flex: values.flex,
-          gap: values.gap,
-          padding: values.padding,
-          margin: values.margin,
-          backgroundColor: values.backgroundColor,
-          borderRadius: values.borderRadius,
-        },
         props,
       });
 
@@ -783,8 +756,9 @@ const ComponentPropertyPanelV2: React.FC = () => {
               allowClear
               showSearch
               optionFilterProp='label'
-              notFoundContent={dataModels.length === 0 ? '暂无数据模型，请先在左侧 OpenAPI 面板添加' : '没有匹配的数据模型'}
-            >
+              notFoundContent={
+                dataModels.length === 0 ? '暂无数据模型，请先在左侧 OpenAPI 面板添加' : '没有匹配的数据模型'
+              }>
               {dataModels.map((model) => (
                 <Option key={model.id} value={model.id} label={model.name}>
                   <Space>

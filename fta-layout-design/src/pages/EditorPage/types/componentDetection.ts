@@ -3,7 +3,7 @@ import type { LayoutTreeNode } from '@/types/layout';
 import type { AnnotationNode } from '@fta/shared-types';
 import { LABEL_STYLES } from '../constants/CanvasConstant';
 
-export type { AnnotationNode, LayoutProperties } from '@fta/shared-types';
+export type { AnnotationNode } from '@fta/shared-types';
 
 // 节点类型枚举
 export enum NodeType {

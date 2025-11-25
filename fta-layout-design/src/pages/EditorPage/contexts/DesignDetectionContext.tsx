@@ -702,7 +702,6 @@ export const designDetectionActions = {
       width: dslNode.layoutStyle?.width || 0,
       height: dslNode.layoutStyle?.height || 0,
       props: additionalProps?.props,
-      layout: additionalProps?.layout,
       createdAt: now,
       updatedAt: now,
     };

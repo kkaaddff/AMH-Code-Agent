@@ -226,7 +226,6 @@ const buildAnnotationDetails = (annotation: AnnotationNode): Record<string, unkn
       width: Math.round(annotation.width || annotation.dslNode?.layoutStyle?.width || 0),
       height: Math.round(annotation.height || annotation.dslNode?.layoutStyle?.height || 0),
     },
-    layout: annotation.layout ?? annotation.dslNode?.layoutStyle ?? {},
     props: annotation.props ?? {},
     childrenCount: annotation.children.length,
     updatedAt: annotation.updatedAt,

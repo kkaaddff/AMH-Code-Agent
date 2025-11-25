@@ -1,6 +1,6 @@
 import type { AnnotationNode } from '@fta/shared-types';
 
-export type { AnnotationNode, DSLData, DSLNode, DesignDSL, LayoutProperties } from '@fta/shared-types';
+export type { AnnotationNode, DSLData, DSLNode, DesignDSL } from '@fta/shared-types';
 
 interface AnnotationNodeSummary {
   id: string;

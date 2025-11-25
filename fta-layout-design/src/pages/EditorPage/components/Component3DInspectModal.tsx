@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Spin } from 'antd';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -87,31 +87,28 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
 
   const annotations = useMemo(() => collectAnnotations(rootAnnotation as AnnotationNode), [rootAnnotation]);
 
-  const resolveAnnotationMetrics = useCallback(
-    (annotation: AnnotationNode) => {
-      const width = annotation.width || annotation.dslNode?.layoutStyle?.width || 0;
-      const height = annotation.height || annotation.dslNode?.layoutStyle?.height || 0;
-      if (annotation.dslNode) {
-        const absolute = calculateDSLNodeAbsolutePosition(annotation.dslNode);
-        return {
-          width,
-          height,
-          absoluteX: absolute.x,
-          absoluteY: absolute.y,
-        };
-      }
+  const resolveAnnotationMetrics = (annotation: AnnotationNode) => {
+    const width = annotation.width || annotation.dslNode?.layoutStyle?.width || 0;
+    const height = annotation.height || annotation.dslNode?.layoutStyle?.height || 0;
+    if (annotation.dslNode) {
+      const absolute = calculateDSLNodeAbsolutePosition(annotation.dslNode);
       return {
         width,
         height,
-        absoluteX: annotation.absoluteX,
-        absoluteY: annotation.absoluteY,
+        absoluteX: absolute.x,
+        absoluteY: absolute.y,
       };
-    },
-    [calculateDSLNodeAbsolutePosition]
-  );
+    }
+    return {
+      width,
+      height,
+      absoluteX: annotation.absoluteX,
+      absoluteY: annotation.absoluteY,
+    };
+  };
 
   // 从 DetectionCanvas 获取已渲染的 DSLElement DOM 节点
-  const getDSLElementFromCanvas = useCallback((annotation: AnnotationNode): HTMLElement | null => {
+  const getDSLElementFromCanvas = (annotation: AnnotationNode): HTMLElement | null => {
     if (!annotation.dslNode) {
       return null;
     }
@@ -121,32 +118,29 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
     const dslElement = document.querySelector(`[data-dsl-id="${annotation.dslNode.id}"]`) as HTMLElement;
 
     return dslElement;
-  }, []);
+  };
 
   // 创建用于捕获的容器，复制原始 DSLElement 的样式和内容
-  const createCaptureContainer = useCallback(
-    (sourceElement: HTMLElement, width: number, height: number): HTMLElement => {
-      const container = document.createElement('div');
-      container.style.width = `${width}px`;
-      container.style.height = `${height}px`;
-      container.style.position = 'absolute';
-      container.style.left = '0';
-      container.style.top = '0';
-      container.style.pointerEvents = 'none';
-      container.style.overflow = 'hidden';
+  const createCaptureContainer = (sourceElement: HTMLElement, width: number, height: number): HTMLElement => {
+    const container = document.createElement('div');
+    container.style.width = `${width}px`;
+    container.style.height = `${height}px`;
+    container.style.position = 'absolute';
+    container.style.left = '0';
+    container.style.top = '0';
+    container.style.pointerEvents = 'none';
+    container.style.overflow = 'hidden';
 
-      // 克隆原始元素以保持所有样式和渲染状态
-      const clonedElement = sourceElement.cloneNode(true) as HTMLElement;
-      clonedElement.style.transform = 'none'; // 移除可能的 transform
-      clonedElement.style.position = 'absolute';
-      clonedElement.style.left = '0';
-      clonedElement.style.top = '0';
+    // 克隆原始元素以保持所有样式和渲染状态
+    const clonedElement = sourceElement.cloneNode(true) as HTMLElement;
+    clonedElement.style.transform = 'none'; // 移除可能的 transform
+    clonedElement.style.position = 'absolute';
+    clonedElement.style.left = '0';
+    clonedElement.style.top = '0';
 
-      container.appendChild(clonedElement);
-      return container;
-    },
-    []
-  );
+    container.appendChild(clonedElement);
+    return container;
+  };
 
   useEffect(() => {
     if (!open && textureCacheRef.current.size) {
