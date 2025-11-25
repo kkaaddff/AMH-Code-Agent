@@ -1,6 +1,4 @@
-import { projectService } from '@/services/projectService';
 import type { DesignDSL } from '@/types/dsl';
-import type { DocumentReference } from '@/types/project';
 import {
   AppstoreOutlined,
   DeploymentUnitOutlined,
@@ -11,7 +9,7 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { App as AntApp, App, Button, Dropdown, Layout, Spin, Typography } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio/react';
 import AnnotationConfirmModal from './components/AnnotationConfirmModal';
 import CodeGenerationDrawer from './components/CodeGenerationDrawer';
@@ -48,7 +46,7 @@ const EditorPageContent: React.FC = () => {
   const { message, modal } = App.useApp();
 
   const editorPageStoreSnapshot = useSnapshot(editorPageStore);
-  const { setPageId, setProjectId, setCurrentPage, setSelectedDocument } = editorPageActions;
+  const { setPageId, setProjectId, setSelectedDocument, fetchPageDetail, deleteDocument } = editorPageActions;
 
   const { toggleShowAllBorders, saveAnnotations, setActiveDesignDocument } = designDetectionActions;
   const componentDetectionStoreSnapshot = useSnapshot(designDetectionStore);
@@ -73,8 +71,6 @@ const EditorPageContent: React.FC = () => {
   const [is3DModalOpen, setIs3DModalOpen] = useState(false);
   const [isDSL3DModalOpen, setIsDSL3DModalOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const [pageLoading, setPageLoading] = useState(false);
-  const [pageError, setPageError] = useState<string | null>(null);
   const [isAnnotationConfirmOpen, setIsAnnotationConfirmOpen] = useState(false);
   const [isSmartDetecting, setIsSmartDetecting] = useState(false);
 
@@ -90,26 +86,20 @@ const EditorPageContent: React.FC = () => {
     setPageId(_pageId || '');
     setProjectId(_projectId || '');
 
-    const fetchPageData = async () => {
-      setPageLoading(true);
-      setPageError(null);
+    const initPageData = async () => {
+      if (!_pageId) {
+        return;
+      }
       try {
-        const pageData = await projectService.getPageDetail(_pageId!);
-        setCurrentPage(pageData);
-        // 初始化：默认选中第一个设计文档
-        setSelectedDocument({ type: 'design', id: pageData.designDocuments?.[0]?.id || undefined });
+        await fetchPageDetail(_pageId);
         // 加载接口数据模型
         editorPageActions.loadInterfaceDataModels();
       } catch (error: any) {
-        console.error('获取页面数据失败:', error);
-        setPageError(error.message || '获取页面数据失败');
         message.error('获取页面数据失败');
-      } finally {
-        setPageLoading(false);
       }
     };
 
-    fetchPageData();
+    initPageData();
   }, []);
 
   // 初始化 DSL 数据和加载已保存的标注信息
@@ -308,9 +298,9 @@ const EditorPageContent: React.FC = () => {
     await handleGenerateCode();
   };
 
-  const handleAnnotationConfirmCancel = useCallback(() => {
+  const handleAnnotationConfirmCancel = () => {
     setIsAnnotationConfirmOpen(false);
-  }, []);
+  };
 
   // 智能识别处理函数
   const handleSmartDetection = async () => {
@@ -361,46 +351,15 @@ const EditorPageContent: React.FC = () => {
   };
 
   // 智能识别状态变化回调
-  const handleSmartDetectionChange = useCallback((detecting: boolean) => {
+  const handleSmartDetectionChange = (detecting: boolean) => {
     setIsSmartDetecting(detecting);
-  }, []);
+  };
 
   // 处理删除文档
   const handleDeleteDocument = async (type: keyof typeof TDocumentKeys, docId: string) => {
-    const { selectedDocument, currentPage } = editorPageStoreSnapshot;
-    if (!currentPage) {
-      message.error('页面数据未加载');
-      return;
-    }
-
     try {
-      // 获取当前该类型的所有文档 URL（过滤掉要删除的文档）
-      let currentDocs: DocumentReference[] | undefined = [];
-      currentDocs = currentPage[TDocumentKeys[type]] as DocumentReference[];
-
-      const updatedUrls = currentDocs
-        .filter((doc: { id: string; url: string }) => doc.id !== docId)
-        .map((doc: { id: string; url: string }) => doc.url);
-
-      // 构建更新数据
-      const updateData: { designUrls?: string[]; prdUrls?: string[]; openapiUrls?: string[] } = {};
-      if (type === 'design') {
-        updateData.designUrls = updatedUrls;
-      } else if (type === 'prd') {
-        updateData.prdUrls = updatedUrls;
-      } else if (type === 'openapi') {
-        updateData.openapiUrls = updatedUrls;
-      }
-
-      // 调用 API 更新页面
-      await projectService.updatePage(currentPage.projectId, currentPage.id, updateData);
-
+      await deleteDocument(type, docId);
       message.success('文档删除成功');
-
-      // 如果删除的是当前选中的文档，清空选择
-      if (selectedDocument?.type === type && selectedDocument?.id === docId) {
-        setSelectedDocument(null);
-      }
     } catch (error: any) {
       console.error('删除文档失败:', error);
       message.error(error.message || '删除文档失败');
@@ -413,17 +372,17 @@ const EditorPageContent: React.FC = () => {
   };
 
   // 如果页面数据加载失败
-  if (pageError) {
+  if (editorPageStoreSnapshot.pageError) {
     return (
       <div className='editor-page-error-container'>
-        <Typography.Text type='danger'>加载页面数据失败：{pageError}</Typography.Text>
+        <Typography.Text type='danger'>加载页面数据失败：{editorPageStoreSnapshot.pageError}</Typography.Text>
       </div>
     );
   }
 
   return (
     <>
-      <Spin spinning={pageLoading} size='large' tip='加载页面数据...'>
+      <Spin spinning={editorPageStoreSnapshot.pageLoading} size='large' tip='加载页面数据...'>
         <Layout className='editor-page-main-layout'>
           {/* 左侧面板：文档管理 */}
           <Sider

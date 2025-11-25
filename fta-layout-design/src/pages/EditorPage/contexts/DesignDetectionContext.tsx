@@ -1573,6 +1573,7 @@ export const designDetectionActions = {
 
 interface DesignTreeDataOptions {
   onSyncDesignDocument?: (doc: DocumentReference) => void;
+  onSettingsClick?: (documentId: string) => void;
   syncing?: boolean;
 }
 
@@ -1598,6 +1599,9 @@ export const useDesignTreeData = (options?: DesignTreeDataOptions): DataNode[] =
             isFirstLevel: true,
             isActiveDoc: isDesignSelected,
             documentName: doc.name || doc.id.substring(0, 6),
+            documentId: doc.id,
+            isMainPage: resolvedAnnotation.isMainPage,
+            onSettingsClick: options?.onSettingsClick,
           });
         }
 
@@ -1640,14 +1644,7 @@ export const useDesignTreeData = (options?: DesignTreeDataOptions): DataNode[] =
         } as DataNode;
       })
       .filter(Boolean) as DataNode[];
-  }, [
-    designDocs,
-    designStoreMap,
-    selectedDocument?.id,
-    selectedDocument?.type,
-    options?.onSyncDesignDocument,
-    isSyncing,
-  ]);
+  }, [designDocs, designStoreMap, selectedDocument?.id, selectedDocument?.type, isSyncing]);
 };
 
 //#endregion

@@ -40,14 +40,16 @@ interface ConvertOptions {
   isFirstLevel?: boolean;
   isActiveDoc?: boolean;
   documentName?: string;
+  documentId?: string;
+  isMainPage?: boolean;
   onExpandAll?: () => void;
   onCollapseAll?: () => void;
-  onSettingsClick?: () => void;
+  onSettingsClick?: (documentId: string) => void;
 }
 
 // 转换AnnotationNode为Tree DataNode
 export const convertToTreeData = (node: AnnotationNode, options: ConvertOptions = {}): DataNode => {
-  const { isFirstLevel = false, isActiveDoc = false, documentName, onSettingsClick } = options;
+  const { isFirstLevel = false, isActiveDoc = false, documentId, onSettingsClick } = options;
   const isRoot = node.isRoot;
   const isContainer = node.isContainer;
   const isMainPage = node.isMainPage;
@@ -106,7 +108,9 @@ export const convertToTreeData = (node: AnnotationNode, options: ConvertOptions 
               icon={<SettingOutlined />}
               onClick={(e) => {
                 e.stopPropagation();
-                onSettingsClick?.();
+                if (documentId) {
+                  onSettingsClick?.(documentId);
+                }
               }}
             />
           </Tooltip>

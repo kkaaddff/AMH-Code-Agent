@@ -1,12 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { App, Button, Card, Empty, Form, Input, List, Modal, Result, Space, Spin, Tag, Typography } from 'antd';
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
-import type { Page, Project, ProjectResolutionResult, CreatePageForm, CreateProjectForm } from '@/types/project';
 import { projectService } from '@/services/projectService';
+import type { CreatePageForm, CreateProjectForm, Page, Project, ProjectResolutionResult } from '@/types/project';
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { App, Button, Card, Empty, Form, Input, List, Modal, Result, Space, Spin, Tag, Typography } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const { Title, Paragraph, Text } = Typography;
 
+/**
+ * 这是一个只存在与 vscode 插件内部的页面，用于管理项目和页面
+ */
 const InternalProjectPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

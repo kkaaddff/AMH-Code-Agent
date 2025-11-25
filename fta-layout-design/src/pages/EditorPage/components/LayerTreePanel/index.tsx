@@ -1,14 +1,16 @@
-import { projectService } from '@/services/projectService';
 import { DocumentReference } from '@/types/project';
 import { getDocumentStatusColor, getDocumentStatusText } from '@/utils/documentStatus';
 import {
   ApiOutlined,
+  CloseOutlined,
   DeleteOutlined,
   DownOutlined,
   FileImageOutlined,
   FileTextOutlined,
+  FlagOutlined,
   LinkOutlined,
   PlusOutlined,
+  ReloadOutlined,
   SaveOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
@@ -63,7 +65,6 @@ const formatTimestamp = (value?: number) => {
 
 const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSave, onGenerateCode }) => {
   const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
-  const { pageId, projectId } = useSnapshot(editorPageStore);
   const { modal, message } = App.useApp();
   const { selectedAnnotation, expandedKeys } = useSnapshot(designDetectionStore);
 
@@ -75,36 +76,112 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
   const [modelStatus, setModelStatus] = useState<ModelStatus>('unknown');
   const [modelStatusMessage, setModelStatusMessage] = useState<string>('');
 
-  const handleSyncDesignDocument = useCallback(
-    async (doc: DocumentReference) => {
-      if (!projectId || !pageId) {
-        message.error('缺少项目或页面信息');
-        return;
-      }
+  // 设置弹窗状态
+  const [settingsModalVisible, setSettingsModalVisible] = useState(false);
+  const [settingsDocumentId, setSettingsDocumentId] = useState<string | null>(null);
 
-      setSyncingStatus(true);
+  const handleSyncDesignDocument = async (doc: DocumentReference) => {
+    setSyncingStatus(true);
 
-      try {
-        await projectService.syncDocument(projectId, pageId, 'design', doc.id);
-        await designDetectionActions.fetchDesignDocumentDSL(doc, { force: true });
-        message.success('设计文档同步成功');
-      } catch (error: any) {
-        console.error(`设计文档同步失败: ${doc.id}`, error);
-        const errorMessage = error?.message ?? '';
-        if (errorMessage.includes('DSL')) {
-          message.warning('设计文档同步已触发，DSL 数据暂未生成');
-        } else {
-          message.error(errorMessage || '设计文档同步失败');
-        }
-      } finally {
-        setSyncingStatus(false);
+    try {
+      await editorPageActions.syncDocument('design', doc.id);
+      await designDetectionActions.fetchDesignDocumentDSL(doc, { force: true });
+      message.success('设计文档同步成功');
+    } catch (error: any) {
+      console.error(`设计文档同步失败: ${doc.id}`, error);
+      const errorMessage = error?.message ?? '';
+      if (errorMessage.includes('DSL')) {
+        message.warning('设计文档同步已触发，DSL 数据暂未生成');
+      } else {
+        message.error(errorMessage || '设计文档同步失败');
       }
-    },
-    [message, pageId, projectId]
-  );
+    } finally {
+      setSyncingStatus(false);
+    }
+  };
+
+  // 打开设置弹窗
+  const handleOpenSettings = useCallback((documentId: string) => {
+    setSettingsDocumentId(documentId);
+    setSettingsModalVisible(true);
+  }, []);
+
+  // 关闭设置弹窗
+  const handleCloseSettings = useCallback(() => {
+    setSettingsModalVisible(false);
+    setSettingsDocumentId(null);
+  }, []);
+
+  // 设置为主页面
+  const handleSetMainPage = useCallback(async () => {
+    if (!settingsDocumentId) return;
+
+    const docState = designDetectionStore.designStoreMap[settingsDocumentId];
+    if (!docState?.rootAnnotation) {
+      message.error('未找到标注数据');
+      return;
+    }
+
+    const currentIsMainPage = docState.rootAnnotation.isMainPage;
+    await designDetectionActions.updateAnnotation(docState.rootAnnotation.id, {
+      isMainPage: !currentIsMainPage,
+    });
+
+    message.success(currentIsMainPage ? '已取消主页面标记' : '已标记为主页面');
+    handleCloseSettings();
+  }, [settingsDocumentId, message, handleCloseSettings]);
+
+  // 删除设计文档
+  const handleDeleteDesignDocument = () => {
+    if (!settingsDocumentId) return;
+
+    modal.confirm({
+      title: '确认删除',
+      content: '确定要删除这个设计文档吗？此操作不可恢复。',
+      okText: '确认删除',
+      okType: 'danger',
+      cancelText: '取消',
+      centered: true,
+      onOk: () => {
+        onDeleteDocument('design', settingsDocumentId);
+        handleCloseSettings();
+      },
+    });
+  };
+
+  // 重新同步设计文档（从设置弹窗触发）
+  const handleResyncFromSettings = () => {
+    if (!settingsDocumentId) return;
+
+    const doc = currentPage?.designDocuments?.find((d) => d.id === settingsDocumentId);
+    if (!doc) {
+      message.error('未找到设计文档');
+      return;
+    }
+
+    modal.confirm({
+      title: '确认重新同步',
+      content: '重新同步将从远程获取最新的设计数据，确定要继续吗？',
+      okText: '确认同步',
+      cancelText: '取消',
+      centered: true,
+      onOk: async () => {
+        handleCloseSettings();
+        await handleSyncDesignDocument(doc as DocumentReference);
+      },
+    });
+  };
+
+  // 获取当前设置文档的主页面状态
+  const settingsDocIsMainPage = useMemo(() => {
+    if (!settingsDocumentId) return false;
+    const docState = designDetectionStore.designStoreMap[settingsDocumentId];
+    return docState?.rootAnnotation?.isMainPage ?? false;
+  }, [settingsDocumentId]);
 
   const designTreeData = useDesignTreeData({
     onSyncDesignDocument: handleSyncDesignDocument,
+    onSettingsClick: handleOpenSettings,
     syncing: syncingStatus,
   });
 
@@ -217,11 +294,6 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
   };
 
   const handleAddDocumentSubmit = async (values: { url: string; name?: string }) => {
-    if (!projectId || !pageId) {
-      message.error('缺少项目或页面信息');
-      return;
-    }
-
     try {
       // 根据文档类型，获取当前的所有文档 URL
       const currentDocs = currentPage?.[TDocumentKeys[addDocType]];
@@ -243,8 +315,8 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
         updateData.openapiUrls = updatedUrls;
       }
 
-      // 调用 API 更新页面
-      await projectService.updatePage(projectId, pageId, updateData);
+      // 通过 context 更新页面
+      await editorPageActions.updatePage(updateData);
 
       message.success('文档添加成功');
       setAddDocModalVisible(false);
@@ -531,6 +603,34 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* 设计文档设置弹窗 */}
+      <Modal
+        title='设计文档设置'
+        open={settingsModalVisible}
+        onCancel={handleCloseSettings}
+        footer={null}
+        width={320}
+        centered>
+        <Space direction='vertical' style={{ width: '100%' }} size='middle'>
+          <Button block icon={<ReloadOutlined />} onClick={handleResyncFromSettings} loading={syncingStatus}>
+            重新同步
+          </Button>
+          <Button
+            block
+            icon={<FlagOutlined />}
+            onClick={handleSetMainPage}
+            type={settingsDocIsMainPage ? 'primary' : 'default'}>
+            {settingsDocIsMainPage ? '取消主页面标记' : '标记为 main-page'}
+          </Button>
+          <Button block danger icon={<DeleteOutlined />} onClick={handleDeleteDesignDocument}>
+            删除
+          </Button>
+          <Button block icon={<CloseOutlined />} onClick={handleCloseSettings}>
+            退出
+          </Button>
+        </Space>
       </Modal>
     </div>
   );
