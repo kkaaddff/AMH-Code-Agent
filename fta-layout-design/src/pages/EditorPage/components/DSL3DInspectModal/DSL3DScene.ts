@@ -174,6 +174,27 @@ export class DSL3DScene {
     this.renderer.setSize(width, height);
   };
 
+  /**
+   * 从相交结果中找到面积最小的节点
+   * @param intersects 射线相交结果数组
+   * @returns 面积最小的相交结果，如果没有则返回 null
+   */
+  private findSmallestAreaIntersection(intersects: THREE.Intersection[]): THREE.Intersection | null {
+    if (intersects.length === 0) return null;
+
+    return intersects.reduce((min, curr) => {
+      const minInfo = min.object.userData.nodeInfo;
+      const currInfo = curr.object.userData.nodeInfo;
+
+      // 计算面积或尺寸，优先用 area，没有就 width*height
+      const minArea = minInfo.area ?? (minInfo.width && minInfo.height ? minInfo.width * minInfo.height : Infinity);
+      const currArea =
+        currInfo.area ?? (currInfo.width && currInfo.height ? currInfo.width * currInfo.height : Infinity);
+
+      return currArea < minArea ? curr : min;
+    }, intersects[0]);
+  }
+
   private onMouseMove = (event: MouseEvent) => {
     if (this.isMouseDown && this.lastMousePosition) {
       const deltaX = event.clientX - this.lastMousePosition.x;
@@ -194,8 +215,9 @@ export class DSL3DScene {
     this.raycaster.setFromCamera(this.mouse, this.camera);
     const intersects = this.raycaster.intersectObjects(this.fillMeshes, false);
 
-    if (intersects.length > 0) {
-      const hit = intersects[0];
+    const hit = this.findSmallestAreaIntersection(intersects);
+
+    if (hit) {
       const info = hit.object.userData.nodeInfo;
 
       if (this.hoveredNodeId !== info.id) {
@@ -228,16 +250,15 @@ export class DSL3DScene {
     this.raycaster.setFromCamera(this.mouse, this.camera);
     const intersects = this.raycaster.intersectObjects(this.fillMeshes, false);
 
-    if (intersects.length > 0) {
-      const hit = intersects[0];
+    const hit = this.findSmallestAreaIntersection(intersects);
+
+    if (hit) {
       const info = hit.object.userData.nodeInfo;
 
       this.selectedNodeId = info.id;
       if (this.options.onSelect) this.options.onSelect(info);
-    } else {
-      return;
+      this.updateHighlights();
     }
-    this.updateHighlights();
   };
 
   private onMouseDown = (event: MouseEvent) => {
