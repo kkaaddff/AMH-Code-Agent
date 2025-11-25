@@ -53,6 +53,8 @@ const SchemaFieldEditor: React.FC<{
       }
       if (value !== 'array') {
         delete newFields[index].items;
+      } else if (value === 'array' && newFields[index].items) {
+        newFields[index].items = { ...EMPTY_SCHEMA_FIELD };
       }
     }
 
@@ -170,7 +172,7 @@ const SchemaFieldEditor: React.FC<{
                 </div>
               );
             }
-            if (record.type === 'array' && record.items) {
+            if (record.type === 'array') {
               return (
                 <div style={{ padding: '8px 0' }}>
                   <Text type='secondary' style={{ fontSize: 12, marginBottom: 8, display: 'block' }}>
@@ -179,7 +181,7 @@ const SchemaFieldEditor: React.FC<{
                   <Space direction='vertical' style={{ width: '100%' }}>
                     <Select
                       size='small'
-                      value={record.items.type}
+                      value={record.items?.type}
                       onChange={(value) =>
                         handleItemsChange(index, { ...record.items!, type: value as SchemaFieldType })
                       }
@@ -190,9 +192,9 @@ const SchemaFieldEditor: React.FC<{
                         </Select.Option>
                       ))}
                     </Select>
-                    {record.items.type === 'object' && (
+                    {record.items?.type === 'object' && (
                       <SchemaFieldEditor
-                        fields={record.items.properties || []}
+                        fields={record.items?.properties || []}
                         onChange={(props) => handleItemsChange(index, { ...record.items!, properties: props })}
                         level={level + 1}
                       />

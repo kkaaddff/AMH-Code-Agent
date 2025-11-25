@@ -120,4 +120,3 @@ export const SCHEMA_FIELD_TYPE_OPTIONS: { value: SchemaFieldType; label: string 
   { value: 'object', label: '对象' },
   { value: 'array', label: '数组' },
 ];
-

@@ -434,7 +434,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
       <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
         <Collapse
           size='small'
-          defaultActiveKey={['design']}
+          defaultActiveKey={['design', 'openapi', 'prd']}
           expandIconPosition='end'
           style={{ background: 'transparent', border: 'none' }}
           items={collapseItems}
