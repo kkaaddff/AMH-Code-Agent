@@ -40,6 +40,44 @@ const buildPreviewDSL = (node: DSLNode, dslData: DesignDSL | null): DesignDSL | 
   };
 };
 
+const HiddenNodePreview: React.FC<{ dsl: DesignDSL | null }> = ({ dsl }) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    const content = contentRef.current;
+    if (!wrapper || !content) return;
+
+    const measure = () => {
+      const { clientWidth: wrapperWidth, clientHeight: wrapperHeight } = wrapper;
+      if (!wrapperWidth || !wrapperHeight) return;
+      const rect = content.getBoundingClientRect();
+      const contentWidth = rect.width || 1;
+      const contentHeight = rect.height || 1;
+      const nextScale = Math.min(wrapperWidth / contentWidth, wrapperHeight / contentHeight, 1);
+      setScale(nextScale || 1);
+    };
+
+    measure();
+    const resizeObserver = new ResizeObserver(() => measure());
+    resizeObserver.observe(wrapper);
+    return () => resizeObserver.disconnect();
+  }, [dsl]);
+
+  return (
+    <div ref={wrapperRef} className='dsl-3d-inspect-modal__hidden-preview'>
+      <div
+        ref={contentRef}
+        className='dsl-3d-inspect-modal__hidden-preview-inner'
+        style={{ transform: `scale(0.25)`, transformOrigin: 'top left' }}>
+        {dsl ? <DSLElement dslData={dsl} isLeaf /> : null}
+      </div>
+    </div>
+  );
+};
+
 const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) => {
   const { message, modal } = App.useApp();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -139,74 +177,19 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     return nodes;
   }, [dslData]);
 
-  const HiddenNodePreview: React.FC<{ dsl: DesignDSL | null }> = ({ dsl }) => {
-    const wrapperRef = useRef<HTMLDivElement>(null);
-    const contentRef = useRef<HTMLDivElement>(null);
-    const [scale, setScale] = useState(1);
-
-    useLayoutEffect(() => {
-      const wrapper = wrapperRef.current;
-      const content = contentRef.current;
-      if (!wrapper || !content) return;
-
-      const measure = () => {
-        const { clientWidth: wrapperWidth, clientHeight: wrapperHeight } = wrapper;
-        if (!wrapperWidth || !wrapperHeight) return;
-        const rect = content.getBoundingClientRect();
-        const contentWidth = rect.width || 1;
-        const contentHeight = rect.height || 1;
-        const nextScale = Math.min(wrapperWidth / contentWidth, wrapperHeight / contentHeight, 1);
-        setScale(nextScale || 1);
-      };
-
-      measure();
-      const resizeObserver = new ResizeObserver(() => measure());
-      resizeObserver.observe(wrapper);
-      return () => resizeObserver.disconnect();
-    }, [dsl]);
-
-    return (
-      <div ref={wrapperRef} className='dsl-3d-inspect-modal__hidden-preview'>
-        <div
-          ref={contentRef}
-          className='dsl-3d-inspect-modal__hidden-preview-inner'
-          style={{ transform: `scale(0.25)`, transformOrigin: 'top left' }}>
-          {dsl ? <DSLElement dslData={dsl} /> : null}
-        </div>
-      </div>
-    );
-  };
-
   // Initialize Scene
   useEffect(() => {
     if (open && !sceneRef.current) {
-      // Small timeout to ensure container has dimensions
-
       setTimeout(() => {
         if (!containerRef.current) return;
         sceneRef.current = new DSL3DScene(containerRef.current, {
           onSelect: (node) => setSelectedNode(node),
-          onHover: () => {
-            // Optional: handle hover state in React if needed,
-            // but currently we only use it for cursor style in the scene class
-          },
+          onHover: () => {},
         });
         // Initial update
         sceneRef.current.updateNodes(flatNodes);
       }, 200);
     }
-
-    // Cleanup when modal closes (unmounts or open becomes false)
-    // Actually, we want to keep the scene instance if possible, but since the modal unmounts the DOM,
-    // we probably need to dispose it.
-    // The user requirement says: "threejs 实例只有在第一次创建页面时创建" (Threejs instance is created only when the page is first created)
-    // But this is a Modal. If the Modal is destroyed, the DOM is gone.
-    // If the Modal uses `destroyOnClose={false}` (or `destroyOnHidden` which is set to true in the original code), then the DOM might be gone.
-    // The original code has `destroyOnHidden`.
-    // If we want to persist the scene, we need to remove `destroyOnHidden` or manage the DOM manually.
-    // However, "第一次创建页面时创建" might mean "when the modal is first opened".
-    // Let's assume we should dispose it when the modal is closed to avoid memory leaks,
-    // BUT we should avoid re-creating it if the data changes while it's open.
 
     return () => {
       if (!open && sceneRef.current) {
@@ -379,7 +362,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
               {tmpDSLData ? (
                 <div className='dsl-3d-inspect-modal__preview-wrapper'>
                   <div className='dsl-3d-inspect-modal__preview'>
-                    <DSLElement dslData={tmpDSLData} />
+                    <DSLElement dslData={tmpDSLData} isLeaf />
                   </div>
                 </div>
               ) : (

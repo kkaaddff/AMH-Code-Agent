@@ -2,11 +2,53 @@ import { Config, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import axios from 'axios';
 import * as https from 'https';
 import { DSLData } from '../../types';
+import { normalizeNumericValues } from '../../utils/design/dsl';
 
 export interface MasterGoDslResponse {
   dsl: DSLData;
   componentDocumentLinks: string[];
 }
+
+const addGroupLayoutToChild = (
+  childLayout: DSLData['nodes'][number]['layoutStyle'],
+  groupLayout: DSLData['nodes'][number]['layoutStyle']
+) => {
+  if (!groupLayout) return childLayout;
+  const mergedLayout: NonNullable<typeof childLayout> = { ...(childLayout || {}) };
+  const offsetKeys: Array<keyof NonNullable<typeof groupLayout>> = ['relativeX', 'relativeY', 'left', 'top', 'rotate'];
+
+  offsetKeys.forEach((key) => {
+    const groupValue = groupLayout?.[key];
+    if (typeof groupValue === 'number') {
+      const currentValue = mergedLayout[key];
+      mergedLayout[key] = (typeof currentValue === 'number' ? currentValue : 0) + groupValue;
+    }
+  });
+
+  return mergedLayout;
+};
+
+const unwrapGroupNodes = (nodes?: DSLData['nodes']): DSLData['nodes'] => {
+  if (!nodes) return [];
+  return nodes.flatMap((node) => {
+    if (node.type === 'GROUP') {
+      const mergedChildren =
+        node.children?.map((child) => ({
+          ...child,
+          layoutStyle: addGroupLayoutToChild(child.layoutStyle, node.layoutStyle),
+        })) || [];
+      return unwrapGroupNodes(mergedChildren);
+    }
+
+    const processedChildren = node.children ? unwrapGroupNodes(node.children) : undefined;
+    return [
+      {
+        ...node,
+        children: processedChildren,
+      },
+    ];
+  });
+};
 
 @Provide()
 @Scope(ScopeEnum.Singleton)
@@ -111,23 +153,27 @@ export class MasterGoServiceV1 {
     const httpsAgent = new https.Agent({
       rejectUnauthorized: false,
     });
-    try {
-      const response = await axios.get(`${this.getBaseUrl()}/mcp/dsl`, {
-        timeout: 30000,
-        params: { fileId, layerId },
-        headers: this.getCommonHeader(),
-        httpsAgent,
-      });
-      const dslData = response.data;
 
-      return {
-        dsl: dslData,
-        componentDocumentLinks: this.extractComponentDocumentLinks(dslData),
-      };
-    } catch (error) {
-      debugger;
-      throw error;
-    }
+    const response = await axios.get(`${this.getBaseUrl()}/mcp/dsl`, {
+      timeout: 30000,
+      params: { fileId, layerId },
+      headers: this.getCommonHeader(),
+      httpsAgent,
+    });
+    const dslData = response.data;
+
+    const processedDSL = {
+      dsl: {
+        ...dslData,
+        nodes: unwrapGroupNodes(dslData.nodes),
+      },
+    };
+    // 1. 先进行数值精度处理
+    const normalizedDSL = normalizeNumericValues(processedDSL);
+    return {
+      dsl: normalizedDSL.dsl,
+      componentDocumentLinks: this.extractComponentDocumentLinks(dslData),
+    };
   }
 
   /**

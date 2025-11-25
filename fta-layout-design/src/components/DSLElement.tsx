@@ -6,7 +6,6 @@ import {
   DSLPathNode,
   DSLFrameNode,
   DSLInstanceNode,
-  DSLData,
   DSLStyles,
   DesignDSL,
 } from '../types/dsl';
@@ -23,6 +22,7 @@ import { parseBorderStyle, parseEffectStyle } from '../utils/layoutUtils';
 interface DSLElementProps {
   node?: DSLNode;
   dslData?: DesignDSL | null;
+  isLeaf?: boolean;
   onSelect?: (nodeId: string | null) => void;
   onHover?: (nodeId: string | null) => void;
   selectedNodeId?: string | null;
@@ -40,7 +40,15 @@ const SELECTION_STYLES = {
   },
 };
 
-const DSLElement: React.FC<DSLElementProps> = ({ node, dslData, onSelect, onHover, selectedNodeId, hoveredNodeId }) => {
+const DSLElement: React.FC<DSLElementProps> = ({
+  node,
+  dslData,
+  onSelect,
+  onHover,
+  selectedNodeId,
+  hoveredNodeId,
+  isLeaf = false,
+}) => {
   const currentNode = node || dslData?.dsl.nodes[0];
   const styles: DSLStyles = dslData?.dsl.styles ?? {};
 
@@ -71,7 +79,7 @@ const DSLElement: React.FC<DSLElementProps> = ({ node, dslData, onSelect, onHove
   };
 
   const combinedStyle: React.CSSProperties = {
-    ...parseLayoutStyle(currentNode.layoutStyle),
+    ...parseLayoutStyle(currentNode.layoutStyle, isLeaf),
     backgroundColor:
       'fill' in currentNode && currentNode.fill ? parseColor(currentNode.fill as string, styles) : 'rgba(0, 0, 0, 0)',
     ...('borderRadius' in currentNode && currentNode.borderRadius
@@ -238,7 +246,7 @@ const DSLElement: React.FC<DSLElementProps> = ({ node, dslData, onSelect, onHove
             width: `${width}px`,
             height: `${height}px`,
             position: 'relative',
-            ...parseLayoutStyle(pathNode.layoutStyle),
+            ...parseLayoutStyle(pathNode.layoutStyle, isLeaf),
           }}
           {...elementProps}>
           <svg
