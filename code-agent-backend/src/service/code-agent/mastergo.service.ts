@@ -2,7 +2,7 @@ import { Config, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import axios from 'axios';
 import * as https from 'https';
 import { DSLData } from '../../types';
-import { normalizeNumericValues } from 'src/utils/design/dsl';
+import { normalizeNumericValues } from '../../utils/design/dsl';
 
 export interface MasterGoDslResponse {
   dsl: DSLData;
@@ -153,30 +153,27 @@ export class MasterGoServiceV1 {
     const httpsAgent = new https.Agent({
       rejectUnauthorized: false,
     });
-    try {
-      const response = await axios.get(`${this.getBaseUrl()}/mcp/dsl`, {
-        timeout: 30000,
-        params: { fileId, layerId },
-        headers: this.getCommonHeader(),
-        httpsAgent,
-      });
-      const dslData = response.data;
 
-      const processedDSL = {
-        dsl: {
-          ...dslData,
-          nodes: unwrapGroupNodes(dslData.nodes),
-        },
-      };
-      // 1. 先进行数值精度处理
-      const normalizedDSL = normalizeNumericValues(processedDSL);
-      return {
-        dsl: normalizedDSL.dsl,
-        componentDocumentLinks: this.extractComponentDocumentLinks(dslData),
-      };
-    } catch (error) {
-      throw error;
-    }
+    const response = await axios.get(`${this.getBaseUrl()}/mcp/dsl`, {
+      timeout: 30000,
+      params: { fileId, layerId },
+      headers: this.getCommonHeader(),
+      httpsAgent,
+    });
+    const dslData = response.data;
+
+    const processedDSL = {
+      dsl: {
+        ...dslData,
+        nodes: unwrapGroupNodes(dslData.nodes),
+      },
+    };
+    // 1. 先进行数值精度处理
+    const normalizedDSL = normalizeNumericValues(processedDSL);
+    return {
+      dsl: normalizedDSL.dsl,
+      componentDocumentLinks: this.extractComponentDocumentLinks(dslData),
+    };
   }
 
   /**
