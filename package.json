@@ -2,16 +2,20 @@
   "name": "amh-code-agent",
   "private": true,
   "version": "0.0.0",
-  "packageManager": "yarn@1.22.22",
-  "workspaces": [
-    "shared-types",
-    "code-agent-backend",
-    "fta-layout-design",
-    "fta-agent-core"
-  ],
+  "workspaces": {
+    "packages": [
+      "shared-types",
+      "code-agent-backend",
+      "fta-layout-design",
+      "fta-agent-core"
+    ],
+    "nohoist": [
+      "**/fta-layout-design/**"
+    ]
+  },
   "scripts": {
     "bootstrap": "yarn install",
-    "build": "yarn workspaces run build",
+    "build": "yarn workspace @fta/shared-types build && yarn workspace @fta/agent-core build && yarn workspace code-agent-backend build",
     "dev:backend": "yarn workspace code-agent-backend dev",
     "dev:frontend": "yarn workspace master-go-design dev",
     "dev:replayer": "yarn workspace messages-replayer replay",
