@@ -1,85 +1,73 @@
 # Repository Guide
 
 ## Monorepo Layout
-- `code-agent-backend/` – Midway 3 + Egg web service (Node 20.19.5) that ingests MasterGo links, versions DSL + annotations, generates requirement docs through the model gateway, orchestrates Bull-based code generation tasks, and exposes project/DSL utilities plus the `/neo/send` streaming agent endpoint.
-- `fta-layout-design/` – React 19 + TypeScript + Vite app that hosts the dashboard, requirement & technical overviews, and the component-detection editor (Valtio stores + Ant Design). Shared docs such as `docs/function-inventory.md` and `docs/refactor-opportunities.md` live here.
-- `messages-replayer/` – Lightweight Node 18+ CLI that replays `messages.log` sessions and can re-send them to any OpenAI-compatible endpoint (uses `MODEL_*` env vars).
-- `fta-agent-core/` – TypeScript agent runtime powering NEOVATE CLI flows; wraps `AgentService`, run-loop/tooling, background task manager, MCP integration, and the `runFrontendProjectWorkflow` helper. See `fta-agent-core/docs/*.md` for lifecycle diagrams and workflow guidance.
-- Keep generated assets (`dist/`, `logs/`, `run/`, `files-cache/`, `output/`) untracked.
+
+- `shared-types/` – Shared TypeScript interfaces (DSL, annotations, model metrics) consumed by backend, frontend, and agent-core.
+- `code-agent-backend/` – Midway 3 service (Node 20) that proxies the model gateway, converts MasterGo DSL PATH nodes to OSS PNG layers with Redis/Mongo caching, manages projects/pages/docs, exposes interface data models CRUD, streams the frontend workflow via SSE, and surfaces model-metrics snapshots from Redis.
+- `fta-layout-design/` – React 19 + Vite 5 UI with Ant Design compact theme. Default route is an internal project binding page (for VSCode connector) plus the component-detection editor, marketing pages, and a streaming markdown demo.
+- `fta-agent-core/` – TypeScript agent runtime providing `createAgentService` and `runFrontendProjectWorkflow` (todo/file-draft/component-doc tools, ai-sdk LLMs). Tests sit beside sources; build copies mock specs.
+- `messages-replayer/` – Small Node 18+ CLI that parses `messages.log`, replays locally, or re-sends to an OpenAI-compatible endpoint.
+- Keep generated assets (`dist/`, `logs/`, `run/`, `files-cache/`, `output/`, `mock-temp/`) out of git.
 
 ## Workflow Basics
-- Use Yarn workspaces. Install deps once via `yarn install` at repo root; run scripts with `yarn workspace <name> <cmd>` or inside each package.
-- Always set `workdir` when running commands and stay inside package folders.
-- Prefer `rg`/`rg --files` for search; avoid destructive git commands.
+
+- Use Yarn workspaces at the repo root (`yarn install` once). Run package scripts from each folder or via `yarn workspace <name> <cmd>`.
+- Always set `workdir` on shell commands and stay inside the target package.
+- Prefer `rg` / `rg --files` for search; avoid destructive git commands.
 - Follow plan-tool rules (no single-step plans; update statuses as you go).
-- Use package scripts (`npm run …`, `yarn …`) over raw binaries; keep generated assets out of git.
-- Add concise comments only when logic is non-obvious; respect existing formatting.
-- Document manual verification when tests aren’t run; keep env secrets out of source.
-
-## Backend Service (`code-agent-backend/`)
-- Entry: `bootstrap.js`/`start.sh`; dev server via `midway-bin dev --ts` on port 7001. Config lives in `src/config/*.ts`; runtime env comes from `.env` + Lion config center.
-- Structure: controllers in `src/controller/` (`design/*`, `code-agent/*`, `neovate`), DTOs under `src/dto/`, entities in `src/entity/`, services split by domain (`design`, `code-agent`, `common`, `oss`, `neovate-code`), queues in `src/queue/`, utilities in `src/utils/`, shared types in `src/types/`.
-- Domain flows:
-  - **Design documents** (`DesignDocumentService`): pulls DSL + component document links with `MasterGoService`, snapshots DSL revisions, computes digests, and caches serialized DSL in Redis (`design:dsl:<id>[:revision]`).
-  - **Component annotation** (`DesignComponentAnnotationService`): versioned tree stored in Mongo, cached in Redis (`design:annotations:*`) and diff-able via `diffAnnotations`.
-  - **Requirement docs** (`DesignRequirementDocumentService` + `RequirementSpecModelService`): streams Markdown over SSE while `ModelGatewayService` talks to `MODEL_ENDPOINT`; falls back to non-stream generation and exports `.md` into `files-cache/design/requirement-docs/`.
-  - **Code generation tasks**: `DesignCodeGenerationTaskService` owns task lifecycle/logs and dispatches Bull jobs to `src/queue/design/code-generation.processor.ts`, which currently assembles a README + optional requirement doc and writes a ZIP under `files-cache/design/codegen/`.
-  - **Design DSL utilities** (`DesignDSLService`): reads `DesignDSL.json`, converts PATH nodes into PNG-backed LAYER nodes with `sharp`, persists assets in Mongo (`DesignPathAssetEntity`) and Redis, and exposes `/code-agent/dsl/*` plus Redis cache helpers.
-  - **Project hub** (`ProjectService` + `controller/code-agent/project.ts`): CRUD for projects/pages, document reference syncing, MasterGo DSL pulls via `MasterGoServiceV1`, and document status tracking.
-  - **Neovate agent** (`controller/neovate/index.ts`): SSE endpoint `/neo/send` that instantiates `service/neovate-code/*`, streams iteration/todo updates, and integrates plugins + tool calls configured via `MODEL_*` envs.
-- Generated ZIPs/exports serve through `/filesCache/<key>`. Redis + Mongo credentials sit in `config.default.ts`; respect production hosts when testing locally.
-
-## Frontend (`fta-layout-design/`)
-- Requirements: Node 20.19.5, Vite 5, React 19 + Ant Design 5 (compact theme). Aliases defined in `vite.config.ts` (`@`, `components`, `hooks`, etc.).
-- Key entry points: `src/main.tsx`, `src/App.tsx`, and config-driven routing in `src/config/routes.tsx`. Layout shell sits in `src/components/Layout.tsx`.
-- Pages:
-  - `src/pages/HomePage/` – overview dashboard with tabbed Project/Asset views, backed by `useProject()` (Valtio store) and the `/code-agent/project/*` API.
-  - `src/pages/RequirementPage.tsx` & `TechnicalPage.tsx` – marketing/overview content for requirement analysis and technical stack.
-  - `src/pages/EditorPage/EditorPageComponentDetect.tsx` – the main detection workspace containing the detection canvas, layer tree, annotation confirmation, property panel, PRD/OpenAPI panels, 3D inspector, and the code-generation drawer that streams updates from `AgentScheduler` or `SSEScheduler`.
-- State management:
-  - `src/contexts/ProjectContext.tsx` – canonical project/page/doc store with async actions delegated to `apiServices.project`.
-  - `src/pages/EditorPage/contexts/*` – `EditorPageContext`, `DesignDetectionContext` (annotation tree, selection, DSL interactions), `DSLDataContext` (node visibility), and `CodeGenerationContext` (drawer, thought chain, todo syncing).
-  - Component detection utilities (`src/pages/EditorPage/components/*` + `.../utils`) map DSL nodes to annotation nodes and persist versions through backend APIs.
-- Services (`src/services/*.ts`) wrap `api.requirement`, `api.project`, etc., and can fall back to mock data through `VITE_ENABLE_MOCK`. `src/utils/apiService.ts` centralizes fetch logic and honours `VITE_API_BASE_URL` + timeout.
-- Local documentation: `docs/function-inventory.md` (exhaustive function map) & `docs/refactor-opportunities.md` (tech debt log).
-
-## Agent Core Library (`fta-agent-core/`)
-- Purpose: reusable LLM agent runtime for CLI/automation. Exposes `createAgentService` (Context + Session + runLoop) and `runFrontendProjectWorkflow` (one-shot frontend generation pipeline with todo/spec/file-draft tools).
-- Key files: `src/agentService.ts`, `src/loop.ts`, `src/tool.ts`, `src/frontendProjectService.ts`, `src/prompts/*`, `src/tools/*`, `src/context.ts`, `src/session.ts`.
-- Docs: `docs/agent-service-lifecycle.md` (architecture + call chains), `docs/frontend-project-workflow.md` (parameter/return contract), `docs/runFrontendProjectWorkflow-browser-compatibility.md`.
-- Build script copies `mock-specs` into `dist` (run via `yarn build`); `yarn typecheck` validates TS. Optional unit specs live beside sources (`*.test.ts`, `vitest.config.ts`).
-
-## Message Replayer (`messages-replayer/`)
-- Parses `../messages.log`, replays sessions verbatim (`npm run replay`), or re-sends each `uid` bucket to a live endpoint with `npm run replay:live` (requires `MODEL_ENDPOINT`, `MODEL_API_KEY`, optional `MODEL_NAME`, `MODEL_TEMPERATURE`, `MODEL_TIMEOUT`). Parsed summaries available via `npm run parse`.
-- Core files: `src/parser.js`, `src/replayer.js`, `src/llmClient.js`, `src/config.js`. Outputs live in `messages-replayer/output/`.
+- Use package scripts over raw binaries; add concise comments only when logic is non-obvious.
+- Document manual verification when tests aren’t run; never leak env secrets.
 
 ## Build & Test Commands
-| Package | Install | Develop | Build/Start | Quality & Tests |
-| --- | --- | --- | --- | --- |
-| `code-agent-backend/` | `npm install` | `npm run dev` (hot reload) | `npm run build && npm start`, or `./start.sh <port>` | `npm run lint`, `npm run lint:fix`, `npm run prettier`, `npm run test`, `npm run cov` |
-| `fta-layout-design/` | `npm install` | `npm run dev` | `npm run build`, `npm run preview` | (Add Vitest/RTL when touching logic; currently manual verification) |
-| `fta-agent-core/` | `yarn install` | N/A | `yarn build` | `yarn typecheck` (use `npx vitest` when editing tests) |
-| `messages-replayer/` | `npm install` | `npm run replay` (default) | N/A | N/A |
 
-## Coding Expectations
-- Backend: follow `mwts` (2 spaces, single quotes, decorators on separate lines, no dangling semicolons). Organize services/dtos/entities under matching folders and keep controller/service names aligned. Use `Provide`/`Scope` consistently and leverage `Config`, `InjectEntityModel`, and `InjectQueue` instead of manual wiring.
-- Frontend: 2-space indentation, PascalCase components/contexts, camelCase hooks/utilities, constants in `UPPER_SNAKE_CASE`. Prefer derived state via selectors/memos, keep Valtio stores single-purpose, and reuse Ant Design tokens/components.
-- Avoid cross-cutting edits that span backend + frontend + CLI in a single PR unless absolutely necessary.
+| Package                | Develop                | Build/Start                                  | Quality & Tests                                                     |
+| ---------------------- | ---------------------- | -------------------------------------------- | ------------------------------------------------------------------- |
+| `shared-types/`        | `yarn workspace @fta/shared-types typecheck` | `yarn workspace @fta/shared-types build` | —                                                                   |
+| `code-agent-backend/`  | `npm run dev`          | `npm run build && npm start`                 | `npm run lint`, `npm run lint:fix`, `npm run prettier`, `npm run test`, `npm run cov` |
+| `fta-layout-design/`   | `npm run dev`          | `npm run build` / `npm run preview`          | Add Vitest/RTL when touching logic; otherwise manual verification   |
+| `fta-agent-core/`      | —                      | `yarn build`                                 | `yarn typecheck` (use `npx vitest` for specs)                       |
+| `messages-replayer/`   | `npm run replay`       | —                                            | `npm run parse`; live mode via `npm run replay:live`                |
 
-## Testing & Verification
-- Backend: place Jest/Midway specs under `test/<feature>/*.test.ts`, boot services with `@midwayjs/mock`, and exercise controller DTO validation. Run `npm run cov` before merging and explain any coverage deltas.
-- Frontend: no automated suite today; when adding logic-heavy code, colocate Vitest + React Testing Library tests or document manual verification steps (UI flows exercised, API mocks used).
-- CLI: smoke-test `npm run parse` and `npm run replay` after changing parser/replayer logic; for live mode, document which endpoint you pointed at.
+## Backend Highlights (`code-agent-backend/`)
 
-## Troubleshooting
-- Backend boot issues: confirm Node 20.19.5, Mongo/Redis endpoints, `MODEL_*`/MasterGo envs, and existing `files-cache/`.
-- DSL import: verify `mastergo.baseUrl` + token and `MasterGoService.extractIdsFromUrl` parsing.
-- Queue/codegen: check Redis connectivity and outputs under `files-cache/design/codegen/`.
-- Frontend 4xx/5xx: validate `VITE_API_BASE_URL` and whether `VITE_ENABLE_MOCK` should be toggled.
-- Messages replayer live failures: double-check `MODEL_ENDPOINT`, `MODEL_API_KEY`, and timeout settings.
+- Controllers: `/model-gateway` (SSE proxy) and `/model-gateway-sync` (buffered) hit `OPENAI_BASE_URL`; `/code-agent/dsl` reads/normalizes `DesignDSL.json` and converts PATH→LAYER via a remote PNG service + OSS upload with Redis/Mongo caching; `/code-agent/dsl/cache` get/set; `/code-agent/gitlab/project-id` resolves GitLab ID; `/code-agent/project/*` handles projects/pages/docs (design sync via MasterGo); `/code-agent/interface-data-model/*` CRUD; `/code-agent/frontend-workflow` streams `runFrontendProjectWorkflow`; `/code-agent/metrics` serves cached vLLM metrics.
+- Services use Mongo (projects, documents, annotations, path assets), Redis (caches + metrics lock), and MasterGo token/base URL. Design annotations and diff utilities live under `src/service/design/*` even if not exposed by current routes.
+- Config: see `src/config/config.default.ts` for Redis/Mongo/mastergo/model-gateway defaults and OSS buckets. Respect production hosts and tokens.
+
+## Frontend Highlights (`fta-layout-design/`)
+
+- React 19, Vite 5, Ant Design 5 compact. Routing in `src/config/routes.tsx`; `Layout` header + breadcrumbs.
+- Default route `InternalProjectPage` resolves/binds project context using `@fta/workstation-connector` (window workspace info) or dev env fallbacks (`VITE_DEV_WORKSPACE_INFO`, `VITE_DEV_USER_INFO`); allows project/page CRUD and jumps to the editor.
+- Editor: `EditorPage/EditorPageComponentDetect.tsx` with Valtio contexts (`EditorPageContext`, `DesignDetectionContext`, `DSLDataContext`, `CodeGenerationContext`, `RequirementDocContext`) for DSL visibility, annotation state, and code-gen drawer streams.
+- `apiService` attaches `X-User-Cookies` from `window.userInfo`; `VITE_API_BASE_URL` + `VITE_REQUEST_TIMEOUT` + optional `VITE_ENABLE_MOCK` control traffic vs mocks.
+- Extra pages: `/requirements`, `/technical`, `/markdown` (Streamdown demo), legacy `/` home dashboard.
+
+## Agent Core (`fta-agent-core/`)
+
+- `runFrontendProjectWorkflow` wires todo storage (file or memory), file-draft buffer, component doc reader, ai-sdk LLMs, and prompts/rules under `src/prompts/*`; logs JSONL in `dist` paths.
+- `Context`, `Session`, `Project`, and `runLoop` live in `src/*.ts`; tests include `agentService.test.ts`, `frontendProjectService.test.ts`, `backgroundTaskManager.test.ts`.
+- Build via `scripts/build.mjs` (clean + compile + copy mock specs); TypeScript config is strict (Node 20).
+
+## Messages Replayer
+
+- CLI commands from `messages-replayer/src/index.js`: `npm run parse`, `npm run replay`, `npm run replay:live` (requires `MODEL_*` or `--api-*` flags). Outputs go to `messages-replayer/output/`.
 
 ## Configuration & Security
-- Backend env: `MODEL_ENDPOINT`, `MODEL_API_KEY`, `MODEL_NAME`, `MODEL_TIMEOUT`, `MODEL_TEMPERATURE`, MasterGo token/URL (`src/config/config.default.ts`), Redis hosts, Mongo URIs, OSS credentials. Never hardcode secrets—pipe them through env or Lion configs. Inspect `files-cache/` and `run/*.json` before publish to ensure no sensitive data leaks.
-- Frontend env: `VITE_API_BASE_URL`, `VITE_REQUEST_TIMEOUT`, optional `VITE_ENABLE_MOCK`. Treat them as build-time switches.
-- Messages replayer env: reuse `MODEL_*` keys; CLI also supports `--api-url`, `--api-key`, etc.
-- Generated zips/markdown are stored under `files-cache/` and served via `/filesCache/*`; clean up before committing.
+
+- Backend env: `OPENAI_BASE_URL`/`OPENAI_API_KEY`/`OPENAI_MODEL`/`MODEL_TIMEOUT`/`MODEL_TEMPERATURE`, `MASTERGO_BASE_URL`/`MASTERGO_TOKEN`, Redis/Mongo hosts, `DESIGN_DSL_PATH_CACHE_TTL`, OSS creds. `config.default.ts` and `gitlab.service.ts` contain real endpoints/tokens—treat as secrets and avoid leaking.
+- Frontend env: `VITE_API_BASE_URL`, `VITE_REQUEST_TIMEOUT`, `VITE_ENABLE_MOCK`, optional dev workspace/user JSON (`VITE_DEV_WORKSPACE_INFO`, `VITE_DEV_USER_INFO`).
+- Keep `files-cache/`, `logs/`, `run/*.json`, and mock/temp outputs out of commits; scrub generated PNGs/ZIPs.
+
+## IMPORTANT: Commit 规范
+
+- 采用 Angular Conventional Commit，提交信息使用中文，保持祈使句、简洁明了。
+- 基本结构：`<type>(scope): <subject>`，常见 type：`feat`、`fix`、`docs`、`refactor`、`chore`、`test`、`style`、`perf`。
+- 示例：
+  - `feat(editor): 支持 PATH 节点转 PNG 后缓存`  
+  - `fix(backend): 修复 model-gateway 超时未写入日志的问题`
+
+## Testing & Verification
+
+- Backend: Jest/Midway under `test/`; use `npm run cov` before merge and explain coverage gaps. Note Redis/Mongo dependencies.
+- Frontend: no default automated suite; document manual flows (InternalProjectPage binding, editor load, API mocks vs live). Add Vitest/RTL when touching logic.
+- CLI: after parser/replayer changes, run `npm run parse` + `npm run replay`; document live endpoint when using `replay:live`.

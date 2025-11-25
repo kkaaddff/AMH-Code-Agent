@@ -1,3 +1,5 @@
+import { modelMetricsService } from '@/services/modelMetricsService';
+import type { ModelMetricsSnapshot } from '@/types/modelMetrics';
 import { DocumentReference } from '@/types/project';
 import { getDocumentStatusColor, getDocumentStatusText } from '@/utils/documentStatus';
 import {
@@ -15,14 +17,12 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { App, Button, Collapse, Form, Input, List, Modal, Space, Tag, Tooltip, Tree, Typography } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { TDocumentKeys } from '../../constants';
-import { ModelMetricsSnapshot } from '@/types/modelMetrics';
 import { designDetectionActions, designDetectionStore, useDesignTreeData } from '../../contexts/DesignDetectionContext';
 import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
 import { extractDesignIdFromTopLevelKey, findTopLevelKey } from './utils';
-import { modelMetricsService } from '@/services/modelMetricsService';
 
 const { Title, Text } = Typography;
 type ModelStatus = 'busy' | 'idle' | 'unknown' | 'error';
@@ -101,19 +101,19 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
   };
 
   // 打开设置弹窗
-  const handleOpenSettings = useCallback((documentId: string) => {
+  const handleOpenSettings = (documentId: string) => {
     setSettingsDocumentId(documentId);
     setSettingsModalVisible(true);
-  }, []);
+  };
 
   // 关闭设置弹窗
-  const handleCloseSettings = useCallback(() => {
+  const handleCloseSettings = () => {
     setSettingsModalVisible(false);
     setSettingsDocumentId(null);
-  }, []);
+  };
 
   // 设置为主页面
-  const handleSetMainPage = useCallback(async () => {
+  const handleSetMainPage = async () => {
     if (!settingsDocumentId) return;
 
     const docState = designDetectionStore.designStoreMap[settingsDocumentId];
@@ -126,10 +126,12 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
     await designDetectionActions.updateAnnotation(docState.rootAnnotation.id, {
       isMainPage: !currentIsMainPage,
     });
+    await designDetectionActions.saveAnnotations(settingsDocumentId);
+    await editorPageActions.refreshCurrentPage();
 
     message.success(currentIsMainPage ? '已取消主页面标记' : '已标记为主页面');
     handleCloseSettings();
-  }, [settingsDocumentId, message, handleCloseSettings]);
+  };
 
   // 删除设计文档
   const handleDeleteDesignDocument = () => {
@@ -622,7 +624,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
             icon={<FlagOutlined />}
             onClick={handleSetMainPage}
             type={settingsDocIsMainPage ? 'primary' : 'default'}>
-            {settingsDocIsMainPage ? '取消主页面标记' : '标记为 main-page'}
+            {settingsDocIsMainPage ? '取消主页面标记' : '标记为 Main Page'}
           </Button>
           <Button block danger icon={<DeleteOutlined />} onClick={handleDeleteDesignDocument}>
             删除

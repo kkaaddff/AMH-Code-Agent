@@ -828,14 +828,8 @@ export const designDetectionActions = {
   updateAnnotation: async (annotationId: string, updates: Partial<AnnotationNode>): Promise<boolean> => {
     const targetAnnotation = findAnnotationById(annotationId);
     if (!targetAnnotation) {
-      componentDetectionDebugLog('updateAnnotation:skipNotFound', { annotationId });
       return false;
     }
-
-    componentDetectionDebugLog('updateAnnotation:start', {
-      annotationId,
-      updateKeys: Object.keys(updates),
-    });
 
     const nextFTAComponent = updates.ftaComponent ?? targetAnnotation.ftaComponent;
     const nextIsContainer = isContainerComponent(nextFTAComponent);
@@ -861,7 +855,6 @@ export const designDetectionActions = {
       });
 
       if (!confirmed) {
-        componentDetectionDebugLog('updateAnnotation:userCancelled', { annotationId });
         return false;
       }
     }
@@ -888,12 +881,17 @@ export const designDetectionActions = {
           nextChildren = [];
         }
 
+        // 克隆 node，合并更新字段
         const updatedNode: AnnotationNode = {
           ...node,
           ...restUpdates,
           children: nextChildren,
           updatedAt: now,
         };
+
+        if (typeof updates.isMainPage === 'boolean' && updates.isMainPage !== node.isMainPage) {
+          updatedNode.name = updates.isMainPage ? 'Page' : 'Component';
+        }
 
         if (updates.ftaComponent) {
           updatedNode.isContainer = isContainerComponent(updates.ftaComponent);
@@ -918,19 +916,8 @@ export const designDetectionActions = {
       nextSelected = findAnnotationById(annotationId);
     }
 
-    // const nextExpandedKeys = designDetectionStore.expandedKeys
-    //   .filter((key) => !removedChildIds.includes(key))
-    //   .concat(
-    //     removedChildIds.length > 0 && !designDetectionStore.expandedKeys.includes(annotationId) ? [annotationId] : []
-    //   );
-
     designDetectionStore.rootAnnotation = sortedRootAnnotation;
     designDetectionStore.selectedAnnotation = nextSelected;
-
-    componentDetectionDebugLog('updateAnnotation:completed', {
-      annotationId,
-      success: true,
-    });
 
     return true;
   },

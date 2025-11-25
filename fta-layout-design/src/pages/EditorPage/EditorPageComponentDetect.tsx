@@ -46,7 +46,7 @@ const EditorPageContent: React.FC = () => {
   const { message, modal } = App.useApp();
 
   const editorPageStoreSnapshot = useSnapshot(editorPageStore);
-  const { setPageId, setProjectId, setSelectedDocument, fetchPageDetail, deleteDocument } = editorPageActions;
+  const { setPageId, setProjectId, fetchPageDetail, deleteDocument } = editorPageActions;
 
   const { toggleShowAllBorders, saveAnnotations, setActiveDesignDocument } = designDetectionActions;
   const componentDetectionStoreSnapshot = useSnapshot(designDetectionStore);

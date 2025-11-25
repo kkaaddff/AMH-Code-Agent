@@ -1,239 +1,106 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working in this repo. Read `AGENTS.md` first for the short version.
 
 ## Project Overview
 
-This is the **FTA MasterGo-to-App Platform** - an enterprise-level "Design-to-Code" platform that converts MasterGo design mockups into DSL (Domain Specific Language), component annotations, requirement documents, and generated code assets.
+FTA MasterGo-to-App platform: pull MasterGo DSL, manage projects/pages/docs, and drive an AI-assisted frontend workflow from DSL + annotations. The frontend is designed to run inside a VSCode extension (via `@fta/workstation-connector`) but also works in a browser with dev fallbacks.
 
 ## High-Level Architecture
 
-| Area | Purpose | Stack | Default Port |
-| --- | --- | --- | --- |
-| `code-agent-backend/` | Midway 3 (Egg.js) API that ingests MasterGo designs, versions DSL/annotations, streams requirement docs through a model gateway, manages Bull-driven code generation tasks, exposes project CRUD utilities, and powers the `/neo/send` agent SSE endpoint. | Node 20.19.5, Midway, MongoDB 5.13, Redis 4.28, Bull | 7001 |
-| `fta-layout-design/` | React + Vite UI with Ant Design & Valtio stores. Hosts dashboard/requirement/technical pages and the component-detection editor with 3D inspector, PRD/OpenAPI side panels, and code-generation drawer. | Node 20.19.5, React 19, AntD 5, Vite 5 | 5173 |
-| `messages-replayer/` | CLI that replays `messages.log` sessions exactly or re-sends them to any OpenAI-compatible endpoint. | Node 18+ | N/A |
-| `fta-agent-core/` | TypeScript agent runtime powering NEOVATE/automation flows; encapsulates `AgentService`, run-loop, tool orchestration, MCP connectivity, and the `runFrontendProjectWorkflow` helper. | Node 20+, TypeScript, ai-sdk, Vitest | N/A |
+| Area                  | Purpose                                                                                                                                                                             | Stack                                  | Port |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---- |
+| `shared-types/`       | Shared TS models (DSL, annotations, model metrics) used across packages.                                                                                                            | TS                                     | —    |
+| `code-agent-backend/` | Midway 3 API: model-gateway proxy, DSL PATH→PNG conversion + caching, project/page/doc hub, interface data-model CRUD, SSE frontend workflow driver, and model-metrics snapshot API. | Node 20, Midway, MongoDB, Redis, OSS   | 7001 |
+| `fta-layout-design/`  | React + Vite UI with AntD/Valtio: internal project-binding page (VSCode), editor workspace, marketing pages, and streaming markdown demo.                                          | Node 20, React 19, Vite 5, AntD 5      | 5173 |
+| `fta-agent-core/`     | Agent runtime (`createAgentService`, `runFrontendProjectWorkflow`) using ai-sdk, todo/file-draft/component-doc tools, and prompt/rules packs.                                       | Node 20, TypeScript, Vitest            | —    |
+| `messages-replayer/`  | CLI to parse `messages.log`, replay locally, or forward to an OpenAI-compatible endpoint.                                                                                           | Node 18+, axios                        | —    |
 
-Generated artifacts (`dist/`, `logs/`, `run/`, `files-cache/`, `messages-replayer/output/`) stay out of git.
-
----
+Generated outputs (`dist/`, `logs/`, `run/`, `files-cache/`, `output/`, `mock-temp/`) stay out of git.
 
 ## Quickstart Rules
 
-- Yarn workspaces: install once via `yarn install` at repo root; run commands with `yarn workspace <name> <cmd>` or from the package dir.
-- Read `AGENTS.md` first; always set `workdir` and stay inside package directories when running commands.
-- Prefer `rg`/`rg --files` for searches; avoid destructive git operations.
-- Follow plan-tool usage (no single-step plans, update statuses as you progress).
-- Use package scripts instead of raw binaries; keep generated assets untracked.
-- Add brief comments only for non-obvious logic; match existing formatting.
-- Document manual verification when tests aren’t run and keep env secrets out of source.
+- Use Yarn workspaces at root; set `workdir` on all shell commands and stay inside package dirs.
+- Prefer `rg`/`rg --files`; avoid destructive git commands. Follow plan-tool rules (no single-step plans, update statuses).
+- Use package scripts (`npm run dev`, `npm run cov`, etc.); add comments only for non-obvious logic.
+- Document manual verification when tests aren’t run; never hardcode secrets. `config.default.ts` and `gitlab.service.ts` contain real endpoints/tokens—treat as sensitive.
 
----
-
-## 2. Repository Layout
+## Repository Layout
 
 ```
 amh_code_agent/
-├── AGENTS.md (shared quick guide)
-├── CLAUDE.md (this file)
-├── README.md (product overview)
-├── code-agent-backend/
-│   ├── bootstrap.js / start.sh
-│   ├── src/
-│   │   ├── controller/        (design, code-agent, neovate)
-│   │   ├── service/
-│   │   │   ├── design/        (design docs, annotations, req docs, codegen)
-│   │   │   ├── code-agent/    (DSL utilities, project hub)
-│   │   │   ├── neovate-code/  (agent runtime)
-│   │   │   └── common/oss/
-│   │   ├── entity/, dto/, queue/, utils/, types/
-│   │   └── config/            (Midway + env wiring)
-│   └── test/ (Jest + @midwayjs/mock)
-├── fta-layout-design/
-│   ├── src/
-│   │   ├── pages/             (Home, Requirement, Technical, Editor)
-│   │   ├── components/, contexts/, services/, utils/
-│   │   └── docs/              (function inventory, refactor notes)
-│   └── vite.config.ts, tailwind.config.js
-├── fta-agent-core/
-│   ├── src/                (agentService, loop, tools, prompts, frontend workflow)
-│   ├── docs/               (agent lifecycle + frontend workflow guides)
-│   ├── scripts/            (build helpers, import fixer)
-│   └── mock-specs/         (copied into dist for prompts/spec fixtures)
-└── messages-replayer/
-    ├── src/ (parser/replayer/llmClient)
-    └── messages.log (input)
+├── AGENTS.md / CLAUDE.md
+├── shared-types/            # DSL + annotation + metrics models
+├── code-agent-backend/      # Midway service (model proxy, DSL tools, project hub, SSE workflow)
+├── fta-layout-design/       # React/Vite UI (VSCode connector + editor)
+├── fta-agent-core/          # Agent runtime (ai-sdk, prompts, tools)
+└── messages-replayer/       # CLI (parse/replay messages.log)
 ```
-
----
 
 ## Development Commands
 
-### Backend (code-agent-backend)
-```bash
-cd code-agent-backend
-npm install
-npm run dev              # Midway dev server on 7001 (hot reload)
-npm run build && npm start
-npm run lint             # mwts check
-npm run lint:fix
-npm run prettier         # format all files
-npm run test             # Jest tests
-npm run cov              # coverage report (required before merge)
-```
-Use `./start.sh <port>` for production-style boots.
-
-### Frontend (fta-layout-design)
-```bash
-cd fta-layout-design
-npm install
-npm run dev              # Vite dev server on 5173
-npm run build            # TypeScript compilation + build
-npm run preview          # preview production build
-```
-
-### Agent Core Library (fta-agent-core)
-```bash
-cd fta-agent-core
-yarn install
-yarn build               # cleans dist, compiles TS, copies mock-specs
-yarn typecheck           # TS only; use npx vitest when editing tests
-```
-
-### Messages Replayer CLI
-```bash
-cd messages-replayer
-npm install
-npm run parse            # summary of messages.log
-npm run replay           # reproduce log exactly
-npm run replay:live      # send to live endpoint (requires MODEL_* env)
-```
-
-## Agent Core Notes (fta-agent-core)
-
-- Entrypoints: `createAgentService` (`src/agentService.ts`) bundles `Context`, `Session`, run-loop, tool resolver, MCP + background tasks; `runFrontendProjectWorkflow` (`src/frontendProjectService.ts`) is a one-shot pipeline that wires todo/spec/file-draft tools and emits drafts while streaming model output.
-- Prompts/tooling: `src/prompts/*` (system/plan/compact/frontend); `src/tools/*` + `src/tool.ts` define repo/todo/spec/file draft tools and approval rules; `src/loop.ts` drives streaming + tool-call dispatch.
-- Build: `scripts/build.mjs` cleans `dist`, compiles TS, fixes imports, then copies `mock-specs` into the bundle. Keep fixtures in sync when updating prompts/specs.
-- Logging/state: `src/jsonl.ts` + `src/history.ts` track messages for replay; `src/backgroundTaskManager.ts` manages bash tasks consumed by `bash`/`bash_output`/`kill_bash` tools.
+- Root: `yarn install`
+- `shared-types/`: `yarn workspace @fta/shared-types build` (or `typecheck`)
+- Backend: `npm run dev`; build/start via `npm run build && npm start`; quality `npm run lint`/`lint:fix`/`prettier`; tests `npm run test`/`cov`.
+- Frontend: `npm run dev` / `npm run build` / `npm run preview`; add Vitest/RTL for logic changes.
+- Agent core: `yarn build`; `yarn typecheck`; use `npx vitest` for tests.
+- Messages replayer: `npm run parse` / `npm run replay` / `npm run replay:live`.
 
 ## Backend Architecture (code-agent-backend)
 
-### Prerequisites
-- Node `20.19.5` (clamped via `package.json` engines)
-- MongoDB 5.13+ with credentials configured in `src/config/config.default.ts`
-- Redis 4.28+ (cluster aware; `DesignDSLService` follows MOVED/ASK redirects)
-- MasterGo token & base URL for DSL pulls (`config.mastergo`)
-- Model gateway endpoint (`MODEL_ENDPOINT`, `MODEL_API_KEY`, etc.) for requirement document streaming and the `/neo` agent
-
-### Domain Services & Flows
-
-| Service | Highlights |
-| --- | --- |
-| `DesignDocumentService` | Creates versions from MasterGo URLs, stores DSL JSON + digest, caches serialized DSL in Redis (`design:dsl:<id>`), handles revision conflicts, and exposes DSL retrieval per revision. |
-| `DesignComponentAnnotationService` | Manages tree-shaped annotations with monotonic versions, caches them via Redis (`design:annotations:*`), and computes diffs between versions. |
-| `DesignRequirementDocumentService` + `RequirementSpecModelService` | Streams Markdown via SSE by invoking `ModelGatewayService`; falls back to buffered generation and can export `.md` into `files-cache/design/requirement-docs/<docId>.md`. |
-| `DesignCodeGenerationTaskService` | Creates Bull tasks, tracks logs/progress, retries, and persists ZIP metadata. Paired with `src/queue/design/code-generation.processor.ts` which currently produces a README + optional requirement doc and writes `/files-cache/design/codegen/<taskId>.zip`. |
-| `DesignDSLService` | Reads `DesignDSL.json`, converts PATH nodes to PNG-backed LAYER nodes with `sharp`, caches assets in Redis + Mongo, and exposes Redis helper endpoints. |
-| `ProjectService` | CRUD projects/pages/document references, syncs MasterGo DSLs, updates reference status, and stores doc content. Exposed under `/code-agent/project/*`. |
-| `NeovateController` + `service/neovate-code/*` | SSE agent endpoint `/neo/send` that spins up `AgentContext`, streams `text_delta`, `todo_update`, `iteration_start/end`, and cleans contexts on completion. |
-
-### Paths & Storage
-- `files-cache/design/requirement-docs/` – exported Markdown docs
-- `files-cache/design/codegen/` – zipped code-generation artifacts
-- `/filesCache/<key>` – static serving URL Midway exposes for cached assets
-
-### Testing Notes
-- Tests live under `test/` and rely on `@midwayjs/mock`
-- Use `npm run cov` for coverage (mandated before merge)
-- Provide manual verification notes for flows without automated coverage
-
-### Coding Conventions
-- `mwts` formatting: 2 spaces, single quotes, no dangling semicolons
-- Decorators each on their own line, exported class names match file purpose
-- Use `@Provide()`, `@Inject()`, `@InjectEntityModel()`, `@InjectQueue()` consistently
-- Never commit secrets; rely on env variables or Lion config center values
+- Controllers
+  - `/model-gateway` (SSE) and `/model-gateway-sync` (buffered) proxy to `OPENAI_BASE_URL` + `OPENAI_API_KEY`; expects OpenAI-style `messages` with a system prompt.
+  - `/code-agent/dsl`: read `DesignDSL.json`, normalize numbers, PATH→LAYER conversion via `DesignDSLService` (posts to `qa-fta-server.../design/convert-svg-path-to-png`, uploads to OSS `fta-snapshot`, caches in Redis + Mongo `DesignPathAssetEntity`).
+  - `/code-agent/dsl/cache`: Redis get/set helpers (handles MOVED/ASK redirects).
+  - `/code-agent/gitlab/project-id`: resolves GitLab project ID (token embedded in `gitlab.service.ts`).
+  - `/code-agent/project/*`: projects/pages CRUD, doc references, design doc sync via `MasterGoServiceV1` (unwraps GROUP nodes, normalizes numbers). Context binding resolves Git ID/workdir.
+  - `/code-agent/interface-data-model/*`: CRUD API schema models per page; stored in Mongo and linked to pages.
+  - `/code-agent/frontend-workflow`: SSE driver for `runFrontendProjectWorkflow` (uses DSL + annotation summary + interface data models + optional `srcTree` from VSCode connector).
+  - `/code-agent/metrics`: returns cached vLLM metrics from Redis; polling loop pulls `/metrics` unless using bigmodel/openrouter/volces endpoints.
+- Services & types: shared models from `@fta/shared-types`; annotations versioned via `DesignComponentAnnotationService` (Redis cache + diff helper) even if routes aren’t exposed. `ModelGatewayService` wraps ai-sdk-style calls; `OssManagement` wires OSS buckets.
+- Storage & config: Mongo URIs, Redis hosts, MasterGo base/token, `OPENAI_*`, `DESIGN_DSL_PATH_CACHE_TTL`, OSS creds in `src/config/config.default.ts`. Logs land under `logs/` (with JSON formatting). Clean `files-cache/` artifacts before committing.
 
 ## Frontend Architecture (fta-layout-design)
 
-### Stack & Conventions
-- Node `20.19.5`
-- React 19, Vite 5, TypeScript 5.5, Ant Design 5 (compact theme)
-- Tailwind only via `@tailwindcss/vite` (no Tailwind configs in components yet)
-- Component/style rules: 2-space indentation, PascalCase components/contexts, camelCase hooks/utilities, constants in `UPPER_SNAKE_CASE`
-- State orchestration via Valtio stores (Project, EditorPage, DesignDetection, DSLData, CodeGeneration)
-- Respect path aliases declared in `vite.config.ts`
+- Entry `src/main.tsx` → `App.tsx` (AntD compact). Routing in `src/config/routes.tsx`; header via `components/Layout.tsx`.
+- Default route `/` and `/internal/projects` render `InternalProjectPage`: resolves/binds project context using `@fta/workstation-connector` (`window.workspaceInfo`/`window.userInfo`); can create/update/delete projects/pages and open the editor.
+- Editor `pages/EditorPage/EditorPageComponentDetect.tsx`: Valtio contexts (`EditorPageContext`, `DesignDetectionContext`, `DSLDataContext`, `CodeGenerationContext`, `RequirementDocContext`) orchestrate DSL visibility, annotation tree, code-gen drawer, and requirement doc state.
+- `apiService` builds URLs from `VITE_API_BASE_URL`, attaches `X-User-Cookies` from `window.userInfo`, handles timeouts (`VITE_REQUEST_TIMEOUT`), and respects `VITE_ENABLE_MOCK`. Services wrap APIs with mock fallbacks.
+- Other routes: `/requirements`, `/technical`, `/markdown` (Streamdown demo), legacy `/editor/component-detect-v2`.
+- Dev fallbacks: `VITE_DEV_WORKSPACE_INFO` and `VITE_DEV_USER_INFO` feed mock workspace/user JSON when not in VSCode.
 
-### Application Structure
-- `src/App.tsx` uses ConfigProvider + React Router to render config-based routes (`src/config/routes.tsx`)
-- Pages
-  - `HomePage/` – dashboard with ProjectManagement (CRUD via `useProject`) and AssetManagement placeholder
-  - `RequirementPage.tsx` & `TechnicalPage.tsx` – marketing/overview content
-  - `EditorPage/EditorPageComponentDetect.tsx` – orchestrates detection canvas, layer tree, annotation save, DSL visibility, PRD/OpenAPI editors, 3D inspector, and the code-generation drawer that talks to `CodeGenerationLoop/AgentScheduler`
-- Contexts & Stores
-  - `ProjectContext` – wraps API calls (`apiServices.project`) and exposes `loadProjects`, `createProject`, etc.
-  - `EditorPageContext` – selected project/page/document state
-  - `DesignDetectionContext` – DSL/annotation state, selection, persistence
-  - `DSLDataContext` – node visibility toggles
-  - `CodeGenerationContext` – UI state for drawer, thought chains, todo updates, SSE streaming hooks
-- Services (`src/services/*.ts`)
-  - `projectService` / `requirementService` / `componentService` etc. use `apiService` and optional mock providers controlled by `VITE_ENABLE_MOCK`
-- Utilities
-  - `src/utils/apiService.ts` centralizes fetch logic, timeouts, and error handling; configure `VITE_API_BASE_URL` & `VITE_REQUEST_TIMEOUT`
-  - `src/pages/EditorPage/services/CodeGenerationLoop` contains AgentScheduler + prompts + tool definitions mirroring backend `/neo` behaviour
+## Agent Core Notes (fta-agent-core)
 
-### Manual Verification Expectations
-Whenever you touch UI logic:
-1. Document the route(s) exercised (`/`, `/editor`, `/requirements`, `/technical`)
-2. Mention which APIs were mocked or hit live
-3. Record key flows (e.g., create/delete project, sync document, start code generation) and any regressions spotted
+- `runFrontendProjectWorkflow` (frontendProjectService.ts): builds todo tool (memory or file), component doc reader, file-draft store, ai-sdk models; formats DSL + page annotation + optional `srcTree` into prompts; rules default to `src/prompts/fta-project-spec-4agent.md`; prompt can be overridden by backend-supplied files.
+- Core primitives: `Context`, `Session`, `Project`, `runLoop`, `Tools`; JSONL logging via `jsonl.ts`; background bash tasks under `backgroundTaskManager.ts`.
+- Prompts/tooling live in `src/prompts/*` and `src/tools/*`; build script `scripts/build.mjs` compiles TS then copies `mock-specs`.
 
-## Messages Replayer CLI
+## Messages Replayer
 
-- Location: `messages-replayer/`
-- Purpose: replay `messages.log` verbatim or forward each recorded request to a live endpoint (OpenAI-compatible)
-- Environment options: `MODEL_ENDPOINT`, `MODEL_API_KEY`, `MODEL_NAME`, `MODEL_TEMPERATURE`, `MODEL_TIMEOUT`, plus CLI flags (`--api-url`, `--api-key`, …)
-- Outputs stored in `messages-replayer/output/`
+- CLI (`messages-replayer/src/index.js`): parse `messages.log`, replay locally to a log file, or forward live to an endpoint (`--api-url/--api-key/--model-name/...` or `MODEL_*` env). Output stored under `messages-replayer/output/`.
 
----
+## Workflow Expectations (Claude)
 
-## Workflow Expectations for Claude Code
+- Respect plan-tool rules and package boundaries; never revert user changes.
+- Use `rg` for search; keep edits minimal and well-explained. Avoid destructive git commands.
+- When skipping tests, state why and list manual checks. Suggest follow-up (e.g., `npm run cov`).
+- Keep secrets out of diffs—config files include real tokens/endpoints; do not expose them in responses.
 
-1. **Read AGENTS.md first** for a speedy reminder of conventions; this CLAUDE.md is the deep dive.
-2. **Stay in package directories** (`code-agent-backend`, `fta-layout-design`, `messages-replayer`) when running commands. Always set `workdir` on shell calls.
-3. **Follow the plan tool rules** (no single-step plans, update statuses as you progress).
-4. **Use `rg`/`rg --files`** for searches. Prefer `npm` scripts over raw binaries (e.g., run `npm run lint` instead of `mwts check`).
-5. **Never undo user changes** you didn't author (dirty worktree awareness). No destructive git commands like `reset --hard`.
-6. **Add concise comments only when necessary** (e.g., complex logic). Default to clean TypeScript/JavaScript.
-7. **Testing**: run relevant `npm run test` / `npm run cov` / manual steps when feasible. If you skip due to time or environment, state the reason and suggest follow-up.
-8. **Environment variables**: document any new required keys in README/CLAUDE/AGENTS comments instead of hardcoding them.
-9. **Before submitting**: summarize changes, mention tests executed (or not), and highlight next steps (e.g., "run `npm run cov` before merge").
+## Key Paths & Troubleshooting
 
-## Key Reference Tables
+- Important paths: `code-agent-backend/src/service/code-agent/design-dsl.ts` (PATH→PNG + Redis/Mongo cache), `.../frontend-workflow.ts` (SSE driver), `.../interface-data-model.ts` (API schemas), `.../mastergo.service.ts` (DSL fetch/unwrapping), `.../common/model-metrics.service.ts` (metrics polling), `fta-layout-design/src/pages/InternalProjectPage.tsx`, `fta-layout-design/src/pages/EditorPage/*`, `fta-agent-core/src/frontendProjectService.ts`, `messages-replayer/src/*.js`.
+- Backend issues: check Node=20, Mongo/Redis availability, MasterGo token/base URL, `OPENAI_*` envs. Redis MOVED/ASK handled in DSL service; ensure Redis allows redirect targets. OSS failures break PATH conversion.
+- Frontend issues: ensure `window.workspaceInfo` populated in VSCode or via `VITE_DEV_WORKSPACE_INFO`; verify `VITE_API_BASE_URL`; toggle mocks with `VITE_ENABLE_MOCK`.
+- GitLab resolution errors: token is hardcoded; 401/404 bubble up from GitLab; project binding requires user-id headers from connector.
 
-### Important Paths
+## Contribution Notes
 
-| Path | Use |
-| --- | --- |
-| `code-agent-backend/src/controller/design/` | REST endpoints for design docs, annotations, requirement docs, code-generation tasks |
-| `code-agent-backend/src/service/design/` | Core business logic for design domain |
-| `code-agent-backend/src/service/code-agent/design-dsl.ts` | DSL parsing, Redis helpers, PATH→PNG conversion |
-| `code-agent-backend/src/service/neovate-code/` | SSE agent runtime implementation |
-| `fta-layout-design/src/pages/EditorPage/` | Component detection UI and contexts |
-| `fta-layout-design/src/contexts/ProjectContext.tsx` | Frontend state for projects/pages/docs |
-| `messages-replayer/src/parser.js` | Log parsing logic |
-
-## Troubleshooting Checklist
-
-- **Backend fails to boot**: verify Node version (must satisfy `20.19.5`), ensure Mongo/Redis endpoints reachable, and populate `MODEL_*` envs if requirement generation or `/neo` endpoint is hit.
-- **MasterGo DSL import issues**: check `mastergo.baseUrl` & `token` in config, and confirm the design link resolves to `fileId` + `layerId` via `MasterGoService.extractIdsFromUrl`.
-- **Bull queue not processing**: confirm Redis connection, ensure `files-cache` directory exists (Midway processor writes ZIPs there), and inspect `DesignCodeGenerationTaskService` logs.
-- **Frontend hitting 4xx/5xx**: confirm `VITE_API_BASE_URL` in `.env` matches backend port, and whether `VITE_ENABLE_MOCK` needs toggling for offline work.
-- **messages-replayer live mode fails**: double-check `MODEL_ENDPOINT`, `MODEL_API_KEY`, `MODEL_TIMEOUT`, and ensure endpoint speaks OpenAI-compatible JSON.
-
-## Contribution & Release Notes
-
-- Follow repo commit practices (short imperative subjects, often Chinese, <72 chars). Keep backend/frontend changes in separate commits when possible.
-- Document manual verification for UI work and `npm run cov` results for backend work.
-- Clean up `files-cache/` and `run/*.json` before pushing branches (avoid leaking DSL or credential traces).
-- When decorators or entity definitions change, regenerate Midway typings with `npx midway-bin dev --ts` if needed.
+- Keep backend/frontend/agent-core changes scoped; avoid cross-package churn unless required.
+- Clean `files-cache/`, `logs/`, `run/*.json`, and PNG/ZIP outputs before sharing branches.
+- Summarize changes + tests in the final reply; suggest running `npm run cov` for backend PRs.
+- **IMPORTANT: Commit 规范**  
+  - 使用 Angular Conventional Commit，提交信息为中文，格式 `<type>(scope): <subject>`，保持祈使句。  
+  - 常用 type：`feat`、`fix`、`docs`、`refactor`、`chore`、`test`、`style`、`perf`。  
+  - 示例：  
+    - `feat(editor): 支持 VSCode 工作区自动绑定项目`  
+    - `fix(backend): 修复接口数据模型更新时的 user 校验错误`
