@@ -16,5 +16,8 @@
     "dev:frontend": "yarn workspace master-go-design dev",
     "dev:replayer": "yarn workspace messages-replayer replay",
     "typecheck": "yarn workspace @fta/agent-core typecheck"
+  },
+  "engines": {
+    "node": "=20"
   }
 }

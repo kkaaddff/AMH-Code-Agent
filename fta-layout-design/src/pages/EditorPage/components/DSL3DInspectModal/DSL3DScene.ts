@@ -381,6 +381,8 @@ export class DSL3DScene {
       return;
     }
 
+    console.log('updateNodes ====>', nodes.length);
+
     let minX = Infinity,
       maxX = -Infinity,
       minY = Infinity,
@@ -420,7 +422,7 @@ export class DSL3DScene {
 
     // 3. Add or Update Nodes
     nodes.forEach((node) => {
-      const x = node.x - centerX + node.width / 2 + 375;
+      const x = node.x - centerX + node.width / 2;
       const y = -(node.y - centerY + node.height / 2);
       const z = node.depth * SCENE_CONFIG.DEPTH_OFFSET;
 
@@ -645,7 +647,7 @@ export class DSL3DScene {
     const labelWidth = labelHeight * labelData.aspectRatio;
 
     const padding = 4;
-    const x = node.x - centerX + node.width / 2 + 375;
+    const x = node.x - centerX + node.width / 2;
     const y = -(node.y - centerY + node.height / 2);
     const z = node.depth * SCENE_CONFIG.DEPTH_OFFSET;
 

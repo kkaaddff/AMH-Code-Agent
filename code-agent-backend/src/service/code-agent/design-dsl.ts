@@ -1,13 +1,14 @@
 import { Inject, Provide } from '@midwayjs/decorator';
-import fs from 'fs/promises';
-import * as path from 'path';
-import * as crypto from 'crypto';
-import axios from 'axios';
 import { Redis, RedisService } from '@midwayjs/redis';
 import { InjectEntityModel } from '@midwayjs/typegoose';
 import { ReturnModelType } from '@typegoose/typegoose';
-import { DesignNode, PathNode, LayerNode, DSLData, LayerStyle, PathItem, DesignDSL } from '../../types/design-dsl';
+import axios from 'axios';
+import * as crypto from 'crypto';
+import fs from 'fs/promises';
+import * as path from 'path';
 import { DesignPathAssetEntity } from '../../entity/code-agent/design-dsl/path-asset';
+import { DesignDSL, DesignNode, DSLData, LayerNode, LayerStyle, PathItem, PathNode } from '../../types/design-dsl';
+import { normalizeNumericValues } from '../../utils/design/dsl';
 import { OssManagement } from '../oss';
 
 @Provide()
@@ -401,49 +402,6 @@ export class DesignDSLService {
   }
 
   /**
-   * 将数字保留两位小数
-   */
-  private roundNumber(value: number): number {
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
-      return value;
-    }
-    return Number(value.toFixed(2));
-  }
-
-  /**
-   * 递归处理 DesignDSL 数据中的所有数值字段，保留两位小数
-   * 修复类型：递归处理 DSLData/DesignNode，避免类型错配
-   */
-  private normalizeNumericValues(obj: DesignDSL): DesignDSL {
-    if (!obj || typeof obj !== 'object' || !('dsl' in obj)) return obj;
-
-    const normalize = (value: any): any => {
-      if (typeof value === 'number' && Number.isFinite(value)) {
-        return this.roundNumber(value);
-      }
-      if (Array.isArray(value)) {
-        return value.map(normalize);
-      }
-      if (value && typeof value === 'object') {
-        const output: any = {};
-        for (const key in value) {
-          if (Object.prototype.hasOwnProperty.call(value, key)) {
-            output[key] = normalize(value[key]);
-          }
-        }
-        return output;
-      }
-      return value;
-    };
-
-    // 只对 obj.dsl（DSLData）递归
-    return {
-      ...obj,
-      dsl: normalize(obj.dsl),
-    } as DesignDSL;
-  }
-
-  /**
    * 处理DesignDSL数据
    */
   public async processDesignDSL(dslData: DesignDSL): Promise<DesignDSL> {
@@ -451,7 +409,7 @@ export class DesignDSLService {
     const processedDSL = JSON.parse(JSON.stringify(dslData)) as DesignDSL;
 
     // 1. 先进行数值精度处理
-    const normalizedDSL = this.normalizeNumericValues(processedDSL);
+    const normalizedDSL = normalizeNumericValues(processedDSL);
 
     // 2. 再进行 PATH 节点转换
     normalizedDSL.dsl.nodes = await Promise.all(

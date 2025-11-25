@@ -1,4 +1,4 @@
-import { DSLStyles } from '../types/dsl';
+import { DSLLayoutStyle, DSLStyles } from '../types/dsl';
 
 /**
  * 解析 DSL 中的颜色标识，转换为实际颜色值。
@@ -36,7 +36,7 @@ export const parseColor = (color: string | undefined, styles: DSLStyles): string
  * @param layoutStyle DSL 布局对象
  * @returns React 风格的样式对象
  */
-export const parseLayoutStyle = (layoutStyle: any): React.CSSProperties => {
+export const parseLayoutStyle = (layoutStyle: DSLLayoutStyle | undefined, isLeaf = false): React.CSSProperties => {
   if (!layoutStyle) return {};
 
   const style: React.CSSProperties = {};
@@ -46,8 +46,10 @@ export const parseLayoutStyle = (layoutStyle: any): React.CSSProperties => {
 
   if (layoutStyle.relativeX !== undefined || layoutStyle.relativeY !== undefined) {
     style.position = 'absolute';
-    if (layoutStyle.relativeX !== undefined) style.left = layoutStyle.relativeX;
-    if (layoutStyle.relativeY !== undefined) style.top = layoutStyle.relativeY;
+    if (!isLeaf) {
+      if (layoutStyle.relativeX !== undefined) style.left = layoutStyle.relativeX;
+      if (layoutStyle.relativeY !== undefined) style.top = layoutStyle.relativeY;
+    }
   }
 
   if (layoutStyle.rotate !== undefined) {
