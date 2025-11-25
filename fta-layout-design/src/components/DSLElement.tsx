@@ -81,7 +81,11 @@ const DSLElement: React.FC<DSLElementProps> = ({
   const combinedStyle: React.CSSProperties = {
     ...parseLayoutStyle(currentNode.layoutStyle, isLeaf),
     backgroundColor:
-      'fill' in currentNode && currentNode.fill ? parseColor(currentNode.fill as string, styles) : 'rgba(0, 0, 0, 0)',
+      'fill' in currentNode && currentNode.fill
+        ? parseColor(currentNode.fill as string, styles)
+        : isLeaf
+        ? '#fff'
+        : 'rgba(0, 0, 0, 0)',
     ...('borderRadius' in currentNode && currentNode.borderRadius
       ? parseBorderRadius(currentNode.borderRadius as string)
       : {}),

@@ -6,8 +6,8 @@ import { DSLLayoutStyle, DSLStyles } from '../types/dsl';
  * @param styles DSL 样式字典
  * @returns 可直接使用的颜色字符串
  */
-export const parseColor = (color: string | undefined, styles: DSLStyles): string => {
-  if (!color || !color.startsWith('paint_')) return color || 'rgba(0, 0, 0, 0)';
+export const parseColor = (color: string | undefined, styles: DSLStyles, isLeaf = false): string => {
+  if (!color || !color.startsWith('paint_')) return color || (isLeaf ? '#fff' : 'rgba(0, 0, 0, 0)');
 
   const style = styles[color];
 
@@ -23,7 +23,7 @@ export const parseColor = (color: string | undefined, styles: DSLStyles): string
 
     // 如果是对象（比如图片），说明这不是颜色，返回默认透明色
     if (typeof firstValue === 'object' && firstValue !== null) {
-      return 'rgba(0, 0, 0, 0)';
+      return isLeaf ? '#fff' : 'rgba(0, 0, 0, 0)';
     }
   }
 
