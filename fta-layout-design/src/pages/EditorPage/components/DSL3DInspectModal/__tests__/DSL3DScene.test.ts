@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { DSL3DScene } from '../DSL3DScene';
 import nodes1 from '../nodes1.json';

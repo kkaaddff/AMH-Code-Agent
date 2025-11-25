@@ -3,8 +3,8 @@ import { Alert, Divider, Drawer, List, Modal, Space, Typography } from 'antd';
 import React, { useMemo } from 'react';
 import { Streamdown } from 'streamdown';
 import { useSnapshot } from 'valtio/react';
-import { codeGenerationActions, codeGenerationStore } from '../contexts/CodeGenerationContext';
-import './CodeGenerationDrawer.css';
+import { codeGenerationActions, codeGenerationStore } from '../../contexts/CodeGenerationContext';
+import './index.css';
 
 const { Text, Title } = Typography;
 

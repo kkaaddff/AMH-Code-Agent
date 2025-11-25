@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { App, Input, Modal, Radio, Spin, Typography } from 'antd';
 import html2canvas from 'html2canvas';
 
-import './AnnotationConfirmModal.css';
-import { AnnotationNode } from '../types/componentDetection';
+import './index.css';
+import { AnnotationNode } from '../../types/componentDetection';
 
 type ConflictChoice = 'left' | 'right' | 'both';
 

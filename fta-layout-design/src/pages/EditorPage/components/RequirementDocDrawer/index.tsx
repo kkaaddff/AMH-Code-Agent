@@ -4,9 +4,9 @@ import React, { useMemo, useState } from 'react';
 import { Streamdown } from 'streamdown';
 
 import { useSnapshot } from 'valtio/react';
-import { createRequirementDocStore } from '../contexts/RequirementDocContext';
-import { executeCodeGeneration, saveRequirementDoc } from '../utils/requirementDoc';
-import './RequirementDocDrawer.css';
+import { createRequirementDocStore } from '../../contexts/RequirementDocContext';
+import { executeCodeGeneration, saveRequirementDoc } from '../../utils/requirementDoc';
+import './index.css';
 
 interface RequirementDocDrawerProps {
   open: boolean;
