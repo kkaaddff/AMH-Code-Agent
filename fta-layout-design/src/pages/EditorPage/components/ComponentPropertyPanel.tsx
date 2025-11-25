@@ -1,5 +1,5 @@
 import { DSLNode } from '@/types/dsl';
-import { CopyOutlined, DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { CopyOutlined, DeleteOutlined, PlusOutlined, SaveOutlined, DatabaseOutlined } from '@ant-design/icons';
 import {
   App,
   Button,
@@ -13,8 +13,9 @@ import {
   Space,
   Switch,
   Typography,
+  Tag,
 } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSnapshot } from 'valtio';
 
 import { FTA_COMPONENTS } from '../constants/FTAComponents';
@@ -29,6 +30,9 @@ import {
 } from '../contexts/DesignDetectionContext';
 import { editorPageStore } from '../contexts/EditorPageContext';
 import { NodeType } from '../types/componentDetection';
+import { interfaceDataModelService } from '@/services/interfaceDataModelService';
+import type { InterfaceDataModel, HttpMethod } from '@/types/interfaceDataModel';
+import { HTTP_METHOD_OPTIONS } from '@/types/interfaceDataModel';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -76,13 +80,48 @@ const customFilterOption = (input: string, option: any) => {
   return false;
 };
 
+// HTTP 方法对应的颜色
+const METHOD_COLORS: Record<HttpMethod, string> = {
+  GET: 'blue',
+  POST: 'green',
+  PUT: 'orange',
+  DELETE: 'red',
+  PATCH: 'purple',
+  HEAD: 'default',
+  OPTIONS: 'default',
+};
+
 const ComponentPropertyPanelV2: React.FC = () => {
   const { message, modal } = App.useApp();
   const { selectedAnnotation, selectedDSLNode, selectedNodeIds } = useSnapshot(designDetectionStore);
-  const { selectedDocument } = useSnapshot(editorPageStore);
+  const { selectedDocument, pageId } = useSnapshot(editorPageStore);
   const [form] = Form.useForm();
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedFTAComponent, setSelectedFTAComponent] = useState<string>('');
+
+  // 数据模型列表状态
+  const [dataModels, setDataModels] = useState<InterfaceDataModel[]>([]);
+  const [loadingDataModels, setLoadingDataModels] = useState(false);
+
+  // 加载数据模型列表
+  const loadDataModels = useCallback(async () => {
+    if (!pageId) return;
+
+    setLoadingDataModels(true);
+    try {
+      const models = await interfaceDataModelService.getByPageId(pageId);
+      setDataModels(models);
+    } catch (error) {
+      console.error('加载数据模型列表失败:', error);
+    } finally {
+      setLoadingDataModels(false);
+    }
+  }, [pageId]);
+
+  // 页面变化时加载数据模型
+  useEffect(() => {
+    loadDataModels();
+  }, [loadDataModels]);
 
   // 初始化表单值
   useEffect(() => {
@@ -106,6 +145,8 @@ const ComponentPropertyPanelV2: React.FC = () => {
         borderRadius: selectedAnnotation.layout?.borderRadius,
         // Props
         props: JSON.stringify(selectedAnnotation.props || {}, null, 2),
+        // 数据模型绑定
+        dataModelId: selectedAnnotation.props?.dataModelId || undefined,
       });
       setHasChanges(false);
     } else {
@@ -127,7 +168,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
       const values = await form.validateFields();
 
       // Parse props JSON
-      let props = {};
+      let props: Record<string, any> = {};
       try {
         if (values.props) {
           props = JSON.parse(values.props);
@@ -135,6 +176,13 @@ const ComponentPropertyPanelV2: React.FC = () => {
       } catch (error) {
         message.error('组件属性 JSON 格式错误');
         return;
+      }
+
+      // 添加数据模型绑定到 props
+      if (values.dataModelId) {
+        props.dataModelId = values.dataModelId;
+      } else {
+        delete props.dataModelId;
       }
 
       // Update annotation
@@ -718,6 +766,46 @@ const ComponentPropertyPanelV2: React.FC = () => {
           <Title level={5}>组件属性</Title>
           {/* 动态属性字段 */}
           {selectedAnnotation?.ftaComponent && renderDynamicPropertyFields(selectedAnnotation.ftaComponent)}
+
+          <Divider />
+          {/* Data Model Binding */}
+          <Title level={5}>
+            <DatabaseOutlined style={{ marginRight: 8 }} />
+            数据绑定
+          </Title>
+          <Form.Item
+            label='关联数据模型'
+            name='dataModelId'
+            extra='选择要绑定的接口数据模型，用于代码生成时关联数据结构'>
+            <Select
+              placeholder='选择数据模型（可选）'
+              loading={loadingDataModels}
+              allowClear
+              showSearch
+              optionFilterProp='label'
+              notFoundContent={dataModels.length === 0 ? '暂无数据模型，请先在左侧 OpenAPI 面板添加' : '没有匹配的数据模型'}
+            >
+              {dataModels.map((model) => (
+                <Option key={model.id} value={model.id} label={model.name}>
+                  <Space>
+                    {model.method && (
+                      <Tag color={METHOD_COLORS[model.method]} style={{ minWidth: 45, textAlign: 'center' }}>
+                        {model.method}
+                      </Tag>
+                    )}
+                    <span>{model.name}</span>
+                    {model.url && (
+                      <Text type='secondary' style={{ fontSize: 11 }}>
+                        {model.url}
+                      </Text>
+                    )}
+                  </Space>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Divider />
           {/* Layout Properties */}
           <Title level={5}>布局属性</Title>
 

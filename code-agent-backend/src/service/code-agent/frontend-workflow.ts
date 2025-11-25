@@ -5,7 +5,9 @@ import { DesignDSL, DesignNode } from '../../types';
 import { ModelGatewayConfig } from '../common/model-gateway';
 import { DesignDSLService } from './design-dsl';
 import { ProjectService } from './project';
+import { InterfaceDataModelService } from './interface-data-model';
 import { TreeNode } from '../../dto/code-agent/frontend-workflow.dto';
+import { InterfaceDataModel } from '../../entity/code-agent/interface-data-model';
 
 let agentCorePromise: Promise<typeof import('@fta/agent-core')> | null = null;
 let annotationUtilsPromise: Promise<typeof import('@fta/agent-core/dist/utils/annotation')> | null = null;
@@ -57,6 +59,9 @@ export class FrontendWorkflowService {
   @Inject()
   private projectService: ProjectService;
 
+  @Inject()
+  private interfaceDataModelService: InterfaceDataModelService;
+
   @Config('modelGateway.default')
   private modelConfig: ModelGatewayConfig;
 
@@ -86,9 +91,10 @@ export class FrontendWorkflowService {
 
     try {
       // 获取 DSL 数据
-      const { data: dsl, annotationData } = await this.projectService.getDocumentContent({
+      const documentContent = await this.projectService.getDocumentContent({
         documentId: designDocId,
       });
+      const { data: dsl, annotationData, pageId } = documentContent;
 
       if (!dsl) {
         return {
@@ -113,6 +119,20 @@ export class FrontendWorkflowService {
       // 获取 annotation 摘要
       const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData.rootAnnotation));
 
+      // 获取页面关联的接口数据模型
+      let interfaceDataModels: InterfaceDataModel[] = [];
+      if (pageId) {
+        try {
+          interfaceDataModels = await this.interfaceDataModelService.getDataModels(pageId);
+          console.log(`frontend-workflow: [${sessionId}] 📊 获取到 ${interfaceDataModels.length} 个接口数据模型`);
+        } catch (error) {
+          console.warn(`frontend-workflow: [${sessionId}] ⚠️ 获取接口数据模型失败，继续执行工作流`, error);
+        }
+      }
+
+      // 格式化接口数据模型为工作流可用格式
+      const interfaceDataModelsSummary = this.formatInterfaceDataModels(interfaceDataModels);
+
       // 准备工作目录
 
       const cwd = this.getWorkflowCwd(sessionId);
@@ -127,12 +147,17 @@ export class FrontendWorkflowService {
       console.log(`frontend-workflow: [${sessionId}] 🚀 开始调用核心工作流引擎`);
       const workflowEngineStart = Date.now();
 
+      // 组合页面标注和接口数据模型信息
+      const fullPageContext = interfaceDataModelsSummary
+        ? `${annotationSummary}\n\n---\n\n${interfaceDataModelsSummary}`
+        : annotationSummary;
+
       // 调用 workflow
       const result = await runFrontendProjectWorkflow({
         cwd,
         srcTree,
         designDsl: JSON.stringify(filteredDSL),
-        pageAnnotation: annotationSummary,
+        pageAnnotation: fullPageContext,
         productName: productName || 'FTA-Frontend',
         version: '0.0.0',
         specDirectories: [ftaSpecsDir],
@@ -245,5 +270,57 @@ export class FrontendWorkflowService {
         }
         return node;
       });
+  }
+
+  /**
+   * 格式化接口数据模型为工作流可用的文本格式
+   */
+  private formatInterfaceDataModels(dataModels: InterfaceDataModel[]): string {
+    if (!dataModels || dataModels.length === 0) {
+      return '';
+    }
+
+    const formatSchema = (fields: any[], indent = 2): string => {
+      if (!fields || fields.length === 0) return '无';
+
+      return fields
+        .map((field) => {
+          const prefix = ' '.repeat(indent);
+          let result = `${prefix}- ${field.name}: ${field.type}`;
+          if (field.description) result += ` // ${field.description}`;
+          if (field.required) result += ' (必填)';
+          if (field.enum?.length) result += ` [${field.enum.join(', ')}]`;
+
+          if (field.properties?.length) {
+            result += '\n' + formatSchema(field.properties, indent + 2);
+          }
+          if (field.items) {
+            result += ` (元素类型: ${field.items.type})`;
+            if (field.items.properties?.length) {
+              result += '\n' + formatSchema(field.items.properties, indent + 2);
+            }
+          }
+
+          return result;
+        })
+        .join('\n');
+    };
+
+    const sections = dataModels.map((model) => {
+      const lines: string[] = [];
+      lines.push(`## ${model.name}`);
+      if (model.description) lines.push(`描述: ${model.description}`);
+      if (model.url) lines.push(`API 地址: ${model.method || 'GET'} ${model.url}`);
+      lines.push(`ID: ${model.id}`);
+      lines.push('');
+      lines.push('### 请求参数');
+      lines.push(formatSchema(model.requestSchema));
+      lines.push('');
+      lines.push('### 响应数据');
+      lines.push(formatSchema(model.responseSchema));
+      return lines.join('\n');
+    });
+
+    return `# 接口数据模型\n\n${sections.join('\n\n---\n\n')}`;
   }
 }

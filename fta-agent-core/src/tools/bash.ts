@@ -46,7 +46,7 @@ const MAX_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 /**
  * Truncate output by line count, showing maximum 20 lines
  */
-function truncateOutput(output: string, maxLines: number = 20): string {
+function truncateOutput(output: string, maxLines = 20): string {
   const lines = output.split('\n');
 
   if (lines.length <= maxLines) {

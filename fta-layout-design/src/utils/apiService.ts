@@ -6,6 +6,7 @@
 import { buildApiUrl, currentApiConfig, API_ENDPOINTS } from '@/config/api';
 import type { DocumentReference } from '@/types/project';
 import { DSLData } from '@/types/dsl';
+import type { InterfaceDataModel, CreateDataModelRequest, UpdateDataModelRequest } from '@/types/interfaceDataModel';
 
 // 请求配置接口
 export interface RequestConfig {
@@ -500,6 +501,47 @@ export const api = {
   // 模型指标
   metrics: {
     latest: <T = any>() => ApiService.get<T>(API_ENDPOINTS.metrics.latest),
+  },
+
+  // 接口数据模型相关
+  interfaceDataModel: {
+    /**
+     * 创建接口数据模型
+     * @param data 创建请求体
+     * @returns 创建结果响应 Promise
+     */
+    create: (data: CreateDataModelRequest) =>
+      ApiService.post<InterfaceDataModel>(API_ENDPOINTS.interfaceDataModel.create, data),
+
+    /**
+     * 更新接口数据模型
+     * @param id 数据模型 ID
+     * @param data 更新请求体
+     * @returns 更新结果响应 Promise
+     */
+    update: (id: string, data: UpdateDataModelRequest) =>
+      ApiService.put<InterfaceDataModel>(API_ENDPOINTS.interfaceDataModel.update(id), data),
+
+    /**
+     * 删除接口数据模型
+     * @param id 数据模型 ID
+     * @returns 删除结果响应 Promise
+     */
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.interfaceDataModel.delete(id)),
+
+    /**
+     * 获取页面的所有接口数据模型
+     * @param pageId 页面 ID
+     * @returns 数据模型列表响应 Promise
+     */
+    list: (pageId: string) => ApiService.get<InterfaceDataModel[]>(API_ENDPOINTS.interfaceDataModel.list(pageId)),
+
+    /**
+     * 获取单个接口数据模型详情
+     * @param id 数据模型 ID
+     * @returns 数据模型详情响应 Promise
+     */
+    detail: (id: string) => ApiService.get<InterfaceDataModel>(API_ENDPOINTS.interfaceDataModel.detail(id)),
   },
 };
 

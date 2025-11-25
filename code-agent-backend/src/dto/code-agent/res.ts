@@ -204,3 +204,48 @@ export class GetGitlabProjectIdResponse extends BaseResponse<{ gitId: string }> 
     super({ gitId }, true, 'GitLab project ID retrieved successfully');
   }
 }
+
+// Interface Data Model Response Types
+interface SimpleDataModel {
+  id: string;
+  pageId: string;
+  name: string;
+  description?: string;
+  url?: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+  requestSchema?: any[];
+  responseSchema?: any[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  userId: string;
+}
+
+export class DataModelListResponse extends BaseResponse<SimpleDataModel[]> {
+  constructor(dataModels: SimpleDataModel[] | any[]) {
+    super(dataModels as SimpleDataModel[], true, 'Data models retrieved successfully');
+  }
+}
+
+export class DataModelDetailResponse extends BaseResponse<SimpleDataModel> {
+  constructor(dataModel: SimpleDataModel | any) {
+    super(dataModel as SimpleDataModel, true, 'Data model retrieved successfully');
+  }
+}
+
+export class CreateDataModelResponse extends BaseResponse<SimpleDataModel> {
+  constructor(dataModel: SimpleDataModel | any) {
+    super(dataModel as SimpleDataModel, true, 'Data model created successfully');
+  }
+}
+
+export class UpdateDataModelResponse extends BaseResponse<SimpleDataModel> {
+  constructor(dataModel: SimpleDataModel | any) {
+    super(dataModel as SimpleDataModel, true, 'Data model updated successfully');
+  }
+}
+
+export class DeleteDataModelResponse extends BaseResponse<boolean> {
+  constructor() {
+    super(true, true, 'Data model deleted successfully');
+  }
+}

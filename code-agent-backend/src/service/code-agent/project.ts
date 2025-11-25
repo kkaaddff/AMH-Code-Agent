@@ -56,7 +56,12 @@ export class ProjectService {
 
   private readonly projectPagesPopulateOptions = {
     path: 'pages',
-    populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
+    populate: [
+      { path: 'designDocuments' },
+      { path: 'prdDocuments' },
+      { path: 'openapiDocuments' },
+      { path: 'interfaceDataModels' },
+    ],
   };
 
   private sanitizeWorkdirs(workdirs?: string[]): string[] {
@@ -222,7 +227,12 @@ export class ProjectService {
       // Find page across all projects
       page = await this.pageEntity
         .findOne({ id: pageId })
-        .populate([{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }])
+        .populate([
+          { path: 'designDocuments' },
+          { path: 'prdDocuments' },
+          { path: 'openapiDocuments' },
+          { path: 'interfaceDataModels' },
+        ])
         .exec();
     }
 

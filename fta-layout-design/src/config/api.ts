@@ -87,6 +87,14 @@ export const API_ENDPOINTS = {
   metrics: {
     latest: '/code-agent/metrics',
   },
+  // 接口数据模型相关
+  interfaceDataModel: {
+    create: '/code-agent/interface-data-model',
+    update: (id: string) => `/code-agent/interface-data-model/${id}`,
+    delete: (id: string) => `/code-agent/interface-data-model/${id}`,
+    list: (pageId: string) => `/code-agent/interface-data-model/page/${pageId}`,
+    detail: (id: string) => `/code-agent/interface-data-model/${id}`,
+  },
 } as const;
 
 // 完整的API URL构建函数

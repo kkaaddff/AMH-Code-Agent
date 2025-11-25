@@ -19,13 +19,9 @@ export function createWriteTool(opts: { cwd: string }) {
     },
     execute: async ({ file_path, content }) => {
       try {
-        const fullFilePath = path.isAbsolute(file_path)
-          ? file_path
-          : path.resolve(opts.cwd, file_path);
+        const fullFilePath = path.isAbsolute(file_path) ? file_path : path.resolve(opts.cwd, file_path);
         const oldFileExists = fs.existsSync(fullFilePath);
-        const oldContent = oldFileExists
-          ? fs.readFileSync(fullFilePath, 'utf-8')
-          : '';
+        const oldContent = oldFileExists ? fs.readFileSync(fullFilePath, 'utf-8') : '';
         // TODO: backup old content
         // TODO: let user know if they want to write to a file that already exists
         const dir = path.dirname(fullFilePath);

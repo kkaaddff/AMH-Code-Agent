@@ -10,7 +10,7 @@ import {
   QuestionCircleOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { App as AntApp, App, Button, Dropdown, Layout, Space, Spin, Typography } from 'antd';
+import { App as AntApp, App, Button, Dropdown, Layout, Spin, Typography } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio/react';
 import AnnotationConfirmModal from './components/AnnotationConfirmModal';
@@ -98,6 +98,8 @@ const EditorPageContent: React.FC = () => {
         setCurrentPage(pageData);
         // 初始化：默认选中第一个设计文档
         setSelectedDocument({ type: 'design', id: pageData.designDocuments?.[0]?.id || undefined });
+        // 加载接口数据模型
+        editorPageActions.loadInterfaceDataModels();
       } catch (error: any) {
         console.error('获取页面数据失败:', error);
         setPageError(error.message || '获取页面数据失败');
@@ -407,7 +409,7 @@ const EditorPageContent: React.FC = () => {
 
   // 处理 OpenAPI 接口选择
   const handleSelectOpenApi = (id: string) => {
-    setSelectedDocument({ type: 'openapi', id });
+    editorPageActions.setSelectedApiId(id || null);
   };
 
   // 如果页面数据加载失败
@@ -440,10 +442,24 @@ const EditorPageContent: React.FC = () => {
             />
           </Sider>
 
-          {/* 中间和右侧内容：根据文档类型切换 */}
-          {editorPageStoreSnapshot.selectedDocument?.type === 'design' && (
-            <>
-              <Layout>
+          {/* 中间内容区域包装器 - 包含折叠按钮和文档内容 */}
+          <div className='editor-page-content-wrapper'>
+            {/* 左侧折叠按钮 - 与文档类型无关 */}
+            <div
+              onClick={() => setLeftCollapsed(!leftCollapsed)}
+              className='editor-page-collapse-button editor-page-collapse-button-left'>
+              {leftCollapsed ? '▶' : '◀'}
+            </div>
+
+            <div
+              onClick={() => setRightCollapsed(!rightCollapsed)}
+              className='editor-page-collapse-button editor-page-collapse-button-right'>
+              {rightCollapsed ? '◀' : '▶'}
+            </div>
+
+            {/* 设计文档编辑器 */}
+            {editorPageStoreSnapshot.selectedDocument?.type === 'design' && (
+              <Layout className='editor-page-flex-layout'>
                 <Content className='editor-page-content'>
                   <div className='editor-page-header-toolbar'>
                     <Title level={5} className='editor-page-title'>
@@ -514,18 +530,6 @@ const EditorPageContent: React.FC = () => {
                   </div>
 
                   <div className='editor-page-canvas-container'>
-                    <div
-                      onClick={() => setLeftCollapsed(!leftCollapsed)}
-                      className='editor-page-collapse-button editor-page-collapse-button-left'>
-                      {leftCollapsed ? '▶' : '◀'}
-                    </div>
-
-                    <div
-                      onClick={() => setRightCollapsed(!rightCollapsed)}
-                      className='editor-page-collapse-button editor-page-collapse-button-right'>
-                      {rightCollapsed ? '◀' : '▶'}
-                    </div>
-
                     <div id='detection-canvas-container' className='editor-page-detection-canvas-container'>
                       <DetectionCanvas
                         dslData={designDetectionStore.dslData as DesignDSL}
@@ -538,86 +542,57 @@ const EditorPageContent: React.FC = () => {
                   </div>
                 </Content>
               </Layout>
+            )}
 
-              <Sider
-                width={350}
-                theme='light'
-                collapsible
-                collapsed={rightCollapsed}
-                onCollapse={setRightCollapsed}
-                collapsedWidth={0}
-                trigger={null}
-                className='editor-page-sider editor-page-right-sider'>
-                <ComponentPropertyPanel />
-              </Sider>
-            </>
-          )}
-
-          {/* PRD 文档编辑器 */}
-          {editorPageStoreSnapshot.selectedDocument?.type === 'prd' && (
-            <Layout className='editor-page-flex-layout'>
-              <Content className='editor-page-content editor-page-content--no-padding'>
-                <div
-                  onClick={() => setLeftCollapsed(!leftCollapsed)}
-                  className='editor-page-collapse-button editor-page-collapse-button-left'>
-                  {leftCollapsed ? '▶' : '◀'}
-                </div>
-                <PRDEditorPanel documentId={editorPageStoreSnapshot.selectedDocument?.id} />
-              </Content>
-            </Layout>
-          )}
-
-          {/* OpenAPI 数据面板 */}
-          {editorPageStoreSnapshot.selectedDocument?.type === 'openapi' && (
-            <>
-              <Layout>
+            {/* PRD 文档编辑器 */}
+            {editorPageStoreSnapshot.selectedDocument?.type === 'prd' && (
+              <Layout className='editor-page-flex-layout'>
                 <Content className='editor-page-content editor-page-content--no-padding'>
-                  <div
-                    onClick={() => setLeftCollapsed(!leftCollapsed)}
-                    className='editor-page-collapse-button editor-page-collapse-button-left'>
-                    {leftCollapsed ? '▶' : '◀'}
-                  </div>
-
-                  <div
-                    onClick={() => setRightCollapsed(!rightCollapsed)}
-                    className='editor-page-collapse-button editor-page-collapse-button-right'>
-                    {rightCollapsed ? '◀' : '▶'}
-                  </div>
-
-                  <OpenAPIUrlPanel
-                    selectedApiId={editorPageStoreSnapshot.selectedDocument?.id || undefined}
-                    onSelectApi={handleSelectOpenApi}
-                  />
+                  <PRDEditorPanel documentId={editorPageStoreSnapshot.selectedDocument?.id} />
                 </Content>
               </Layout>
+            )}
 
-              <Sider
-                width={350}
-                theme='light'
-                collapsible
-                collapsed={rightCollapsed}
-                onCollapse={setRightCollapsed}
-                collapsedWidth={0}
-                trigger={null}
-                className='editor-page-sider editor-page-right-sider'>
-                <OpenAPIDataPanel selectedApiId={editorPageStoreSnapshot.selectedDocument?.id || undefined} />
-              </Sider>
-            </>
-          )}
+            {/* OpenAPI 数据面板 */}
+            {editorPageStoreSnapshot.selectedDocument?.type === 'openapi' && (
+              <Layout className='editor-page-flex-layout'>
+                <Content className='editor-page-content editor-page-content--no-padding'>
+                  <OpenAPIDataPanel selectedApiId={editorPageStoreSnapshot.selectedApiId || undefined} />
+                </Content>
+              </Layout>
+            )}
 
-          {/* 没有选中任何文档时的提示 */}
-          {!editorPageStoreSnapshot.selectedDocument && (
-            <Layout className='editor-page-flex-layout'>
-              <Content className='editor-page-empty-content'>
-                <div
-                  onClick={() => setLeftCollapsed(!leftCollapsed)}
-                  className='editor-page-collapse-button editor-page-collapse-button-left'>
-                  {leftCollapsed ? '▶' : '◀'}
-                </div>
-                <Typography.Text type='secondary'>请从左侧选择一个文档开始编辑</Typography.Text>
-              </Content>
-            </Layout>
-          )}
+            {/* 没有选中任何文档时的提示 */}
+            {!editorPageStoreSnapshot.selectedDocument && (
+              <Layout className='editor-page-flex-layout'>
+                <Content className='editor-page-empty-content'>
+                  <Typography.Text type='secondary'>请从左侧选择一个文档开始编辑</Typography.Text>
+                </Content>
+              </Layout>
+            )}
+          </div>
+
+          {/* 右侧面板 - 根据文档类型显示不同内容 */}
+          <Sider
+            width={350}
+            theme='light'
+            collapsible
+            collapsed={rightCollapsed}
+            onCollapse={setRightCollapsed}
+            collapsedWidth={0}
+            trigger={null}
+            className='editor-page-sider editor-page-right-sider'>
+            {editorPageStoreSnapshot.selectedDocument?.type === 'design' ? (
+              <ComponentPropertyPanel />
+            ) : editorPageStoreSnapshot.selectedDocument?.type === 'openapi' ? (
+              <OpenAPIUrlPanel
+                selectedApiId={editorPageStoreSnapshot.selectedApiId || undefined}
+                onSelectApi={handleSelectOpenApi}
+              />
+            ) : (
+              <div style={{ padding: 24, textAlign: 'center', color: '#aaa' }}>暂无内容</div>
+            )}
+          </Sider>
         </Layout>
       </Spin>
       <AnnotationConfirmModal

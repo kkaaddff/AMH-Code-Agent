@@ -132,7 +132,9 @@ function extractFirstUserMessageSummary(lines: string[]): string {
       if (entry.type === 'message' && 'role' in entry && entry.role === 'user' && typeof entry.content === 'string') {
         return entry.content.length > 50 ? entry.content.slice(0, 50) + '...' : entry.content;
       }
-    } catch (e) {}
+    } catch (e) {
+      // ignore parse error
+    }
   }
   return '';
 }
