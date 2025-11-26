@@ -462,13 +462,7 @@ const EditorPageContent: React.FC = () => {
                         tabIndex={isSmartDetecting ? -1 : 0}
                         aria-disabled={isSmartDetecting}
                         className={`gradient-action-button ${isSmartDetecting ? 'is-disabled' : ''}`}
-                        onClick={isSmartDetecting ? undefined : handleSmartDetection}
-                        onKeyDown={(e) => {
-                          if ((e.key === 'Enter' || e.key === ' ') && !isSmartDetecting) {
-                            e.preventDefault();
-                            handleSmartDetection();
-                          }
-                        }}>
+                        onClick={isSmartDetecting ? undefined : handleSmartDetection}>
                         <ThunderboltOutlined />
                         <span>{isSmartDetecting ? '智能识别中...' : '智能识别'}</span>
                       </div>

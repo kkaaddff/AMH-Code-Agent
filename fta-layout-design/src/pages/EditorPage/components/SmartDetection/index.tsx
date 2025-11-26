@@ -109,7 +109,7 @@ const parseSmartDetectionEvents = (events: Array<{ type: string; text?: string }
 const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
   ({ onDetectingChange }, ref: React.Ref<SmartDetectionHandle>) => {
     const componentDetectionStoreSnapshot = useSnapshot(designDetectionStore);
-    const { designData: dslData, rootAnnotation } = componentDetectionStoreSnapshot;
+    const { designData, rootAnnotation } = componentDetectionStoreSnapshot;
     const editorPageStoreSnapshot = useSnapshot(editorPageStore);
     const selectedDocumentId =
       editorPageStoreSnapshot.selectedDocument?.type === 'design'
@@ -223,7 +223,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         return;
       }
 
-      if (!dslData?.dsl || !rootAnnotation) {
+      if (!designData?.dsl || !rootAnnotation) {
         message.error('当前文档的 DSL 或标注数据尚未加载完成');
         return;
       }
@@ -232,7 +232,8 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
       onDetectingChange?.(true);
 
       try {
-        const detectionEvents = await smartDetection(dslData.dsl as DSLData);
+        const dslData = designData.dsl as DSLData;
+        const detectionEvents = await smartDetection(dslData);
         const parsedEntries = parseSmartDetectionEvents(detectionEvents);
 
         if (!parsedEntries.length) {
@@ -285,7 +286,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         setIsDetecting(false);
         onDetectingChange?.(false);
       }
-    }, [dslData, isDetecting, rootAnnotation, selectedDocumentId, onDetectingChange]);
+    }, [designData, isDetecting, rootAnnotation, selectedDocumentId]);
 
     useImperativeHandle(ref, () => ({
       runDetection,
