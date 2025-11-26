@@ -109,7 +109,7 @@ const parseSmartDetectionEvents = (events: Array<{ type: string; text?: string }
 const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
   ({ onDetectingChange }, ref: React.Ref<SmartDetectionHandle>) => {
     const componentDetectionStoreSnapshot = useSnapshot(designDetectionStore);
-    const { dslData, rootAnnotation } = componentDetectionStoreSnapshot;
+    const { designData: dslData, rootAnnotation } = componentDetectionStoreSnapshot;
     const editorPageStoreSnapshot = useSnapshot(editorPageStore);
     const selectedDocumentId =
       editorPageStoreSnapshot.selectedDocument?.type === 'design'

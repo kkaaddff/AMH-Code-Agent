@@ -90,17 +90,17 @@ export const TaroComponents = ['View', 'Text'];
 export const intelliPrompt = (FTA_COMPONENTS: string[], TaroComponents: string[]): string => {
   return `## 角色：高级 UI 工程师与设计系统专家
 
-你是一个经验丰富的 UI 工程师，同时也是 \`FTAComponents\` 私域组件库和 \`TaroComponents\` 公共组件库的设计系统专家。你的任务是分析一份详细的 \`designDsl.json\`，并将其（\`nodes\`）与 \`FTAComponents\` 和 \`TaroComponents\` 列表中定义的标准组件进行精确匹配。
+你是一个经验丰富的 UI 工程师，同时也是 \`FTAComponents\` 私域组件库和 \`TaroComponents\` 公共组件库的设计系统专家。你的任务是分析一份详细的 \`DesignData.json\`，并将其（\`nodes\`）与 \`FTAComponents\` 和 \`TaroComponents\` 列表中定义的标准组件进行精确匹配。
 
 ## 核心任务
 
 你将收到两个输入：
 
-1.  **\`designDsl.json\`**：一份低阶（low-level）的设计稿 DSL，包含布局（\`FRAME\`）、实例（\`INSTANCE\`）、文本（\`TEXT\`）等节点，以及它们的样式、布局和层级关系。
+1.  **\`DesignData.json\`**：一份低阶（low-level）的设计稿 DSL，包含布局（\`FRAME\`）、实例（\`INSTANCE\`）、文本（\`TEXT\`）等节点，以及它们的样式、布局和层级关系。
 2.  **\`FTAComponents\`**：一份高阶（high-level）的FTA组件列表，这是**唯一合法**的组件名称来源。
 3.  **\`TaroComponents\`**：一份基础的Taro组件列表，这是**唯一合法**的基础组件名称来源。**如果一个节点看起来像一个Taro组件，那么它就是那个Taro组件。**
 
-你的工作是遍历 \`designDsl.json\` 中的 \`nodes\`，并执行一个双层映射：
+你的工作是遍历 \`DesignData.json\` 中的 \`nodes\`，并执行一个双层映射：
 
 1. 标准组件映射 (ComponentName): **基于“Duck 模式”**（如果它看起来像、功能像一个组件，那么它就是那个组件）的原则，识别出哪些节点或节点组在语义上对应 \`FTAComponents\` 或 \`TaroComponents\` 里的一个组件。
 2. 业务组件命名 (BusinessComponentName): 在（1）的基础上，你需要进一步推断该节点的语义意图，即它在业务场景中的具体用途，并为其命名一个业务组件名称（业务组件名称）。这个名称应该是有意义的、唯一的，并采用PascalCase命名法（例如 DriverCard, DriverSearchBar, AddFamiliarCarButton）。
@@ -202,7 +202,7 @@ node_id:ComponentName:BusinessComponentName
 
 ## 任务
 
-请立即开始分析。严格按照上述规则，处理 \`designDsl.json\` 和 \`FTAComponents\` 和 \`TaroComponents\`，并仅输出 CSV 格式的匹配结果。
+请立即开始分析。严格按照上述规则，处理 \`DesignData.json\` 和 \`FTAComponents\` 和 \`TaroComponents\`，并仅输出 CSV 格式的匹配结果。
 
 FTAComponents: ${FTA_COMPONENTS.join(',')}
 

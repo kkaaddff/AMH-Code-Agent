@@ -1,4 +1,4 @@
-import type { DesignDSL } from '@/types/dsl';
+import type { DesignData } from '@/types/dsl';
 import {
   AppstoreOutlined,
   DeploymentUnitOutlined,
@@ -496,7 +496,7 @@ const EditorPageContent: React.FC = () => {
                   <div className='editor-page-canvas-container'>
                     <div id='detection-canvas-container' className='editor-page-detection-canvas-container'>
                       <DetectionCanvas
-                        dslData={designDetectionStore.dslData as DesignDSL}
+                        designData={designDetectionStore.designData as DesignData}
                         scale={scale}
                         onScaleChange={handleScaleChange}
                         highlightedNodeId={null}

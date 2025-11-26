@@ -26,13 +26,42 @@ import {
 // 给 canvas 画布增加额外的空间以支持框选交互
 const CANVAS_EXTEND_SIZE = 80;
 
+// 绘制DSL节点边框
+const drawDSLNodeBorders = (ctx: CanvasRenderingContext2D, node: DSLNode, parentX = 0, parentY = 0) => {
+  const bounds = getNodeBounds(node, parentX, parentY);
+
+  if (
+    !findAnnotationByDSLNodeId(node.id) &&
+    bounds.width > 0 &&
+    bounds.height > 0 &&
+    !node.hidden &&
+    node.mask !== 'outline'
+  ) {
+    drawBorder(ctx, bounds.x, bounds.y, bounds.width, bounds.height, {
+      color: COLORS.UNANNOTATED_BORDER,
+      width: DRAW_STYLES.UNANNOTATED_BORDER_WIDTH,
+      dash: DASH_PATTERNS.UNANNOTATED_DASH,
+    });
+  }
+
+  node.children?.forEach((child) => drawDSLNodeBorders(ctx, child, bounds.x, bounds.y));
+};
+
+const isEditableTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false;
+  const tagName = target.tagName;
+  return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName);
+};
+
 const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
-  dslData,
+  designData,
   scale = 1,
   onScaleChange,
   highlightedNodeId,
   hoveredNodeId,
 }) => {
+  const effectiveScale = scale === 0 ? 1 : scale;
+
   const { annotations, selectedNodeIds, hoveredAnnotation, hoveredDSLNode, showAllBorders } =
     useSnapshot(designDetectionStore);
 
@@ -87,24 +116,19 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       canvas.style.cursor = isSpacePressedRef.current ? 'grab' : 'default';
     }
   }, []);
+
   // Get root node dimensions
   const { rootNode, width, height } = useMemo(() => {
-    const node = dslData?.dsl.nodes[0] ?? null;
+    const node = designData?.dsl.nodes[0] ?? null;
     return {
       rootNode: node,
       width: node?.layoutStyle?.width || 720,
       height: node?.layoutStyle?.height || 1560,
     };
-  }, [dslData]);
+  }, [designData]);
 
   // 统一的键盘事件管理
   useEffect(() => {
-    const isEditableTarget = (target: EventTarget | null) => {
-      if (!(target instanceof HTMLElement)) return false;
-      const tagName = target.tagName;
-      return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName);
-    };
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isEditableTarget(e.target)) return;
 
@@ -185,8 +209,6 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
   const findNodeAtPositionMemo = (x: number, y: number) => findNodeAtPosition(x, y, rootNode);
 
-  const effectiveScale = useMemo(() => (scale === 0 ? 1 : scale), [scale]);
-
   const horizontalPadding = useMemo(() => {
     if (!containerSize.width) return CANVAS_EXTEND_SIZE;
     return Math.max((containerSize.width / effectiveScale - width) / 2, CANVAS_EXTEND_SIZE);
@@ -262,21 +284,6 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
     return null;
   };
 
-  // 绘制DSL节点边框
-  const drawDSLNodeBorders = (ctx: CanvasRenderingContext2D, node: DSLNode, parentX = 0, parentY = 0) => {
-    const bounds = getNodeBounds(node, parentX, parentY);
-
-    if (!findAnnotationByDSLNodeId(node.id) && bounds.width > 0 && bounds.height > 0) {
-      drawBorder(ctx, bounds.x, bounds.y, bounds.width, bounds.height, {
-        color: COLORS.UNANNOTATED_BORDER,
-        width: DRAW_STYLES.UNANNOTATED_BORDER_WIDTH,
-        dash: DASH_PATTERNS.UNANNOTATED_DASH,
-      });
-    }
-
-    node.children?.forEach((child) => drawDSLNodeBorders(ctx, child, bounds.x, bounds.y));
-  };
-
   // 绘制canvas
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -296,7 +303,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // 绘制背景栅格
-    // 洞区域向外扩 2px
+    // 洞区域向外扩 3px
     drawGridBackground(ctx, canvasWidth, canvasHeight, {
       x: horizontalPadding - 3,
       y: verticalPadding - 3,
@@ -315,16 +322,14 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 
     // 2. 绘制hover的DSL节点
     if (hoveredDSLNode) {
-      if (hoveredDSLNode) {
-        const bounds = calculateDSLNodeAbsolutePosition(hoveredDSLNode as DSLNode);
-        const nodeWidth = hoveredDSLNode.layoutStyle?.width || 0;
-        const nodeHeight = hoveredDSLNode.layoutStyle?.height || 0;
-        drawBorder(ctx, bounds.x, bounds.y, nodeWidth, nodeHeight, {
-          color: COLORS.HOVER_DSL_NODE,
-          width: DRAW_STYLES.HOVER_DSL_NODE_WIDTH,
-          dash: DASH_PATTERNS.HOVER_DSL_NODE_DASH,
-        });
-      }
+      const bounds = calculateDSLNodeAbsolutePosition(hoveredDSLNode as DSLNode);
+      const nodeWidth = hoveredDSLNode.layoutStyle?.width || 0;
+      const nodeHeight = hoveredDSLNode.layoutStyle?.height || 0;
+      drawBorder(ctx, bounds.x, bounds.y, nodeWidth, nodeHeight, {
+        color: COLORS.HOVER_DSL_NODE,
+        width: DRAW_STYLES.HOVER_DSL_NODE_WIDTH,
+        dash: DASH_PATTERNS.HOVER_DSL_NODE_DASH,
+      });
     }
 
     // 3. 绘制选中的DSL节点
@@ -438,9 +443,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
     hoveredDSLNode,
     width,
     height,
-    findAnnotationByDSLNodeId,
     showAllBorders,
-    drawDSLNodeBorders,
     selectionBox,
     isSelecting,
     horizontalPadding,
@@ -772,16 +775,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
         canvas.style.cursor = 'default';
       }
     },
-    [
-      effectiveScale,
-      getInteractionTarget,
-      isSelecting,
-      isShiftPressed,
-      horizontalPadding,
-      verticalPadding,
-      isPanning,
-      isSpacePressed,
-    ]
+    [effectiveScale, isSelecting, isShiftPressed, horizontalPadding, verticalPadding, isPanning, isSpacePressed]
   );
 
   // 处理鼠标离开
@@ -1049,7 +1043,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
               {/* Base DSL layer */}
               <DSLElement
                 node={rootNode}
-                dslData={dslData}
+                dslData={designData}
                 selectedNodeId={highlightedNodeId}
                 hoveredNodeId={hoveredNodeId}
               />

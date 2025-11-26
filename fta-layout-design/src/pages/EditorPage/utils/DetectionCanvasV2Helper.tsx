@@ -1,4 +1,4 @@
-import type { DSLNode, DesignDSL } from '@/types/dsl';
+import type { DSLNode, DesignData } from '@/types/dsl';
 import { useState, useEffect, useCallback } from 'react';
 import { GRID_CONFIG, COLORS } from '../constants/CanvasConstant';
 
@@ -9,7 +9,7 @@ import { GRID_CONFIG, COLORS } from '../constants/CanvasConstant';
  * @property onScaleChange 缩放变更回调函数。
  */
 export interface DetectionCanvasV2Props {
-  dslData: DesignDSL;
+  designData: DesignData;
   scale?: number;
   onScaleChange?: (scale: number) => void;
   highlightedNodeId?: string | null;

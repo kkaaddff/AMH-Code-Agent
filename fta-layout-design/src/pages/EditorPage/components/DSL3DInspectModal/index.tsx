@@ -1,6 +1,6 @@
 import DSLElement from '@/components/DSLElement';
 import { apiServices } from '@/services';
-import { DesignDSL, DSLNode } from '@/types/dsl';
+import { DesignData, DSLNode } from '@/types/dsl';
 import { DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons';
 import { App, Button, Modal } from 'antd';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -17,7 +17,7 @@ interface DSL3DInspectModalProps {
   onClose: () => void;
 }
 
-const buildPreviewDSL = (node: DSLNode, dslData: DesignDSL | null): DesignDSL | null => {
+const buildPreviewDSL = (node: DSLNode, dslData: DesignData | null): DesignData | null => {
   if (!dslData) return null;
 
   const cloneWithoutHidden = (current: DSLNode): DSLNode => {
@@ -40,7 +40,7 @@ const buildPreviewDSL = (node: DSLNode, dslData: DesignDSL | null): DesignDSL | 
   };
 };
 
-const HiddenNodePreview: React.FC<{ dsl: DesignDSL | null }> = ({ dsl }) => {
+const HiddenNodePreview: React.FC<{ dsl: DesignData | null }> = ({ dsl }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -81,7 +81,7 @@ const HiddenNodePreview: React.FC<{ dsl: DesignDSL | null }> = ({ dsl }) => {
 const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) => {
   const { message, modal } = App.useApp();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { dslData } = useSnapshot(designDetectionStore);
+  const { designData: dslData } = useSnapshot(designDetectionStore);
   const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
   const sceneRef = useRef<DSL3DScene | null>(null);
 
@@ -135,8 +135,8 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
 
     let rootNodes: DSLNode[] = [];
 
-    if (dslData && typeof dslData === 'object' && 'dsl' in dslData && (dslData as DesignDSL).dsl?.nodes) {
-      rootNodes = (dslData as DesignDSL).dsl.nodes;
+    if (dslData && typeof dslData === 'object' && 'dsl' in dslData && (dslData as DesignData).dsl?.nodes) {
+      rootNodes = (dslData as DesignData).dsl.nodes;
     }
 
     rootNodes.forEach((item) => traverse(item, 0, 0, 0));
@@ -144,7 +144,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     return nodes;
   }, [dslData]);
 
-  const tmpDSLData: DesignDSL | null = useMemo(() => {
+  const tmpDSLData: DesignData | null = useMemo(() => {
     if (!selectedNode || !dslData) return null;
 
     const targetNode = selectedNode.rawNode as DSLNode;
@@ -235,7 +235,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     try {
       await apiServices.project.updateDocument({
         id: selectedDesignDocument!.id,
-        data: dslData as DesignDSL,
+        data: dslData as DesignData,
       });
       message.success('DSL 已保存');
       await finalizeClose();
@@ -304,7 +304,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
               ) : (
                 <div className='dsl-3d-inspect-modal__hidden-grid'>
                   {hiddenNodes.map((node) => {
-                    const previewDSL = buildPreviewDSL(node, dslData as DesignDSL);
+                    const previewDSL = buildPreviewDSL(node, dslData as DesignData);
                     return (
                       <div key={node.id} className='dsl-3d-inspect-modal__hidden-item'>
                         <HiddenNodePreview dsl={previewDSL} />
@@ -335,7 +335,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
               {dslData ? (
                 <div className='dsl-3d-inspect-modal__preview-wrapper1'>
                   <div className='dsl-3d-inspect-modal__preview1' style={{ transform: 'scale(0.5)' }}>
-                    <DSLElement dslData={dslData as DesignDSL} />
+                    <DSLElement dslData={dslData as DesignData} />
                   </div>
                 </div>
               ) : (

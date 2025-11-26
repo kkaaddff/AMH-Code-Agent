@@ -1,6 +1,6 @@
 import type { AnnotationNode } from '@fta/shared-types';
 
-export type { AnnotationNode, DSLData, DSLNode, DesignDSL } from '@fta/shared-types';
+export type { AnnotationNode, DSLData, DSLNode, DesignData } from '@fta/shared-types';
 
 interface AnnotationNodeSummary {
   id: string;
@@ -58,7 +58,7 @@ export function flattenAnnotation(root?: AnnotationNode): AnnotationNodeSummary[
     }
     const children = Array.isArray(node.children) ? node.children : [];
     summaries.push({
-      id: String(node.id ?? node.dslNodeId ?? `node-${summaries.length}`),
+      id: String(node.id ?? `node-${summaries.length}`),
       name: typeof node.name === 'string' && node.name.length ? node.name : undefined,
       component: typeof node.ftaComponent === 'string' && node.ftaComponent.length ? node.ftaComponent : undefined,
       isContainer: Boolean(node.isContainer),

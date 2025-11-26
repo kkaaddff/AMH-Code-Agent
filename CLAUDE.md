@@ -8,13 +8,13 @@ FTA MasterGo-to-App platform: pull MasterGo DSL, manage projects/pages/docs, and
 
 ## High-Level Architecture
 
-| Area                  | Purpose                                                                                                                                                                             | Stack                                  | Port |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---- |
-| `shared-types/`       | Shared TS models (DSL, annotations, model metrics) used across packages.                                                                                                            | TS                                     | —    |
-| `code-agent-backend/` | Midway 3 API: model-gateway proxy, DSL PATH→PNG conversion + caching, project/page/doc hub, interface data-model CRUD, SSE frontend workflow driver, and model-metrics snapshot API. | Node 20, Midway, MongoDB, Redis, OSS   | 7001 |
-| `fta-layout-design/`  | React + Vite UI with AntD/Valtio: internal project-binding page (VSCode), editor workspace, marketing pages, and streaming markdown demo.                                          | Node 20, React 19, Vite 5, AntD 5      | 5173 |
-| `fta-agent-core/`     | Agent runtime (`createAgentService`, `runFrontendProjectWorkflow`) using ai-sdk, todo/file-draft/component-doc tools, and prompt/rules packs.                                       | Node 20, TypeScript, Vitest            | —    |
-| `messages-replayer/`  | CLI to parse `messages.log`, replay locally, or forward to an OpenAI-compatible endpoint.                                                                                           | Node 18+, axios                        | —    |
+| Area                  | Purpose                                                                                                                                                                              | Stack                                | Port |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | ---- |
+| `shared-types/`       | Shared TS models (DSL, annotations, model metrics) used across packages.                                                                                                             | TS                                   | —    |
+| `code-agent-backend/` | Midway 3 API: model-gateway proxy, DSL PATH→PNG conversion + caching, project/page/doc hub, interface data-model CRUD, SSE frontend workflow driver, and model-metrics snapshot API. | Node 20, Midway, MongoDB, Redis, OSS | 7001 |
+| `fta-layout-design/`  | React + Vite UI with AntD/Valtio: internal project-binding page (VSCode), editor workspace, marketing pages, and streaming markdown demo.                                            | Node 20, React 19, Vite 5, AntD 5    | 5173 |
+| `fta-agent-core/`     | Agent runtime (`createAgentService`, `runFrontendProjectWorkflow`) using ai-sdk, todo/file-draft/component-doc tools, and prompt/rules packs.                                        | Node 20, TypeScript, Vitest          | —    |
+| `messages-replayer/`  | CLI to parse `messages.log`, replay locally, or forward to an OpenAI-compatible endpoint.                                                                                            | Node 18+, axios                      | —    |
 
 Generated outputs (`dist/`, `logs/`, `run/`, `files-cache/`, `output/`, `mock-temp/`) stay out of git.
 
@@ -50,7 +50,7 @@ amh_code_agent/
 
 - Controllers
   - `/model-gateway` (SSE) and `/model-gateway-sync` (buffered) proxy to `OPENAI_BASE_URL` + `OPENAI_API_KEY`; expects OpenAI-style `messages` with a system prompt.
-  - `/code-agent/dsl`: read `DesignDSL.json`, normalize numbers, PATH→LAYER conversion via `DesignDSLService` (posts to `qa-fta-server.../design/convert-svg-path-to-png`, uploads to OSS `fta-snapshot`, caches in Redis + Mongo `DesignPathAssetEntity`).
+  - `/code-agent/dsl`: read `DesignData.json`, normalize numbers, PATH→LAYER conversion via `DesignDSLService` (posts to `qa-fta-server.../design/convert-svg-path-to-png`, uploads to OSS `fta-snapshot`, caches in Redis + Mongo `DesignPathAssetEntity`).
   - `/code-agent/dsl/cache`: Redis get/set helpers (handles MOVED/ASK redirects).
   - `/code-agent/gitlab/project-id`: resolves GitLab project ID (token embedded in `gitlab.service.ts`).
   - `/code-agent/project/*`: projects/pages CRUD, doc references, design doc sync via `MasterGoServiceV1` (unwraps GROUP nodes, normalizes numbers). Context binding resolves Git ID/workdir.
@@ -98,9 +98,9 @@ amh_code_agent/
 - Keep backend/frontend/agent-core changes scoped; avoid cross-package churn unless required.
 - Clean `files-cache/`, `logs/`, `run/*.json`, and PNG/ZIP outputs before sharing branches.
 - Summarize changes + tests in the final reply; suggest running `npm run cov` for backend PRs.
-- **IMPORTANT: Commit 规范**  
-  - 使用 Angular Conventional Commit，提交信息为中文，格式 `<type>(scope): <subject>`，保持祈使句。  
-  - 常用 type：`feat`、`fix`、`docs`、`refactor`、`chore`、`test`、`style`、`perf`。  
-  - 示例：  
-    - `feat(editor): 支持 VSCode 工作区自动绑定项目`  
+- **IMPORTANT: Commit 规范**
+  - 使用 Angular Conventional Commit，提交信息为中文，格式 `<type>(scope): <subject>`，保持祈使句。
+  - 常用 type：`feat`、`fix`、`docs`、`refactor`、`chore`、`test`、`style`、`perf`。
+  - 示例：
+    - `feat(editor): 支持 VSCode 工作区自动绑定项目`
     - `fix(backend): 修复接口数据模型更新时的 user 校验错误`

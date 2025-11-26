@@ -14,7 +14,7 @@
 我需要整理成满足一下类型定义：
 
 ```typescript
-// DesignDSL 数据类型定义
+// DesignData 数据类型定义
 export interface StyleValue {
   family?: string;
   size?: number;
@@ -76,7 +76,7 @@ export interface DSLData {
   nodes: DesignNode[];
 }
 
-export interface DesignDSL {
+export interface DesignData {
   dsl: DSLData;
 }
 
@@ -127,7 +127,7 @@ export interface LayerNode extends BaseNode {
 
 ```typescript
 import type {
-  DesignDSL,
+  DesignData,
   DSLData,
   DesignNode,
   Style,
@@ -154,7 +154,7 @@ class DSLNormalizer {
     this.styles = rawDsl.dsl.styles || {};
   }
 
-  public process(): DesignDSL {
+  public process(): DesignData {
     const rawNodes = this.rawDsl.dsl.nodes || [];
 
     // 1. 递归处理节点树

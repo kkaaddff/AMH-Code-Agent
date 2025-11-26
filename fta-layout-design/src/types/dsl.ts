@@ -13,7 +13,7 @@ export type {
   DSLLayerNode,
   DSLNode,
   DSLData,
-  DesignDSL,
+  DesignData as DesignData,
   StyleValue,
   ImageValue,
   LayerStyle,

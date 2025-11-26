@@ -30,7 +30,7 @@ export interface TreeNode {
 }
 
 export type FrontendProjectWorkflowOptions = {
-  designDsl: string;
+  designData: string;
   srcTree?: TreeNode;
   pageAnnotation: string;
   productName: string;
@@ -181,7 +181,7 @@ export async function runFrontendProjectWorkflow(
     ${opts.pageAnnotation}
 
     # Design DSL
-    ${opts.designDsl}
+    ${opts.designData}
 
     ${opts.srcTree ? `# 项目 src 目录结构\n${formatTreeToCompactList(opts.srcTree)}` : ''}`;
 

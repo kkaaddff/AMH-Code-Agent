@@ -3,7 +3,7 @@ import { callModelAPI } from './CodeGenerationLoop/index.AgentScheduler.backup';
 import { Message, RequestBody } from './CodeGenerationLoop/types';
 import intelliPrompt from './intelli-prompt';
 
-export const smartDetection = async (designDsl: DSLData) => {
+export const smartDetection = async (DesignData: DSLData) => {
   const systemMessages: Message[] = [
     {
       role: 'system',
@@ -25,7 +25,7 @@ export const smartDetection = async (designDsl: DSLData) => {
         content: [
           {
             type: 'text',
-            text: 'designDsl: ' + JSON.stringify(designDsl),
+            text: 'DesignData: ' + JSON.stringify(DesignData),
           },
         ],
       },

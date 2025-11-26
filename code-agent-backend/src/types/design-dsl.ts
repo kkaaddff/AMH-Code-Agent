@@ -15,6 +15,6 @@ export type {
   DSLLayerNode as LayerNode,
   DSLNode as DesignNode,
   DSLData,
-  DesignDSL,
+  DesignData,
   LayerStyle,
 } from '@fta/shared-types';

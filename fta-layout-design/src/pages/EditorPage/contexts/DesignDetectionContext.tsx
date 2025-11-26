@@ -3,7 +3,7 @@ import { proxy, useSnapshot } from 'valtio';
 import type { DataNode } from 'antd/es/tree';
 import { FileImageOutlined, ReloadOutlined } from '@ant-design/icons';
 import { App, Button, Space, Typography } from 'antd';
-import { DesignDSL, DSLNode } from '@/types/dsl';
+import { DesignData, DSLNode } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import { api } from '@/utils/apiService';
 import { componentDetectionDebugLog } from '@/utils/componentDetectionDebug';
@@ -92,7 +92,7 @@ const findAnnotationByDSLNodeId = (dslNodeId: string): AnnotationNode | null => 
 
 // 统一的DSL节点查找函数
 const findDSLNodeById = (id: string): DSLNode | null => {
-  if (!designDetectionStore.dslData) return null;
+  if (!designDetectionStore.designData) return null;
 
   const search = (node: DSLNode | null): DSLNode | null => {
     if (!node) return null;
@@ -294,7 +294,7 @@ const findContainingDSLNode = (selectedAnnotations: AnnotationNode[], selectedDS
 interface DesignDocumentDetectionState {
   rootAnnotation: AnnotationNode | null;
   annotations: AnnotationNode[];
-  dslData: DesignDSL | null;
+  designData: DesignData | null;
   readonly dslRootNode: DSLNode | null;
   isLoading: boolean;
   error: string | null;
@@ -305,7 +305,7 @@ interface DesignDetectionState extends AnnotationState {
   showAllBorders: boolean;
   selectedNodeIds: SelectedNodeItem[];
   designStoreMap: Record<string, DesignDocumentDetectionState>;
-  dslData: DesignDSL | null;
+  designData: DesignData | null;
   readonly dslRootNode: DSLNode | null;
   readonly currentDesignId: string | undefined;
 }
@@ -314,7 +314,7 @@ const createEmptyDesignDocumentState = (): DesignDocumentDetectionState => {
   const state = {
     rootAnnotation: null,
     annotations: [],
-    dslData: null as DesignDSL | null,
+    designData: null as DesignData | null,
     isLoading: false,
     error: null,
     versionToken: null,
@@ -322,7 +322,7 @@ const createEmptyDesignDocumentState = (): DesignDocumentDetectionState => {
   return {
     ...state,
     get dslRootNode() {
-      return state.dslData?.dsl.nodes?.[0] ?? null;
+      return state.designData?.dsl.nodes?.[0] ?? null;
     },
   };
 };
@@ -359,18 +359,18 @@ export const designDetectionStore = proxy<DesignDetectionState>({
   hoveredDSLNode: null,
   expandedKeys: [],
   isLoading: false,
-  get dslData() {
+  get designData() {
     if (!this.currentDesignId) {
       return null;
     }
-    return this.designStoreMap[this.currentDesignId]?.dslData ?? null;
+    return this.designStoreMap[this.currentDesignId]?.designData ?? null;
   },
-  set dslData(value: DesignDSL | null) {
+  set designData(value: DesignData | null) {
     if (!this.currentDesignId) return;
     if (!this.designStoreMap[this.currentDesignId]) {
       this.designStoreMap[this.currentDesignId] = createEmptyDesignDocumentState();
     }
-    this.designStoreMap[this.currentDesignId].dslData = value;
+    this.designStoreMap[this.currentDesignId].designData = value;
   },
   showAllBorders: true,
   selectedNodeIds: [],
@@ -378,7 +378,7 @@ export const designDetectionStore = proxy<DesignDetectionState>({
     if (!this.currentDesignId) {
       return null;
     }
-    return this.designStoreMap[this.currentDesignId]?.dslData?.dsl.nodes?.[0] ?? null;
+    return this.designStoreMap[this.currentDesignId]?.designData?.dsl.nodes?.[0] ?? null;
   },
 });
 
@@ -395,9 +395,9 @@ const setDesignRootAnnotation = (designId: string, root: AnnotationNode | null) 
   target.annotations = root ? flattenAnnotationTree(root) : [];
 };
 
-const setDesignDslData = (designId: string, data: DesignDSL | null) => {
+const setDesignDslData = (designId: string, data: DesignData | null) => {
   const target = ensureDesignDocumentState(designId);
-  target.dslData = data;
+  target.designData = data;
 };
 
 const updateDSLNodeHiddenState = (id: string) => {
@@ -406,7 +406,7 @@ const updateDSLNodeHiddenState = (id: string) => {
   }
 
   const designState = designDetectionStore.designStoreMap[designDetectionStore.currentDesignId];
-  if (!designState?.dslData?.dsl?.nodes?.length) {
+  if (!designState?.designData?.dsl?.nodes?.length) {
     return;
   }
 
@@ -427,7 +427,7 @@ const updateDSLNodeHiddenState = (id: string) => {
     return false;
   };
 
-  designState.dslData.dsl.nodes.some((node) => findAndToggleNode(node));
+  designState.designData?.dsl.nodes.some((node) => findAndToggleNode(node));
 };
 
 const getDocumentVersionToken = (doc: PartialExcept<DocumentReference, 'id'>) =>
@@ -441,7 +441,7 @@ const shouldFetchDesignDocument = (doc: PartialExcept<DocumentReference, 'id'>, 
   if (!target) {
     return true;
   }
-  if (!target.dslData || !target.rootAnnotation) {
+  if (!target.designData || !target.rootAnnotation) {
     return true;
   }
   const nextVersion = getDocumentVersionToken(doc);
@@ -456,7 +456,7 @@ const fetchDesignDocumentDSLInternal = async (doc: PartialExcept<DocumentReferen
 
   try {
     const response = await api.project.document.getContent({ documentId: doc.id });
-    const rawDslData: DesignDSL | undefined = response?.data?.data;
+    const rawDslData: DesignData | undefined = response?.data?.data;
     if (!rawDslData) {
       throw new Error('没有获取到DSL数据');
     }
@@ -517,7 +517,7 @@ export const designDetectionActions = {
     designId: string,
     payload: {
       rootAnnotation?: AnnotationNode | null;
-      dslData?: DesignDSL | null;
+      dslData?: DesignData | null;
     }
   ) => {
     if (!designId) return;

@@ -1,4 +1,4 @@
-import type { AnnotationNode, AnnotationSnapshot, DesignDSL } from '@fta/shared-types';
+import type { AnnotationNode, AnnotationSnapshot, DesignData } from '@fta/shared-types';
 import { modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { EntityModel } from '@midwayjs/typegoose';
 import { InterfaceDataModel } from './interface-data-model';
@@ -38,7 +38,7 @@ export class DocumentReference {
   lastSyncAt?: Date;
 
   @prop({ type: Object })
-  data?: DesignDSL;
+  data?: DesignData;
 
   @prop({ type: Object })
   annotationData?: AnnotationSnapshot;

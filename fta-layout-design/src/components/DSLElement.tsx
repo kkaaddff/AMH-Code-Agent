@@ -7,7 +7,7 @@ import {
   DSLFrameNode,
   DSLInstanceNode,
   DSLStyles,
-  DesignDSL,
+  DesignData,
 } from '../types/dsl';
 import {
   parseColor,
@@ -21,7 +21,7 @@ import { parseBorderStyle, parseEffectStyle } from '../utils/layoutUtils';
 
 interface DSLElementProps {
   node?: DSLNode;
-  dslData?: DesignDSL | null;
+  dslData?: DesignData | null;
   isLeaf?: boolean;
   onSelect?: (nodeId: string | null) => void;
   onHover?: (nodeId: string | null) => void;

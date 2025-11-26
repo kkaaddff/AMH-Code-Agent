@@ -139,7 +139,7 @@ export interface DSLData {
   nodes: DSLNode[];
 }
 
-export interface DesignDSL {
+export interface DesignData {
   dsl: DSLData;
 }
 

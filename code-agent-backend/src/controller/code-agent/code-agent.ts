@@ -13,7 +13,7 @@ import {
 } from '../../dto/design-dsl';
 import { DesignDSLService } from '../../service/code-agent/design-dsl';
 import { GitlabService } from '../../service/code-agent/gitlab.service';
-import { DesignDSL } from '../../types/design-dsl';
+import { DesignData } from '../../types/design-dsl';
 
 @Controller('/code-agent')
 export class CodeAgentController {
@@ -31,7 +31,7 @@ export class CodeAgentController {
    */
   @Get('/dsl')
   async getDSLData(): Promise<GetDSLDataResponse> {
-    const dslPath = path.join(process.cwd(), 'DesignDSL.json');
+    const dslPath = path.join(process.cwd(), 'DesignData.json');
     const dslData = await this.designDSLService.readDesignDSLFile(dslPath);
     return new GetDSLDataResponse(dslData);
   }
@@ -46,7 +46,7 @@ export class CodeAgentController {
       throw new Error('DSL data is required');
     }
 
-    const originalDSL = body as unknown as DesignDSL;
+    const originalDSL = body as unknown as DesignData;
     const processedDSL =
       body.convertPaths === false ? originalDSL : await this.designDSLService.processDesignDSL(originalDSL);
     const stats = await this.designDSLService.getDSLStats(processedDSL);

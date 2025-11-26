@@ -1,7 +1,7 @@
 import type { FrontendProjectWorkflowCallbacks } from '@fta/agent-core';
 import { Config, Inject, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import path from 'path';
-import { DesignDSL, DesignNode } from '../../types';
+import { DesignData, DesignNode } from '../../types';
 import { ModelGatewayConfig } from '../common/model-gateway';
 import { DesignDSLService } from './design-dsl';
 import { ProjectService } from './project';
@@ -107,7 +107,7 @@ export class FrontendWorkflowService {
         };
       }
 
-      const processedDSL = await this.designDSLService.processDesignDSL(dsl as DesignDSL);
+      const processedDSL = await this.designDSLService.processDesignDSL(dsl as DesignData);
       const filteredDSL = {
         ...processedDSL,
         dsl: {
@@ -156,7 +156,7 @@ export class FrontendWorkflowService {
       const result = await runFrontendProjectWorkflow({
         cwd,
         srcTree,
-        designDsl: JSON.stringify(filteredDSL),
+        designData: JSON.stringify(filteredDSL),
         pageAnnotation: fullPageContext,
         productName: productName || 'FTA-Frontend',
         version: '0.0.0',
