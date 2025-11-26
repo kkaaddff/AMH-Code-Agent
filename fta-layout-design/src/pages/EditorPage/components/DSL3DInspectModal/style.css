@@ -158,7 +158,7 @@
   border-bottom: 1px solid #eee;
   font-weight: bold;
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto auto auto auto;
   align-items: center;
   gap: 8px;
 }

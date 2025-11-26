@@ -348,9 +348,20 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
             <div className='dsl-3d-inspect-modal__sidebar-header'>
               <span>当前节点预览</span>
               <span>按 Esc 键取消选择</span>
+              {tmpDSLData?.dsl?.nodes?.[0]?.id && (
+                <Button
+                  size='small'
+                  onClick={() => {
+                    navigator.clipboard.writeText(tmpDSLData.dsl.nodes[0].id);
+                    message.success('已复制节点 ID');
+                  }}>
+                  {tmpDSLData.dsl.nodes[0].id}
+                </Button>
+              )}
               {tmpDSLData?.dsl?.nodes?.[0]?.id ? (
                 <Button
                   size='small'
+                  type='primary'
                   onClick={() => {
                     designDetectionActions.toggleDSLNodeById(tmpDSLData.dsl.nodes[0].id);
                   }}>
