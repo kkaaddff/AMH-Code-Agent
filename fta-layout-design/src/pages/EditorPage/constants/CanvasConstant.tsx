@@ -1,18 +1,20 @@
 /** Canvas 颜色常量定义 */
 export const COLORS = {
   /** Hover DSL节点颜色 - 浅蓝色虚线外发光 */
-  HOVER_DSL_NODE: 'rgb(64, 169, 255)',
-  /** 已标注组件默认颜色 - 浅蓝色实线 */
-  ANNOTATED_DEFAULT: 'rgb(145, 213, 255)',
-  /** 已标注组件选中颜色 - 更亮的蓝色虚线 */
-  ANNOTATED_SELECTED: 'rgb(24, 144, 255)',
-  /** 已标注组件hover颜色 - 中等亮度蓝色虚线 */
-  ANNOTATED_HOVERED: 'rgb(64, 169, 255)',
-  /** 标签背景色 */
+  HOVER_DSL_NODE: 'rgb(145, 213, 255)',
+  /** 选中DSL节点颜色 - 更亮的蓝色虚线 */
+  SELECTED_DSL_NODE: 'rgb(24, 144, 255)',
+  /** 已标注组件默认颜色 - 浅紫色实线 */
+  ANNOTATED_DEFAULT: 'rgb(211, 173, 247)',
+  /** 已标注组件选中颜色 - 深紫色虚线 */
+  ANNOTATED_SELECTED: 'rgb(179, 127, 235)',
+  /** 已标注组件hover颜色 - 中等紫色虚线 */
+  ANNOTATED_HOVERED: 'rgb(153, 107, 234)',
+  /** 标签背景色（默认蓝色，为DSL标签） */
   LABEL_BACKGROUND: 'rgb(24, 144, 255)',
   /** 标签文字颜色 */
   LABEL_TEXT: 'rgb(255, 255, 255)',
-  /** 选中标签背景色 */
+  /** 选中标签背景色（DSL标签选中） */
   LABEL_BACKGROUND_SELECTED: 'rgb(24, 120, 255)',
   /** 容器边框颜色 */
   CONTAINER_BORDER: 'rgb(217, 217, 217)',
@@ -24,10 +26,10 @@ export const COLORS = {
   CANVAS_BACKGROUND: 'rgb(255, 255, 255)',
   /** 栅格线颜色 */
   GRID_LINE: 'rgba(0, 0, 0, 0.05)',
-  /** 未标注节点边框颜色 - 浅灰色虚线 */
-  UNANNOTATED_BORDER: 'rgb(105, 192, 255)',
-  /** DSL面板边界颜色 */
-  DSL_BOUNDARY: 'rgb(179, 127, 235)',
+  /** 未标注节点边框颜色 - 浅蓝色虚线 */
+  UNANNOTATED_BORDER: 'rgb(145, 213, 255)',
+  /** DSL面板边界颜色（蓝色系，与DSL相关） */
+  DSL_BOUNDARY: 'rgb(24, 144, 255)',
 } as const;
 
 /** Canvas 绘制样式常量定义 */
@@ -54,13 +56,13 @@ export const DRAW_STYLES = {
 
 /** Canvas 虚线样式常量定义 */
 export const DASH_PATTERNS: { [key: string]: [number, number] } = {
-  /** 未标注节点虚线样式 */
+  /** 未标注节点虚线样式（蓝色系，DSL） */
   UNANNOTATED_DASH: [4, 4],
   /** Hover DSL节点虚线样式 */
   HOVER_DSL_NODE_DASH: [5, 5],
   /** 选中DSL节点虚线样式 */
   SELECTED_DSL_NODE_DASH: [8, 4],
-  /** 已标注组件hover虚线样式 */
+  /** 已标注组件hover虚线样式（紫色系，Annotation） */
   ANNOTATED_HOVER_DASH: [8, 4],
 };
 

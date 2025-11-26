@@ -1,4 +1,4 @@
-import type { DSLNode, DesignData } from '@/types/dsl';
+import type { DSLNode, DesignData, AnnotationNode } from '@/types/dsl';
 import { useState, useEffect, useCallback } from 'react';
 import { GRID_CONFIG, COLORS } from '../constants/CanvasConstant';
 
@@ -121,7 +121,13 @@ export const getNodeBounds = (node: DSLNode, parentX = 0, parentY = 0) => {
  * @param parentY 父节点 Y 偏移。
  * @returns 命中的 DSL 节点，未命中时返回 null。
  */
-export const findNodeAtPosition = (x: number, y: number, node: DSLNode, parentX = 0, parentY = 0): DSLNode | null => {
+export const findDSLNodeAtPosition = (
+  x: number,
+  y: number,
+  node: DSLNode,
+  parentX = 0,
+  parentY = 0
+): DSLNode | null => {
   const bounds = getNodeBounds(node, parentX, parentY);
 
   if (x < bounds.x || x > bounds.right || y < bounds.y || y > bounds.bottom) {
@@ -132,7 +138,32 @@ export const findNodeAtPosition = (x: number, y: number, node: DSLNode, parentX 
   }
   if (node.children?.length) {
     for (const child of node.children) {
-      const found = findNodeAtPosition(x, y, child, bounds.x, bounds.y);
+      const found = findDSLNodeAtPosition(x, y, child, bounds.x, bounds.y);
+      if (found) return found;
+    }
+  }
+
+  return node;
+};
+
+/**
+ * 根据坐标命中查找最内层 Annotation 节点。
+ * @param x 相对于根节点的 X 坐标。
+ * @param y 相对于根节点的 Y 坐标。
+ * @param node 当前遍历的 Annotation 树节点。
+ * @returns 命中的 Annotation 节点，未命中时返回 null。
+ */
+export const findAnnotationNodeAtPosition = (x: number, y: number, node: AnnotationNode): AnnotationNode | null => {
+  const right = node.absoluteX + node.width;
+  const bottom = node.absoluteY + node.height;
+
+  if (x < node.absoluteX || x > right || y < node.absoluteY || y > bottom) {
+    return null;
+  }
+
+  if (node.children?.length) {
+    for (const child of node.children) {
+      const found = findAnnotationNodeAtPosition(x, y, child);
       if (found) return found;
     }
   }

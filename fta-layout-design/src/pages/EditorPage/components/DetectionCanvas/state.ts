@@ -10,9 +10,13 @@ export interface SelectionBox {
 export interface DetectionCanvasState {
   isShiftPressed: boolean;
   isSpacePressed: boolean;
+  /** 是否正在选择 */
   isSelecting: boolean;
+  /** 是否正在平移 */
   isPanning: boolean;
+  /** 平移偏移量 */
   panOffset: { x: number; y: number };
+  /** 选择框 */
   selectionBox: SelectionBox | null;
 }
 

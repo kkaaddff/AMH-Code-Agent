@@ -2,6 +2,7 @@ export type {
   DSLStyle,
   DSLStyles,
   DSLNodeType,
+  AnnotationNode,
   DSLLayoutStyle,
   DSLBaseNode,
   DSLFrameNode,

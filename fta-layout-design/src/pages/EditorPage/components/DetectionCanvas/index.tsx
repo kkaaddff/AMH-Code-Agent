@@ -1,10 +1,8 @@
 import DSLElement from '@/components/DSLElement';
-import { AnnotationNode, DSLNode } from '@fta/shared-types';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useSnapshot } from 'valtio';
 import { COLORS } from '../../constants/CanvasConstant';
-import { designDetectionActions, designDetectionStore } from '../../contexts/DesignDetectionContext';
-import { SelectedNodeItem } from '../../types/componentDetection';
+import { designDetectionActions } from '../../contexts/DesignDetectionContext';
 import { DetectionCanvasV2Props, useContainerSize } from '../../utils/DetectionCanvasV2Helper';
 import { CANVAS_EXTEND_SIZE, DetectionCanvasScene } from './scene';
 import { detectionCanvasActions, detectionCanvasState } from './state';
@@ -18,8 +16,6 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
 }) => {
   const effectiveScale = scale === 0 ? 1 : scale;
 
-  const { annotations, selectedNodeIds, hoveredAnnotation, hoveredDSLNode, showAllBorders } =
-    useSnapshot(designDetectionStore);
   const canvasState = useSnapshot(detectionCanvasState);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -87,12 +83,6 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
   useEffect(() => {
     if (!sceneRef.current) return;
     sceneRef.current.updateState({
-      rootNode,
-      annotations: annotations as AnnotationNode[],
-      selectedNodeIds: selectedNodeIds as SelectedNodeItem[],
-      hoveredAnnotation: hoveredAnnotation as AnnotationNode | null,
-      hoveredDSLNode: hoveredDSLNode as DSLNode | null,
-      showAllBorders,
       width,
       height,
       horizontalPadding,
@@ -101,20 +91,7 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       containerSize,
       effectiveScale,
     });
-  }, [
-    rootNode,
-    annotations,
-    selectedNodeIds,
-    hoveredAnnotation,
-    hoveredDSLNode,
-    showAllBorders,
-    width,
-    height,
-    horizontalPadding,
-    verticalPadding,
-    contentOffset,
-    effectiveScale,
-  ]);
+  }, [width, height, horizontalPadding, verticalPadding, contentOffset, containerSize, effectiveScale]);
 
   const styles = useMemo(() => {
     const contentWidth = width + horizontalPadding * 2;

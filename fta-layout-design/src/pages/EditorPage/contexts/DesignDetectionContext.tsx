@@ -1,25 +1,26 @@
-import { useMemo } from 'react';
-import { proxy, useSnapshot } from 'valtio';
-import type { DataNode } from 'antd/es/tree';
-import { FileImageOutlined, ReloadOutlined } from '@ant-design/icons';
-import { App, Button, Space, Typography } from 'antd';
+import { dslService } from '@/services/dslService';
 import { DesignData, DSLNode } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import { api } from '@/utils/apiService';
 import { componentDetectionDebugLog } from '@/utils/componentDetectionDebug';
-import { dslService } from '@/services/dslService';
+import { FileImageOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Modal, Space, Typography } from 'antd';
+import type { DataNode } from 'antd/es/tree';
+import { useMemo } from 'react';
+import { proxy, useSnapshot } from 'valtio';
+
+import { convertToTreeData, createRootAnnotationFromDesignDoc } from '../components/LayerTreePanel/utils';
 import {
-  AnnotationState,
   AnnotationNode,
-  isContainerComponent,
-  SelectedNodeItem,
-  NodeType,
+  AnnotationState,
   ComponentCategory,
   getComponentCategory,
+  isContainerComponent,
+  NodeType,
+  SelectedNodeItem,
 } from '../types/componentDetection';
 import { saveAnnotationState } from '../utils/componentStorage';
 import { editorPageStore } from './EditorPageContext';
-import { convertToTreeData, createRootAnnotationFromDesignDoc } from '../components/LayerTreePanel/utils';
 
 type PartialExcept<T, K extends keyof T> = Partial<T> & Pick<T, K>;
 
@@ -107,6 +108,20 @@ const findDSLNodeById = (id: string): DSLNode | null => {
   };
 
   return search(designDetectionStore.dslRootNode);
+};
+
+// 扁平化 DSLNode 树
+export const flattenDSLNodeTree = (root: DSLNode | null): DSLNode[] => {
+  if (!root) return [];
+  const result: DSLNode[] = [];
+  const traverse = (node: DSLNode) => {
+    result.push(node);
+    if (node.children && Array.isArray(node.children)) {
+      node.children.forEach(traverse);
+    }
+  };
+  traverse(root);
+  return result;
 };
 
 // 计算DSL节点的绝对坐标
@@ -293,7 +308,7 @@ const findContainingDSLNode = (selectedAnnotations: AnnotationNode[], selectedDS
 
 interface DesignDocumentDetectionState {
   rootAnnotation: AnnotationNode | null;
-  annotations: AnnotationNode[];
+  readonly flatAnnotationList: AnnotationNode[];
   designData: DesignData | null;
   readonly dslRootNode: DSLNode | null;
   isLoading: boolean;
@@ -306,14 +321,15 @@ interface DesignDetectionState extends AnnotationState {
   selectedNodeIds: SelectedNodeItem[];
   designStoreMap: Record<string, DesignDocumentDetectionState>;
   designData: DesignData | null;
+  readonly flatAnnotationList: AnnotationNode[];
   readonly dslRootNode: DSLNode | null;
+  readonly flatDSLNodeList: DSLNode[];
   readonly currentDesignId: string | undefined;
 }
 
 const createEmptyDesignDocumentState = (): DesignDocumentDetectionState => {
   const state = {
     rootAnnotation: null,
-    annotations: [],
     designData: null as DesignData | null,
     isLoading: false,
     error: null,
@@ -321,6 +337,9 @@ const createEmptyDesignDocumentState = (): DesignDocumentDetectionState => {
   };
   return {
     ...state,
+    get flatAnnotationList() {
+      return state.rootAnnotation ? flattenAnnotationTree(state.rootAnnotation) : [];
+    },
     get dslRootNode() {
       return state.designData?.dsl.nodes?.[0] ?? null;
     },
@@ -345,13 +364,12 @@ export const designDetectionStore = proxy<DesignDetectionState>({
     }
     const target = this.designStoreMap[this.currentDesignId];
     target.rootAnnotation = value;
-    target.annotations = value ? flattenAnnotationTree(value) : [];
   },
-  get annotations() {
+  get flatAnnotationList() {
     if (!this.currentDesignId) {
       return [];
     }
-    return this.designStoreMap[this.currentDesignId]?.annotations ?? [];
+    return this.designStoreMap[this.currentDesignId]?.flatAnnotationList ?? [];
   },
   selectedAnnotation: null,
   hoveredAnnotation: null,
@@ -380,6 +398,9 @@ export const designDetectionStore = proxy<DesignDetectionState>({
     }
     return this.designStoreMap[this.currentDesignId]?.designData?.dsl.nodes?.[0] ?? null;
   },
+  get flatDSLNodeList() {
+    return flattenDSLNodeTree(this.dslRootNode);
+  },
 });
 
 const ensureDesignDocumentState = (designId: string): DesignDocumentDetectionState => {
@@ -392,10 +413,9 @@ const ensureDesignDocumentState = (designId: string): DesignDocumentDetectionSta
 const setDesignRootAnnotation = (designId: string, root: AnnotationNode | null) => {
   const target = ensureDesignDocumentState(designId);
   target.rootAnnotation = root;
-  target.annotations = root ? flattenAnnotationTree(root) : [];
 };
 
-const setDesignDslData = (designId: string, data: DesignData | null) => {
+const setDesignData = (designId: string, data: DesignData | null) => {
   const target = ensureDesignDocumentState(designId);
   target.designData = data;
 };
@@ -471,7 +491,7 @@ const fetchDesignDocumentDSLInternal = async (doc: PartialExcept<DocumentReferen
     if (!rootAnnotation) {
       throw new Error('DSL数据中缺少根节点');
     }
-    setDesignDslData(doc.id, {
+    setDesignData(doc.id, {
       dsl: processedDesignDSL.dsl,
     });
     setDesignRootAnnotation(doc.id, rootAnnotation);
@@ -485,13 +505,6 @@ const fetchDesignDocumentDSLInternal = async (doc: PartialExcept<DocumentReferen
 };
 
 // ==================== Actions ====================
-
-// 获取 modal 实例的辅助函数 (需要在组件内调用)
-let modalInstance: ReturnType<typeof App.useApp>['modal'] | null = null;
-
-export const setModalInstance = (modal: ReturnType<typeof App.useApp>['modal']) => {
-  modalInstance = modal;
-};
 
 export const designDetectionActions = {
   // 切换当前设计文档
@@ -528,11 +541,11 @@ export const designDetectionActions = {
         convertPaths: true,
       });
 
-      setDesignDslData(designId, {
+      setDesignData(designId, {
         dsl: processedDesignDSL.dsl,
       });
     } else if ('dslData' in payload) {
-      setDesignDslData(designId, null);
+      setDesignData(designId, null);
     }
     if ('rootAnnotation' in payload) {
       setDesignRootAnnotation(designId, payload.rootAnnotation ?? null);
@@ -579,14 +592,14 @@ export const designDetectionActions = {
       (additionalProps && additionalProps.force === false);
 
     if (shouldCheckDuplicate) {
-      const existingAnnotation = designDetectionStore.annotations.find((a) => a.id === dslNode.id);
+      const existingAnnotation = designDetectionStore.flatAnnotationList.find((a) => a.id === dslNode.id);
       if (existingAnnotation) {
         console.warn('This DSL node is already annotated');
         return false;
       }
     } else {
       // 强制创建，删除重复标注
-      const existingAnnotation = designDetectionStore.annotations.find((a) => a.id === dslNode.id);
+      const existingAnnotation = designDetectionStore.flatAnnotationList.find((a) => a.id === dslNode.id);
       if (existingAnnotation) {
         designDetectionActions.deleteAnnotation(existingAnnotation.id, {
           docId: designDetectionStore.currentDesignId!,
@@ -608,7 +621,7 @@ export const designDetectionActions = {
     };
 
     const descendantDSLIdSet = collectDescendantDSLIds(dslNode);
-    const descendantAnnotations = designDetectionStore.annotations.filter((annotation) =>
+    const descendantAnnotations = designDetectionStore.flatAnnotationList.filter((annotation) =>
       descendantDSLIdSet.has(annotation.id)
     );
 
@@ -617,9 +630,9 @@ export const designDetectionActions = {
     const isNonContainer =
       componentCategory === ComponentCategory.ATOMIC || componentCategory === ComponentCategory.BUSINESS;
 
-    if (hasAnnotatedChildren && isNonContainer && modalInstance) {
+    if (hasAnnotatedChildren && isNonContainer) {
       const confirmed = await new Promise<boolean>((resolve) => {
-        const instance = modalInstance!.confirm({
+        const instance = Modal.confirm({
           title: '检测到内部已有标注',
           content: `该节点内部存在 ${descendantAnnotations.length} 个已标注节点。若创建为非容器组件，将清空其内部标注。`,
           okText: '强制创建并清空',
@@ -831,9 +844,9 @@ export const designDetectionActions = {
     const nextIsContainer = isContainerComponent(nextFTAComponent);
     const shouldClearChildren = targetAnnotation.children.length > 0 && !nextIsContainer;
 
-    if (shouldClearChildren && modalInstance) {
+    if (shouldClearChildren) {
       const confirmed = await new Promise<boolean>((resolve) => {
-        const instance = modalInstance!.confirm({
+        const instance = Modal.confirm({
           title: '检测到内部已有标注',
           content: '当前组件内部存在已标注的子节点，转换为非容器组件将清空这些子标注，是否继续？',
           okText: '强制清空并保存',
@@ -928,9 +941,7 @@ export const designDetectionActions = {
     }
 
     if (multiSelect) {
-      const existingIndex = designDetectionStore.selectedNodeIds.findIndex(
-        (item) => item.id === annotationId && item.type === NodeType.ANNOTATION
-      );
+      const existingIndex = designDetectionStore.selectedNodeIds.findIndex((item) => item.id === annotationId);
 
       if (existingIndex !== -1) {
         designDetectionStore.selectedNodeIds = designDetectionStore.selectedNodeIds.filter(
@@ -938,9 +949,7 @@ export const designDetectionActions = {
         );
         const newIds = designDetectionStore.selectedNodeIds;
         designDetectionStore.selectedAnnotation =
-          newIds.length > 0 && newIds[newIds.length - 1].type === NodeType.ANNOTATION
-            ? findAnnotationById(newIds[newIds.length - 1].id)
-            : null;
+          newIds.length > 0 ? findAnnotationById(newIds[newIds.length - 1].id) : null;
         designDetectionStore.selectedDSLNode = null;
       } else {
         designDetectionStore.selectedNodeIds = [
@@ -967,15 +976,13 @@ export const designDetectionActions = {
     }
 
     if (multiSelect) {
-      const existingIndex = designDetectionStore.selectedNodeIds.findIndex(
-        (item) => item.id === dslNode.id && item.type === NodeType.DSL
-      );
+      const existingIndex = designDetectionStore.selectedNodeIds.findIndex((item) => item.id === dslNode.id);
       const isAlreadySelected = existingIndex !== -1;
       const newIds = isAlreadySelected
         ? designDetectionStore.selectedNodeIds.filter((_, index) => index !== existingIndex)
         : [...designDetectionStore.selectedNodeIds, { id: dslNode.id, type: NodeType.DSL }];
 
-      const lastDSLNodeId = [...newIds].reverse().find((item) => item.type === NodeType.DSL)?.id;
+      const lastDSLNodeId = [...newIds].reverse()[0]?.id;
       const lastNode = lastDSLNodeId ? findDSLNodeById(lastDSLNodeId) : null;
 
       designDetectionStore.selectedNodeIds = newIds;
@@ -1012,7 +1019,7 @@ export const designDetectionActions = {
 
   // 展开全部
   expandAll: () => {
-    const allKeys = designDetectionStore.annotations.map((a) => a.id);
+    const allKeys = designDetectionStore.flatAnnotationList.map((a) => a.id);
     designDetectionStore.expandedKeys = allKeys;
   },
 
@@ -1050,7 +1057,7 @@ export const designDetectionActions = {
         designDetectionStore.selectedDSLNode = null;
       }
       componentDetectionDebugLog('loadAnnotations:success', {
-        annotationCount: designDetectionStore.designStoreMap[designId]?.annotations.length ?? 0,
+        annotationCount: designDetectionStore.designStoreMap[designId]?.flatAnnotationList.length ?? 0,
       });
     } catch (error) {
       componentDetectionDebugLog('loadAnnotations:failed', { error });
@@ -1150,7 +1157,7 @@ export const designDetectionActions = {
     };
     buildParentMap(designDetectionStore.rootAnnotation);
 
-    const annotationsInBounds = designDetectionStore.annotations.filter((annotation) => {
+    const annotationsInBounds = designDetectionStore.flatAnnotationList.filter((annotation) => {
       if (annotation.isRoot) return false;
       const width = annotation.width || 0;
       const height = annotation.height || 0;
@@ -1629,4 +1636,4 @@ export const useDesignTreeData = (options?: DesignTreeDataOptions): DataNode[] =
 
 // ==================== 工具方法导出 ====================
 
-export { findAnnotationById, findAnnotationByDSLNodeId, findDSLNodeById, calculateDSLNodeAbsolutePosition };
+export { calculateDSLNodeAbsolutePosition, findAnnotationByDSLNodeId, findAnnotationById, findDSLNodeById };

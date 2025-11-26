@@ -100,7 +100,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
 
   // 从 DetectionCanvas 获取已渲染的 DSLElement DOM 节点
   const getDSLElementFromCanvas = (annotation: AnnotationNode): HTMLElement | null => {
-    console.log('annotation', annotation.id);
+    console.log('annotationid', annotation.id);
     return null;
   };
 

@@ -3,6 +3,7 @@ import { COLORS, DASH_PATTERNS, DRAW_STYLES, LABEL_STYLES, SCALE_CONFIG } from '
 import {
   calculateDSLNodeAbsolutePosition,
   designDetectionActions,
+  designDetectionStore,
   findAnnotationByDSLNodeId,
   findDSLNodeById,
 } from '../../contexts/DesignDetectionContext';
@@ -11,23 +12,18 @@ import { NodeType } from '../../types/componentDetection';
 import {
   drawBorder,
   drawGridBackground,
-  findNodeAtPosition,
+  findDSLNodeAtPosition,
   getCanvasPoint,
   getNodeBounds,
   getSelectionBounds,
   isItemInSelection,
 } from '../../utils/DetectionCanvasV2Helper';
 import { detectionCanvasActions, detectionCanvasState, type SelectionBox } from './state';
+import { drawDSLNodeBorders, drawLabel } from './utils';
 
 export const CANVAS_EXTEND_SIZE = 80;
 
 export interface DetectionCanvasRenderState {
-  rootNode: DSLNode | null;
-  annotations: AnnotationNode[];
-  selectedNodeIds: SelectedNodeItem[];
-  hoveredAnnotation: AnnotationNode | null;
-  hoveredDSLNode: DSLNode | null;
-  showAllBorders: boolean;
   width: number;
   height: number;
   horizontalPadding: number;
@@ -42,26 +38,6 @@ export interface DetectionCanvasSceneOptions {
   container: HTMLDivElement;
   onScaleChange?: (scale: number) => void;
 }
-
-const drawDSLNodeBorders = (ctx: CanvasRenderingContext2D, node: DSLNode, parentX = 0, parentY = 0) => {
-  const bounds = getNodeBounds(node, parentX, parentY);
-
-  if (
-    !findAnnotationByDSLNodeId(node.id) &&
-    bounds.width > 0 &&
-    bounds.height > 0 &&
-    !node.hidden &&
-    node.mask !== 'outline'
-  ) {
-    drawBorder(ctx, bounds.x, bounds.y, bounds.width, bounds.height, {
-      color: COLORS.UNANNOTATED_BORDER,
-      width: DRAW_STYLES.UNANNOTATED_BORDER_WIDTH,
-      dash: DASH_PATTERNS.UNANNOTATED_DASH,
-    });
-  }
-
-  node.children?.forEach((child) => drawDSLNodeBorders(ctx, child, bounds.x, bounds.y));
-};
 
 export class DetectionCanvasScene {
   private renderState: DetectionCanvasRenderState;
@@ -83,12 +59,6 @@ export class DetectionCanvasScene {
     this.onScaleChange = onScaleChange;
 
     this.renderState = {
-      rootNode: null,
-      annotations: [],
-      selectedNodeIds: [],
-      hoveredAnnotation: null,
-      hoveredDSLNode: null,
-      showAllBorders: false,
       width: 0,
       height: 0,
       horizontalPadding: CANVAS_EXTEND_SIZE,
@@ -210,8 +180,8 @@ export class DetectionCanvasScene {
   }
 
   private getInteractionTarget(x: number, y: number) {
-    const { annotations, rootNode } = this.renderState;
-    const hoveredAnnotation = [...annotations].reverse().find((annotation) => {
+    const { flatAnnotationList, dslRootNode } = designDetectionStore;
+    const hoveredAnnotation = [...flatAnnotationList].reverse().find((annotation) => {
       if (annotation.isRoot) return false;
       return (
         x >= annotation.absoluteX &&
@@ -221,18 +191,18 @@ export class DetectionCanvasScene {
       );
     });
 
-    const hoveredDSLNode = rootNode ? findNodeAtPosition(x, y, rootNode) : null;
+    const hoveredDSLNode = dslRootNode ? findDSLNodeAtPosition(x, y, dslRootNode) : null;
 
     if (hoveredAnnotation && hoveredDSLNode) {
       if (hoveredAnnotation.isContainer && hoveredDSLNode.id !== hoveredAnnotation.id) {
-        return { type: 'dsl', target: hoveredDSLNode };
+        return { type: NodeType.DSL, target: hoveredDSLNode };
       } else {
-        return { type: 'annotation', target: hoveredAnnotation };
+        return { type: NodeType.ANNOTATION, target: hoveredAnnotation };
       }
     }
 
-    if (hoveredAnnotation) return { type: 'annotation', target: hoveredAnnotation };
-    if (hoveredDSLNode) return { type: 'dsl', target: hoveredDSLNode };
+    if (hoveredAnnotation) return { type: NodeType.ANNOTATION, target: hoveredAnnotation };
+    if (hoveredDSLNode) return { type: NodeType.DSL, target: hoveredDSLNode };
     return null;
   }
 
@@ -329,7 +299,7 @@ export class DetectionCanvasScene {
       interactionTarget?.type === 'annotation' ? (interactionTarget.target as AnnotationNode) : null;
     const clickedDSLNode = interactionTarget?.type === 'dsl' ? (interactionTarget.target as DSLNode) : null;
 
-    const { selectedNodeIds, annotations } = this.renderState;
+    const { flatAnnotationList, selectedNodeIds } = designDetectionStore;
 
     if (multiSelect && selectedNodeIds.length > 0) {
       const clickedItem = clickedAnnotation
@@ -342,10 +312,7 @@ export class DetectionCanvasScene {
         const itemsToRemove: string[] = [];
 
         for (const selectedId of selectedNodeIds) {
-          const selectedItemDslNodeId =
-            selectedId.type === NodeType.ANNOTATION
-              ? annotations.find((a) => a.id === selectedId.id)?.id
-              : selectedId.id;
+          const selectedItemDslNodeId = flatAnnotationList.find((a) => a.id === selectedId.id)?.id;
 
           if (!selectedItemDslNodeId) continue;
 
@@ -358,7 +325,7 @@ export class DetectionCanvasScene {
 
         if (itemsToRemove.length > 0) {
           itemsToRemove.forEach((id) => {
-            const annotation = annotations.find((a) => a.id === id);
+            const annotation = flatAnnotationList.find((a) => a.id === id);
             if (annotation) {
               designDetectionActions.selectAnnotation(id, true);
             } else {
@@ -513,9 +480,9 @@ export class DetectionCanvasScene {
     );
   }
 
-  private filterToOutermostItems(items: Array<{ type: 'annotation' | 'dsl'; id: string; node?: DSLNode }>) {
-    const { annotations } = this.renderState;
-    const result: typeof items = [];
+  private filterToOutermostItems(items: SelectedNodeItem[]) {
+    const { flatAnnotationList } = designDetectionStore;
+    const result: SelectedNodeItem[] = [];
 
     for (const item of items) {
       let isInner = false;
@@ -523,26 +490,26 @@ export class DetectionCanvasScene {
       for (const other of items) {
         if (item === other) continue;
 
-        if (item.type === 'dsl' && other.type === 'dsl') {
+        if (item.type === NodeType.DSL && other.type === NodeType.DSL) {
           if (this.isAncestorOf(other.id, item.id)) {
             isInner = true;
             break;
           }
-        } else if (item.type === 'annotation' && other.type === 'annotation') {
-          const itemAnnotation = annotations.find((a) => a.id === item.id);
-          const otherAnnotation = annotations.find((a) => a.id === other.id);
+        } else if (item.type === NodeType.ANNOTATION && other.type === NodeType.ANNOTATION) {
+          const itemAnnotation = flatAnnotationList.find((a) => a.id === item.id);
+          const otherAnnotation = flatAnnotationList.find((a) => a.id === other.id);
           if (itemAnnotation && otherAnnotation && this.isAnnotationContaining(otherAnnotation, itemAnnotation)) {
             isInner = true;
             break;
           }
-        } else if (item.type === 'dsl' && other.type === 'annotation') {
-          const otherAnnotation = annotations.find((a) => a.id === other.id);
+        } else if (item.type === NodeType.DSL && other.type === NodeType.ANNOTATION) {
+          const otherAnnotation = flatAnnotationList.find((a) => a.id === other.id);
           if (otherAnnotation && this.isAncestorOf(otherAnnotation.id, item.id)) {
             isInner = true;
             break;
           }
-        } else if (item.type === 'annotation' && other.type === 'dsl') {
-          const itemAnnotation = annotations.find((a) => a.id === item.id);
+        } else if (item.type === NodeType.ANNOTATION && other.type === NodeType.DSL) {
+          const itemAnnotation = flatAnnotationList.find((a) => a.id === item.id);
           if (itemAnnotation && this.isAncestorOf(other.id, itemAnnotation.id)) {
             isInner = true;
             break;
@@ -557,26 +524,15 @@ export class DetectionCanvasScene {
   }
 
   private draw() {
-    const {
-      annotations,
-      selectedNodeIds,
-      hoveredAnnotation,
-      hoveredDSLNode,
-      width,
-      height,
-      showAllBorders,
-      selectionBox,
-      isSelecting,
-      horizontalPadding,
-      verticalPadding,
-      rootNode,
-    } = {
-      ...this.renderState,
-      selectionBox: detectionCanvasState.selectionBox,
-      isSelecting: detectionCanvasState.isSelecting,
-    };
+    const { width, height, horizontalPadding, verticalPadding } = this.renderState;
 
-    if (!rootNode) return;
+    const { flatAnnotationList, selectedNodeIds, hoveredAnnotation, hoveredDSLNode, showAllBorders, dslRootNode } =
+      designDetectionStore;
+
+    const selectionBox = detectionCanvasState.selectionBox;
+    const isSelecting = detectionCanvasState.isSelecting;
+
+    if (!dslRootNode) return;
 
     const ctx = this.canvas.getContext('2d');
     if (!ctx) return;
@@ -599,7 +555,7 @@ export class DetectionCanvasScene {
     ctx.translate(horizontalPadding, verticalPadding);
 
     if (showAllBorders) {
-      drawDSLNodeBorders(ctx, rootNode);
+      drawDSLNodeBorders(ctx, dslRootNode);
     }
 
     if (hoveredDSLNode) {
@@ -613,7 +569,7 @@ export class DetectionCanvasScene {
       });
     }
 
-    const selectedDSLNodeIdsList = selectedNodeIds.filter((item) => item.type === NodeType.DSL).map((item) => item.id);
+    const selectedDSLNodeIdsList = selectedNodeIds.map((item) => item.id);
     selectedDSLNodeIdsList.forEach((nodeId) => {
       const selectedNode = findDSLNodeById(nodeId);
       if (selectedNode) {
@@ -621,21 +577,19 @@ export class DetectionCanvasScene {
         const nodeWidth = selectedNode.layoutStyle?.width || 0;
         const nodeHeight = selectedNode.layoutStyle?.height || 0;
         drawBorder(ctx, bounds.x, bounds.y, nodeWidth, nodeHeight, {
-          color: COLORS.ANNOTATED_SELECTED,
+          color: COLORS.SELECTED_DSL_NODE,
           width: DRAW_STYLES.SELECTED_DSL_NODE_WIDTH,
           dash: DASH_PATTERNS.SELECTED_DSL_NODE_DASH,
         });
       }
     });
 
-    const selectedAnnotationIdsList = selectedNodeIds
-      .filter((item) => item.type === NodeType.ANNOTATION)
-      .map((item) => item.id);
+    const selectedAnnotationIdsList = selectedNodeIds.map((item) => item.id);
 
     const defaultLabelInstructions: LabelInstruction[] = [];
     const selectedLabelInstructions: LabelInstruction[] = [];
 
-    annotations.forEach((annotation) => {
+    flatAnnotationList.forEach((annotation) => {
       if (annotation.isRoot) return;
 
       const isSelected = selectedAnnotationIdsList.includes(annotation.id);
@@ -682,22 +636,8 @@ export class DetectionCanvasScene {
       });
     });
 
-    const drawLabel = (instruction: LabelInstruction) => {
-      ctx.font = instruction.style.FONT;
-      ctx.fillStyle = instruction.backgroundColor;
-      ctx.fillRect(instruction.x, instruction.y, instruction.width, instruction.height);
-      ctx.fillStyle = COLORS.LABEL_TEXT;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(
-        instruction.text,
-        instruction.x + instruction.style.TEXT_OFFSET_X,
-        instruction.y + instruction.height / 2
-      );
-    };
-
-    defaultLabelInstructions.forEach(drawLabel);
-    selectedLabelInstructions.forEach(drawLabel);
+    defaultLabelInstructions.forEach((instruction) => drawLabel(ctx, instruction));
+    selectedLabelInstructions.forEach((instruction) => drawLabel(ctx, instruction));
 
     if (selectionBox && isSelecting) {
       const selectionBounds = getSelectionBounds(selectionBox);
@@ -717,15 +657,55 @@ export class DetectionCanvasScene {
     }
   }
 
+  /**
+   * 处理框选操作完成后的逻辑
+   *
+   * 当用户通过 Shift + 拖拽完成框选操作后，此方法会被调用以处理选择结果。
+   * 该方法会：
+   * 1. 从当前选择框（selectionBox）中提取所有被框选中的节点
+   * 2. 遍历所有已标注的节点（AnnotationNode），检查其是否在选择框范围内
+   * 3. 遍历所有 DSL 节点树，找出未被标注且在选择框范围内的节点
+   * 4. 过滤出最外层的节点（避免选择嵌套的父子节点）
+   * 5. 更新全局选择状态，将选中的节点添加到选择列表中
+   *
+   * @description
+   * 选择逻辑说明：
+   * - 已标注节点（AnnotationNode）：直接检查其绝对位置是否在选择框内
+   * - 未标注 DSL 节点：仅选择那些没有对应标注的节点，且节点必须有有效的宽高
+   * - 去重过滤：通过 filterToOutermostItems 方法过滤掉被其他选中节点包含的嵌套节点
+   * - 多选处理：第一个节点作为主选择（multiSelect=false），后续节点作为追加选择（multiSelect=true）
+   *
+   * @remarks
+   * - 依赖状态：
+   *   - `detectionCanvasState.selectionBox`: 当前选择框的坐标信息（startX, startY, currentX, currentY）
+   *   - `designDetectionStore.dslRootNode`: DSL 根节点，用于遍历所有 DSL 节点
+   *   - `designDetectionStore.flatAnnotationList`: 扁平化的标注节点列表
+   *
+   * - 副作用：
+   *   - 调用 `designDetectionActions.clearSelection()` 清空当前选择
+   *   - 调用 `designDetectionActions.selectAnnotation()` 或 `designDetectionActions.selectDSLNode()` 更新选择状态
+   *   - 调用 `detectionCanvasActions.resetSelection()` 和 `detectionCanvasActions.updateSelection(null)` 重置选择框状态
+   *
+   * - 边界情况：
+   *   - 如果 selectionBox 或 rootNode 不存在，方法直接返回，不执行任何操作
+   *   - 如果选择框内没有任何节点，会清空当前选择状态
+   *   - 根节点（isRoot=true）的标注不会被选择
+   *
+   *
+   * @see {@link filterToOutermostItems} 用于过滤嵌套节点的辅助方法
+   * @see {@link getSelectionBounds} 用于计算选择框边界的辅助函数
+   * @see {@link isItemInSelection} 用于判断节点是否在选择框内的辅助函数
+   * @see {@link getNodeBounds} 用于计算 DSL 节点边界的辅助函数
+   */
   private handleSelectionFinish() {
     const { selectionBox } = detectionCanvasState;
-    const { rootNode, annotations } = this.renderState;
-    if (!selectionBox || !rootNode) return;
+    const { dslRootNode, flatAnnotationList } = designDetectionStore;
+    if (!selectionBox || !dslRootNode) return;
 
     const selectionBounds = getSelectionBounds(selectionBox);
-    const selectedItems: Array<{ type: 'annotation' | 'dsl'; id: string; node?: DSLNode }> = [];
+    const selectedItems: SelectedNodeItem[] = [];
 
-    annotations.forEach((annotation) => {
+    flatAnnotationList.forEach((annotation) => {
       if (annotation.isRoot) return;
 
       const annotationBounds = {
@@ -736,7 +716,7 @@ export class DetectionCanvasScene {
       };
 
       if (isItemInSelection(annotationBounds, selectionBounds)) {
-        selectedItems.push({ type: 'annotation', id: annotation.id });
+        selectedItems.push({ type: NodeType.ANNOTATION, id: annotation.id });
       }
     });
 
@@ -745,14 +725,14 @@ export class DetectionCanvasScene {
 
       if (!findAnnotationByDSLNodeId(node.id) && bounds.width > 0 && bounds.height > 0) {
         if (isItemInSelection(bounds, selectionBounds)) {
-          selectedItems.push({ type: 'dsl', id: node.id, node });
+          selectedItems.push({ type: NodeType.DSL, id: node.id });
         }
       }
 
       node.children?.forEach((child) => traverseDSLNodes(child, bounds.x, bounds.y));
     };
 
-    traverseDSLNodes(rootNode);
+    traverseDSLNodes(dslRootNode);
 
     const outermostItems = this.filterToOutermostItems(selectedItems);
 
@@ -760,10 +740,10 @@ export class DetectionCanvasScene {
       designDetectionActions.clearSelection();
       outermostItems.forEach((item, index) => {
         const isFirst = index === 0;
-        if (item.type === 'annotation') {
+        if (item.type === NodeType.ANNOTATION) {
           designDetectionActions.selectAnnotation(item.id, !isFirst);
-        } else if (item.type === 'dsl' && item.node) {
-          designDetectionActions.selectDSLNode(item.node, !isFirst);
+        } else if (item.type === NodeType.DSL) {
+          designDetectionActions.selectDSLNode(findDSLNodeById(item.id) as DSLNode, !isFirst);
         }
       });
     } else {

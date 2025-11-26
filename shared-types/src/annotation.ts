@@ -1,5 +1,6 @@
 export interface AnnotationNode {
   id: string;
+  dslNodeId?: string;
   ftaComponent: string;
   isRoot: boolean;
   isMainPage: boolean;
