@@ -124,11 +124,6 @@ export class DetectionCanvasScene {
   private handleKeyDown = (e: KeyboardEvent) => {
     if (this.isEditableTarget(e.target)) return;
 
-    if (e.key === 'Shift') {
-      detectionCanvasActions.setShiftPressed(true);
-      return;
-    }
-
     if (e.code === 'Space' || e.key === ' ') {
       if (!detectionCanvasState.isSpacePressed) {
         detectionCanvasActions.setSpacePressed(true);
@@ -147,7 +142,7 @@ export class DetectionCanvasScene {
 
   private handleKeyUp = (e: KeyboardEvent) => {
     if (e.key === 'Shift') {
-      detectionCanvasActions.setShiftPressed(false);
+      // Shift 释放时，如果正在框选则取消
       if (detectionCanvasState.isSelecting) {
         detectionCanvasActions.resetSelection();
         this.clearDocumentListeners();
@@ -201,12 +196,9 @@ export class DetectionCanvasScene {
       } else {
         result = { type: NodeType.DSL, target: hitDSLNode };
       }
-    }
-
-    if (validAnnotation) {
+    } else if (validAnnotation) {
       result = { type: NodeType.ANNOTATION, target: validAnnotation };
-    }
-    if (hitDSLNode) {
+    } else if (hitDSLNode) {
       result = { type: NodeType.DSL, target: hitDSLNode };
     }
 
@@ -260,8 +252,7 @@ export class DetectionCanvasScene {
     const { x, y } = getCanvasPoint(e, rect, effectiveScale, horizontalPadding, verticalPadding);
 
     /** 按下 Shift 键且鼠标左键按下，开始选择 */
-    if (detectionCanvasState.isShiftPressed && e.button === 0) {
-      e.preventDefault();
+    if (e.shiftKey && e.button === 0) {
       detectionCanvasActions.startSelection({
         startX: x,
         startY: y,
@@ -385,7 +376,7 @@ export class DetectionCanvasScene {
     const rect = this.canvas.getBoundingClientRect();
     const { x, y } = getCanvasPoint(e, rect, effectiveScale, horizontalPadding, verticalPadding);
 
-    if (detectionCanvasState.isShiftPressed) {
+    if (e.shiftKey) {
       this.canvas.style.cursor = 'crosshair';
       return;
     }
@@ -731,6 +722,9 @@ export class DetectionCanvasScene {
     });
 
     const traverseDSLNodes = (node: DSLNode, parentX = 0, parentY = 0) => {
+      if (node.hidden || node.mask === 'outline') {
+        return;
+      }
       const bounds = getNodeBounds(node, parentX, parentY);
 
       if (!findAnnotationByDSLNodeId(node.id) && bounds.width > 0 && bounds.height > 0) {

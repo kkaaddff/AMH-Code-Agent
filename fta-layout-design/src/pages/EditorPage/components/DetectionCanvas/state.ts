@@ -8,7 +8,6 @@ export interface SelectionBox {
 }
 
 export interface DetectionCanvasState {
-  isShiftPressed: boolean;
   isSpacePressed: boolean;
   /** 是否正在选择 */
   isSelecting: boolean;
@@ -21,7 +20,6 @@ export interface DetectionCanvasState {
 }
 
 export const detectionCanvasState = proxy<DetectionCanvasState>({
-  isShiftPressed: false,
   isSpacePressed: false,
   isSelecting: false,
   isPanning: false,
@@ -30,9 +28,6 @@ export const detectionCanvasState = proxy<DetectionCanvasState>({
 });
 
 export const detectionCanvasActions = {
-  setShiftPressed(next: boolean) {
-    detectionCanvasState.isShiftPressed = next;
-  },
   setSpacePressed(next: boolean) {
     detectionCanvasState.isSpacePressed = next;
   },
@@ -60,7 +55,6 @@ export const detectionCanvasActions = {
     detectionCanvasState.isSelecting = false;
   },
   reset() {
-    detectionCanvasState.isShiftPressed = false;
     detectionCanvasState.isSpacePressed = false;
     detectionCanvasState.isSelecting = false;
     detectionCanvasState.isPanning = false;
