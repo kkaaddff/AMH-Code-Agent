@@ -3,6 +3,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { GRID_CONFIG, COLORS } from '../constants/CanvasConstant';
 
 /**
+ * 带绝对坐标的扁平化 DSL 节点类型。
+ * 用于扁平化遍历 DSL 树后的节点列表，包含预计算的绝对坐标。
+ */
+export type FlattenedDSLNode = DSLNode & {
+  absoluteX: number;
+  absoluteY: number;
+};
+
+/**
  * DetectionCanvasV2 组件的 props 类型。
  * @property dslData DSL 数据结构，包含根节点等信息。
  * @property scale 当前缩放比例，默认为 1。
@@ -113,62 +122,64 @@ export const getNodeBounds = (node: DSLNode, parentX = 0, parentY = 0) => {
 };
 
 /**
- * 根据坐标命中查找最内层 DSL 节点。
+ * 根据坐标命中查找面积最小的 DSL 节点。
  * @param x 相对于根节点的 X 坐标。
  * @param y 相对于根节点的 Y 坐标。
- * @param node 当前遍历的树节点。
- * @param parentX 父节点 X 偏移。
- * @param parentY 父节点 Y 偏移。
- * @returns 命中的 DSL 节点，未命中时返回 null。
+ * @param flatList 扁平化后的 DSL 节点列表（包含绝对坐标）。
+ * @returns 命中的面积最小 DSL 节点，未命中时返回 null。
  */
-export const findDSLNodeAtPosition = (
-  x: number,
-  y: number,
-  node: DSLNode,
-  parentX = 0,
-  parentY = 0
-): DSLNode | null => {
-  const bounds = getNodeBounds(node, parentX, parentY);
+export const findDSLNodeAtPosition = (x: number, y: number, flatList: FlattenedDSLNode[]): FlattenedDSLNode | null => {
+  // 过滤出包含 (x, y) 的所有节点，排除 hidden 节点
+  const hits = flatList.filter((node) => {
+    if (node.hidden) return false;
+    const width = node.layoutStyle?.width || 0;
+    const height = node.layoutStyle?.height || 0;
+    const right = node.absoluteX + width;
+    const bottom = node.absoluteY + height;
+    return x >= node.absoluteX && x <= right && y >= node.absoluteY && y <= bottom;
+  });
 
-  if (x < bounds.x || x > bounds.right || y < bounds.y || y > bounds.bottom) {
-    return null;
-  }
-  if (node.hidden) {
-    return null;
-  }
-  if (node.children?.length) {
-    for (const child of node.children) {
-      const found = findDSLNodeAtPosition(x, y, child, bounds.x, bounds.y);
-      if (found) return found;
-    }
-  }
+  if (hits.length === 0) return null;
 
-  return node;
+  // 按面积升序排序，返回面积最小的节点
+  hits.sort((a, b) => {
+    const areaA = (a.layoutStyle?.width || 0) * (a.layoutStyle?.height || 0);
+    const areaB = (b.layoutStyle?.width || 0) * (b.layoutStyle?.height || 0);
+    return areaA - areaB;
+  });
+
+  return hits[0];
 };
 
 /**
- * 根据坐标命中查找最内层 Annotation 节点。
+ * 根据坐标命中查找面积最小的 Annotation 节点。
  * @param x 相对于根节点的 X 坐标。
  * @param y 相对于根节点的 Y 坐标。
- * @param node 当前遍历的 Annotation 树节点。
- * @returns 命中的 Annotation 节点，未命中时返回 null。
+ * @param flatList 扁平化后的 Annotation 节点列表。
+ * @returns 命中的面积最小 Annotation 节点，未命中时返回 null。
  */
-export const findAnnotationNodeAtPosition = (x: number, y: number, node: AnnotationNode): AnnotationNode | null => {
-  const right = node.absoluteX + node.width;
-  const bottom = node.absoluteY + node.height;
+export const findAnnotationNodeAtPosition = (
+  x: number,
+  y: number,
+  flatList: AnnotationNode[]
+): AnnotationNode | null => {
+  // 过滤出包含 (x, y) 的所有节点
+  const hits = flatList.filter((node) => {
+    const right = node.absoluteX + node.width;
+    const bottom = node.absoluteY + node.height;
+    return x >= node.absoluteX && x <= right && y >= node.absoluteY && y <= bottom;
+  });
 
-  if (x < node.absoluteX || x > right || y < node.absoluteY || y > bottom) {
-    return null;
-  }
+  if (hits.length === 0) return null;
 
-  if (node.children?.length) {
-    for (const child of node.children) {
-      const found = findAnnotationNodeAtPosition(x, y, child);
-      if (found) return found;
-    }
-  }
+  // 按面积升序排序，返回面积最小的节点
+  hits.sort((a, b) => {
+    const areaA = a.width * a.height;
+    const areaB = b.width * b.height;
+    return areaA - areaB;
+  });
 
-  return node;
+  return hits[0];
 };
 
 /**

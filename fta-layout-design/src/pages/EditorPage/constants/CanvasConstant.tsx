@@ -1,15 +1,18 @@
 /** Canvas 颜色常量定义 */
 export const COLORS = {
-  /** Hover DSL节点颜色 - 浅蓝色虚线外发光 */
-  HOVER_DSL_NODE: 'rgb(145, 213, 255)',
-  /** 选中DSL节点颜色 - 更亮的蓝色虚线 */
-  SELECTED_DSL_NODE: 'rgb(24, 144, 255)',
+  /** Hover / 默认 DSL节点颜色 - 浅蓝色虚线外发光 */
+  DSL_NODE_DEFAULT: 'rgb(145, 213, 255)',
+  DSL_NODE_HOVERED: 'rgb(145, 213, 255)', // hover 和默认一致
+  /** 选中DSL节点颜色 - 更深蓝色虚线 */
+  DSL_NODE_SELECTED: 'rgb(24, 144, 255)',
+
   /** 已标注组件默认颜色 - 浅紫色实线 */
   ANNOTATED_DEFAULT: 'rgb(211, 173, 247)',
-  /** 已标注组件选中颜色 - 深紫色虚线 */
+  /** 已标注组件hover颜色 - 与默认一致 */
+  ANNOTATED_HOVERED: 'rgb(211, 173, 247)',
+  /** 已标注组件选中颜色 - 更深紫色虚线 */
   ANNOTATED_SELECTED: 'rgb(179, 127, 235)',
-  /** 已标注组件hover颜色 - 中等紫色虚线 */
-  ANNOTATED_HOVERED: 'rgb(153, 107, 234)',
+
   /** 标签背景色（默认蓝色，为DSL标签） */
   LABEL_BACKGROUND: 'rgb(24, 144, 255)',
   /** 标签文字颜色 */
@@ -34,17 +37,17 @@ export const COLORS = {
 
 /** Canvas 绘制样式常量定义 */
 export const DRAW_STYLES = {
-  /** 未标注节点边框线宽 */
-  UNANNOTATED_BORDER_WIDTH: 1,
-  /** Hover DSL节点线宽 */
-  HOVER_DSL_NODE_WIDTH: 2,
-  /** 选中DSL节点线宽 */
+  /** 未标注节点边框线宽（默认/hover 统一为 2）*/
+  UNANNOTATED_BORDER_WIDTH: 2,
+  /** Hover DSL节点线宽（改为 4）*/
+  HOVER_DSL_NODE_WIDTH: 4,
+  /** 选中DSL节点线宽（4）*/
   SELECTED_DSL_NODE_WIDTH: 4,
-  /** 已标注组件默认线宽 */
+  /** 已标注组件默认线宽（2） */
   ANNOTATED_DEFAULT_WIDTH: 2,
-  /** 已标注组件hover线宽 */
-  ANNOTATED_HOVER_WIDTH: 3,
-  /** 已标注组件选中线宽 */
+  /** 已标注组件hover线宽（4）*/
+  ANNOTATED_HOVER_WIDTH: 4,
+  /** 已标注组件选中线宽（4）*/
   ANNOTATED_SELECTED_WIDTH: 4,
   /** Hover DSL节点阴影模糊半径 */
   HOVER_DSL_NODE_SHADOW_BLUR: 10,
@@ -59,7 +62,7 @@ export const DASH_PATTERNS: { [key: string]: [number, number] } = {
   /** 未标注节点虚线样式（蓝色系，DSL） */
   UNANNOTATED_DASH: [4, 4],
   /** Hover DSL节点虚线样式 */
-  HOVER_DSL_NODE_DASH: [5, 5],
+  HOVER_DSL_NODE_DASH: [4, 4],
   /** 选中DSL节点虚线样式 */
   SELECTED_DSL_NODE_DASH: [8, 4],
   /** 已标注组件hover虚线样式（紫色系，Annotation） */
@@ -105,8 +108,8 @@ export const LABEL_STYLES = {
     TEXT_OFFSET_X: 8,
   },
 } as const;
-/** Canvas 缩放常量定义 */
 
+/** Canvas 缩放常量定义 */
 export const SCALE_CONFIG = {
   /** 最小缩放比例 */
   MIN_SCALE: 0.1,

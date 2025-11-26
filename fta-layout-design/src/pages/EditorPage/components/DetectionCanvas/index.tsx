@@ -2,7 +2,7 @@ import DSLElement from '@/components/DSLElement';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useSnapshot } from 'valtio';
 import { COLORS } from '../../constants/CanvasConstant';
-import { designDetectionActions } from '../../contexts/DesignDetectionContext';
+import { designDetectionActions, designDetectionStore } from '../../contexts/DesignDetectionContext';
 import { DetectionCanvasV2Props, useContainerSize } from '../../utils/DetectionCanvasV2Helper';
 import { CANVAS_EXTEND_SIZE, DetectionCanvasScene } from './scene';
 import { detectionCanvasActions, detectionCanvasState } from './state';
@@ -15,7 +15,8 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
   hoveredNodeId,
 }) => {
   const effectiveScale = scale === 0 ? 1 : scale;
-
+  const { selectedAnnotation, hoveredAnnotation, selectedNodeIds, showAllBorders, selectedDSLNode, hoveredDSLNode } =
+    useSnapshot(designDetectionStore);
   const canvasState = useSnapshot(detectionCanvasState);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -92,6 +93,13 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
       effectiveScale,
     });
   }, [width, height, horizontalPadding, verticalPadding, contentOffset, containerSize, effectiveScale]);
+
+  useEffect(() => {
+    if (!sceneRef.current) {
+      return;
+    }
+    sceneRef.current.draw();
+  }, [selectedAnnotation, hoveredAnnotation, selectedNodeIds, showAllBorders, selectedDSLNode, hoveredDSLNode]);
 
   const styles = useMemo(() => {
     const contentWidth = width + horizontalPadding * 2;

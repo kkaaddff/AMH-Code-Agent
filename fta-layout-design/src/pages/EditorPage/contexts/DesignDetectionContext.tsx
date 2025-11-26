@@ -1,6 +1,7 @@
 import { dslService } from '@/services/dslService';
 import { DesignData, DSLNode } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
+import type { FlattenedDSLNode } from '../utils/DetectionCanvasV2Helper';
 import { api } from '@/utils/apiService';
 import { componentDetectionDebugLog } from '@/utils/componentDetectionDebug';
 import { FileImageOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -110,14 +111,16 @@ const findDSLNodeById = (id: string): DSLNode | null => {
   return search(designDetectionStore.dslRootNode);
 };
 
-// 扁平化 DSLNode 树
-export const flattenDSLNodeTree = (root: DSLNode | null): DSLNode[] => {
+// 扁平化 DSLNode 树，同时计算每个节点的绝对坐标
+export const flattenDSLNodeTree = (root: DSLNode | null): FlattenedDSLNode[] => {
   if (!root) return [];
-  const result: DSLNode[] = [];
-  const traverse = (node: DSLNode) => {
-    result.push(node);
+  const result: FlattenedDSLNode[] = [];
+  const traverse = (node: DSLNode, parentX = 0, parentY = 0) => {
+    const absoluteX = parentX + (node.layoutStyle?.relativeX || 0);
+    const absoluteY = parentY + (node.layoutStyle?.relativeY || 0);
+    result.push({ ...node, absoluteX, absoluteY });
     if (node.children && Array.isArray(node.children)) {
-      node.children.forEach(traverse);
+      node.children.forEach((child) => traverse(child, absoluteX, absoluteY));
     }
   };
   traverse(root);
@@ -323,7 +326,7 @@ interface DesignDetectionState extends AnnotationState {
   designData: DesignData | null;
   readonly flatAnnotationList: AnnotationNode[];
   readonly dslRootNode: DSLNode | null;
-  readonly flatDSLNodeList: DSLNode[];
+  readonly flatDSLNodeList: FlattenedDSLNode[];
   readonly currentDesignId: string | undefined;
 }
 
@@ -371,10 +374,7 @@ export const designDetectionStore = proxy<DesignDetectionState>({
     }
     return this.designStoreMap[this.currentDesignId]?.flatAnnotationList ?? [];
   },
-  selectedAnnotation: null,
-  hoveredAnnotation: null,
-  selectedDSLNode: null,
-  hoveredDSLNode: null,
+
   expandedKeys: [],
   isLoading: false,
   get designData() {
@@ -390,8 +390,7 @@ export const designDetectionStore = proxy<DesignDetectionState>({
     }
     this.designStoreMap[this.currentDesignId].designData = value;
   },
-  showAllBorders: true,
-  selectedNodeIds: [],
+
   get dslRootNode() {
     if (!this.currentDesignId) {
       return null;
@@ -401,6 +400,13 @@ export const designDetectionStore = proxy<DesignDetectionState>({
   get flatDSLNodeList() {
     return flattenDSLNodeTree(this.dslRootNode);
   },
+  // 下面是和 绘制 canvas 相关的状态
+  selectedAnnotation: null,
+  hoveredAnnotation: null,
+  selectedDSLNode: null,
+  hoveredDSLNode: null,
+  showAllBorders: true,
+  selectedNodeIds: [],
 });
 
 const ensureDesignDocumentState = (designId: string): DesignDocumentDetectionState => {

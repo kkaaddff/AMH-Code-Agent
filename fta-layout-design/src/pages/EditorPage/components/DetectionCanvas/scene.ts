@@ -12,7 +12,9 @@ import { NodeType } from '../../types/componentDetection';
 import {
   drawBorder,
   drawGridBackground,
+  findAnnotationNodeAtPosition,
   findDSLNodeAtPosition,
+  type FlattenedDSLNode,
   getCanvasPoint,
   getNodeBounds,
   getSelectionBounds,
@@ -180,35 +182,41 @@ export class DetectionCanvasScene {
   }
 
   private getInteractionTarget(x: number, y: number) {
-    const { flatAnnotationList, dslRootNode } = designDetectionStore;
-    const hoveredAnnotation = [...flatAnnotationList].reverse().find((annotation) => {
-      if (annotation.isRoot) return false;
-      return (
-        x >= annotation.absoluteX &&
-        x <= annotation.absoluteX + annotation.width &&
-        y >= annotation.absoluteY &&
-        y <= annotation.absoluteY + annotation.height
-      );
-    });
+    const { flatAnnotationList, flatDSLNodeList } = designDetectionStore;
+    let result: { type: NodeType; target: AnnotationNode | FlattenedDSLNode } | null = null;
 
-    const hoveredDSLNode = dslRootNode ? findDSLNodeAtPosition(x, y, dslRootNode) : null;
+    const hitAnnotation = findAnnotationNodeAtPosition(x, y, flatAnnotationList);
+    const hitDSLNode = findDSLNodeAtPosition(x, y, flatDSLNodeList);
 
-    if (hoveredAnnotation && hoveredDSLNode) {
-      if (hoveredAnnotation.isContainer && hoveredDSLNode.id !== hoveredAnnotation.id) {
-        return { type: NodeType.DSL, target: hoveredDSLNode };
+    // 过滤掉根节点
+    const validAnnotation = hitAnnotation && !hitAnnotation.isRoot ? hitAnnotation : null;
+
+    if (validAnnotation && hitDSLNode) {
+      // 两者都匹配到，返回面积更小的节点
+      const annotationArea = validAnnotation.width * validAnnotation.height;
+      const dslArea = (hitDSLNode.layoutStyle?.width || 0) * (hitDSLNode.layoutStyle?.height || 0);
+
+      if (annotationArea <= dslArea) {
+        result = { type: NodeType.ANNOTATION, target: validAnnotation };
       } else {
-        return { type: NodeType.ANNOTATION, target: hoveredAnnotation };
+        result = { type: NodeType.DSL, target: hitDSLNode };
       }
     }
 
-    if (hoveredAnnotation) return { type: NodeType.ANNOTATION, target: hoveredAnnotation };
-    if (hoveredDSLNode) return { type: NodeType.DSL, target: hoveredDSLNode };
-    return null;
+    if (validAnnotation) {
+      result = { type: NodeType.ANNOTATION, target: validAnnotation };
+    }
+    if (hitDSLNode) {
+      result = { type: NodeType.DSL, target: hitDSLNode };
+    }
+
+    return result;
   }
 
   private handleMouseDown = (e: MouseEvent) => {
     const { horizontalPadding, verticalPadding, effectiveScale } = this.renderState;
 
+    /** 空格键按下且鼠标左键按下，开始平移 */
     if (detectionCanvasState.isSpacePressed && e.button === 0) {
       e.preventDefault();
       designDetectionActions.hoverAnnotation(null);
@@ -251,7 +259,9 @@ export class DetectionCanvasScene {
     const rect = this.canvas.getBoundingClientRect();
     const { x, y } = getCanvasPoint(e, rect, effectiveScale, horizontalPadding, verticalPadding);
 
-    if (detectionCanvasState.isShiftPressed) {
+    /** 按下 Shift 键且鼠标左键按下，开始选择 */
+    if (detectionCanvasState.isShiftPressed && e.button === 0) {
+      e.preventDefault();
       detectionCanvasActions.startSelection({
         startX: x,
         startY: y,
@@ -296,16 +306,16 @@ export class DetectionCanvasScene {
     const multiSelect = e.ctrlKey || e.metaKey;
     const interactionTarget = this.getInteractionTarget(x, y);
     const clickedAnnotation =
-      interactionTarget?.type === 'annotation' ? (interactionTarget.target as AnnotationNode) : null;
-    const clickedDSLNode = interactionTarget?.type === 'dsl' ? (interactionTarget.target as DSLNode) : null;
+      interactionTarget?.type === NodeType.ANNOTATION ? (interactionTarget.target as AnnotationNode) : null;
+    const clickedDSLNode = interactionTarget?.type === NodeType.DSL ? (interactionTarget.target as DSLNode) : null;
 
     const { flatAnnotationList, selectedNodeIds } = designDetectionStore;
 
     if (multiSelect && selectedNodeIds.length > 0) {
       const clickedItem = clickedAnnotation
-        ? { type: 'annotation' as const, id: clickedAnnotation.id }
+        ? { type: NodeType.ANNOTATION, id: clickedAnnotation.id }
         : clickedDSLNode
-        ? { type: 'dsl' as const, id: clickedDSLNode.id }
+        ? { type: NodeType.DSL, id: clickedDSLNode.id }
         : null;
 
       if (clickedItem) {
@@ -338,9 +348,9 @@ export class DetectionCanvasScene {
     }
 
     if (interactionTarget) {
-      if (interactionTarget.type === 'annotation') {
+      if (interactionTarget.type === NodeType.ANNOTATION) {
         designDetectionActions.selectAnnotation(interactionTarget.target.id, multiSelect);
-      } else if (interactionTarget.type === 'dsl') {
+      } else if (interactionTarget.type === NodeType.DSL) {
         const existingAnnotation = findAnnotationByDSLNodeId(interactionTarget.target.id);
         if (existingAnnotation) {
           designDetectionActions.selectAnnotation(existingAnnotation.id, multiSelect);
@@ -383,11 +393,11 @@ export class DetectionCanvasScene {
     const interactionTarget = this.getInteractionTarget(x, y);
 
     if (interactionTarget) {
-      if (interactionTarget.type === 'annotation') {
+      if (interactionTarget.type === NodeType.ANNOTATION) {
         designDetectionActions.hoverAnnotation(interactionTarget.target.id);
         designDetectionActions.hoverDSLNode(null);
         this.canvas.style.cursor = 'pointer';
-      } else if (interactionTarget.type === 'dsl') {
+      } else if (interactionTarget.type === NodeType.DSL) {
         designDetectionActions.hoverAnnotation(null);
         designDetectionActions.hoverDSLNode(interactionTarget.target.id);
         this.canvas.style.cursor = 'pointer';
@@ -523,7 +533,7 @@ export class DetectionCanvasScene {
     return result;
   }
 
-  private draw() {
+  public draw() {
     const { width, height, horizontalPadding, verticalPadding } = this.renderState;
 
     const { flatAnnotationList, selectedNodeIds, hoveredAnnotation, hoveredDSLNode, showAllBorders, dslRootNode } =
@@ -563,7 +573,7 @@ export class DetectionCanvasScene {
       const nodeWidth = hoveredDSLNode.layoutStyle?.width || 0;
       const nodeHeight = hoveredDSLNode.layoutStyle?.height || 0;
       drawBorder(ctx, bounds.x, bounds.y, nodeWidth, nodeHeight, {
-        color: COLORS.HOVER_DSL_NODE,
+        color: COLORS.DSL_NODE_HOVERED,
         width: DRAW_STYLES.HOVER_DSL_NODE_WIDTH,
         dash: DASH_PATTERNS.HOVER_DSL_NODE_DASH,
       });
@@ -577,7 +587,7 @@ export class DetectionCanvasScene {
         const nodeWidth = selectedNode.layoutStyle?.width || 0;
         const nodeHeight = selectedNode.layoutStyle?.height || 0;
         drawBorder(ctx, bounds.x, bounds.y, nodeWidth, nodeHeight, {
-          color: COLORS.SELECTED_DSL_NODE,
+          color: COLORS.DSL_NODE_SELECTED,
           width: DRAW_STYLES.SELECTED_DSL_NODE_WIDTH,
           dash: DASH_PATTERNS.SELECTED_DSL_NODE_DASH,
         });
@@ -751,6 +761,5 @@ export class DetectionCanvasScene {
     }
 
     detectionCanvasActions.resetSelection();
-    detectionCanvasActions.updateSelection(null);
   }
 }

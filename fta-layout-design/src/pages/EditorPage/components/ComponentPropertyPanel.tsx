@@ -601,10 +601,20 @@ const ComponentPropertyPanelV2: React.FC = () => {
             </Card>
           ) : (
             <Card size='small' style={{ marginBottom: 16 }}>
-              <Space direction='vertical' size={0} style={{ width: '100%' }}>
-                <Text type='secondary'>DSL节点ID:</Text>
-                <Text code>{selectedDSLNode?.id}</Text>
-              </Space>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '50px 1fr',
+                  width: '100%',
+                  alignItems: 'center',
+                }}>
+                <Text type='secondary'>ID:</Text>
+                <Text>{selectedDSLNode?.id}</Text>
+                <Text type='secondary'>名称:</Text>
+                <Text>{selectedDSLNode?.name}</Text>
+                <Text type='secondary'>类型:</Text>
+                <Text>{selectedDSLNode?.type}</Text>
+              </div>
             </Card>
           )}
 
