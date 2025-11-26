@@ -111,11 +111,12 @@ const findDSLNodeById = (id: string): DSLNode | null => {
   return search(designDetectionStore.dslRootNode);
 };
 
-// 扁平化 DSLNode 树，同时计算每个节点的绝对坐标
-export const flattenDSLNodeTree = (root: DSLNode | null): FlattenedDSLNode[] => {
+/** 扁平化 DSLNode 树，同时计算每个节点的绝对坐标 */
+export const flattenDSLNodeTree = (root: DSLNode | null, hidden = false): FlattenedDSLNode[] => {
   if (!root) return [];
   const result: FlattenedDSLNode[] = [];
   const traverse = (node: DSLNode, parentX = 0, parentY = 0) => {
+    if (hidden && (node.hidden || node.mask === 'outline')) return;
     const absoluteX = parentX + (node.layoutStyle?.relativeX || 0);
     const absoluteY = parentY + (node.layoutStyle?.relativeY || 0);
     result.push({ ...node, absoluteX, absoluteY });
@@ -398,7 +399,7 @@ export const designDetectionStore = proxy<DesignDetectionState>({
     return this.designStoreMap[this.currentDesignId]?.designData?.dsl.nodes?.[0] ?? null;
   },
   get flatDSLNodeList() {
-    return flattenDSLNodeTree(this.dslRootNode);
+    return flattenDSLNodeTree(this.dslRootNode, true);
   },
   // 下面是和 绘制 canvas 相关的状态
   selectedAnnotation: null,

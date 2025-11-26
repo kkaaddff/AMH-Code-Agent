@@ -19,15 +19,11 @@ export const drawLabel = (ctx: CanvasRenderingContext2D, instruction: LabelInstr
 };
 
 export const drawDSLNodeBorders = (ctx: CanvasRenderingContext2D, node: DSLNode, parentX = 0, parentY = 0) => {
+  if (node.hidden || node.mask === 'outline') return;
+
   const bounds = getNodeBounds(node, parentX, parentY);
 
-  if (
-    !findAnnotationByDSLNodeId(node.id) &&
-    bounds.width > 0 &&
-    bounds.height > 0 &&
-    !node.hidden &&
-    node.mask !== 'outline'
-  ) {
+  if (bounds.width > 0 && bounds.height > 0 && !findAnnotationByDSLNodeId(node.id)) {
     drawBorder(ctx, bounds.x, bounds.y, bounds.width, bounds.height, {
       color: COLORS.UNANNOTATED_BORDER,
       width: DRAW_STYLES.UNANNOTATED_BORDER_WIDTH,
