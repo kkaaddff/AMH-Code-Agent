@@ -58,12 +58,14 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
     };
   }, [scaledContentDimensions, containerSize.width, containerSize.height]);
 
+  const isSpacePressed = canvasState.isSpacePressed;
+
   useEffect(() => {
-    if (canvasState.isSpacePressed) {
+    if (isSpacePressed) {
       designDetectionActions.hoverAnnotation(null);
       designDetectionActions.hoverDSLNode(null);
     }
-  }, [canvasState.isSpacePressed]);
+  }, [isSpacePressed]);
 
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current || sceneRef.current) return;
@@ -101,6 +103,11 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
     sceneRef.current.draw();
   }, [selectedAnnotation, hoveredAnnotation, selectedNodeIds, showAllBorders, selectedDSLNode, hoveredDSLNode]);
 
+  // 提取原始值作为依赖项，确保 useMemo 能正确检测变化
+  const panOffsetX = canvasState.panOffset.x;
+  const panOffsetY = canvasState.panOffset.y;
+  const isPanning = canvasState.isPanning;
+
   const styles = useMemo(() => {
     const contentWidth = width + horizontalPadding * 2;
     const contentHeight = height + verticalPadding * 2;
@@ -119,8 +126,8 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
         left: 0,
         width: '100%',
         height: '100%',
-        transform: `translate(${canvasState.panOffset.x}px, ${canvasState.panOffset.y}px)`,
-        willChange: canvasState.isPanning ? 'transform' : undefined,
+        transform: `translate(${panOffsetX}px, ${panOffsetY}px)`,
+        willChange: isPanning ? 'transform' : undefined,
       },
       scaledContent: {
         position: 'absolute' as const,
@@ -149,9 +156,20 @@ const DetectionCanvasV2: React.FC<DetectionCanvasV2Props> = ({
         width: contentWidth,
         height: contentHeight,
         pointerEvents: 'auto' as const,
+        zIndex: 1,
       },
     };
-  }, [width, height, horizontalPadding, verticalPadding, contentOffset, effectiveScale, canvasState]);
+  }, [
+    width,
+    height,
+    horizontalPadding,
+    verticalPadding,
+    contentOffset,
+    effectiveScale,
+    panOffsetX,
+    panOffsetY,
+    isPanning,
+  ]);
 
   return (
     <div
