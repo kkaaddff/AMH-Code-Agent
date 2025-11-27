@@ -1,0 +1,35 @@
+.data-model-create-modal__tab-content {
+  padding: 16px 0;
+  max-height: 500px;
+  overflow: auto;
+}
+
+.data-model-create-modal__ai-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.data-model-create-modal__ai-hint {
+  display: flex;
+  align-items: center;
+}
+
+.data-model-create-modal__ai-input {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+}
+
+.data-model-create-modal__ai-btn {
+  align-self: flex-end;
+}
+
+.data-model-create-modal__schema-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 0;
+}
+

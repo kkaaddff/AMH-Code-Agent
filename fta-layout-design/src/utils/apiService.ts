@@ -6,7 +6,24 @@
 import { buildApiUrl, currentApiConfig, API_ENDPOINTS } from '@/config/api';
 import type { DocumentReference } from '@/types/project';
 import { DSLData } from '@/types/dsl';
-import type { InterfaceDataModel, CreateDataModelRequest, UpdateDataModelRequest } from '@/types/interfaceDataModel';
+import type { SchemaField } from '@/types/interfaceDataModel';
+import type {
+  DataModel,
+  DataModelGroup,
+  CreateDataModelGroupRequest,
+  UpdateDataModelGroupRequest,
+  CreateDataModelRequest,
+  UpdateDataModelRequest,
+  ParseSchemaRequest,
+} from '@/types/dataModel';
+import type {
+  RestApi,
+  RestApiGroup,
+  CreateRestApiRequest,
+  UpdateRestApiRequest,
+  CreateRestApiGroupRequest,
+  UpdateRestApiGroupRequest,
+} from '@/types/restApi';
 
 // 请求配置接口
 export interface RequestConfig {
@@ -503,45 +520,168 @@ export const api = {
     latest: <T = any>() => ApiService.get<T>(API_ENDPOINTS.metrics.latest),
   },
 
-  // 接口数据模型相关
-  interfaceDataModel: {
+  // 数据模型组相关
+  dataModelGroup: {
     /**
-     * 创建接口数据模型
-     * @param data 创建请求体
-     * @returns 创建结果响应 Promise
+     * 创建数据模型组
+     */
+    create: (data: CreateDataModelGroupRequest) =>
+      ApiService.post<DataModelGroup>(API_ENDPOINTS.dataModelGroup.create, data),
+
+    /**
+     * 更新数据模型组
+     */
+    update: (id: string, data: UpdateDataModelGroupRequest) =>
+      ApiService.put<DataModelGroup>(API_ENDPOINTS.dataModelGroup.update(id), data),
+
+    /**
+     * 删除数据模型组
+     */
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.dataModelGroup.delete(id)),
+
+    /**
+     * 获取项目的所有数据模型组
+     */
+    list: (projectId: string) =>
+      ApiService.get<DataModelGroup[]>(API_ENDPOINTS.dataModelGroup.list(projectId)),
+
+    /**
+     * 获取单个数据模型组详情
+     */
+    detail: (id: string) => ApiService.get<DataModelGroup>(API_ENDPOINTS.dataModelGroup.detail(id)),
+  },
+
+  // 数据模型相关（项目级别）
+  dataModel: {
+    /**
+     * 创建数据模型
      */
     create: (data: CreateDataModelRequest) =>
-      ApiService.post<InterfaceDataModel>(API_ENDPOINTS.interfaceDataModel.create, data),
+      ApiService.post<DataModel>(API_ENDPOINTS.dataModel.create, data),
 
     /**
-     * 更新接口数据模型
-     * @param id 数据模型 ID
-     * @param data 更新请求体
-     * @returns 更新结果响应 Promise
+     * 更新数据模型
      */
     update: (id: string, data: UpdateDataModelRequest) =>
-      ApiService.put<InterfaceDataModel>(API_ENDPOINTS.interfaceDataModel.update(id), data),
+      ApiService.put<DataModel>(API_ENDPOINTS.dataModel.update(id), data),
 
     /**
-     * 删除接口数据模型
-     * @param id 数据模型 ID
-     * @returns 删除结果响应 Promise
+     * 删除数据模型
      */
-    delete: (id: string) => ApiService.delete(API_ENDPOINTS.interfaceDataModel.delete(id)),
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.dataModel.delete(id)),
 
     /**
-     * 获取页面的所有接口数据模型
-     * @param pageId 页面 ID
-     * @returns 数据模型列表响应 Promise
+     * 获取项目的所有数据模型
      */
-    list: (pageId: string) => ApiService.get<InterfaceDataModel[]>(API_ENDPOINTS.interfaceDataModel.list(pageId)),
+    list: (projectId: string) =>
+      ApiService.get<DataModel[]>(API_ENDPOINTS.dataModel.list(projectId)),
 
     /**
-     * 获取单个接口数据模型详情
-     * @param id 数据模型 ID
-     * @returns 数据模型详情响应 Promise
+     * 获取分组内的数据模型
      */
-    detail: (id: string) => ApiService.get<InterfaceDataModel>(API_ENDPOINTS.interfaceDataModel.detail(id)),
+    listByGroup: (groupId: string) =>
+      ApiService.get<DataModel[]>(API_ENDPOINTS.dataModel.listByGroup(groupId)),
+
+    /**
+     * 获取未分组的数据模型
+     */
+    listUngrouped: (projectId: string) =>
+      ApiService.get<DataModel[]>(API_ENDPOINTS.dataModel.listUngrouped(projectId)),
+
+    /**
+     * 获取单个数据模型详情
+     */
+    detail: (id: string) => ApiService.get<DataModel>(API_ENDPOINTS.dataModel.detail(id)),
+
+    /**
+     * 使用 AI 解析文本生成 Schema
+     */
+    parseSchema: (data: ParseSchemaRequest) =>
+      ApiService.post<SchemaField[]>(API_ENDPOINTS.dataModel.parseSchema, data),
+  },
+
+  // REST API 接口相关
+  // REST API 组相关
+  restApiGroup: {
+    /**
+     * 创建 REST API 组
+     */
+    create: (data: CreateRestApiGroupRequest) =>
+      ApiService.post<RestApiGroup>(API_ENDPOINTS.restApiGroup.create, data),
+
+    /**
+     * 更新 REST API 组
+     */
+    update: (id: string, data: UpdateRestApiGroupRequest) =>
+      ApiService.put<RestApiGroup>(API_ENDPOINTS.restApiGroup.update(id), data),
+
+    /**
+     * 删除 REST API 组
+     */
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.restApiGroup.delete(id)),
+
+    /**
+     * 获取项目的所有 REST API 组
+     */
+    list: (projectId: string) =>
+      ApiService.get<RestApiGroup[]>(API_ENDPOINTS.restApiGroup.list(projectId)),
+
+    /**
+     * 获取单个 REST API 组详情
+     */
+    detail: (id: string) => ApiService.get<RestApiGroup>(API_ENDPOINTS.restApiGroup.detail(id)),
+
+    /**
+     * 同步远程 OpenAPI 文档
+     */
+    sync: (id: string, syncUrl?: string) =>
+      ApiService.post<{ syncedCount: number; apis: RestApi[] }>(
+        API_ENDPOINTS.restApiGroup.sync(id),
+        { syncUrl }
+      ),
+  },
+
+  // REST API 相关
+  restApi: {
+    /**
+     * 创建 REST API
+     */
+    create: (data: CreateRestApiRequest) =>
+      ApiService.post<RestApi>(API_ENDPOINTS.restApi.create, data),
+
+    /**
+     * 更新 REST API
+     */
+    update: (id: string, data: UpdateRestApiRequest) =>
+      ApiService.put<RestApi>(API_ENDPOINTS.restApi.update(id), data),
+
+    /**
+     * 删除 REST API
+     */
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.restApi.delete(id)),
+
+    /**
+     * 获取项目的所有 REST API
+     */
+    list: (projectId: string) =>
+      ApiService.get<RestApi[]>(API_ENDPOINTS.restApi.list(projectId)),
+
+    /**
+     * 获取组内的所有 REST API
+     */
+    listByGroup: (groupId: string) =>
+      ApiService.get<RestApi[]>(API_ENDPOINTS.restApi.listByGroup(groupId)),
+
+    /**
+     * 获取项目内未分组的 REST API
+     */
+    listUngrouped: (projectId: string) =>
+      ApiService.get<RestApi[]>(API_ENDPOINTS.restApi.listUngrouped(projectId)),
+
+    /**
+     * 获取单个 REST API 详情
+     */
+    detail: (id: string) => ApiService.get<RestApi>(API_ENDPOINTS.restApi.detail(id)),
   },
 };
 

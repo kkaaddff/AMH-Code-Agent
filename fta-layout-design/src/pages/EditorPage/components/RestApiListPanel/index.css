@@ -1,0 +1,83 @@
+.rest-api-list-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: rgb(255, 255, 255);
+}
+
+.rest-api-list-panel__header {
+  padding: 16px 24px;
+  border-bottom: 1px solid rgb(240, 240, 240);
+  background: rgb(255, 255, 255);
+}
+
+.rest-api-list-panel__header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.rest-api-list-panel__title {
+  margin: 0 !important;
+}
+
+.rest-api-list-panel__search {
+  width: 100%;
+}
+
+.rest-api-list-panel__content {
+  flex: 1;
+  overflow: auto;
+}
+
+.rest-api-list-panel__empty {
+  margin-top: 48px;
+}
+
+.rest-api-list-panel__item {
+  cursor: pointer;
+  padding: 16px 24px !important;
+  border-bottom: 1px solid rgb(240, 240, 240);
+  transition: background-color 0.2s;
+}
+
+.rest-api-list-panel__item:hover {
+  background-color: rgb(250, 250, 250);
+}
+
+.rest-api-list-panel__item--selected {
+  background-color: rgb(230, 247, 255) !important;
+}
+
+.rest-api-list-panel__item-title {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.rest-api-list-panel__method-tag {
+  min-width: 50px;
+  text-align: center;
+}
+
+.rest-api-list-panel__item-desc {
+  margin-top: 4px;
+}
+
+.rest-api-list-panel__desc {
+  font-size: 12px;
+  display: block;
+}
+
+.rest-api-list-panel__url {
+  font-size: 11px;
+  margin-top: 4px;
+  display: block;
+}
+
+.rest-api-list-panel__footer {
+  padding: 12px 24px;
+  border-top: 1px solid rgb(240, 240, 240);
+  background: rgb(250, 250, 250);
+}
+

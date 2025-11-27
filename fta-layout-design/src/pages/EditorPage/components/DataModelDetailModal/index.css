@@ -1,0 +1,12 @@
+.data-model-detail-modal__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.data-model-detail-modal__tab-content {
+  padding: 16px 0;
+  max-height: 500px;
+  overflow: auto;
+}
+

@@ -15,13 +15,19 @@ import AnnotationConfirmModal from './components/AnnotationConfirmModal';
 import CodeGenerationDrawer from './components/CodeGenerationDrawer';
 import Component3DInspectModal from './components/Component3DInspectModal';
 import ComponentPropertyPanel from './components/ComponentPropertyPanel';
+import DataModelCreateModal from './components/DataModelCreateModal';
+import DataModelDetailModal from './components/DataModelDetailModal';
+import DataModelGroupPanel from './components/DataModelGroupPanel';
+import DataModelListPanel from './components/DataModelListPanel';
 import DetectionCanvas from './components/DetectionCanvas';
 import DSL3DInspectModal from './components/DSL3DInspectModal';
 import InteractionGuideOverlay from './components/InteractionGuideOverlay';
 import LayerTreePanel from './components/LayerTreePanel';
-import OpenAPIDataPanel from './components/OpenAPIDataPanel';
-import OpenAPIUrlPanel from './components/OpenAPIUrlPanel';
 import PRDEditorPanel from './components/PRDEditorPanel';
+import RestApiGroupPanel from './components/RestApiGroupPanel';
+import RestApiCreateModal from './components/RestApiCreateModal';
+import RestApiDetailModal from './components/RestApiDetailModal';
+import RestApiListPanel from './components/RestApiListPanel';
 import type { SmartDetectionHandle } from './components/SmartDetection';
 import SmartDetection from './components/SmartDetection';
 import { TDocumentKeys } from './constants';
@@ -74,6 +80,12 @@ const EditorPageContent: React.FC = () => {
   const [isAnnotationConfirmOpen, setIsAnnotationConfirmOpen] = useState(false);
   const [isSmartDetecting, setIsSmartDetecting] = useState(false);
 
+  // 数据管理相关弹窗状态
+  const [dataModelCreateModalOpen, setDataModelCreateModalOpen] = useState(false);
+  const [dataModelDetailModalOpen, setDataModelDetailModalOpen] = useState(false);
+  const [restApiCreateModalOpen, setRestApiCreateModalOpen] = useState(false);
+  const [restApiDetailModalOpen, setRestApiDetailModalOpen] = useState(false);
+
   // Frontend Workflow Scheduler
   const schedulerRef = useRef<FrontendWorkflowScheduler | null>(null);
   const smartDetectionRef = useRef<SmartDetectionHandle | null>(null);
@@ -92,8 +104,8 @@ const EditorPageContent: React.FC = () => {
       }
       try {
         await fetchPageDetail(_pageId);
-        // 加载接口数据模型
-        editorPageActions.loadInterfaceDataModels();
+        // 加载数据模型和 REST API
+        editorPageActions.loadAllDataView();
       } catch (error: any) {
         message.error('获取页面数据失败');
       }
@@ -366,11 +378,6 @@ const EditorPageContent: React.FC = () => {
     }
   };
 
-  // 处理 OpenAPI 接口选择
-  const handleSelectOpenApi = (id: string) => {
-    editorPageActions.setSelectedApiId(id || null);
-  };
-
   // 如果页面数据加载失败
   if (editorPageStoreSnapshot.pageError) {
     return (
@@ -511,11 +518,21 @@ const EditorPageContent: React.FC = () => {
               </Layout>
             )}
 
-            {/* OpenAPI 数据面板 */}
+            {/* 数据管理面板 - 根据 dataViewType 显示 */}
             {editorPageStoreSnapshot.selectedDocument?.type === 'openapi' && (
               <Layout className='editor-page-flex-layout'>
                 <Content className='editor-page-content editor-page-content--no-padding'>
-                  <OpenAPIDataPanel selectedApiId={editorPageStoreSnapshot.selectedApiId || undefined} />
+                  {editorPageStoreSnapshot.dataViewType === 'dataModel' ? (
+                    <DataModelListPanel
+                      onCreateClick={() => setDataModelCreateModalOpen(true)}
+                      onItemClick={() => setDataModelDetailModalOpen(true)}
+                    />
+                  ) : (
+                    <RestApiListPanel
+                      onCreateClick={() => setRestApiCreateModalOpen(true)}
+                      onItemClick={() => setRestApiDetailModalOpen(true)}
+                    />
+                  )}
                 </Content>
               </Layout>
             )}
@@ -543,16 +560,38 @@ const EditorPageContent: React.FC = () => {
             {editorPageStoreSnapshot.selectedDocument?.type === 'design' ? (
               <ComponentPropertyPanel />
             ) : editorPageStoreSnapshot.selectedDocument?.type === 'openapi' ? (
-              <OpenAPIUrlPanel
-                selectedApiId={editorPageStoreSnapshot.selectedApiId || undefined}
-                onSelectApi={handleSelectOpenApi}
-              />
+              editorPageStoreSnapshot.dataViewType === 'dataModel' ? (
+                <DataModelGroupPanel />
+              ) : (
+                <RestApiGroupPanel />
+              )
             ) : (
               <div style={{ padding: 24, textAlign: 'center', color: '#aaa' }}>暂无内容</div>
             )}
           </Sider>
         </Layout>
       </Spin>
+
+      {/* 数据模型创建弹窗 */}
+      <DataModelCreateModal open={dataModelCreateModalOpen} onClose={() => setDataModelCreateModalOpen(false)} />
+
+      {/* 数据模型详情弹窗 */}
+      <DataModelDetailModal
+        open={dataModelDetailModalOpen}
+        modelId={editorPageStoreSnapshot.selectedDataModelId}
+        onClose={() => setDataModelDetailModalOpen(false)}
+      />
+
+      {/* REST API 创建弹窗 */}
+      <RestApiCreateModal open={restApiCreateModalOpen} onClose={() => setRestApiCreateModalOpen(false)} />
+
+      {/* REST API 详情弹窗 */}
+      <RestApiDetailModal
+        open={restApiDetailModalOpen}
+        apiId={editorPageStoreSnapshot.selectedRestApiId}
+        onClose={() => setRestApiDetailModalOpen(false)}
+      />
+
       <AnnotationConfirmModal
         open={isAnnotationConfirmOpen}
         rootAnnotation={componentDetectionStoreSnapshot.rootAnnotation as AnnotationNode | null}

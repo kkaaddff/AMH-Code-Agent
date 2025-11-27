@@ -249,3 +249,193 @@ export class DeleteDataModelResponse extends BaseResponse<boolean> {
     super(true, true, 'Data model deleted successfully');
   }
 }
+
+// ============ 新数据模型相关响应 DTO ============
+
+// DataModelGroup 响应类型
+interface SimpleDataModelGroup {
+  id: string;
+  projectId: string;
+  name: string;
+  description?: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  userId: string;
+}
+
+export class DataModelGroupListResponse extends BaseResponse<SimpleDataModelGroup[]> {
+  constructor(groups: SimpleDataModelGroup[] | any[]) {
+    super(groups as SimpleDataModelGroup[], true, 'Data model groups retrieved successfully');
+  }
+}
+
+export class DataModelGroupDetailResponse extends BaseResponse<SimpleDataModelGroup> {
+  constructor(group: SimpleDataModelGroup | any) {
+    super(group as SimpleDataModelGroup, true, 'Data model group retrieved successfully');
+  }
+}
+
+export class CreateDataModelGroupResponse extends BaseResponse<SimpleDataModelGroup> {
+  constructor(group: SimpleDataModelGroup | any) {
+    super(group as SimpleDataModelGroup, true, 'Data model group created successfully');
+  }
+}
+
+export class UpdateDataModelGroupResponse extends BaseResponse<SimpleDataModelGroup> {
+  constructor(group: SimpleDataModelGroup | any) {
+    super(group as SimpleDataModelGroup, true, 'Data model group updated successfully');
+  }
+}
+
+export class DeleteDataModelGroupResponse extends BaseResponse<boolean> {
+  constructor() {
+    super(true, true, 'Data model group deleted successfully');
+  }
+}
+
+// 新 DataModel 响应类型（项目级别）
+interface SimpleNewDataModel {
+  id: string;
+  projectId: string;
+  groupId?: string;
+  name: string;
+  description?: string;
+  schema?: any[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  userId: string;
+}
+
+export class NewDataModelListResponse extends BaseResponse<SimpleNewDataModel[]> {
+  constructor(dataModels: SimpleNewDataModel[] | any[]) {
+    super(dataModels as SimpleNewDataModel[], true, 'Data models retrieved successfully');
+  }
+}
+
+export class NewDataModelDetailResponse extends BaseResponse<SimpleNewDataModel> {
+  constructor(dataModel: SimpleNewDataModel | any) {
+    super(dataModel as SimpleNewDataModel, true, 'Data model retrieved successfully');
+  }
+}
+
+export class CreateNewDataModelResponse extends BaseResponse<SimpleNewDataModel> {
+  constructor(dataModel: SimpleNewDataModel | any) {
+    super(dataModel as SimpleNewDataModel, true, 'Data model created successfully');
+  }
+}
+
+export class UpdateNewDataModelResponse extends BaseResponse<SimpleNewDataModel> {
+  constructor(dataModel: SimpleNewDataModel | any) {
+    super(dataModel as SimpleNewDataModel, true, 'Data model updated successfully');
+  }
+}
+
+export class DeleteNewDataModelResponse extends BaseResponse<boolean> {
+  constructor() {
+    super(true, true, 'Data model deleted successfully');
+  }
+}
+
+// RestApiGroup 响应类型
+interface SimpleRestApiGroup {
+  id: string;
+  projectId: string;
+  name: string;
+  description?: string;
+  syncUrl?: string;
+  lastSyncAt?: string | Date;
+  syncStatus?: 'idle' | 'syncing' | 'success' | 'failed';
+  syncError?: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  userId: string;
+}
+
+export class RestApiGroupListResponse extends BaseResponse<SimpleRestApiGroup[]> {
+  constructor(groups: SimpleRestApiGroup[] | any[]) {
+    super(groups as SimpleRestApiGroup[], true, 'REST API groups retrieved successfully');
+  }
+}
+
+export class RestApiGroupDetailResponse extends BaseResponse<SimpleRestApiGroup> {
+  constructor(group: SimpleRestApiGroup | any) {
+    super(group as SimpleRestApiGroup, true, 'REST API group retrieved successfully');
+  }
+}
+
+export class CreateRestApiGroupResponse extends BaseResponse<SimpleRestApiGroup> {
+  constructor(group: SimpleRestApiGroup | any) {
+    super(group as SimpleRestApiGroup, true, 'REST API group created successfully');
+  }
+}
+
+export class UpdateRestApiGroupResponse extends BaseResponse<SimpleRestApiGroup> {
+  constructor(group: SimpleRestApiGroup | any) {
+    super(group as SimpleRestApiGroup, true, 'REST API group updated successfully');
+  }
+}
+
+export class DeleteRestApiGroupResponse extends BaseResponse<boolean> {
+  constructor() {
+    super(true, true, 'REST API group deleted successfully');
+  }
+}
+
+export class SyncRestApiGroupResponse extends BaseResponse<{ syncedCount: number; apis: any[] }> {
+  constructor(syncedCount: number, apis: any[]) {
+    super({ syncedCount, apis }, true, `Synced ${syncedCount} REST APIs successfully`);
+  }
+}
+
+// RestApi 响应类型
+interface SimpleRestApi {
+  id: string;
+  projectId: string;
+  groupId?: string;
+  name: string;
+  description?: string;
+  url?: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+  requestModelIds: string[];
+  responseModelIds: string[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  userId: string;
+}
+
+export class RestApiListResponse extends BaseResponse<SimpleRestApi[]> {
+  constructor(restApis: SimpleRestApi[] | any[]) {
+    super(restApis as SimpleRestApi[], true, 'REST APIs retrieved successfully');
+  }
+}
+
+export class RestApiDetailResponse extends BaseResponse<SimpleRestApi> {
+  constructor(restApi: SimpleRestApi | any) {
+    super(restApi as SimpleRestApi, true, 'REST API retrieved successfully');
+  }
+}
+
+export class CreateRestApiResponse extends BaseResponse<SimpleRestApi> {
+  constructor(restApi: SimpleRestApi | any) {
+    super(restApi as SimpleRestApi, true, 'REST API created successfully');
+  }
+}
+
+export class UpdateRestApiResponse extends BaseResponse<SimpleRestApi> {
+  constructor(restApi: SimpleRestApi | any) {
+    super(restApi as SimpleRestApi, true, 'REST API updated successfully');
+  }
+}
+
+export class DeleteRestApiResponse extends BaseResponse<boolean> {
+  constructor() {
+    super(true, true, 'REST API deleted successfully');
+  }
+}
+
+// AI 解析 Schema 响应
+export class ParseSchemaResponse extends BaseResponse<any[]> {
+  constructor(schema: any[]) {
+    super(schema, true, 'Schema parsed successfully');
+  }
+}

@@ -547,7 +547,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
       title='3D 检视'
       width={MODAL_CONFIG.WIDTH}
       centered
-      /** 隐藏时销毁组件 （必须是这个属性不能乱改）*/
+      maskClosable={false}
       destroyOnHidden
       styles={{
         content: { background: COLOR_CONFIG.MODAL_CONTENT_BG },

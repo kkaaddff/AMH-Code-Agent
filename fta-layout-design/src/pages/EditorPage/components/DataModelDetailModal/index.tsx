@@ -1,30 +1,31 @@
-import { interfaceDataModelService } from '@/services/interfaceDataModelService';
-import type {
-  HttpMethod,
-  InterfaceDataModel,
-  SchemaField,
-  SchemaFieldType,
-  UpdateDataModelRequest,
-} from '@/types/interfaceDataModel';
-import { EMPTY_SCHEMA_FIELD, HTTP_METHOD_OPTIONS, SCHEMA_FIELD_TYPE_OPTIONS } from '@/types/interfaceDataModel';
+import { dataModelService, dataModelGroupService } from '@/services/dataModelService';
+import type { DataModel, DataModelGroup, SchemaField, UpdateDataModelRequest } from '@/types/dataModel';
+import { EMPTY_SCHEMA_FIELD, SCHEMA_FIELD_TYPE_OPTIONS } from '@/types/dataModel';
+import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import {
-  CodeOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  FileTextOutlined,
-  PlusOutlined,
-  SaveOutlined,
-} from '@ant-design/icons';
-import { App, Button, Empty, Form, Input, Popconfirm, Select, Space, Spin, Table, Tabs, Tag, Typography } from 'antd';
+  App,
+  Button,
+  Form,
+  Input,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Tabs,
+  Typography,
+} from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useSnapshot } from 'valtio';
-import { editorPageActions, editorPageStore } from '../contexts/EditorPageContext';
+import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
+import './index.css';
 
 const { Title, Text } = Typography;
 
-interface OpenAPIDataPanelProps {
-  selectedApiId?: string;
-  onDataModelUpdated?: (dataModel: InterfaceDataModel) => void;
+interface DataModelDetailModalProps {
+  open: boolean;
+  modelId: string | null;
+  onClose: () => void;
 }
 
 // Schema 字段编辑器组件
@@ -38,22 +39,17 @@ const SchemaFieldEditor: React.FC<{
   };
 
   const handleRemoveField = (index: number) => {
-    const newFields = fields.filter((_, i) => i !== index);
-    onChange(newFields);
+    onChange(fields.filter((_, i) => i !== index));
   };
 
   const handleFieldChange = (index: number, key: keyof SchemaField, value: any) => {
     const newFields = [...fields];
     newFields[index] = { ...newFields[index], [key]: value };
 
-    // 当类型从 object/array 切换到其他类型时，清空 properties/items
     if (key === 'type') {
-      if (value !== 'object') {
-        delete newFields[index].properties;
-      }
-      if (value !== 'array') {
-        delete newFields[index].items;
-      } else if (value === 'array' && newFields[index].items) {
+      if (value !== 'object') delete newFields[index].properties;
+      if (value !== 'array') delete newFields[index].items;
+      else if (value === 'array' && !newFields[index].items) {
         newFields[index].items = { ...EMPTY_SCHEMA_FIELD };
       }
     }
@@ -183,7 +179,7 @@ const SchemaFieldEditor: React.FC<{
                       size='small'
                       value={record.items?.type}
                       onChange={(value) =>
-                        handleItemsChange(index, { ...record.items!, type: value as SchemaFieldType })
+                        handleItemsChange(index, { ...record.items!, type: value as SchemaField['type'] })
                       }
                       style={{ width: 120 }}>
                       {SCHEMA_FIELD_TYPE_OPTIONS.map((opt) => (
@@ -208,65 +204,44 @@ const SchemaFieldEditor: React.FC<{
           rowExpandable: (record) => record.type === 'object' || record.type === 'array',
         }}
       />
-      <Button
-        type='dashed'
-        size='small'
-        icon={<PlusOutlined />}
-        onClick={handleAddField}
-        style={{ marginTop: 8, width: '100%' }}>
+      <Button type='dashed' size='small' icon={<PlusOutlined />} onClick={handleAddField} style={{ marginTop: 8, width: '100%' }}>
         添加字段
       </Button>
     </div>
   );
 };
 
-const OpenAPIDataPanel: React.FC<OpenAPIDataPanelProps> = ({ selectedApiId, onDataModelUpdated }) => {
+const DataModelDetailModal: React.FC<DataModelDetailModalProps> = ({ open, modelId, onClose }) => {
   const { message } = App.useApp();
-  const { interfaceDataModels } = useSnapshot(editorPageStore);
-  const [activeTab, setActiveTab] = useState('basic');
-  const [loading, setLoading] = useState(false);
+  const { dataModels, dataModelGroups } = useSnapshot(editorPageStore);
+
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [activeTab, setActiveTab] = useState('basic');
 
   // 表单状态
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [url, setUrl] = useState('');
-  const [method, setMethod] = useState<HttpMethod | undefined>();
-  const [requestSchema, setRequestSchema] = useState<SchemaField[]>([]);
-  const [responseSchema, setResponseSchema] = useState<SchemaField[]>([]);
+  const [groupId, setGroupId] = useState<string | undefined>();
+  const [schema, setSchema] = useState<SchemaField[]>([]);
 
-  // 从 context 中获取数据模型
-  const dataModel = selectedApiId ? interfaceDataModels.find((m) => m.id === selectedApiId) || null : null;
+  // 获取当前数据模型
+  const dataModel = modelId ? (dataModels as DataModel[]).find((m) => m.id === modelId) : null;
 
-  // 当选中的数据模型变化时，更新表单
+  // 初始化表单
   useEffect(() => {
     if (dataModel) {
       setName(dataModel.name);
       setDescription(dataModel.description || '');
-      setUrl(dataModel.url || '');
-      setMethod(dataModel.method);
-
-      setRequestSchema((dataModel.requestSchema as SchemaField[]) || []);
-      setResponseSchema((dataModel.responseSchema as SchemaField[]) || []);
+      setGroupId(dataModel.groupId);
+      setSchema(dataModel.schema || []);
       setHasChanges(false);
-    } else {
-      setName('');
-      setDescription('');
-      setUrl('');
-      setMethod(undefined);
-      setRequestSchema([]);
-      setResponseSchema([]);
-      setHasChanges(false);
+      setActiveTab('basic');
     }
   }, [dataModel?.id]);
 
-  // 标记有变更
-  const markChanged = () => {
-    setHasChanges(true);
-  };
+  const markChanged = () => setHasChanges(true);
 
-  // 保存数据模型
   const handleSave = async () => {
     if (!dataModel) return;
 
@@ -275,52 +250,28 @@ const OpenAPIDataPanel: React.FC<OpenAPIDataPanelProps> = ({ selectedApiId, onDa
       const updateData: UpdateDataModelRequest = {
         name,
         description: description || undefined,
-        url: url || undefined,
-        method,
-        requestSchema,
-        responseSchema,
+        groupId: groupId || null,
+        schema,
       };
 
-      const updatedModel = await interfaceDataModelService.update(dataModel.id, updateData);
-      // 更新 context 中的数据模型
-      editorPageActions.updateInterfaceDataModel(dataModel.id, updatedModel);
+      const updated = await dataModelService.update(dataModel.id, updateData);
+      editorPageActions.updateDataModel(dataModel.id, updated);
       setHasChanges(false);
       message.success('保存成功');
-      onDataModelUpdated?.(updatedModel);
-    } catch (error) {
-      console.error('保存数据模型失败:', error);
-      message.error('保存失败');
+    } catch (error: any) {
+      console.error('保存失败:', error);
+      message.error(error.message || '保存失败');
     } finally {
       setSaving(false);
     }
   };
 
-  // 如果没有选中的数据模型，显示空状态
-  if (!selectedApiId) {
-    return (
-      <div
-        style={{
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'rgb(255, 255, 255)',
-        }}>
-        <Empty description='请从左侧选择一个数据模型' />
-      </div>
-    );
-  }
-
   const tabItems = [
     {
       key: 'basic',
-      label: (
-        <span>
-          <EditOutlined /> 基本信息
-        </span>
-      ),
+      label: '基本信息',
       children: (
-        <div style={{ padding: '16px' }}>
+        <div className='data-model-detail-modal__tab-content'>
           <Form layout='vertical'>
             <Form.Item label='数据模型名称' required>
               <Input
@@ -332,7 +283,6 @@ const OpenAPIDataPanel: React.FC<OpenAPIDataPanelProps> = ({ selectedApiId, onDa
                 placeholder='数据模型名称'
               />
             </Form.Item>
-
             <Form.Item label='描述'>
               <Input.TextArea
                 rows={3}
@@ -344,77 +294,39 @@ const OpenAPIDataPanel: React.FC<OpenAPIDataPanelProps> = ({ selectedApiId, onDa
                 placeholder='简要描述该数据模型的用途'
               />
             </Form.Item>
-
-            <Form.Item label='HTTP 方法'>
+            <Form.Item label='所属分组'>
               <Select
-                value={method}
+                value={groupId}
                 onChange={(value) => {
-                  setMethod(value);
+                  setGroupId(value);
                   markChanged();
                 }}
-                placeholder='选择请求方法'
+                placeholder='选择分组（可选）'
                 allowClear
-                style={{ width: 200 }}>
-                {HTTP_METHOD_OPTIONS.map((opt) => (
-                  <Select.Option key={opt.value} value={opt.value}>
-                    <Tag color={opt.color}>{opt.label}</Tag>
+                style={{ width: '100%' }}>
+                {(dataModelGroups as DataModelGroup[]).map((g) => (
+                  <Select.Option key={g.id} value={g.id}>
+                    {g.name}
                   </Select.Option>
                 ))}
               </Select>
-            </Form.Item>
-
-            <Form.Item label='API 地址'>
-              <Input
-                value={url}
-                onChange={(e) => {
-                  setUrl(e.target.value);
-                  markChanged();
-                }}
-                placeholder='如：/api/v1/users'
-              />
             </Form.Item>
           </Form>
         </div>
       ),
     },
     {
-      key: 'request',
-      label: (
-        <span>
-          <CodeOutlined /> 请求参数
-        </span>
-      ),
+      key: 'schema',
+      label: '数据结构',
       children: (
-        <div style={{ padding: '16px' }}>
+        <div className='data-model-detail-modal__tab-content'>
           <Text type='secondary' style={{ marginBottom: 12, display: 'block' }}>
-            定义请求时需要传递的参数结构
+            定义数据模型的字段结构
           </Text>
           <SchemaFieldEditor
-            fields={requestSchema}
+            fields={schema}
             onChange={(fields) => {
-              setRequestSchema(fields);
-              markChanged();
-            }}
-          />
-        </div>
-      ),
-    },
-    {
-      key: 'response',
-      label: (
-        <span>
-          <FileTextOutlined /> 响应数据
-        </span>
-      ),
-      children: (
-        <div style={{ padding: '16px' }}>
-          <Text type='secondary' style={{ marginBottom: 12, display: 'block' }}>
-            定义接口返回的数据结构
-          </Text>
-          <SchemaFieldEditor
-            fields={responseSchema}
-            onChange={(fields) => {
-              setResponseSchema(fields);
+              setSchema(fields);
               markChanged();
             }}
           />
@@ -424,49 +336,34 @@ const OpenAPIDataPanel: React.FC<OpenAPIDataPanelProps> = ({ selectedApiId, onDa
   ];
 
   return (
-    <Spin spinning={false}>
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'rgb(255, 255, 255)' }}>
-        {/* Header */}
-        <div
-          style={{
-            padding: '16px 24px',
-            borderBottom: '1px solid rgb(240, 240, 240)',
-            background: 'rgb(255, 255, 255)',
-          }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <Title level={5} style={{ margin: 0 }}>
-                {dataModel?.name || '数据模型详情'}
-              </Title>
-              <Text type='secondary' style={{ fontSize: 12 }}>
-                ID: {selectedApiId}
-              </Text>
-            </div>
-            <Button
-              type='primary'
-              size='small'
-              icon={<SaveOutlined />}
-              loading={saving}
-              disabled={!hasChanges}
-              onClick={handleSave}>
-              保存
-            </Button>
-          </div>
+    <Modal
+      title={
+        <div className='data-model-detail-modal__header'>
+          <Title level={5} style={{ margin: 0 }}>
+            {dataModel?.name || '数据模型详情'}
+          </Title>
+          <Text type='secondary' style={{ fontSize: 12 }}>
+            ID: {modelId}
+          </Text>
         </div>
-
-        {/* Tabs */}
-        <div style={{ flex: 1, overflow: 'auto' }}>
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={tabItems}
-            style={{ height: '100%' }}
-            tabBarStyle={{ margin: 0, padding: '0 16px' }}
-          />
-        </div>
-      </div>
-    </Spin>
+      }
+      open={open}
+      onCancel={onClose}
+      maskClosable={false}
+      width={800}
+      footer={
+        <Space>
+          <Button onClick={onClose}>关闭</Button>
+          <Button type='primary' icon={<SaveOutlined />} loading={saving} disabled={!hasChanges} onClick={handleSave}>
+            保存
+          </Button>
+        </Space>
+      }
+      destroyOnClose>
+      <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
+    </Modal>
   );
 };
 
-export default OpenAPIDataPanel;
+export default DataModelDetailModal;
+

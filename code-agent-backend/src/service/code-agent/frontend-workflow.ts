@@ -5,9 +5,11 @@ import { DesignData, DesignNode } from '../../types';
 import { ModelGatewayConfig } from '../common/model-gateway';
 import { DesignDSLService } from './design-dsl';
 import { ProjectService } from './project';
-import { InterfaceDataModelService } from './interface-data-model';
+import { DataModelService } from './data-model';
+import { RestApiService } from './rest-api';
 import { TreeNode } from '../../dto/code-agent/frontend-workflow.dto';
-import { InterfaceDataModel } from '../../entity/code-agent/interface-data-model';
+import { DataModel } from '../../entity/code-agent/data-model';
+import { RestApi } from '../../entity/code-agent/rest-api';
 
 let agentCorePromise: Promise<typeof import('@fta/agent-core')> | null = null;
 let annotationUtilsPromise: Promise<typeof import('@fta/agent-core/dist/utils/annotation')> | null = null;
@@ -60,7 +62,10 @@ export class FrontendWorkflowService {
   private projectService: ProjectService;
 
   @Inject()
-  private interfaceDataModelService: InterfaceDataModelService;
+  private dataModelService: DataModelService;
+
+  @Inject()
+  private restApiService: RestApiService;
 
   @Config('modelGateway.default')
   private modelConfig: ModelGatewayConfig;
@@ -119,19 +124,29 @@ export class FrontendWorkflowService {
       // 获取 annotation 摘要
       const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData.rootAnnotation));
 
-      // 获取页面关联的接口数据模型
-      let interfaceDataModels: InterfaceDataModel[] = [];
+      // 获取项目关联的数据模型和 REST API
+      let dataModels: DataModel[] = [];
+      let restApis: RestApi[] = [];
       if (pageId) {
         try {
-          interfaceDataModels = await this.interfaceDataModelService.getDataModels(pageId);
-          console.log(`frontend-workflow: [${sessionId}] 📊 获取到 ${interfaceDataModels.length} 个接口数据模型`);
+          // 从 page 获取 projectId
+          const page = await this.projectService.findPage({ pageId });
+          if (page?.projectId) {
+            const [models, apis] = await Promise.all([
+              this.dataModelService.getByProjectId(page.projectId),
+              this.restApiService.getByProjectId(page.projectId),
+            ]);
+            dataModels = models;
+            restApis = apis;
+            console.log(`frontend-workflow: [${sessionId}] 📊 获取到 ${dataModels.length} 个数据模型，${restApis.length} 个 REST API`);
+          }
         } catch (error) {
-          console.warn(`frontend-workflow: [${sessionId}] ⚠️ 获取接口数据模型失败，继续执行工作流`, error);
+          console.warn(`frontend-workflow: [${sessionId}] ⚠️ 获取数据模型失败，继续执行工作流`, error);
         }
       }
 
-      // 格式化接口数据模型为工作流可用格式
-      const interfaceDataModelsSummary = this.formatInterfaceDataModels(interfaceDataModels);
+      // 格式化数据模型和 REST API 为工作流可用格式
+      const dataContextSummary = this.formatDataContext(dataModels, restApis);
 
       // 准备工作目录
 
@@ -147,9 +162,9 @@ export class FrontendWorkflowService {
       console.log(`frontend-workflow: [${sessionId}] 🚀 开始调用核心工作流引擎`);
       const workflowEngineStart = Date.now();
 
-      // 组合页面标注和接口数据模型信息
-      const fullPageContext = interfaceDataModelsSummary
-        ? `${annotationSummary}\n\n---\n\n${interfaceDataModelsSummary}`
+      // 组合页面标注和数据上下文信息
+      const fullPageContext = dataContextSummary
+        ? `${annotationSummary}\n\n---\n\n${dataContextSummary}`
         : annotationSummary;
 
       // 调用 workflow
@@ -273,13 +288,30 @@ export class FrontendWorkflowService {
   }
 
   /**
-   * 格式化接口数据模型为工作流可用的文本格式
+   * 格式化数据上下文（数据模型 + REST API）为工作流可用的文本格式
    */
-  private formatInterfaceDataModels(dataModels: InterfaceDataModel[]): string {
-    if (!dataModels || dataModels.length === 0) {
-      return '';
+  private formatDataContext(dataModels: DataModel[], restApis: RestApi[]): string {
+    const sections: string[] = [];
+
+    // 格式化数据模型
+    if (dataModels && dataModels.length > 0) {
+      const dataModelSection = this.formatDataModels(dataModels);
+      sections.push(dataModelSection);
     }
 
+    // 格式化 REST API
+    if (restApis && restApis.length > 0) {
+      const restApiSection = this.formatRestApis(restApis, dataModels);
+      sections.push(restApiSection);
+    }
+
+    return sections.join('\n\n---\n\n');
+  }
+
+  /**
+   * 格式化数据模型
+   */
+  private formatDataModels(dataModels: DataModel[]): string {
     const formatSchema = (fields: any[], indent = 2): string => {
       if (!fields || fields.length === 0) return '无';
 
@@ -306,21 +338,48 @@ export class FrontendWorkflowService {
         .join('\n');
     };
 
-    const sections = dataModels.map((model) => {
+    const modelSections = dataModels.map((model) => {
       const lines: string[] = [];
       lines.push(`## ${model.name}`);
       if (model.description) lines.push(`描述: ${model.description}`);
-      if (model.url) lines.push(`API 地址: ${model.method || 'GET'} ${model.url}`);
       lines.push(`ID: ${model.id}`);
       lines.push('');
-      lines.push('### 请求参数');
-      lines.push(formatSchema(model.requestSchema));
-      lines.push('');
-      lines.push('### 响应数据');
-      lines.push(formatSchema(model.responseSchema));
+      lines.push('### Schema');
+      lines.push(formatSchema(model.schema));
       return lines.join('\n');
     });
 
-    return `# 接口数据模型\n\n${sections.join('\n\n---\n\n')}`;
+    return `# 数据模型\n\n${modelSections.join('\n\n---\n\n')}`;
+  }
+
+  /**
+   * 格式化 REST API
+   */
+  private formatRestApis(restApis: RestApi[], dataModels: DataModel[]): string {
+    // 创建数据模型 ID -> 名称的映射
+    const modelMap = new Map(dataModels.map((m) => [m.id, m.name]));
+
+    const apiSections = restApis.map((api) => {
+      const lines: string[] = [];
+      lines.push(`## ${api.name}`);
+      if (api.description) lines.push(`描述: ${api.description}`);
+      if (api.url) lines.push(`API 地址: ${api.method || 'GET'} ${api.url}`);
+      lines.push(`ID: ${api.id}`);
+
+      // 关联的请求数据模型
+      if (api.requestModelIds && api.requestModelIds.length > 0) {
+        const modelNames = api.requestModelIds.map((id) => modelMap.get(id) || id).join(', ');
+        lines.push(`请求数据模型: ${modelNames}`);
+      }
+      // 关联的响应数据模型
+      if (api.responseModelIds && api.responseModelIds.length > 0) {
+        const modelNames = api.responseModelIds.map((id) => modelMap.get(id) || id).join(', ');
+        lines.push(`响应数据模型: ${modelNames}`);
+      }
+
+      return lines.join('\n');
+    });
+
+    return `# REST API 接口\n\n${apiSections.join('\n\n---\n\n')}`;
   }
 }

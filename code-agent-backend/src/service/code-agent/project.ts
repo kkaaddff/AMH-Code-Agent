@@ -60,7 +60,6 @@ export class ProjectService {
       { path: 'designDocuments' },
       { path: 'prdDocuments' },
       { path: 'openapiDocuments' },
-      { path: 'interfaceDataModels' },
     ],
   };
 
@@ -231,7 +230,6 @@ export class ProjectService {
           { path: 'designDocuments' },
           { path: 'prdDocuments' },
           { path: 'openapiDocuments' },
-          { path: 'interfaceDataModels' },
         ])
         .exec();
     }

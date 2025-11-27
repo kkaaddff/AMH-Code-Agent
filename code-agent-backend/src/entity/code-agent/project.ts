@@ -1,7 +1,6 @@
 import type { AnnotationNode, AnnotationSnapshot, DesignData } from '@fta/shared-types';
 import { modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { EntityModel } from '@midwayjs/typegoose';
-import { InterfaceDataModel } from './interface-data-model';
 
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'completed' | 'editing';
 
@@ -88,9 +87,6 @@ export class Page {
 
   @prop({ ref: () => DocumentReference, default: () => [] })
   openapiDocuments: DocumentReference[];
-
-  @prop({ ref: () => InterfaceDataModel, default: () => [] })
-  interfaceDataModels: InterfaceDataModel[];
 
   @prop({ default: () => [] })
   designSpecs: string[];

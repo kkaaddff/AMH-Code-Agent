@@ -5,6 +5,7 @@ import { getDocumentStatusColor, getDocumentStatusText } from '@/utils/documentS
 import {
   ApiOutlined,
   CloseOutlined,
+  DatabaseOutlined,
   DeleteOutlined,
   DownOutlined,
   FileImageOutlined,
@@ -13,6 +14,7 @@ import {
   LinkOutlined,
   PlusOutlined,
   ReloadOutlined,
+  RightOutlined,
   SaveOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
@@ -21,13 +23,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { TDocumentKeys } from '../../constants';
 import { designDetectionActions, designDetectionStore, useDesignTreeData } from '../../contexts/DesignDetectionContext';
-import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
+import { DataViewType, editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
 import { extractDesignIdFromTopLevelKey, findTopLevelKey } from './utils';
 import './index.css';
 
 const { Title, Text } = Typography;
 type ModelStatus = 'busy' | 'idle' | 'unknown' | 'error';
-const DEFAULT_ACTIVE_KEY = ['design', 'openapi'];
+const DEFAULT_ACTIVE_KEY = ['design', 'data'];
 interface LayerTreePanelProps {
   onDeleteDocument: (type: keyof typeof TDocumentKeys, id: string) => void;
   onSave?: () => void;
@@ -65,7 +67,7 @@ const formatTimestamp = (value?: number) => {
 };
 
 const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSave, onGenerateCode }) => {
-  const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
+  const { currentPage, selectedDocument, dataViewType } = useSnapshot(editorPageStore);
   const { modal, message } = App.useApp();
   const { selectedAnnotation, expandedKeys } = useSnapshot(designDetectionStore);
 
@@ -296,6 +298,19 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
     setAddDocModalVisible(true);
   };
 
+  // 处理数据视图选择
+  const handleDataViewSelect = (type: DataViewType) => {
+    editorPageActions.setDataViewType(type);
+    // 设置 selectedDocument 为 null，触发中间区域显示对应列表
+    editorPageActions.setSelectedDocument({ type: 'openapi', id: undefined });
+    // 加载对应的数据
+    if (type === 'dataModel') {
+      editorPageActions.loadDataModels();
+    } else {
+      editorPageActions.loadRestApis();
+    }
+  };
+
   const handleAddDocumentSubmit = async (values: { url: string; name?: string }) => {
     try {
       // 根据文档类型，获取当前的所有文档 URL
@@ -459,36 +474,57 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
         ),
     },
     {
-      key: 'openapi',
+      key: 'data',
       label: (
         <Space>
-          <ApiOutlined className='layer-tree-panel__icon--openapi' />
+          <DatabaseOutlined className='layer-tree-panel__icon--data' />
           <span>数据</span>
         </Space>
       ),
-      extra: (
-        <Button
-          type='text'
-          size='small'
-          icon={<PlusOutlined />}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAddDocumentClick('openapi');
-          }}
-        />
+      children: (
+        <div className='layer-tree-panel__data-menu'>
+          <div
+            className={`layer-tree-panel__data-menu-item${
+              selectedDocument?.type === 'openapi' && dataViewType === 'restApi'
+                ? ' layer-tree-panel__data-menu-item--active'
+                : ''
+            }`}
+            onClick={() => handleDataViewSelect('restApi')}
+            role='button'
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleDataViewSelect('restApi');
+              }
+            }}>
+            <Space>
+              <ApiOutlined />
+              <span>接口</span>
+            </Space>
+            <RightOutlined className='layer-tree-panel__data-menu-arrow' />
+          </div>
+          <div
+            className={`layer-tree-panel__data-menu-item${
+              selectedDocument?.type === 'openapi' && dataViewType === 'dataModel'
+                ? ' layer-tree-panel__data-menu-item--active'
+                : ''
+            }`}
+            onClick={() => handleDataViewSelect('dataModel')}
+            role='button'
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleDataViewSelect('dataModel');
+              }
+            }}>
+            <Space>
+              <DatabaseOutlined />
+              <span>数据模型</span>
+            </Space>
+            <RightOutlined className='layer-tree-panel__data-menu-arrow' />
+          </div>
+        </div>
       ),
-      children:
-        currentPage?.openapiDocuments && currentPage.openapiDocuments.length > 0 ? (
-          <List
-            size='small'
-            dataSource={currentPage.openapiDocuments as DocumentReference[]}
-            renderItem={(doc) => renderDocumentItem(doc, 'openapi')}
-          />
-        ) : (
-          <Text type='secondary' className='layer-tree-panel__empty-text'>
-            暂无OpenAPI文档
-          </Text>
-        ),
     },
   ];
 
@@ -549,6 +585,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
           setAddDocModalVisible(false);
           addDocForm.resetFields();
         }}
+        maskClosable={false}
         footer={null}>
         <Form form={addDocForm} layout='vertical' onFinish={handleAddDocumentSubmit}>
           <Form.Item label='文档名称' name='name'>
@@ -602,6 +639,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
         title='设计文档设置'
         open={settingsModalVisible}
         onCancel={handleCloseSettings}
+        maskClosable={false}
         footer={null}
         width={320}
         centered>

@@ -227,6 +227,7 @@ const OpenAPIUrlPanel: React.FC<OpenAPIUrlPanelProps> = ({ selectedApiId, onSele
           setAddModalVisible(false);
           addForm.resetFields();
         }}
+        maskClosable={false}
         footer={null}
         destroyOnClose>
         <Form form={addForm} layout='vertical' onFinish={handleAddDataModel}>

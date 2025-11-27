@@ -510,7 +510,7 @@ const AnnotationConfirmModal: React.FC<AnnotationConfirmModalProps> = ({
       open={open}
       width={960}
       centered
-      maskClosable={!loading && !submitting}
+      maskClosable={false}
       destroyOnHidden={false}
       onCancel={handleCancel}
       onOk={handleSubmit}

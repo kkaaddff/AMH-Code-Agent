@@ -4,6 +4,7 @@ import {
   App,
   Button,
   Card,
+  Cascader,
   Checkbox,
   Divider,
   Form,
@@ -12,9 +13,11 @@ import {
   Select,
   Space,
   Switch,
+  Tooltip,
   Typography,
   Tag,
 } from 'antd';
+import type { DefaultOptionType } from 'antd/es/cascader';
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSnapshot } from 'valtio';
 
@@ -28,10 +31,9 @@ import {
   findAnnotationById,
   findDSLNodeById,
 } from '../contexts/DesignDetectionContext';
-import { editorPageStore } from '../contexts/EditorPageContext';
+import { editorPageActions, editorPageStore } from '../contexts/EditorPageContext';
 import { NodeType } from '../types/componentDetection';
-import { interfaceDataModelService } from '@/services/interfaceDataModelService';
-import type { InterfaceDataModel, HttpMethod } from '@/types/interfaceDataModel';
+import type { DataModel, DataModelGroup } from '@/types/dataModel';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -79,48 +81,61 @@ const customFilterOption = (input: string, option: any) => {
   return false;
 };
 
-// HTTP 方法对应的颜色
-const METHOD_COLORS: Record<HttpMethod, string> = {
-  GET: 'blue',
-  POST: 'green',
-  PUT: 'orange',
-  DELETE: 'red',
-  PATCH: 'purple',
-  HEAD: 'default',
-  OPTIONS: 'default',
-};
-
 const ComponentPropertyPanelV2: React.FC = () => {
   const { message, modal } = App.useApp();
   const { selectedAnnotation, selectedDSLNode, selectedNodeIds } = useSnapshot(designDetectionStore);
-  const { selectedDocument, pageId } = useSnapshot(editorPageStore);
+  const { selectedDocument, projectId, dataModels: dataModelsList, dataModelGroups } = useSnapshot(editorPageStore);
   const [form] = Form.useForm();
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedFTAComponent, setSelectedFTAComponent] = useState<string>('');
 
-  // 数据模型列表状态
-  const [dataModels, setDataModels] = useState<InterfaceDataModel[]>([]);
-  const [loadingDataModels, setLoadingDataModels] = useState(false);
-
-  // 加载数据模型列表
-  const loadDataModels = useCallback(async () => {
-    if (!pageId) return;
-
-    setLoadingDataModels(true);
-    try {
-      const models = await interfaceDataModelService.getByPageId(pageId);
-      setDataModels(models);
-    } catch (error) {
-      console.error('加载数据模型列表失败:', error);
-    } finally {
-      setLoadingDataModels(false);
-    }
-  }, [pageId]);
-
   // 页面变化时加载数据模型
   useEffect(() => {
-    loadDataModels();
-  }, [loadDataModels]);
+    if (projectId) {
+      editorPageActions.loadDataModels();
+    }
+  }, [projectId]);
+
+  // 构建 Cascader 选项（分组 -> 数据模型）
+  const cascaderOptions = useMemo<DefaultOptionType[]>(() => {
+    const groups = dataModelGroups as DataModelGroup[];
+    const models = dataModelsList as DataModel[];
+
+    const options: DefaultOptionType[] = [];
+
+    // 未分组
+    const ungroupedModels = models.filter((m) => !m.groupId);
+    if (ungroupedModels.length > 0) {
+      options.push({
+        value: '__ungrouped__',
+        label: '未分组',
+        children: ungroupedModels.map((m) => ({
+          value: m.id,
+          label: m.name,
+          description: m.description,
+        })),
+      });
+    }
+
+    // 按分组
+    groups.forEach((group) => {
+      const groupModels = models.filter((m) => m.groupId === group.id);
+      if (groupModels.length > 0) {
+        options.push({
+          value: group.id,
+          label: group.name,
+          description: group.description,
+          children: groupModels.map((m) => ({
+            value: m.id,
+            label: m.name,
+            description: m.description,
+          })),
+        });
+      }
+    });
+
+    return options;
+  }, [dataModelsList, dataModelGroups]);
 
   // 初始化表单值
   useEffect(() => {
@@ -757,34 +772,47 @@ const ComponentPropertyPanelV2: React.FC = () => {
           <Form.Item
             label='关联数据模型'
             name='dataModelId'
-            extra='选择要绑定的接口数据模型，用于代码生成时关联数据结构'>
-            <Select
-              placeholder='选择数据模型（可选）'
-              loading={loadingDataModels}
+            extra='选择要绑定的数据模型，用于代码生成时关联数据结构'
+            getValueFromEvent={(value: string[]) => {
+              // Cascader 返回的是数组 [groupId, modelId]，我们只需要 modelId
+              return value && value.length > 1 ? value[1] : undefined;
+            }}
+            getValueProps={(value) => {
+              // 反向查找：根据 modelId 找到对应的 [groupId, modelId] 路径
+              if (!value) return { value: undefined };
+              const model = (dataModelsList as DataModel[]).find((m) => m.id === value);
+              if (!model) return { value: undefined };
+              const groupKey = model.groupId || '__ungrouped__';
+              return { value: [groupKey, value] };
+            }}>
+            <Cascader
+              options={cascaderOptions}
+              placeholder='选择分组 → 数据模型'
               allowClear
-              showSearch
-              optionFilterProp='label'
-              notFoundContent={
-                dataModels.length === 0 ? '暂无数据模型，请先在左侧 OpenAPI 面板添加' : '没有匹配的数据模型'
-              }>
-              {dataModels.map((model) => (
-                <Option key={model.id} value={model.id} label={model.name}>
-                  <Space>
-                    {model.method && (
-                      <Tag color={METHOD_COLORS[model.method]} style={{ minWidth: 45, textAlign: 'center' }}>
-                        {model.method}
-                      </Tag>
-                    )}
-                    <span>{model.name}</span>
-                    {model.url && (
-                      <Text type='secondary' style={{ fontSize: 11 }}>
-                        {model.url}
-                      </Text>
-                    )}
-                  </Space>
-                </Option>
-              ))}
-            </Select>
+              showSearch={{
+                filter: (inputValue, path) => {
+                  return path.some(
+                    (option) =>
+                      (option.label as string).toLowerCase().includes(inputValue.toLowerCase()) ||
+                      (option.description as string | undefined)?.toLowerCase().includes(inputValue.toLowerCase())
+                  );
+                },
+              }}
+              displayRender={(labels, selectedOptions) => {
+                if (!selectedOptions || selectedOptions.length < 2) return '';
+                const model = selectedOptions[1];
+                return (
+                  <Tooltip title={model.description}>
+                    <span>
+                      {labels[0]} / <strong>{labels[1]}</strong>
+                    </span>
+                  </Tooltip>
+                );
+              }}
+              expandTrigger='hover'
+              notFoundContent={cascaderOptions.length === 0 ? '暂无数据模型，请先在左侧面板添加' : '没有匹配的数据模型'}
+              style={{ width: '100%' }}
+            />
           </Form.Item>
 
           <Divider />
