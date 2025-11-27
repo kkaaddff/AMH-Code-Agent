@@ -102,5 +102,7 @@ amh_code_agent/
   - 使用 Angular Conventional Commit，提交信息为中文，格式 `<type>(scope): <subject>`，保持祈使句。
   - 常用 type：`feat`、`fix`、`docs`、`refactor`、`chore`、`test`、`style`、`perf`。
   - 示例：
-    - `feat(editor): 支持 VSCode 工作区自动绑定项目`
-    - `fix(backend): 修复接口数据模型更新时的 user 校验错误`
+    - feat(editor):
+      - 支持 PATH 节点转 PNG 后缓存
+    - fix(backend):
+      - 修复 model-gateway 超时未写入日志的问题

@@ -1,6 +1,6 @@
 import type { DSLNode } from '@/types/dsl';
 import { COLORS, DASH_PATTERNS, DRAW_STYLES } from '../../constants/CanvasConstant';
-import { findAnnotationByDSLNodeId } from '../../contexts/DesignDetectionContext';
+import { designDetectionStore, findAnnotationByDSLNodeId } from '../../contexts/DesignDetectionContext';
 import type { LabelInstruction } from '../../types/componentDetection';
 import { drawBorder, getNodeBounds } from '../../utils/DetectionCanvasV2Helper';
 
@@ -23,7 +23,11 @@ export const drawDSLNodeBorders = (ctx: CanvasRenderingContext2D, node: DSLNode,
 
   const bounds = getNodeBounds(node, parentX, parentY);
 
-  if (bounds.width > 0 && bounds.height > 0 && !findAnnotationByDSLNodeId(node.id)) {
+  if (
+    bounds.width > 0 &&
+    bounds.height > 0 &&
+    !findAnnotationByDSLNodeId(node.id, designDetectionStore.rootAnnotation)
+  ) {
     drawBorder(ctx, bounds.x, bounds.y, bounds.width, bounds.height, {
       color: COLORS.UNANNOTATED_BORDER,
       width: DRAW_STYLES.UNANNOTATED_BORDER_WIDTH,

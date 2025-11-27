@@ -63,8 +63,10 @@
 - 采用 Angular Conventional Commit，提交信息使用中文，保持祈使句、简洁明了。
 - 基本结构：`<type>(scope): <subject>`，常见 type：`feat`、`fix`、`docs`、`refactor`、`chore`、`test`、`style`、`perf`。
 - 示例：
-  - `feat(editor): 支持 PATH 节点转 PNG 后缓存`
-  - `fix(backend): 修复 model-gateway 超时未写入日志的问题`
+  - feat(editor):
+    - 支持 PATH 节点转 PNG 后缓存
+  - fix(backend):
+    - 修复 model-gateway 超时未写入日志的问题
 
 ## Testing & Verification
 

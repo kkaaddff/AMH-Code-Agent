@@ -1,3 +1,4 @@
+import { DSLData, DSLNode } from '@/types/dsl';
 import { App } from 'antd';
 import confetti from 'canvas-confetti';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
@@ -7,7 +8,6 @@ import { editorPageStore } from '../../contexts/EditorPageContext';
 import { smartDetection } from '../../services/SmartDetection';
 import { CONFETTI_BURSTS, SMART_DETECTION_COMPONENT_REGEX } from './config';
 import './styles.css';
-import { DSLData } from '@/types/dsl';
 
 type SmartDetectionEntry = {
   nodeId: string;
@@ -108,8 +108,7 @@ const parseSmartDetectionEvents = (events: Array<{ type: string; text?: string }
 
 const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
   ({ onDetectingChange }, ref: React.Ref<SmartDetectionHandle>) => {
-    const componentDetectionStoreSnapshot = useSnapshot(designDetectionStore);
-    const { designData, rootAnnotation } = componentDetectionStoreSnapshot;
+    const { designData, rootAnnotation, dslRootNode } = useSnapshot(designDetectionStore);
     const editorPageStoreSnapshot = useSnapshot(editorPageStore);
     const selectedDocumentId =
       editorPageStoreSnapshot.selectedDocument?.type === 'design'
@@ -245,7 +244,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         let missingCount = 0;
 
         for (const entry of parsedEntries) {
-          const dslNode = findDSLNodeById(entry.nodeId);
+          const dslNode = findDSLNodeById(entry.nodeId, dslRootNode as DSLNode);
           if (!dslNode) {
             missingCount += 1;
             continue;

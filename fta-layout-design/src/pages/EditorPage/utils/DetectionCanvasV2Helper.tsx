@@ -369,3 +369,304 @@ export const drawGridBackground = (
     ctx.clearRect(hole.x, hole.y, hole.width, hole.height);
   }
 };
+
+//#region ==================== 工具函数 ====================
+
+// 排序 AnnotationNode 的 children，按照坐标顺序：从上到下，从左到右
+export const sortAnnotationChildren = (node: AnnotationNode): AnnotationNode => {
+  const sortedChildren = [...node.children].sort((a, b) => {
+    const yDiff = a.absoluteY - b.absoluteY;
+    if (Math.abs(yDiff) > 1) {
+      return yDiff;
+    }
+    return a.absoluteX - b.absoluteX;
+  });
+
+  return {
+    ...node,
+    children: sortedChildren.map(sortAnnotationChildren),
+  };
+};
+
+// 扁平化 Annotation 树
+export const flattenAnnotationTree = (root: AnnotationNode): AnnotationNode[] => {
+  const result: AnnotationNode[] = [];
+  const traverse = (node: AnnotationNode) => {
+    result.push(node);
+    node.children.forEach(traverse);
+  };
+  traverse(root);
+  return result;
+};
+
+// 查找标注节点
+export const findAnnotationById = (id: string, rootAnnotation: AnnotationNode | null): AnnotationNode | null => {
+  const search = (node: AnnotationNode): AnnotationNode | null => {
+    if (node.id === id) return node;
+    for (const child of node.children) {
+      const found = search(child);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  if (rootAnnotation) {
+    return search(rootAnnotation);
+  }
+  return null;
+};
+
+// 通过DSL节点ID查找标注
+export const findAnnotationByDSLNodeId = (
+  dslNodeId: string,
+  rootAnnotation: AnnotationNode | null
+): AnnotationNode | null => {
+  const search = (node: AnnotationNode): AnnotationNode | null => {
+    if (node.id === dslNodeId) return node;
+    for (const child of node.children) {
+      const found = search(child);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  if (rootAnnotation) {
+    return search(rootAnnotation);
+  }
+  return null;
+};
+
+// 统一的DSL节点查找函数
+export const findDSLNodeById = (id: string, dslRootNode: DSLNode | null): DSLNode | null => {
+  if (!dslRootNode) return null;
+
+  const search = (node: DSLNode | null): DSLNode | null => {
+    if (!node) return null;
+    if (node.id === id) return node;
+    if (node.children) {
+      for (const child of node.children) {
+        const found = search(child);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  return search(dslRootNode);
+};
+
+/** 扁平化 DSLNode 树，同时计算每个节点的绝对坐标 */
+export const flattenDSLNodeTree = (root: DSLNode | null, hidden = false): FlattenedDSLNode[] => {
+  if (!root) return [];
+  const result: FlattenedDSLNode[] = [];
+  const traverse = (node: DSLNode, parentX = 0, parentY = 0) => {
+    if (hidden && (node.hidden || node.mask === 'outline')) return;
+    const absoluteX = parentX + (node.layoutStyle?.relativeX || 0);
+    const absoluteY = parentY + (node.layoutStyle?.relativeY || 0);
+    result.push({ ...node, absoluteX, absoluteY });
+    if (node.children && Array.isArray(node.children)) {
+      node.children.forEach((child) => traverse(child, absoluteX, absoluteY));
+    }
+  };
+  traverse(root);
+  return result;
+};
+
+// 计算DSL节点的绝对坐标
+export const calculateDSLNodeAbsolutePosition = (
+  targetNode: DSLNode,
+  flatDSLNodeList: FlattenedDSLNode[]
+): { x: number; y: number } => {
+  if (flatDSLNodeList.length === 0) return { x: 0, y: 0 };
+  const node = flatDSLNodeList.find((node) => node.id === targetNode.id);
+  if (!node) return { x: 0, y: 0 };
+  return { x: node.absoluteX, y: node.absoluteY };
+};
+
+// 查找最佳父节点
+export const findBestAnnotationNodeParent = (
+  dslNode: DSLNode,
+  rootAnnotation: AnnotationNode,
+  flatDSLNodeList: FlattenedDSLNode[]
+): AnnotationNode => {
+  const dslAbsolutePos = calculateDSLNodeAbsolutePosition(dslNode, flatDSLNodeList);
+  const dslX = dslAbsolutePos.x;
+  const dslY = dslAbsolutePos.y;
+  const dslWidth = dslNode.layoutStyle?.width || 0;
+  const dslHeight = dslNode.layoutStyle?.height || 0;
+
+  let bestParent = rootAnnotation;
+  let smallestArea = rootAnnotation.width * rootAnnotation.height;
+
+  const search = (node: AnnotationNode) => {
+    if (!node.isContainer) return;
+
+    const isInside =
+      dslX >= node.absoluteX &&
+      dslY >= node.absoluteY &&
+      dslX + dslWidth <= node.absoluteX + node.width &&
+      dslY + dslHeight <= node.absoluteY + node.height;
+
+    if (isInside) {
+      const area = node.width * node.height;
+      if (area < smallestArea) {
+        smallestArea = area;
+        bestParent = node;
+      }
+      node.children.forEach(search);
+    }
+  };
+
+  rootAnnotation.children.forEach(search);
+  return bestParent;
+};
+
+// 边界计算辅助函数
+export const calculateContainerBounds = (
+  children: AnnotationNode[]
+): { minX: number; minY: number; maxX: number; maxY: number } => {
+  if (children.length === 0) {
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  }
+
+  const bounds = children.map((child) => ({
+    x1: child.absoluteX,
+    y1: child.absoluteY,
+    x2: child.absoluteX + child.width,
+    y2: child.absoluteY + child.height,
+  }));
+
+  return {
+    minX: Math.min(...bounds.map((b) => b.x1)),
+    minY: Math.min(...bounds.map((b) => b.y1)),
+    maxX: Math.max(...bounds.map((b) => b.x2)),
+    maxY: Math.max(...bounds.map((b) => b.y2)),
+  };
+};
+
+// 查找父节点
+export const findParentAnnotation = (childId: string, rootAnnotation: AnnotationNode | null): AnnotationNode | null => {
+  if (!rootAnnotation) return null;
+
+  const search = (node: AnnotationNode): AnnotationNode | null => {
+    for (const child of node.children) {
+      if (child.id === childId) {
+        return node;
+      }
+      const found = search(child);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  return search(rootAnnotation);
+};
+
+/** 从 selectedAnnotations 或 selectedDSLNodes 中找到那个能够包含所有其他选中节点的节点 */
+export const findContainingDSLNode = (
+  selectedAnnotations: AnnotationNode[],
+  selectedDSLNodes: DSLNode[],
+  flatDSLNodeList: FlattenedDSLNode[]
+): DSLNode | null => {
+  // 构建所有候选节点的边界信息
+  type CandidateNode = {
+    type: 'annotation' | 'dslNode';
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+
+  const candidates: CandidateNode[] = [
+    ...selectedAnnotations.map((a) => ({
+      type: 'annotation' as const,
+      id: a.id,
+      x: a.absoluteX,
+      y: a.absoluteY,
+      width: a.width,
+      height: a.height,
+    })),
+    ...selectedDSLNodes.map((node) => {
+      const pos = calculateDSLNodeAbsolutePosition(node, flatDSLNodeList);
+      return {
+        type: 'dslNode' as const,
+        id: node.id,
+        x: pos.x,
+        y: pos.y,
+        width: node.layoutStyle?.width || 0,
+        height: node.layoutStyle?.height || 0,
+      };
+    }),
+  ];
+
+  if (candidates.length === 0) return null;
+
+  // 遍历每个候选节点，检查它是否能包含所有其他节点
+  for (const candidate of candidates) {
+    const candidateRight = candidate.x + candidate.width;
+    const candidateBottom = candidate.y + candidate.height;
+
+    const containsAll = candidates.every((other) => {
+      if (other.id === candidate.id) return true; // 跳过自身
+      const otherRight = other.x + other.width;
+      const otherBottom = other.y + other.height;
+      return (
+        other.x >= candidate.x &&
+        other.y >= candidate.y &&
+        otherRight <= candidateRight &&
+        otherBottom <= candidateBottom
+      );
+    });
+
+    if (containsAll) {
+      return null;
+    }
+  }
+
+  return null;
+};
+
+/** 提取统一的绝对边界信息，兼容标注节点与扁平化 DSL 节点 */
+export const getNodeAbsoluteBounds = (node: AnnotationNode | FlattenedDSLNode | null) => {
+  if (!node) return null;
+  const width = 'width' in node ? node.width : node.layoutStyle?.width || 0;
+  const height = 'height' in node ? node.height : node.layoutStyle?.height || 0;
+
+  return {
+    id: node.id,
+    x: node.absoluteX || 0,
+    y: node.absoluteY || 0,
+    right: (node.absoluteX || 0) + width,
+    bottom: (node.absoluteY || 0) + height,
+  };
+};
+
+/**
+ * 判断一个节点是否包含其他一个或多个节点（支持标注与 DSL 混合）
+ *
+ * @remarks
+ * - 采用矩形包含逻辑，需容器完全覆盖子节点范围
+ * - 同一节点不会被视为包含关系（ID 相同直接返回 false）
+ */
+export const isAnnotationContaining = (
+  containerAnnotation: AnnotationNode | FlattenedDSLNode,
+  ...innerAnnotations: Array<AnnotationNode | FlattenedDSLNode>
+): boolean => {
+  if (innerAnnotations.length === 0) return false;
+
+  const containerBounds = getNodeAbsoluteBounds(containerAnnotation);
+  if (!containerBounds) return false;
+
+  return innerAnnotations.every((inner) => {
+    const innerBounds = getNodeAbsoluteBounds(inner);
+    if (!innerBounds || containerBounds.id === innerBounds.id) return false;
+
+    return (
+      containerBounds.x <= innerBounds.x &&
+      containerBounds.y <= innerBounds.y &&
+      containerBounds.right >= innerBounds.right &&
+      containerBounds.bottom >= innerBounds.bottom
+    );
+  });
+};

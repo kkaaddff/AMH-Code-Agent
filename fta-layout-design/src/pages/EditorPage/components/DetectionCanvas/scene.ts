@@ -313,9 +313,9 @@ export class DetectionCanvasScene {
         const itemsToRemove: string[] = [];
 
         for (const selectedId of selectedNodeIds) {
-          if (this.isAncestorOf(clickedItem, selectedId)) {
+          if (designDetectionActions.isAncestorOf(clickedItem, selectedId)) {
             itemsToRemove.push(selectedId.id);
-          } else if (this.isAncestorOf(selectedId, clickedItem)) {
+          } else if (designDetectionActions.isAncestorOf(selectedId, clickedItem)) {
             return;
           }
         }
@@ -326,7 +326,7 @@ export class DetectionCanvasScene {
             if (annotation) {
               designDetectionActions.selectAnnotation(id, true);
             } else {
-              const node = findDSLNodeById(id);
+              const node = findDSLNodeById(id, designDetectionStore.dslRootNode);
               if (node) designDetectionActions.selectDSLNode(node, true);
             }
           });
@@ -338,7 +338,10 @@ export class DetectionCanvasScene {
       if (interactionTarget.type === NodeType.ANNOTATION) {
         designDetectionActions.selectAnnotation(interactionTarget.target.id, multiSelect);
       } else if (interactionTarget.type === NodeType.DSL) {
-        const existingAnnotation = findAnnotationByDSLNodeId(interactionTarget.target.id);
+        const existingAnnotation = findAnnotationByDSLNodeId(
+          interactionTarget.target.id,
+          designDetectionStore.rootAnnotation
+        );
         if (existingAnnotation) {
           designDetectionActions.selectAnnotation(existingAnnotation.id, multiSelect);
         } else {
@@ -453,75 +456,6 @@ export class DetectionCanvasScene {
   };
 
   /**
-   * 判断节点间的祖先关系（基于绝对坐标的包含关系）
-   * 不再依赖 DSL 树结构递归，而是根据节点类型从 flatDSLNodeList 或 flatAnnotationList 中取出节点，使用矩形包含判断。
-   * 在画布中父级区域完全包裹子级区域时，视为存在祖先关系。
-   */
-  private isAncestorOf(ancestor: SelectedNodeItem, descendant: SelectedNodeItem): boolean {
-    if (ancestor.id === descendant.id && ancestor.type === descendant.type) return false;
-
-    const { flatDSLNodeList, flatAnnotationList } = designDetectionStore;
-
-    const ancestorNode =
-      ancestor.type === NodeType.ANNOTATION
-        ? flatAnnotationList.find((node) => node.id === ancestor.id)
-        : flatDSLNodeList.find((node) => node.id === ancestor.id);
-
-    const descendantNode =
-      descendant.type === NodeType.ANNOTATION
-        ? flatAnnotationList.find((node) => node.id === descendant.id)
-        : flatDSLNodeList.find((node) => node.id === descendant.id);
-
-    if (!ancestorNode || !descendantNode) return false;
-
-    return this.isAnnotationContaining(ancestorNode, descendantNode);
-  }
-
-  /** 提取统一的绝对边界信息，兼容标注节点与扁平化 DSL 节点 */
-  private getNodeAbsoluteBounds(node: AnnotationNode | FlattenedDSLNode | null) {
-    if (!node) return null;
-    const width = 'width' in node ? node.width : node.layoutStyle?.width || 0;
-    const height = 'height' in node ? node.height : node.layoutStyle?.height || 0;
-
-    return {
-      id: node.id,
-      x: node.absoluteX || 0,
-      y: node.absoluteY || 0,
-      right: (node.absoluteX || 0) + width,
-      bottom: (node.absoluteY || 0) + height,
-    };
-  }
-
-  /**
-   * 判断一个节点是否包含其他一个或多个节点（支持标注与 DSL 混合）
-   *
-   * @remarks
-   * - 采用矩形包含逻辑，需容器完全覆盖子节点范围
-   * - 同一节点不会被视为包含关系（ID 相同直接返回 false）
-   */
-  private isAnnotationContaining(
-    containerAnnotation: AnnotationNode | FlattenedDSLNode,
-    ...innerAnnotations: Array<AnnotationNode | FlattenedDSLNode>
-  ) {
-    if (innerAnnotations.length === 0) return false;
-
-    const containerBounds = this.getNodeAbsoluteBounds(containerAnnotation);
-    if (!containerBounds) return false;
-
-    return innerAnnotations.every((inner) => {
-      const innerBounds = this.getNodeAbsoluteBounds(inner);
-      if (!innerBounds || containerBounds.id === innerBounds.id) return false;
-
-      return (
-        containerBounds.x <= innerBounds.x &&
-        containerBounds.y <= innerBounds.y &&
-        containerBounds.right >= innerBounds.right &&
-        containerBounds.bottom >= innerBounds.bottom
-      );
-    });
-  }
-
-  /**
    * 过滤选择结果，只保留最外层的节点
    *
    * 当框选同时包含父子节点或标注/DSL 混合节点时，避免内层节点重复出现在最终选择列表中。
@@ -531,9 +465,6 @@ export class DetectionCanvasScene {
    * - 通过 `isAncestorOf` 统一判断层级关系（支持 DSL/标注混合）
    * - 父级存在则移除子级
    *
-   * @remarks
-   * - `isAncestorOf` 内部根据节点类型自动从对应列表获取节点
-   * - 返回的列表已剔除内层节点，供后续选择更新使用
    */
   private filterToOutermostItems(items: SelectedNodeItem[]) {
     const result: SelectedNodeItem[] = [];
@@ -544,7 +475,7 @@ export class DetectionCanvasScene {
       for (const other of items) {
         if (item === other) continue;
 
-        if (this.isAncestorOf(other, item)) {
+        if (designDetectionActions.isAncestorOf(other, item)) {
           isInner = true;
           break;
         }
@@ -592,7 +523,7 @@ export class DetectionCanvasScene {
     }
 
     if (hoveredDSLNode) {
-      const bounds = calculateDSLNodeAbsolutePosition(hoveredDSLNode as DSLNode);
+      const bounds = calculateDSLNodeAbsolutePosition(hoveredDSLNode, designDetectionStore.flatDSLNodeList);
       const nodeWidth = hoveredDSLNode.layoutStyle?.width || 0;
       const nodeHeight = hoveredDSLNode.layoutStyle?.height || 0;
       drawBorder(ctx, bounds.x, bounds.y, nodeWidth, nodeHeight, {
@@ -604,9 +535,9 @@ export class DetectionCanvasScene {
 
     const selectedDSLNodeIdsList = selectedNodeIds.map((item) => item.id);
     selectedDSLNodeIdsList.forEach((nodeId) => {
-      const selectedNode = findDSLNodeById(nodeId);
+      const selectedNode = findDSLNodeById(nodeId, designDetectionStore.dslRootNode);
       if (selectedNode) {
-        const bounds = calculateDSLNodeAbsolutePosition(selectedNode);
+        const bounds = calculateDSLNodeAbsolutePosition(selectedNode, designDetectionStore.flatDSLNodeList);
         const nodeWidth = selectedNode.layoutStyle?.width || 0;
         const nodeHeight = selectedNode.layoutStyle?.height || 0;
         drawBorder(ctx, bounds.x, bounds.y, nodeWidth, nodeHeight, {
@@ -759,7 +690,11 @@ export class DetectionCanvasScene {
       }
       const bounds = getNodeBounds(node, parentX, parentY);
 
-      if (!findAnnotationByDSLNodeId(node.id) && bounds.width > 0 && bounds.height > 0) {
+      if (
+        !findAnnotationByDSLNodeId(node.id, designDetectionStore.rootAnnotation) &&
+        bounds.width > 0 &&
+        bounds.height > 0
+      ) {
         if (isItemInSelection(bounds, selectionBounds)) {
           selectedItems.push({ type: NodeType.DSL, id: node.id });
         }
@@ -780,7 +715,10 @@ export class DetectionCanvasScene {
         if (item.type === NodeType.ANNOTATION) {
           designDetectionActions.selectAnnotation(item.id, !isFirst);
         } else if (item.type === NodeType.DSL) {
-          designDetectionActions.selectDSLNode(findDSLNodeById(item.id) as DSLNode, !isFirst);
+          designDetectionActions.selectDSLNode(
+            findDSLNodeById(item.id, designDetectionStore.dslRootNode) as DSLNode,
+            !isFirst
+          );
         }
       });
     }

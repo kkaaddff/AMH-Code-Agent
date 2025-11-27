@@ -32,7 +32,6 @@ import { editorPageStore } from '../contexts/EditorPageContext';
 import { NodeType } from '../types/componentDetection';
 import { interfaceDataModelService } from '@/services/interfaceDataModelService';
 import type { InterfaceDataModel, HttpMethod } from '@/types/interfaceDataModel';
-import { HTTP_METHOD_OPTIONS } from '@/types/interfaceDataModel';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -251,7 +250,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
 
     selectedNodeIds.forEach((item) => {
       if (item.type === NodeType.ANNOTATION) {
-        const annotation = findAnnotationById(item.id);
+        const annotation = findAnnotationById(item.id, designDetectionStore.rootAnnotation);
         if (!annotation) return;
         bounds.push({
           id: item.id,
@@ -261,9 +260,9 @@ const ComponentPropertyPanelV2: React.FC = () => {
           height: annotation.height,
         });
       } else if (item.type === NodeType.DSL) {
-        const node = findDSLNodeById(item.id);
+        const node = findDSLNodeById(item.id, designDetectionStore.dslRootNode);
         if (!node) return;
-        const { x, y } = calculateDSLNodeAbsolutePosition(node);
+        const { x, y } = calculateDSLNodeAbsolutePosition(node, designDetectionStore.flatDSLNodeList);
         bounds.push({
           id: item.id,
           x,
@@ -312,9 +311,9 @@ const ComponentPropertyPanelV2: React.FC = () => {
 
     selectedNodeIds.forEach((item) => {
       if (item.type !== NodeType.DSL) return;
-      const node = findDSLNodeById(item.id);
+      const node = findDSLNodeById(item.id, designDetectionStore.dslRootNode);
       if (!node) return;
-      const alreadyAnnotated = !!findAnnotationByDSLNodeId(node.id);
+      const alreadyAnnotated = !!findAnnotationByDSLNodeId(node.id, designDetectionStore.rootAnnotation);
       if (alreadyAnnotated) return;
       nodes.push(node);
     });
@@ -330,7 +329,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
       const values = await form.validateFields();
       const ftaComponent = values.ftaComponent;
       let shouldResetForm = false;
-
       if (isMultiSelection) {
         const combined = designDetectionActions.combineSelectedDSLNodes(ftaComponent);
         if (combined) {
