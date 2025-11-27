@@ -676,3 +676,82 @@ export const isAnnotationContaining = (
     );
   });
 };
+
+//#region ==================== 碰撞检测工具函数 ====================
+
+/** 矩形类型定义 */
+export type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+/**
+ * 碰撞检测默认误差值（像素），允许标注边缘在此范围内视为相邻而非交叉
+ * 值越大，容忍的"相邻"距离越大
+ */
+export const DEFAULT_COLLISION_TOLERANCE = 2;
+
+/**
+ * 检测两个矩形是否交叉（不是包含关系，不是相邻关系）
+ * @param rect1 矩形1
+ * @param rect2 矩形2
+ * @param tolerance 误差值，边缘重叠在此范围内视为相邻（默认 DEFAULT_COLLISION_TOLERANCE）
+ * @returns true 表示交叉，false 表示不交叉（分离或相邻）
+ */
+export const checkRectsIntersect = (
+  rect1: Rect,
+  rect2: Rect,
+  tolerance: number = DEFAULT_COLLISION_TOLERANCE
+): boolean => {
+  const r1Left = rect1.x;
+  const r1Right = rect1.x + rect1.width;
+  const r1Top = rect1.y;
+  const r1Bottom = rect1.y + rect1.height;
+
+  const r2Left = rect2.x;
+  const r2Right = rect2.x + rect2.width;
+  const r2Top = rect2.y;
+  const r2Bottom = rect2.y + rect2.height;
+
+  // 计算水平和垂直方向的重叠区间
+  const horizontalOverlap = Math.min(r1Right, r2Right) - Math.max(r1Left, r2Left);
+  const verticalOverlap = Math.min(r1Bottom, r2Bottom) - Math.max(r1Top, r2Top);
+
+  // 只有当两个方向的重叠都超过误差值时，才视为交叉
+  // 重叠 <= tolerance 视为相邻或分离，允许通过
+  return horizontalOverlap > tolerance && verticalOverlap > tolerance;
+};
+
+/**
+ * 检测新创建的标注是否与已存在的标注列表中的节点交叉
+ * @param newRect 新创建标注的矩形区域
+ * @param existingAnnotations 已存在的标注列表
+ * @param excludeIds 需要排除的标注ID（如被合并的子节点）
+ * @param tolerance 碰撞检测误差值（默认 DEFAULT_COLLISION_TOLERANCE）
+ * @returns 与新标注交叉的标注列表，空数组表示无交叉
+ */
+export const findIntersectingAnnotations = (
+  newRect: Rect,
+  existingAnnotations: AnnotationNode[],
+  excludeIds: Set<string>
+): AnnotationNode[] => {
+  return existingAnnotations.filter((annotation) => {
+    // 排除根节点
+    if (annotation.isRoot) return false;
+    // 排除已被合并的节点
+    if (excludeIds.has(annotation.id)) return false;
+
+    const annotationRect: Rect = {
+      x: annotation.absoluteX,
+      y: annotation.absoluteY,
+      width: annotation.width || 0,
+      height: annotation.height || 0,
+    };
+
+    return checkRectsIntersect(newRect, annotationRect, DEFAULT_COLLISION_TOLERANCE);
+  });
+};
+
+//#endregion

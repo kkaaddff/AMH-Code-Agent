@@ -13,6 +13,7 @@ import {
   calculateDSLNodeAbsolutePosition,
   findAnnotationByDSLNodeId,
   findAnnotationById,
+  findIntersectingAnnotations,
   findNearestParentContainer,
   findContainingDSLNode,
   findDSLNodeById,
@@ -1001,6 +1002,39 @@ export const designDetectionActions = {
       };
 
       rootAfterRemoval.children.forEach(searchParent);
+
+      // 碰撞检测：检查虚拟容器是否与其他已存在的标注交叉
+      const virtualRect = {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+      };
+
+      // 收集需要排除的节点ID：被合并的节点及其子节点
+      const excludeIds = new Set<string>(nodesToRemove);
+      annotationsToAttach.forEach((attached) => {
+        excludeIds.add(attached.id);
+        const collectChildIds = (node: AnnotationNode) => {
+          excludeIds.add(node.id);
+          node.children.forEach(collectChildIds);
+        };
+        attached.children.forEach(collectChildIds);
+      });
+
+      // 检测与移除后剩余标注的碰撞
+      const flatAfterRemoval = flattenAnnotationTree(rootAfterRemoval);
+      const intersectingAnnotations = findIntersectingAnnotations(virtualRect, flatAfterRemoval, excludeIds);
+
+      if (intersectingAnnotations.length > 0) {
+        const intersectingNames = intersectingAnnotations
+          .map((a) => a.name || a.comment || a.id)
+          .slice(0, 3)
+          .join(', ');
+        const moreCount = intersectingAnnotations.length > 3 ? ` 等${intersectingAnnotations.length}个` : '';
+        console.warn(`[combineSelectedDSLNodes] 虚拟容器与已存在的标注交叉: ${intersectingNames}${moreCount}`);
+        return false;
+      }
     }
 
     const insertAnnotation = (node: AnnotationNode): AnnotationNode => {
