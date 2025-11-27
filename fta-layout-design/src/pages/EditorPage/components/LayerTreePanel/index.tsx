@@ -23,10 +23,11 @@ import { TDocumentKeys } from '../../constants';
 import { designDetectionActions, designDetectionStore, useDesignTreeData } from '../../contexts/DesignDetectionContext';
 import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
 import { extractDesignIdFromTopLevelKey, findTopLevelKey } from './utils';
+import './index.css';
 
 const { Title, Text } = Typography;
 type ModelStatus = 'busy' | 'idle' | 'unknown' | 'error';
-
+const DEFAULT_ACTIVE_KEY = ['design', 'openapi'];
 interface LayerTreePanelProps {
   onDeleteDocument: (type: keyof typeof TDocumentKeys, id: string) => void;
   onSave?: () => void;
@@ -268,7 +269,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
       <Tooltip
         placement='topRight'
         title={
-          <div style={{ maxWidth: 240 }}>
+          <div className='layer-tree-panel__tooltip-content'>
             <div>{textMap[modelStatus]}</div>
             <div>运行中请求：{running}</div>
             <div>排队中请求：{waiting}</div>
@@ -277,7 +278,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
             {modelStatusMessage && <div>提示：{modelStatusMessage}</div>}
           </div>
         }>
-        <Tag color={colorMap[modelStatus]} style={{ marginInlineStart: 4 }}>
+        <Tag color={colorMap[modelStatus]} className='layer-tree-panel__model-status-tag'>
           {textMap[modelStatus]}
         </Tag>
       </Tooltip>
@@ -346,15 +347,11 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
   // 渲染文档列表项
   const renderDocumentItem = (doc: DocumentReference, type: keyof typeof TDocumentKeys) => {
     const isSelected = selectedDocument?.type === type && selectedDocument?.id === doc.id;
+    const itemClassName = `layer-tree-panel__doc-item${isSelected ? ' layer-tree-panel__doc-item--selected' : ''}`;
     return (
       <List.Item
         key={doc.id}
-        style={{
-          cursor: 'pointer',
-          backgroundColor: isSelected ? 'rgb(230, 247, 255)' : 'transparent',
-          padding: '8px 12px',
-          borderRadius: 4,
-        }}
+        className={itemClassName}
         onClick={() => editorPageActions.setSelectedDocument({ type, id: doc.id })}
         actions={[
           <Button
@@ -373,13 +370,13 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
           title={
             <Space>
               <Text strong>{doc.name || `文档 ${doc.id.substring(0, 6)}`}</Text>
-              <Tag color={getDocumentStatusColor(doc.status)} style={{ fontSize: 11 }}>
+              <Tag color={getDocumentStatusColor(doc.status)} className='layer-tree-panel__doc-tag'>
                 {getDocumentStatusText(doc.status)}
               </Tag>
             </Space>
           }
           description={
-            <Text type='secondary' style={{ fontSize: 12 }} ellipsis>
+            <Text type='secondary' className='layer-tree-panel__doc-desc' ellipsis>
               <LinkOutlined /> {doc.url}
             </Text>
           }
@@ -394,7 +391,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
       key: 'design',
       label: (
         <Space>
-          <FileImageOutlined style={{ color: 'rgb(24, 144, 255)' }} />
+          <FileImageOutlined className='layer-tree-panel__icon--design' />
           <span>设计</span>
         </Space>
       ),
@@ -424,7 +421,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
             blockNode
           />
         ) : (
-          <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+          <Text type='secondary' className='layer-tree-panel__empty-text'>
             暂无标注结构
           </Text>
         ),
@@ -433,7 +430,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
       key: 'prd',
       label: (
         <Space>
-          <FileTextOutlined style={{ color: 'rgb(82, 196, 26)' }} />
+          <FileTextOutlined className='layer-tree-panel__icon--prd' />
           <span>文档</span>
         </Space>
       ),
@@ -456,7 +453,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
             renderItem={(doc) => renderDocumentItem(doc, 'prd')}
           />
         ) : (
-          <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+          <Text type='secondary' className='layer-tree-panel__empty-text'>
             暂无PRD文档
           </Text>
         ),
@@ -465,7 +462,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
       key: 'openapi',
       label: (
         <Space>
-          <ApiOutlined style={{ color: 'rgb(250, 140, 22)' }} />
+          <ApiOutlined className='layer-tree-panel__icon--openapi' />
           <span>数据</span>
         </Space>
       ),
@@ -488,7 +485,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
             renderItem={(doc) => renderDocumentItem(doc, 'openapi')}
           />
         ) : (
-          <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+          <Text type='secondary' className='layer-tree-panel__empty-text'>
             暂无OpenAPI文档
           </Text>
         ),
@@ -496,41 +493,34 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
   ];
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'rgb(255, 255, 255)' }}>
+    <div className='layer-tree-panel'>
       {/* Header */}
-      <div style={{ padding: '16px', borderBottom: '1px solid rgb(240, 240, 240)' }}>
-        <Title level={5} style={{ margin: 0 }}>
+      <div className='layer-tree-panel__header'>
+        <Title level={5} className='layer-tree-panel__header-title'>
           页面管理 - {currentPage?.name}
         </Title>
       </div>
 
       {/* Collapse Panels */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
+      <div className='layer-tree-panel__content'>
         <Collapse
           size='small'
-          defaultActiveKey={['design', 'openapi', 'prd']}
+          defaultActiveKey={DEFAULT_ACTIVE_KEY}
           expandIconPosition='end'
-          style={{ background: 'transparent', border: 'none' }}
-          items={collapseItems}
+          className='layer-tree-panel__collapse'
+          items={collapseItems.filter((item) => item.key !== 'prd')}
         />
       </div>
 
       {/* Footer */}
-      <div
-        style={{
-          padding: '16px',
-          borderTop: '1px solid rgb(240, 240, 240)',
-          background: 'rgb(255, 255, 255)',
-        }}>
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 24px',
-          }}>
-          <Button type='primary' size='small' icon={<SaveOutlined />} onClick={onSave} style={{ minWidth: '80px' }}>
+      <div className='layer-tree-panel__footer'>
+        <div className='layer-tree-panel__footer-inner'>
+          <Button
+            type='primary'
+            size='small'
+            icon={<SaveOutlined />}
+            onClick={onSave}
+            className='layer-tree-panel__save-btn'>
             保存
           </Button>
           <div
@@ -590,8 +580,8 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
               }
             />
           </Form.Item>
-          <Form.Item style={{ marginBottom: 0 }}>
-            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+          <Form.Item className='layer-tree-panel__form-footer'>
+            <Space className='layer-tree-panel__form-actions'>
               <Button
                 onClick={() => {
                   setAddDocModalVisible(false);
@@ -615,7 +605,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
         footer={null}
         width={320}
         centered>
-        <Space direction='vertical' style={{ width: '100%' }} size='middle'>
+        <Space direction='vertical' className='layer-tree-panel__settings-actions' size='middle'>
           <Button block icon={<ReloadOutlined />} onClick={handleResyncFromSettings} loading={syncingStatus}>
             重新同步
           </Button>

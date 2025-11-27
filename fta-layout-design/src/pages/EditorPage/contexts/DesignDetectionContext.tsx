@@ -13,7 +13,7 @@ import {
   calculateDSLNodeAbsolutePosition,
   findAnnotationByDSLNodeId,
   findAnnotationById,
-  findBestAnnotationNodeParent,
+  findNearestParentContainer,
   findContainingDSLNode,
   findDSLNodeById,
   findParentAnnotation,
@@ -330,38 +330,22 @@ export const designDetectionActions = {
       (additionalProps && typeof additionalProps.force === 'undefined') ||
       (additionalProps && additionalProps.force === false);
 
-    if (shouldCheckDuplicate) {
-      const existingAnnotation = designDetectionStore.flatAnnotationList.find((a) => a.id === dslNode.id);
-      if (existingAnnotation) {
+    const existingAnnotation = designDetectionStore.flatAnnotationList.find((a) => a.id === dslNode.id);
+    if (existingAnnotation) {
+      if (shouldCheckDuplicate) {
         console.warn('This DSL node is already annotated');
         return false;
-      }
-    } else {
-      // 强制创建，删除重复标注
-      const existingAnnotation = designDetectionStore.flatAnnotationList.find((a) => a.id === dslNode.id);
-      if (existingAnnotation) {
+      } else {
+        // 强制创建，删除重复标注
         designDetectionActions.deleteAnnotation(existingAnnotation.id, {
           docId: designDetectionStore.currentDesignId!,
         });
       }
     }
 
-    const collectDescendantDSLIds = (node: DSLNode): Set<string> => {
-      const ids = new Set<string>();
-      const traverse = (current: DSLNode | undefined) => {
-        if (!current?.children) return;
-        current.children.forEach((child) => {
-          ids.add(child.id);
-          traverse(child);
-        });
-      };
-      traverse(node);
-      return ids;
-    };
-
-    const descendantDSLIdSet = collectDescendantDSLIds(dslNode);
+    const ancestorItem: SelectedNodeItem = { id: dslNode.id, type: NodeType.DSL };
     const descendantAnnotations = designDetectionStore.flatAnnotationList.filter((annotation) =>
-      descendantDSLIdSet.has(annotation.id)
+      designDetectionActions.isAncestorOf(ancestorItem, { id: annotation.id, type: NodeType.ANNOTATION })
     );
 
     const hasAnnotatedChildren = descendantAnnotations.length > 0;
@@ -412,7 +396,7 @@ export const designDetectionActions = {
         const remainingChildren: AnnotationNode[] = [];
 
         node.children.forEach((child) => {
-          if (descendantDSLIdSet.has(child.id)) {
+          if (designDetectionActions.isAncestorOf(ancestorItem, { id: child.id, type: NodeType.ANNOTATION })) {
             detached.push(child);
             return;
           }
@@ -456,7 +440,7 @@ export const designDetectionActions = {
       updatedAt: now,
     };
 
-    const parent = findBestAnnotationNodeParent(dslNode, updatedRoot, designDetectionStore.flatDSLNodeList);
+    const parent = findNearestParentContainer(newAnnotation, flattenAnnotationTree(updatedRoot)) ?? updatedRoot;
 
     const insertAnnotation = (node: AnnotationNode): AnnotationNode => {
       if (node.id === parent.id) {
@@ -981,7 +965,7 @@ export const designDetectionActions = {
         containingNode.layoutStyle?.height || 0,
         annotationsToAttach
       );
-      parent = findBestAnnotationNodeParent(containingNode, rootAfterRemoval, designDetectionStore.flatDSLNodeList);
+      parent = findNearestParentContainer(newAnnotation, flattenAnnotationTree(rootAfterRemoval)) ?? rootAfterRemoval;
     } else {
       const virtualAnnotationId = `${VIRTUAL_ANNOTATION_PREFIX}${now}-${Math.random().toString(36).slice(2, 8)}`;
       newAnnotation = createNewAnnotation(

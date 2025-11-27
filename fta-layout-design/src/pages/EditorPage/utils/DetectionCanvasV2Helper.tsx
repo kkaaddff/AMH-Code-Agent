@@ -476,48 +476,54 @@ export const flattenDSLNodeTree = (root: DSLNode | null, hidden = false): Flatte
 export const calculateDSLNodeAbsolutePosition = (
   targetNode: DSLNode,
   flatDSLNodeList: FlattenedDSLNode[]
-): { x: number; y: number } => {
-  if (flatDSLNodeList.length === 0) return { x: 0, y: 0 };
+): { x: number; y: number; width: number; height: number } => {
+  if (flatDSLNodeList.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
   const node = flatDSLNodeList.find((node) => node.id === targetNode.id);
-  if (!node) return { x: 0, y: 0 };
-  return { x: node.absoluteX, y: node.absoluteY };
+  if (!node) return { x: 0, y: 0, width: 0, height: 0 };
+
+  return {
+    x: node.absoluteX,
+    y: node.absoluteY,
+    width: node.layoutStyle?.width || 0,
+    height: node.layoutStyle?.height || 0,
+  };
 };
 
-// 查找最佳父节点
-export const findBestAnnotationNodeParent = (
-  dslNode: DSLNode,
-  rootAnnotation: AnnotationNode,
-  flatDSLNodeList: FlattenedDSLNode[]
-): AnnotationNode => {
-  const dslAbsolutePos = calculateDSLNodeAbsolutePosition(dslNode, flatDSLNodeList);
-  const dslX = dslAbsolutePos.x;
-  const dslY = dslAbsolutePos.y;
-  const dslWidth = dslNode.layoutStyle?.width || 0;
-  const dslHeight = dslNode.layoutStyle?.height || 0;
+/** 基于矩形包含关系，查找目标节点的最近父级容器 */
+export const findNearestParentContainer = (
+  targetNode: AnnotationNode,
+  flatAnnotationList: AnnotationNode[]
+): AnnotationNode | null => {
+  const targetX = targetNode.absoluteX;
+  const targetY = targetNode.absoluteY;
+  const targetWidth = targetNode.width;
+  const targetHeight = targetNode.height;
 
-  let bestParent = rootAnnotation;
-  let smallestArea = rootAnnotation.width * rootAnnotation.height;
+  let bestParent: AnnotationNode | null = null;
+  let smallestArea = Infinity;
 
-  const search = (node: AnnotationNode) => {
-    if (!node.isContainer) return;
+  for (const node of flatAnnotationList) {
+    // 排除目标节点自身
+    if (node.id === targetNode.id) continue;
+    // TODO！！！ 只考虑容器节点
+    // if (!node.isContainer) continue;
 
-    const isInside =
-      dslX >= node.absoluteX &&
-      dslY >= node.absoluteY &&
-      dslX + dslWidth <= node.absoluteX + node.width &&
-      dslY + dslHeight <= node.absoluteY + node.height;
+    // 判断 node 是否完全包含 targetNode
+    const isContaining =
+      targetX >= node.absoluteX &&
+      targetY >= node.absoluteY &&
+      targetX + targetWidth <= node.absoluteX + node.width &&
+      targetY + targetHeight <= node.absoluteY + node.height;
 
-    if (isInside) {
+    if (isContaining) {
       const area = node.width * node.height;
       if (area < smallestArea) {
         smallestArea = area;
         bestParent = node;
       }
-      node.children.forEach(search);
     }
-  };
+  }
 
-  rootAnnotation.children.forEach(search);
   return bestParent;
 };
 
