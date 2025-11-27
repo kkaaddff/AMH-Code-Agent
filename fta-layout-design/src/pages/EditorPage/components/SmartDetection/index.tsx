@@ -209,7 +209,6 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
 
         timeoutsRef.current.push(explosionTimeout);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isDetecting]);
 
     const runDetection = useCallback(async () => {

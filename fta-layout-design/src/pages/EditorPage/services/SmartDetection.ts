@@ -2,6 +2,7 @@ import { DSLData, DSLNode } from '@/types/dsl';
 import { callModelAPI } from './CodeGenerationLoop/index.AgentScheduler.backup';
 import { Message, RequestBody } from './CodeGenerationLoop/types';
 import intelliPrompt from './intelli-prompt';
+import api from '@/utils/apiService';
 
 const filterHiddenNodes = (nodes?: DSLNode[]): DSLNode[] => {
   if (!nodes) return [];
@@ -27,6 +28,7 @@ export const smartDetection = async (DesignData: DSLData) => {
     ...DesignData,
     nodes: filterHiddenNodes(DesignData.nodes),
   };
+  const processedDesignData = await api.dsl.process({ dsl: sanitizedDesignData });
 
   const systemMessages: Message[] = [
     {
@@ -49,7 +51,7 @@ export const smartDetection = async (DesignData: DSLData) => {
         content: [
           {
             type: 'text',
-            text: 'DesignData: ' + JSON.stringify(sanitizedDesignData),
+            text: 'DesignData: ' + JSON.stringify(processedDesignData?.data),
           },
         ],
       },
@@ -62,5 +64,6 @@ export const smartDetection = async (DesignData: DSLData) => {
 
   // 调用模型 API
   const response = await callModelAPI(requestBody);
+
   return response;
 };
