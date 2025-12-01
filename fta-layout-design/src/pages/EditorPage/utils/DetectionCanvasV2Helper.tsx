@@ -400,7 +400,6 @@ export const flattenAnnotationTree = (root: AnnotationNode): AnnotationNode[] =>
   return result;
 };
 
-// 查找标注节点
 export const findAnnotationById = (id: string, rootAnnotation: AnnotationNode | null): AnnotationNode | null => {
   const search = (node: AnnotationNode): AnnotationNode | null => {
     if (node.id === id) return node;
@@ -417,7 +416,6 @@ export const findAnnotationById = (id: string, rootAnnotation: AnnotationNode | 
   return null;
 };
 
-// 通过DSL节点ID查找标注
 export const findAnnotationByDSLNodeId = (
   dslNodeId: string,
   rootAnnotation: AnnotationNode | null

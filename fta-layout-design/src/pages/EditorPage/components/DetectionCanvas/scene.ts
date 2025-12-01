@@ -555,8 +555,6 @@ export class DetectionCanvasScene {
     const selectedLabelInstructions: LabelInstruction[] = [];
 
     flatAnnotationList.forEach((annotation) => {
-      if (annotation.isRoot) return;
-
       const isSelected = selectedAnnotationIdsList.includes(annotation.id);
       const isHovered = hoveredAnnotation?.id === annotation.id;
 

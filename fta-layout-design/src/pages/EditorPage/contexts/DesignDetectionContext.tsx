@@ -332,7 +332,10 @@ export const designDetectionActions = {
       (additionalProps && typeof additionalProps.force === 'undefined') ||
       (additionalProps && additionalProps.force === false);
 
-    const existingAnnotation = designDetectionStore.flatAnnotationList.find((a) => a.id === dslNode.id);
+    const existingAnnotation = designDetectionStore.flatAnnotationList.find(
+      (a) => a.id === dslNode.id || a.dslNodeId === dslNode.id
+    );
+
     if (existingAnnotation) {
       if (shouldCheckDuplicate) {
         console.warn('This DSL node is already annotated');
