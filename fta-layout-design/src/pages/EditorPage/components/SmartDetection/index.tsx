@@ -286,6 +286,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
       } finally {
         setIsDetecting(false);
         onDetectingChange?.(false);
+        designDetectionActions.saveAnnotations(selectedDocumentId!);
       }
     }, [designData, isDetecting, rootAnnotation, selectedDocumentId]);
 

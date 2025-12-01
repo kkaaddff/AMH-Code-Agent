@@ -195,6 +195,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
           docId: selectedDocument?.id!,
           deleteChildren,
         });
+        designDetectionActions.saveAnnotations(selectedDocument?.id!);
         message.success('已删除标注');
       },
     });
@@ -324,6 +325,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
         }
         form.resetFields();
         setSelectedFTAComponent('');
+        designDetectionActions.saveAnnotations(selectedDocument?.id!);
       }
     } catch (error) {
       console.error('Form validation failed:', error);
@@ -374,6 +376,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
         }
         form.resetFields();
         setSelectedFTAComponent('');
+        designDetectionActions.saveAnnotations(selectedDocument?.id!);
       } else {
         message.info(messageParts.join('，') || '未创建任何标注');
       }
