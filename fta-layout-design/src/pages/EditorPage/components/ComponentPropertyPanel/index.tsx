@@ -10,27 +10,10 @@ import {
   SaveOutlined,
   TagOutlined,
 } from '@ant-design/icons';
-import {
-  App,
-  Button,
-  Card,
-  Cascader,
-  Checkbox,
-  Divider,
-  Form,
-  Input,
-  InputNumber,
-  Select,
-  Space,
-  Switch,
-  Tooltip,
-  Typography,
-} from 'antd';
+import { App, Button, Card, Checkbox, Divider, Form, Space, Tooltip, Typography } from 'antd';
 import type { DefaultOptionType } from 'antd/es/cascader';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio';
-import { FTA_COMPONENTS } from '../../constants/FTAComponents';
-import { getComponentSchema, PropertySchema } from '../../constants/FTAComponentSchemas';
 import { addRecentComponent, getRecentComponents } from '../../utils/recentComponentStorage';
 import {
   calculateDSLNodeAbsolutePosition,
@@ -42,65 +25,17 @@ import {
 } from '../../contexts/DesignDetectionContext';
 import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
 import { NodeType } from '../../types/componentDetection';
+import { getComponentSchema } from '../../constants/FTAComponentSchemas';
+import { BasicInfoFields, DataModelBindingField, DynamicPropertyFields, FTAComponentSelectField } from './FormFields';
 
 import './index.css';
 
 const { Title, Text } = Typography;
-const { TextArea } = Input;
-const { OptGroup, Option } = Select;
-
-// 自定义搜索过滤函数，支持模糊匹配和优先级排序
-const customFilterOption = (input: string, option: any) => {
-  if (!input || !option?.children) return false;
-
-  const componentName = option.children as string;
-  const searchTerms = input.toLowerCase().trim();
-
-  // 如果完全匹配组件名，优先级最高
-  if (componentName.toLowerCase() === searchTerms) {
-    return true;
-  }
-
-  // 如果组件名以搜索词开头，优先级较高
-  if (componentName.toLowerCase().startsWith(searchTerms)) {
-    return true;
-  }
-
-  // 拆分搜索词为单个字符，检查是否都能按顺序在组件名中找到
-  const searchChars = searchTerms.split('');
-  let componentIndex = 0;
-  let searchIndex = 0;
-
-  while (componentIndex < componentName.length && searchIndex < searchChars.length) {
-    if (componentName[componentIndex].toLowerCase() === searchChars[searchIndex]) {
-      searchIndex++;
-    }
-    componentIndex++;
-  }
-
-  // 如果所有搜索字符都能按顺序匹配到，则显示
-  if (searchIndex === searchChars.length) {
-    return true;
-  }
-
-  // 检查是否包含完整的搜索词
-  if (componentName.toLowerCase().includes(searchTerms)) {
-    return true;
-  }
-
-  return false;
-};
 
 const ComponentPropertyPanelV2: React.FC = () => {
   const { message, modal } = App.useApp();
   const { selectedAnnotation, selectedDSLNode, selectedNodeIds, designData } = useSnapshot(designDetectionStore);
-  const {
-    selectedDocument,
-    currentPage,
-    projectId,
-    dataModels: dataModelsList,
-    dataModelGroups,
-  } = useSnapshot(editorPageStore);
+  const { selectedDocument, projectId, dataModels: dataModelsList, dataModelGroups } = useSnapshot(editorPageStore);
   const [form] = Form.useForm();
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedFTAComponent, setSelectedFTAComponent] = useState<string>('');
@@ -114,13 +49,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
       setRecentComponents(updated);
     }
   }, []);
-
-  const selectedDesignDocument = useMemo(() => {
-    if (!currentPage || selectedDocument?.type !== 'design') {
-      return null;
-    }
-    return currentPage.designDocuments.find((doc) => doc.id === selectedDocument.id) ?? null;
-  }, [currentPage, selectedDocument]);
 
   // 页面变化时加载数据模型
   useEffect(() => {
@@ -224,7 +152,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
       if (updated) {
         setHasChanges(false);
         message.success('保存成功');
-        // 更新最近选择列表
         if (values.ftaComponent) {
           const updatedRecent = addRecentComponent(values.ftaComponent);
           setRecentComponents(updatedRecent);
@@ -275,7 +202,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
 
   const isMultiSelection = useMemo(() => selectedNodeIds.length > 1, [selectedNodeIds]);
 
-  // 分别统计已标注和未标注节点数量
   const selectedAnnotationCount = useMemo(
     () => selectedNodeIds.filter((item) => item.type === NodeType.ANNOTATION).length,
     [selectedNodeIds]
@@ -334,11 +260,7 @@ const ComponentPropertyPanelV2: React.FC = () => {
         const bx2 = b.x + (b.width || 0);
         const by2 = b.y + (b.height || 0);
 
-        const separated =
-          ax2 <= b.x || // a 在 b 左侧
-          bx2 <= a.x || // b 在 a 左侧
-          ay2 <= b.y || // a 在 b 上方
-          by2 <= a.y; // b 在 a 上方
+        const separated = ax2 <= b.x || bx2 <= a.x || ay2 <= b.y || by2 <= a.y;
 
         if (!separated) {
           return true;
@@ -396,7 +318,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
       }
 
       if (shouldResetForm) {
-        // 确保更新最近选择列表（创建成功时）
         if (ftaComponent) {
           const updatedRecent = addRecentComponent(ftaComponent);
           setRecentComponents(updatedRecent);
@@ -447,7 +368,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
 
       if (createdCount > 0) {
         message.success(messageParts.join('，'));
-        // 确保更新最近选择列表（批量创建成功时）
         if (ftaComponent) {
           const updatedRecent = addRecentComponent(ftaComponent);
           setRecentComponents(updatedRecent);
@@ -487,14 +407,10 @@ const ComponentPropertyPanelV2: React.FC = () => {
   // 全局快捷键监听
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + Enter: 创建标注
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
 
-        // 校验：必须是创建状态（有选中的DSL节点或多选状态），且不是编辑现有标注
-        if (selectedAnnotation) {
-          return;
-        }
+        if (selectedAnnotation) return;
 
         if (!isMultiSelection && !selectedDSLNode) {
           message.warning('请先选择一个节点');
@@ -504,11 +420,9 @@ const ComponentPropertyPanelV2: React.FC = () => {
         handleCreateAnnotation();
       }
 
-      // Cmd/Ctrl + Delete: 删除标注
       if ((e.metaKey || e.ctrlKey) && e.key === 'Backspace') {
         e.preventDefault();
 
-        // 校验：必须有选中的标注，且不是根节点
         if (!selectedAnnotation) {
           message.warning('请先选择一个标注');
           return;
@@ -529,74 +443,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [selectedAnnotation, selectedAnnotation, selectedDSLNode, isMultiSelection, message]);
-
-  // 渲染动态属性字段
-  const renderDynamicPropertyFields = (componentName: string) => {
-    if (!componentName) return null;
-
-    const schema = getComponentSchema(componentName);
-
-    if (!schema || schema.properties.length === 0) {
-      return (
-        <div className='component-property-panel-dynamic-properties-hint'>
-          <Text type='secondary'>该组件暂无预定义属性，可在创建后通过属性面板编辑</Text>
-        </div>
-      );
-    }
-
-    return schema.properties.map((prop: PropertySchema) => {
-      const defaultValue = prop.defaultValue;
-      const commonProps = {
-        label: prop.label,
-        name: prop.name,
-        rules: prop.required ? [{ required: true, message: `请输入${prop.label}` }] : undefined,
-        initialValue: defaultValue,
-        help: prop.description,
-      };
-
-      switch (prop.type) {
-        case 'string':
-          return (
-            <Form.Item key={prop.name} {...commonProps}>
-              <Input placeholder={prop.placeholder} />
-            </Form.Item>
-          );
-        case 'number':
-          return (
-            <Form.Item key={prop.name} {...commonProps}>
-              <InputNumber style={{ width: '100%' }} placeholder={prop.placeholder} />
-            </Form.Item>
-          );
-        case 'boolean':
-          return (
-            <Form.Item key={prop.name} {...commonProps} valuePropName='checked'>
-              <Switch />
-            </Form.Item>
-          );
-        case 'select':
-          return (
-            <Form.Item key={prop.name} {...commonProps}>
-              <Select placeholder={prop.placeholder || `选择${prop.label}`} options={prop.options} allowClear />
-            </Form.Item>
-          );
-        case 'color':
-        case 'textarea':
-        case 'json':
-          const Component = prop.type === 'color' ? Input : TextArea;
-          const rows = prop.type === 'textarea' ? 3 : 4;
-          return (
-            <Form.Item key={prop.name} {...commonProps}>
-              <Component
-                rows={rows}
-                placeholder={prop.placeholder || (prop.type === 'json' ? '输入JSON格式数据' : '')}
-              />
-            </Form.Item>
-          );
-        default:
-          return null;
-      }
-    });
-  };
 
   const handleToggleVisibilityAndSave = async () => {
     designDetectionActions.toggleDSLNodeById(selectedDSLNode!.id);
@@ -685,74 +531,32 @@ const ComponentPropertyPanelV2: React.FC = () => {
           )}
 
           <Form form={form} layout='vertical' onValuesChange={handleValuesChange}>
-            <Form.Item
-              label={
-                <Space>
-                  <Text>FTA 组件类型</Text>
-                  <Button
-                    size='small'
-                    type='primary'
-                    icon={<TagOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // 使用默认组件类型快速创建标注
-                      if (selectedFTAComponent) {
-                        handleCreateAnnotation();
-                      } else {
-                        message.info('请先选择组件类型');
-                      }
-                    }}>
-                    快速创建标注
-                  </Button>
-                </Space>
+            <FTAComponentSelectField
+              recentComponents={recentComponents}
+              onChange={handleComponentSelect}
+              labelExtra={
+                <Button
+                  size='small'
+                  type='primary'
+                  icon={<TagOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (selectedFTAComponent) {
+                      handleCreateAnnotation();
+                    } else {
+                      message.info('请先选择组件类型');
+                    }
+                  }}>
+                  快速创建标注
+                </Button>
               }
-              name='ftaComponent'
-              rules={[{ required: true, message: '请选择组件类型' }]}>
-              <Select
-                placeholder='选择组件类型'
-                showSearch
-                filterOption={customFilterOption}
-                onChange={handleComponentSelect}>
-                {/* 最近选择分组 */}
-                {recentComponents.length > 0 && (
-                  <OptGroup key='最近选择' label='最近选择'>
-                    {recentComponents.map((comp) => (
-                      <Option key={`recent-${comp}`} value={comp}>
-                        {comp}
-                      </Option>
-                    ))}
-                  </OptGroup>
-                )}
-                {Object.entries(FTA_COMPONENTS).map(([groupName, components]) => (
-                  <OptGroup key={groupName} label={groupName}>
-                    {components.map((comp) => (
-                      <Option key={comp} value={comp}>
-                        {comp}
-                      </Option>
-                    ))}
-                  </OptGroup>
-                ))}
-              </Select>
-            </Form.Item>
+            />
 
-            {/* 基本属性 */}
-            <Form.Item label='组件名称' name='name'>
-              <Input placeholder='输入组件实例名称（可选）' />
-            </Form.Item>
+            <BasicInfoFields optionalSuffix />
 
-            <Form.Item label='组件说明' name='comment'>
-              <TextArea rows={2} placeholder='输入组件说明或备注（可选）' />
-            </Form.Item>
+            {selectedFTAComponent && <DynamicPropertyFields componentName={selectedFTAComponent} />}
 
-            {/* 动态属性字段 */}
-            {selectedFTAComponent && (
-              <>
-                <Divider orientation='left' style={{ margin: '16px 0' }}>
-                  <Text strong>组件属性</Text>
-                </Divider>
-                {renderDynamicPropertyFields(selectedFTAComponent)}
-              </>
-            )}
+            <DataModelBindingField cascaderOptions={cascaderOptions} dataModelsList={dataModelsList as DataModel[]} />
           </Form>
         </div>
 
@@ -808,103 +612,32 @@ const ComponentPropertyPanelV2: React.FC = () => {
       {/* Form */}
       <div className='component-property-panel-form-container'>
         <Form form={form} layout='vertical' onValuesChange={handleValuesChange}>
-          {/* Basic Info */}
           <Title level={5}>基本信息</Title>
 
-          <Form.Item label='FTA 组件类型' name='ftaComponent' rules={[{ required: true, message: '请选择组件类型' }]}>
-            <Select
-              placeholder='选择组件类型'
-              showSearch
-              filterOption={customFilterOption}
-              disabled={selectedAnnotation?.isRoot}
-              onChange={handleComponentSelect}>
-              {/* 最近选择分组 */}
-              {recentComponents.length > 0 && (
-                <OptGroup key='最近选择' label='最近选择'>
-                  {recentComponents.map((comp) => (
-                    <Option key={`recent-edit-${comp}`} value={comp}>
-                      {comp}
-                    </Option>
-                  ))}
-                </OptGroup>
-              )}
-              {Object.entries(FTA_COMPONENTS).map(([groupName, components]) => (
-                <OptGroup key={groupName} label={groupName}>
-                  {components.map((comp) => (
-                    <Option key={comp} value={comp}>
-                      {comp}
-                    </Option>
-                  ))}
-                </OptGroup>
-              ))}
-            </Select>
-          </Form.Item>
+          <FTAComponentSelectField
+            recentComponents={recentComponents}
+            onChange={handleComponentSelect}
+            disabled={selectedAnnotation?.isRoot}
+          />
 
-          <Form.Item label='组件名称' name='name'>
-            <Input placeholder='输入组件实例名称' />
-          </Form.Item>
-
-          <Form.Item label='组件说明' name='comment'>
-            <TextArea rows={2} placeholder='输入组件说明或备注' />
-          </Form.Item>
+          <BasicInfoFields />
 
           <Divider />
-          {/* Component Props */}
           <Title level={5}>组件属性</Title>
-          {/* 动态属性字段 */}
-          {selectedAnnotation?.ftaComponent && renderDynamicPropertyFields(selectedAnnotation.ftaComponent)}
+          {selectedAnnotation?.ftaComponent && (
+            <DynamicPropertyFields componentName={selectedAnnotation.ftaComponent} showDivider={false} />
+          )}
 
           <Divider />
-          {/* Data Model Binding */}
           <Title level={5}>
             <DatabaseOutlined style={{ marginRight: 8 }} />
             数据绑定
           </Title>
-          <Form.Item
-            label='关联数据模型'
-            name='dataModelId'
-            extra='选择要绑定的数据模型，用于代码生成时关联数据结构'
-            getValueFromEvent={(value: string[]) => {
-              // Cascader 返回的是数组 [groupId, modelId]，我们只需要 modelId
-              return value && value.length > 1 ? value[1] : undefined;
-            }}
-            getValueProps={(value) => {
-              // 反向查找：根据 modelId 找到对应的 [groupId, modelId] 路径
-              if (!value) return { value: undefined };
-              const model = (dataModelsList as DataModel[]).find((m) => m.id === value);
-              if (!model) return { value: undefined };
-              const groupKey = model.groupId || '__ungrouped__';
-              return { value: [groupKey, value] };
-            }}>
-            <Cascader
-              options={cascaderOptions}
-              placeholder='选择分组 → 数据模型'
-              allowClear
-              showSearch={{
-                filter: (inputValue, path) => {
-                  return path.some(
-                    (option) =>
-                      (option.label as string).toLowerCase().includes(inputValue.toLowerCase()) ||
-                      (option.description as string | undefined)?.toLowerCase().includes(inputValue.toLowerCase())
-                  );
-                },
-              }}
-              displayRender={(labels, selectedOptions) => {
-                if (!selectedOptions || selectedOptions.length < 2) return '';
-                const model = selectedOptions[1];
-                return (
-                  <Tooltip title={model.description}>
-                    <span>
-                      {labels[0]} / <strong>{labels[1]}</strong>
-                    </span>
-                  </Tooltip>
-                );
-              }}
-              expandTrigger='hover'
-              notFoundContent={cascaderOptions.length === 0 ? '暂无数据模型，请先在左侧面板添加' : '没有匹配的数据模型'}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
+          <DataModelBindingField
+            cascaderOptions={cascaderOptions}
+            dataModelsList={dataModelsList as DataModel[]}
+            showDivider={false}
+          />
 
           <Divider />
         </Form>
