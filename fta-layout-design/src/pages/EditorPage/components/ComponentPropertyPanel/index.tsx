@@ -27,10 +27,11 @@ import {
   Typography,
 } from 'antd';
 import type { DefaultOptionType } from 'antd/es/cascader';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { FTA_COMPONENTS } from '../../constants/FTAComponents';
 import { getComponentSchema, PropertySchema } from '../../constants/FTAComponentSchemas';
+import { addRecentComponent, getRecentComponents } from '../../utils/recentComponentStorage';
 import {
   calculateDSLNodeAbsolutePosition,
   designDetectionActions,
@@ -103,6 +104,16 @@ const ComponentPropertyPanelV2: React.FC = () => {
   const [form] = Form.useForm();
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedFTAComponent, setSelectedFTAComponent] = useState<string>('');
+  const [recentComponents, setRecentComponents] = useState<string[]>(() => getRecentComponents());
+
+  // 处理组件类型选择变化，更新最近选择列表
+  const handleComponentSelect = useCallback((value: string) => {
+    setSelectedFTAComponent(value);
+    if (value) {
+      const updated = addRecentComponent(value);
+      setRecentComponents(updated);
+    }
+  }, []);
 
   const selectedDesignDocument = useMemo(() => {
     if (!currentPage || selectedDocument?.type !== 'design') {
@@ -213,6 +224,11 @@ const ComponentPropertyPanelV2: React.FC = () => {
       if (updated) {
         setHasChanges(false);
         message.success('保存成功');
+        // 更新最近选择列表
+        if (values.ftaComponent) {
+          const updatedRecent = addRecentComponent(values.ftaComponent);
+          setRecentComponents(updatedRecent);
+        }
       } else {
         message.info('已取消更新');
       }
@@ -380,6 +396,11 @@ const ComponentPropertyPanelV2: React.FC = () => {
       }
 
       if (shouldResetForm) {
+        // 确保更新最近选择列表（创建成功时）
+        if (ftaComponent) {
+          const updatedRecent = addRecentComponent(ftaComponent);
+          setRecentComponents(updatedRecent);
+        }
         form.resetFields();
         setSelectedFTAComponent('');
       }
@@ -426,6 +447,11 @@ const ComponentPropertyPanelV2: React.FC = () => {
 
       if (createdCount > 0) {
         message.success(messageParts.join('，'));
+        // 确保更新最近选择列表（批量创建成功时）
+        if (ftaComponent) {
+          const updatedRecent = addRecentComponent(ftaComponent);
+          setRecentComponents(updatedRecent);
+        }
         form.resetFields();
         setSelectedFTAComponent('');
       } else {
@@ -661,24 +687,23 @@ const ComponentPropertyPanelV2: React.FC = () => {
           <Form form={form} layout='vertical' onValuesChange={handleValuesChange}>
             <Form.Item
               label={
-                <Space size={4}>
+                <Space>
                   <Text>FTA 组件类型</Text>
-                  <Tooltip title='快速创建标注'>
-                    <Button
-                      size='small'
-                      type='primary'
-                      icon={<TagOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // 使用默认组件类型快速创建标注
-                        if (selectedFTAComponent) {
-                          handleCreateAnnotation();
-                        } else {
-                          message.info('请先选择组件类型');
-                        }
-                      }}
-                    />
-                  </Tooltip>
+                  <Button
+                    size='small'
+                    type='primary'
+                    icon={<TagOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // 使用默认组件类型快速创建标注
+                      if (selectedFTAComponent) {
+                        handleCreateAnnotation();
+                      } else {
+                        message.info('请先选择组件类型');
+                      }
+                    }}>
+                    快速创建标注
+                  </Button>
                 </Space>
               }
               name='ftaComponent'
@@ -687,7 +712,17 @@ const ComponentPropertyPanelV2: React.FC = () => {
                 placeholder='选择组件类型'
                 showSearch
                 filterOption={customFilterOption}
-                onChange={(value) => setSelectedFTAComponent(value)}>
+                onChange={handleComponentSelect}>
+                {/* 最近选择分组 */}
+                {recentComponents.length > 0 && (
+                  <OptGroup key='最近选择' label='最近选择'>
+                    {recentComponents.map((comp) => (
+                      <Option key={`recent-${comp}`} value={comp}>
+                        {comp}
+                      </Option>
+                    ))}
+                  </OptGroup>
+                )}
                 {Object.entries(FTA_COMPONENTS).map(([groupName, components]) => (
                   <OptGroup key={groupName} label={groupName}>
                     {components.map((comp) => (
@@ -781,7 +816,18 @@ const ComponentPropertyPanelV2: React.FC = () => {
               placeholder='选择组件类型'
               showSearch
               filterOption={customFilterOption}
-              disabled={selectedAnnotation?.isRoot}>
+              disabled={selectedAnnotation?.isRoot}
+              onChange={handleComponentSelect}>
+              {/* 最近选择分组 */}
+              {recentComponents.length > 0 && (
+                <OptGroup key='最近选择' label='最近选择'>
+                  {recentComponents.map((comp) => (
+                    <Option key={`recent-edit-${comp}`} value={comp}>
+                      {comp}
+                    </Option>
+                  ))}
+                </OptGroup>
+              )}
               {Object.entries(FTA_COMPONENTS).map(([groupName, components]) => (
                 <OptGroup key={groupName} label={groupName}>
                   {components.map((comp) => (

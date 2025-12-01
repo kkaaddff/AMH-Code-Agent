@@ -144,7 +144,8 @@
     ],
     "summary": "由用户操作触发，提供一组与操作相关的两个或多个选项，让用户在不离场的情况下完成操作。相比于对话框，动作面板的位置更适合于在大屏幕时代的单手操作。",
     "sourcePath": "tickling/action-sheet.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 385
   },
   "AddressPicker": {
     "component": "AddressPicker",
@@ -835,7 +836,8 @@
     ],
     "summary": "遵循满帮设计规范的通用地址选择器。",
     "sourcePath": "pro/address-picker.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 575
   },
   "AnimatedResult": {
     "component": "AnimatedResult",
@@ -883,7 +885,8 @@
     ],
     "summary": "带动画交互的结果页",
     "sourcePath": "animated/result.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 401
   },
   "AnimatedSlideinout": {
     "component": "AnimatedSlideinout",
@@ -898,7 +901,8 @@
     ],
     "summary": "缓入缓出的动画效果。",
     "sourcePath": "animated/slideinout.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 402
   },
   "Avatar": {
     "component": "Avatar",
@@ -1023,7 +1027,8 @@
     ],
     "summary": "需要更加直观的展现人物或事物特征。",
     "sourcePath": "display/avatar.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 135
   },
   "Badge": {
     "component": "Badge",
@@ -1127,7 +1132,8 @@
     ],
     "summary": "徽标，红点、数字或文字。用于告诉用户待处理的事物或更新数。",
     "sourcePath": "display/badge.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 141
   },
   "BottomTips": {
     "component": "BottomTips",
@@ -1166,7 +1172,8 @@
     ],
     "summary": "显示在一级页面最底部，常用于品牌标识、口号展示。",
     "sourcePath": "tickling/bottom-tips.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 202
   },
   "Button": {
     "component": "Button",
@@ -1306,7 +1313,8 @@
     ],
     "summary": "标记了一个（或封装一组）操作命令，响应用户点击行为，触发相应的业务逻辑。",
     "sourcePath": "basic/button.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 118
   },
   "Calendar": {
     "component": "Calendar",
@@ -1474,7 +1482,8 @@
     ],
     "summary": "日历组件，支持范围选择。",
     "sourcePath": "form/calendar.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 556
   },
   "Captcha": {
     "component": "Captcha",
@@ -1622,7 +1631,8 @@
     ],
     "summary": "验证码组件",
     "sourcePath": "form/captcha.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 403
   },
   "Card": {
     "component": "Card",
@@ -1672,7 +1682,8 @@
     ],
     "summary": "用于展示文字、列表、图片等信息，通用卡片容器。",
     "sourcePath": "display/card.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 359
   },
   "Carkeyboard": {
     "component": "Carkeyboard",
@@ -1749,7 +1760,8 @@
     ],
     "summary": "车牌输入键盘，针对公司车牌操作的 Taro 组件，按钮和标题可定制，支持设置默认车牌号，对车牌进行编辑。",
     "sourcePath": "pro/car-keyboard.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 602
   },
   "Cascader": {
     "component": "Cascader",
@@ -2055,7 +2067,8 @@
     ],
     "summary": "基于选择器封装的级联选择组件。",
     "sourcePath": "form/cascader.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 563
   },
   "CheckBox": {
     "component": "CheckBox",
@@ -2145,7 +2158,8 @@
     ],
     "summary": "多选框组件",
     "sourcePath": "form/checkbox.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 189
   },
   "CircularProgress": {
     "component": "CircularProgress",
@@ -2225,7 +2239,8 @@
       }
     ],
     "sourcePath": "display/circular-progress.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 205
   },
   "Collapse": {
     "component": "Collapse",
@@ -2274,7 +2289,8 @@
     ],
     "summary": "可以自定义渲染的折叠面板组件。",
     "sourcePath": "display/collapse.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 385
   },
   "CountDown": {
     "component": "CountDown",
@@ -2349,7 +2365,8 @@
     ],
     "summary": "倒计时组件，时分秒格式，仅支持 24 小时内的时间戳。",
     "sourcePath": "tickling/count-down.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 206
   },
   "Coupon": {
     "component": "Coupon",
@@ -2441,7 +2458,8 @@
       }
     ],
     "sourcePath": "pro/coupon.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 406
   },
   "Curtain": {
     "component": "Curtain",
@@ -2463,7 +2481,8 @@
     ],
     "summary": "幕帘组件，可以用来放置广告提示内容。",
     "sourcePath": "tickling/curtain.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 407
   },
   "DashedLine": {
     "component": "DashedLine",
@@ -2521,7 +2540,8 @@
     ],
     "summary": "自定义虚线样式",
     "sourcePath": "layout/dashed-line.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 207
   },
   "Divider": {
     "component": "Divider",
@@ -2596,7 +2616,8 @@
     ],
     "summary": "区隔内容的分割线。",
     "sourcePath": "layout/divider.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 163
   },
   "Drawer": {
     "component": "Drawer",
@@ -2663,7 +2684,8 @@
     ],
     "summary": "抽屉组件，用于从屏幕一侧滑出的面板，常用于菜单、设置等场景。",
     "sourcePath": "tickling/drawer.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 383
   },
   "Dropdown": {
     "component": "Dropdown",
@@ -2907,7 +2929,8 @@
     ],
     "summary": "当页面上的操作命令过多时，用此组件可以收纳操作元素。点击触点，会出现一个下拉菜单。可在列表中进行选择，并执行相应的命令。",
     "sourcePath": "form/dropdown.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 409
   },
   "Empty": {
     "component": "Empty",
@@ -2968,7 +2991,8 @@
     ],
     "summary": "该组件用于需要加载内容，但是加载的数据为空，提示一个“没有内容”或“访问出错”的场景。",
     "sourcePath": "tickling/empty.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 169
   },
   "Flex": {
     "component": "Flex",
@@ -3017,7 +3041,8 @@
     ],
     "summary": "弹性布局 flexbox，默认盒模型为 `border-box`。",
     "sourcePath": "layout/flex.md",
-    "type": "基础容器"
+    "type": "基础容器",
+    "weight": 55
   },
   "FlexScrollView": {
     "component": "FlexScrollView",
@@ -3081,7 +3106,8 @@
     ],
     "summary": "存在可拖动滚动的容器布局，借助此布局可实现类似于视频播放评论区等功能。",
     "sourcePath": "pro/flex-scroll-view.md",
-    "type": "基础容器"
+    "type": "基础容器",
+    "weight": 101
   },
   "FloatingBubble": {
     "component": "FloatingBubble",
@@ -3128,7 +3154,8 @@
     ],
     "summary": "可以拖动的悬浮窗组件。",
     "sourcePath": "tickling/floating-bubble.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 410
   },
   "FloatingPanel": {
     "component": "FloatingPanel",
@@ -3219,7 +3246,8 @@
     ],
     "summary": "浮动面板组件，常用于地图场景等。",
     "sourcePath": "tickling/floating-panel.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 411
   },
   "Form": {
     "component": "Form",
@@ -3400,7 +3428,8 @@
     ],
     "summary": "表单组件，表单状态当前需自行维护。",
     "sourcePath": "form/form.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 372
   },
   "Gap": {
     "component": "Gap",
@@ -3457,7 +3486,8 @@
     ],
     "summary": "该组件一般用于内容块之间的用一个灰色块隔开的场景，方便用户风格统一，减少工作量。",
     "sourcePath": "layout/gap.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 180
   },
   "Gradient": {
     "component": "Gradient",
@@ -3497,7 +3527,8 @@
     ],
     "summary": "线性渐变色组件，请传入 Hex 格式的 color 以兼容 Thresh 平台。",
     "sourcePath": "nav/gradient.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 413
   },
   "Grid": {
     "component": "Grid",
@@ -3529,7 +3560,8 @@
     ],
     "summary": "宫格可以在水平方向上把页面分隔成等宽度的区块，用于展示内容或进行页面导航。",
     "sourcePath": "layout/grid.md",
-    "type": "基础容器"
+    "type": "基础容器",
+    "weight": 67
   },
   "Icon": {
     "component": "Icon",
@@ -3589,7 +3621,8 @@
     ],
     "summary": "对需要使用图形来对基础操作功能进行隐喻呈现，给予用户正确、友好且清晰的操作指引。",
     "sourcePath": "basic/icon.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 136
   },
   "Image": {
     "component": "Image",
@@ -3794,7 +3827,8 @@
     ],
     "summary": "图片展示组件，支持多种缩放模式、懒加载与触摸事件处理。",
     "sourcePath": "display/image.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 132
   },
   "ImageBackground": {
     "component": "ImageBackground",
@@ -3840,7 +3874,8 @@
     ],
     "summary": "带背景图的容器组件，使用时请指定宽高。",
     "sourcePath": "layout/image-background.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 414
   },
   "ImageUpload": {
     "component": "ImageUpload",
@@ -4070,7 +4105,8 @@
     ],
     "summary": "图片上传至 OSS。",
     "sourcePath": "form/image-upload.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 574
   },
   "IndexBar": {
     "component": "IndexBar",
@@ -4134,7 +4170,8 @@
     ],
     "summary": "用于列表的索引分类显示和快速定位。",
     "sourcePath": "nav/index-bar.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 213
   },
   "InfiniteScroll": {
     "component": "InfiniteScroll",
@@ -4241,7 +4278,8 @@
     ],
     "summary": "滚动时动态加载数据，默认撑满父元素，请给父元素设置固定高度或 `flex: 1`。",
     "sourcePath": "display/infinite-scroll.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 605
   },
   "Input": {
     "component": "Input",
@@ -4406,7 +4444,8 @@
     ],
     "summary": "输入框组件用于用户输入文本内容，支持多种类型和状态，适用于各类表单场景。",
     "sourcePath": "form/input.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 345
   },
   "InputNumber": {
     "component": "InputNumber",
@@ -4535,7 +4574,8 @@
     ],
     "summary": "带加减按钮的数字输入框，用户可以控制每次点击增加的数值，支持小数，同时支持自定义输入框宽度。",
     "sourcePath": "form/input-number.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 214
   },
   "IntersectionObserver": {
     "component": "IntersectionObserver",
@@ -4576,7 +4616,8 @@
     ],
     "summary": "监听页面元素可见性，通常用于埋点曝光等场景。",
     "sourcePath": "other/intersection-observer.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 416
   },
   "Intro": {
     "component": "Intro",
@@ -4695,7 +4736,8 @@
     ],
     "summary": "功能引导组件，引导用户操作。",
     "sourcePath": "tickling/intro.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 606
   },
   "Keyboard": {
     "component": "Keyboard",
@@ -4932,21 +4974,24 @@
     ],
     "summary": "通用键盘组件，包含数字键盘、身份证键盘等，可以传入正则或函数形式的 `validator` 自定义校验规则。",
     "sourcePath": "form/keyboard.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 607
   },
   "Layer": {
     "component": "Layer",
     "properties": [],
     "summary": "为了增加业务代码的灵活性，`@fta/components` 提供了以下方法动态调用弹窗：",
     "sourcePath": "tickling/layer.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 175
   },
   "LazyList": {
     "component": "LazyList",
     "properties": [],
     "summary": "懒加载列表组件，在列表场景中，当需一次性渲染大量数据节点的场景下，由 Dart 侧驱动，通知 JS 分片加载，达到懒加载的目的，从而避免下拉刷新和上拉加载\"慢\"的问题。",
     "sourcePath": "other/lazylist.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 216
   },
   "Line": {
     "component": "Line",
@@ -5003,7 +5048,8 @@
     ],
     "summary": "此组件一般用于显示一根线条，用于分隔内容块，有横向和竖向两种模式，且能设置 1PX 绝对像素，使用也很简单。",
     "sourcePath": "layout/line.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 217
   },
   "List": {
     "component": "List",
@@ -5185,7 +5231,8 @@
     ],
     "summary": "提供常见的 List 组件，帮助使用者快速搭建列表。",
     "sourcePath": "display/list.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 387
   },
   "Loading": {
     "component": "Loading",
@@ -5254,7 +5301,8 @@
     ],
     "summary": "加载中图标",
     "sourcePath": "tickling/loading.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 168
   },
   "LoadingImage": {
     "component": "LoadingImage",
@@ -5323,14 +5371,16 @@
     ],
     "summary": "可预览的图片组件，用于展示图片，支持加载中和加载失败的容错处理。",
     "sourcePath": "display/image.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 219
   },
   "Lottie": {
     "component": "Lottie",
     "properties": [],
     "summary": "Lottie动画组件，支持播放Lottie格式的动画文件，提供丰富的动画控制API和属性配置。",
     "sourcePath": "other/lottie.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 608
   },
   "Modal": {
     "component": "Modal",
@@ -5593,14 +5643,16 @@
     ],
     "summary": "弹窗，支持函数式调用。",
     "sourcePath": "tickling/modal.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 368
   },
   "Native": {
     "component": "Native",
     "properties": [],
     "summary": "Thresh特有的组件和API，自 `@fta/components@1.10.10` 开始支持。",
     "sourcePath": "other/native.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 220
   },
   "NavBar": {
     "component": "NavBar",
@@ -5684,7 +5736,8 @@
     ],
     "summary": "为页面提供全局性的导航功能，主要用于头部导航，需要隐藏各端内置的导航栏。",
     "sourcePath": "nav/nav-bar.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 419
   },
   "NoticeBar": {
     "component": "NoticeBar",
@@ -5834,7 +5887,8 @@
     ],
     "summary": "用于展示一行或多行通告文字。",
     "sourcePath": "tickling/notice-bar.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 221
   },
   "OptionSelect": {
     "component": "OptionSelect",
@@ -5957,7 +6011,8 @@
     ],
     "summary": "提供多个选项供用户选择，一般在筛选和表单中使用。",
     "sourcePath": "form/option-select.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 609
   },
   "Overlay": {
     "component": "Overlay",
@@ -6023,7 +6078,8 @@
     ],
     "summary": "创建一个背景蒙层，用于强调特定的页面元素，并阻止用户对遮罩下层的内容进行操作，一般用于弹窗场景。",
     "sourcePath": "tickling/overlay.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 420
   },
   "PageIndicator": {
     "component": "PageIndicator",
@@ -6084,7 +6140,8 @@
     ],
     "summary": "遵循满帮设计规范，指示当前显示的是多页面视图/轮播图的哪一页。",
     "sourcePath": "display/page-indicator.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 222
   },
   "Password": {
     "component": "Password",
@@ -6172,7 +6229,8 @@
     ],
     "summary": "通用密码输入框",
     "sourcePath": "form/password.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 610
   },
   "Picker": {
     "component": "Picker",
@@ -6384,7 +6442,8 @@
     ],
     "summary": "选择器组件，包含单列、多列、时间和日期选择等。",
     "sourcePath": "form/picker.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 371
   },
   "Popover": {
     "component": "Popover",
@@ -6561,7 +6620,8 @@
     ],
     "summary": "气泡提示组件",
     "sourcePath": "tickling/popover.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 611
   },
   "ProgressBar": {
     "component": "ProgressBar",
@@ -6621,7 +6681,8 @@
     ],
     "summary": "简单的进度条组件。",
     "sourcePath": "display/progress-bar.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 213
   },
   "Protocol": {
     "component": "Protocol",
@@ -6772,7 +6833,8 @@
     ],
     "summary": "协议组件用于展示用户需阅读并同意的服务协议、隐私政策等内容，支持自定义前缀、后缀、协议列表、富文本协议等。",
     "sourcePath": "form/protocol.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 612
   },
   "PullToRefresh": {
     "component": "PullToRefresh",
@@ -6935,7 +6997,8 @@
     ],
     "summary": "下拉刷新组件。",
     "sourcePath": "tickling/pull-to-refresh.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 422
   },
   "Radio": {
     "component": "Radio",
@@ -7084,7 +7147,8 @@
     ],
     "summary": "单选框组件",
     "sourcePath": "form/radio.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 204
   },
   "Rate": {
     "component": "Rate",
@@ -7166,7 +7230,8 @@
     ],
     "summary": "一般用于满意度调查",
     "sourcePath": "form/rate.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 195
   },
   "Result": {
     "component": "Result",
@@ -7220,7 +7285,8 @@
     ],
     "summary": "操作结果页",
     "sourcePath": "tickling/result.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 423
   },
   "RichText": {
     "component": "RichText",
@@ -7309,7 +7375,8 @@
       }
     ],
     "sourcePath": "display/rich-text.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 613
   },
   "SafeArea": {
     "component": "SafeArea",
@@ -7363,7 +7430,8 @@
     ],
     "summary": "在全面屏下提供自适应的边距调整，当网页被全屏展示时，可借助安全区实现自动适配。 SafeArea 组件的底层实现基于 `env(safe-area-inset-xxx)`。",
     "sourcePath": "layout/safe-area.md",
-    "type": "基础容器"
+    "type": "基础容器",
+    "weight": 78
   },
   "ScrollHelper": {
     "component": "ScrollHelper",
@@ -7404,7 +7472,8 @@
     ],
     "summary": "将元素滚动到可视区域内，`ScrollHelper` 需要配合 `ScrollHelper.ScrollView` 搭配使用。",
     "sourcePath": "tickling/scroll-helper.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 424
   },
   "Search": {
     "component": "Search",
@@ -7595,7 +7664,8 @@
     ],
     "summary": "搜索框组件",
     "sourcePath": "form/search.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 390
   },
   "Selector": {
     "component": "Selector",
@@ -8046,14 +8116,16 @@
     ],
     "summary": "通用级联选择器",
     "sourcePath": "form/selector.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 426
   },
   "Skeleton": {
     "component": "Skeleton",
     "properties": [],
     "summary": "在需要等待加载内容的位置提供一个占位图形组合。",
     "sourcePath": "tickling/skeleton.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 427
   },
   "Slider": {
     "component": "Slider",
@@ -8117,7 +8189,8 @@
     ],
     "summary": "滑动条组件，支持自定义滑块样式、自定义轨道样式、步点等样式。支持单滑块和双滑块模式。",
     "sourcePath": "other/slider.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 201
   },
   "Steps": {
     "component": "Steps",
@@ -8196,13 +8269,15 @@
     ],
     "summary": "步骤条组件，建议步骤在 2 ～ 4 之内。",
     "sourcePath": "display/steps.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 227
   },
   "Style": {
     "component": "Style",
     "properties": [],
     "sourcePath": "style.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 228
   },
   "SwipeAction": {
     "component": "SwipeAction",
@@ -8288,7 +8363,8 @@
       }
     ],
     "sourcePath": "tickling/swipe-action.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 614
   },
   "Swiper": {
     "component": "Swiper",
@@ -8523,7 +8599,8 @@
     ],
     "summary": "滑块视图容器，常用于走马灯、轮播图。",
     "sourcePath": "display/swiper.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 418
   },
   "TabBar": {
     "component": "TabBar",
@@ -8596,14 +8673,16 @@
     ],
     "summary": "主要用于底部导航，方便用户在不同功能模块之间进行快速切换，建议标签数量控制在 2 ～ 5 个。",
     "sourcePath": "nav/tab-bar.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 229
   },
   "Tabs": {
     "component": "Tabs",
     "properties": [],
     "summary": "可切换面板容器，该容器需要一个固定的尺寸用于布局内部视图。内部视图分为从上至下，分为3部分：顶部Tab、中间视图、底部TabPanel。",
     "sourcePath": "other/tabs.md",
-    "type": "带有插槽的复杂组件"
+    "type": "带有插槽的复杂组件",
+    "weight": 394
   },
   "Tag": {
     "component": "Tag",
@@ -8674,7 +8753,8 @@
     ],
     "summary": "用于展示 1 个或多个文字标签。",
     "sourcePath": "display/tag.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 175
   },
   "Text": {
     "component": "Text",
@@ -8776,7 +8856,8 @@
         "type": "string",
         "description": "类型: CSSProperties"
       }
-    ]
+    ],
+    "weight": 141
   },
   "Textarea": {
     "component": "Textarea",
@@ -8983,7 +9064,8 @@
       }
     ],
     "sourcePath": "form/textarea.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 615
   },
   "Timeline": {
     "component": "Timeline",
@@ -9037,7 +9119,8 @@
     ],
     "summary": "垂直展示的时间流信息。当有一系列信息需按时间排列时，可正序和倒序。需要有一条时间轴进行视觉上的串联时。",
     "sourcePath": "display/timeline.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 232
   },
   "Toast": {
     "component": "Toast",
@@ -9156,7 +9239,8 @@
       }
     ],
     "sourcePath": "tickling/toast.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 616
   },
   "Toggle": {
     "component": "Toggle",
@@ -9315,7 +9399,8 @@
     ],
     "summary": "全新开关组件，支持更多属性配置，默认为受控组件。",
     "sourcePath": "form/toggle.md",
-    "type": "基础原子组件"
+    "type": "基础原子组件",
+    "weight": 233
   },
   "Tooltip": {
     "component": "Tooltip",
@@ -9431,7 +9516,8 @@
     ],
     "summary": "常用于悬浮展示提示信息。",
     "sourcePath": "tickling/tooltip.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 617
   },
   "Typography": {
     "component": "Typography",
@@ -9533,7 +9619,8 @@
     ],
     "summary": "文本的基本格式，内置关怀模式的 `Text` 组件。",
     "sourcePath": "basic/typography.md",
-    "type": "复杂整体业务组件"
+    "type": "复杂整体业务组件",
+    "weight": 618
   },
   "View": {
     "component": "View",
@@ -9564,6 +9651,7 @@
         "type": "string",
         "description": "类型: () => void"
       }
-    ]
+    ],
+    "weight": 54
   }
 }

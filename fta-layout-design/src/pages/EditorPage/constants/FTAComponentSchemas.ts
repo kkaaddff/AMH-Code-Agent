@@ -21,6 +21,7 @@ export interface ComponentSchema {
   summary?: string;
   sourcePath?: string;
   type?: string;
+  weight?: number;
 }
 
 // 引入自动生成的大型schema JSON
@@ -43,6 +44,7 @@ type RawComponentSchema = {
   summary?: string;
   sourcePath?: string;
   type?: string;
+  weight?: number;
 };
 
 const SUPPORTED_TYPES: PropertyType[] = ['string', 'number', 'boolean', 'color', 'select', 'textarea', 'json'];
@@ -73,6 +75,7 @@ function toComponentSchema(name: string, raw: RawComponentSchema): ComponentSche
     summary: raw.summary,
     sourcePath: raw.sourcePath,
     type: raw.type,
+    weight: raw.weight,
   };
 }
 
