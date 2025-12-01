@@ -414,7 +414,7 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
           </Button>
         </Space>
       }
-      destroyOnClose>
+      destroyOnHidden>
       <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
     </Modal>
   );

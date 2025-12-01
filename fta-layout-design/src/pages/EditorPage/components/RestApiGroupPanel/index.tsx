@@ -239,7 +239,9 @@ const RestApiGroupPanel: React.FC<RestApiGroupPanelProps> = ({ onGroupSelect }) 
         <Spin spinning={loadingDataView}>
           {/* 全部 */}
           <div
-            className={`rest-api-group-panel__item${!selectedRestApiGroupId ? ' rest-api-group-panel__item--active' : ''}`}
+            className={`rest-api-group-panel__item${
+              !selectedRestApiGroupId ? ' rest-api-group-panel__item--active' : ''
+            }`}
             onClick={() => handleGroupClick(null)}
             role='button'
             tabIndex={0}
@@ -273,7 +275,11 @@ const RestApiGroupPanel: React.FC<RestApiGroupPanelProps> = ({ onGroupSelect }) 
 
           {/* 分组列表 */}
           {(restApiGroups as RestApiGroup[]).length === 0 ? (
-            <Empty description='暂无接口组' image={Empty.PRESENTED_IMAGE_SIMPLE} className='rest-api-group-panel__empty' />
+            <Empty
+              description='暂无接口组'
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              className='rest-api-group-panel__empty'
+            />
           ) : (
             <List
               dataSource={restApiGroups as RestApiGroup[]}
@@ -351,7 +357,7 @@ const RestApiGroupPanel: React.FC<RestApiGroupPanelProps> = ({ onGroupSelect }) 
         }}
         maskClosable={false}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         width={480}>
         <Form form={form} layout='vertical' onFinish={handleCreate} style={{ marginTop: 16 }}>
           <Form.Item label='组名称' name='name' rules={[{ required: true, message: '请输入组名称' }]}>
@@ -394,7 +400,7 @@ const RestApiGroupPanel: React.FC<RestApiGroupPanelProps> = ({ onGroupSelect }) 
         }}
         maskClosable={false}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         width={480}>
         <Form form={form} layout='vertical' onFinish={handleUpdate} style={{ marginTop: 16 }}>
           <Form.Item label='组名称' name='name' rules={[{ required: true, message: '请输入组名称' }]}>

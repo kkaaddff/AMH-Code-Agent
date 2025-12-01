@@ -292,7 +292,7 @@ const RestApiDetailModal: React.FC<RestApiDetailModalProps> = ({ open, apiId, on
           </Button>
         </Space>
       }
-      destroyOnClose>
+      destroyOnHidden>
       <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
     </Modal>
   );

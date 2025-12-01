@@ -549,7 +549,7 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
       width={MODAL_CONFIG.WIDTH}
       centered
       maskClosable={false}
-      destroyOnClose
+      destroyOnHidden
       className='component-3d-inspect-modal'>
       <div className='component-3d-inspect-modal__container'>
         <div ref={containerRef} className='component-3d-inspect-modal__canvas' />

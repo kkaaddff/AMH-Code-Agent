@@ -243,7 +243,7 @@ const DataModelGroupPanel: React.FC<DataModelGroupPanelProps> = ({ onGroupSelect
         }}
         maskClosable={false}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         width={400}>
         <Form form={form} layout='vertical' onFinish={handleCreate} style={{ marginTop: 16 }}>
           <Form.Item label='分组名称' name='name' rules={[{ required: true, message: '请输入分组名称' }]}>
@@ -280,7 +280,7 @@ const DataModelGroupPanel: React.FC<DataModelGroupPanelProps> = ({ onGroupSelect
         }}
         maskClosable={false}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         width={400}>
         <Form form={form} layout='vertical' onFinish={handleUpdate} style={{ marginTop: 16 }}>
           <Form.Item label='分组名称' name='name' rules={[{ required: true, message: '请输入分组名称' }]}>

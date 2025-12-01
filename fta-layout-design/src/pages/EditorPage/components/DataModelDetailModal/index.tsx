@@ -2,19 +2,7 @@ import { dataModelService, dataModelGroupService } from '@/services/dataModelSer
 import type { DataModel, DataModelGroup, SchemaField, UpdateDataModelRequest } from '@/types/dataModel';
 import { EMPTY_SCHEMA_FIELD, SCHEMA_FIELD_TYPE_OPTIONS } from '@/types/dataModel';
 import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
-import {
-  App,
-  Button,
-  Form,
-  Input,
-  Modal,
-  Popconfirm,
-  Select,
-  Space,
-  Table,
-  Tabs,
-  Typography,
-} from 'antd';
+import { App, Button, Form, Input, Modal, Popconfirm, Select, Space, Table, Tabs, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
@@ -204,7 +192,12 @@ const SchemaFieldEditor: React.FC<{
           rowExpandable: (record) => record.type === 'object' || record.type === 'array',
         }}
       />
-      <Button type='dashed' size='small' icon={<PlusOutlined />} onClick={handleAddField} style={{ marginTop: 8, width: '100%' }}>
+      <Button
+        type='dashed'
+        size='small'
+        icon={<PlusOutlined />}
+        onClick={handleAddField}
+        style={{ marginTop: 8, width: '100%' }}>
         添加字段
       </Button>
     </div>
@@ -359,11 +352,10 @@ const DataModelDetailModal: React.FC<DataModelDetailModalProps> = ({ open, model
           </Button>
         </Space>
       }
-      destroyOnClose>
+      destroyOnHidden>
       <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
     </Modal>
   );
 };
 
 export default DataModelDetailModal;
-

@@ -67,7 +67,14 @@ const RestApiCreateModal: React.FC<RestApiCreateModalProps> = ({ open, onClose, 
   };
 
   return (
-    <Modal title='新建接口' open={open} onCancel={handleClose} maskClosable={false} footer={null} destroyOnClose width={500}>
+    <Modal
+      title='新建接口'
+      open={open}
+      onCancel={handleClose}
+      maskClosable={false}
+      footer={null}
+      destroyOnHidden
+      width={500}>
       <Form form={form} layout='vertical' onFinish={handleCreate} style={{ marginTop: 16 }}>
         <Form.Item label='接口名称' name='name' rules={[{ required: true, message: '请输入接口名称' }]}>
           <Input placeholder='如：获取用户信息、创建订单' />
@@ -115,4 +122,3 @@ const RestApiCreateModal: React.FC<RestApiCreateModalProps> = ({ open, onClose, 
 };
 
 export default RestApiCreateModal;
-
