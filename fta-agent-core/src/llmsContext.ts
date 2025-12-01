@@ -23,7 +23,7 @@ export class LlmsContext {
   static async create(opts: LlmsContextCreateOpts) {
     const gitStatus = await getGitStatus({ cwd: opts.context.cwd });
 
-    let llmsContext: Record<string, string> = {};
+    const llmsContext: Record<string, string> = {};
     // 1. git status
     const llmsGitStatus = await getLlmGitStatus(gitStatus);
     if (llmsGitStatus) {
@@ -70,7 +70,7 @@ ${Object.entries(llmsContext)
   .join('\n')}
     `.trim();
 
-    let llmsEnv = {
+    const llmsEnv = {
       'Working directory': opts.context.cwd,
       'Is directory a git repo': gitStatus ? 'YES' : 'NO',
       Platform: platform,

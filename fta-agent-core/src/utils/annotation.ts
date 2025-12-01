@@ -4,8 +4,10 @@ export type { AnnotationNode, DSLData, DSLNode, DesignData } from '@fta/shared-t
 
 interface AnnotationNodeSummary {
   id: string;
+  dslNodeId?: string;
   name?: string;
   component?: string;
+  comment?: string;
   isContainer?: boolean;
   depth: number;
   childCount: number;
@@ -28,14 +30,18 @@ export function formatAnnotationSummary(nodes: AnnotationNodeSummary[]): string 
     const indent = '  '.repeat(Math.max(node.depth - 1, 0));
     const labelParts = [
       `[${node.id}]`,
+      node.dslNodeId ? `(DSL:${node.dslNodeId})` : '',
       node.name ?? '未命名节点',
       node.component ? `<${node.component}>` : '',
       node.isContainer ? '(容器)' : '',
     ].filter(Boolean);
+
     const metrics =
       node.width && node.height ? `尺寸：${Math.round(node.width)}×${Math.round(node.height)}` : undefined;
     const childInfo = node.childCount ? `子节点：${node.childCount}` : undefined;
-    const info = [metrics, childInfo].filter(Boolean).join('，');
+    const commentInfo = node.comment ? `备注：${node.comment}` : undefined;
+
+    const info = [metrics, childInfo, commentInfo].filter(Boolean).join('，');
     lines.push(`${indent}- ${labelParts.join(' ')}${info ? `（${info}）` : ''}`);
   });
   return lines.join('\n');
@@ -59,8 +65,10 @@ export function flattenAnnotation(root?: AnnotationNode): AnnotationNodeSummary[
     const children = Array.isArray(node.children) ? node.children : [];
     summaries.push({
       id: String(node.id ?? `node-${summaries.length}`),
+      dslNodeId: typeof node.dslNodeId === 'string' && node.dslNodeId.length ? node.dslNodeId : undefined,
       name: typeof node.name === 'string' && node.name.length ? node.name : undefined,
       component: typeof node.ftaComponent === 'string' && node.ftaComponent.length ? node.ftaComponent : undefined,
+      comment: typeof node.comment === 'string' && node.comment.length ? node.comment : undefined,
       isContainer: Boolean(node.isContainer),
       depth,
       childCount: children.length,

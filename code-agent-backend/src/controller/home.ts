@@ -179,6 +179,8 @@ export class HomeController {
       payload,
     };
 
+    const start = Date.now();
+
     try {
       const headers = this.getModelHeaders();
       const endpoint = this.getModelEndpoint();
@@ -194,6 +196,10 @@ export class HomeController {
         timeout: this.modelGatewayConfig?.timeout ?? 600_000,
       });
 
+      const duration = Date.now() - start;
+      // 控制台输出耗时
+      console.log(`[model-gateway-sync] 请求耗时: ${duration}ms`);
+
       // 记录出参
       const responseLog = {
         timestamp: new Date().toISOString(),
@@ -202,6 +208,7 @@ export class HomeController {
         endpoint: '/model-gateway-sync',
         status: response.status,
         responseData: response.data,
+        durationMs: duration,
       };
 
       // 写入日志文件
@@ -213,6 +220,10 @@ export class HomeController {
         data: response.data,
       };
     } catch (error: any) {
+      const duration = Date.now() - start;
+      // 控制台输出耗时
+      console.log(`[model-gateway-sync] 请求耗时: ${duration}ms`);
+
       // 记录错误日志
       const errorLog = {
         timestamp: new Date().toISOString(),
@@ -221,6 +232,7 @@ export class HomeController {
         endpoint: '/model-gateway-sync',
         status: error.response?.status || 500,
         error: error.response?.data || error.message || 'Request Error',
+        durationMs: duration,
       };
 
       // 写入日志文件

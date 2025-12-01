@@ -16,7 +16,7 @@ import type { Tool } from './tool';
 import { Tools } from './tool';
 import { createFileDraftTool, FileDraftStore } from './tools/fileDraft';
 import { createComponentDocReaderTool } from './tools/componentDocReader';
-import { createSpecReaderTool, loadSpecsFromDirectories } from './tools/specReader';
+import { loadSpecsFromDirectories } from './tools/specReader';
 import { createInMemoryTodoStorage, createTodoTool } from './tools/todo';
 import { randomUUID } from './utils/randomUUID';
 

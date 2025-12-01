@@ -29,8 +29,7 @@ const getAnnotationUtils = () => {
 };
 
 const ftaSpecsDir = path.join(__dirname, 'fta-specs');
-const ftaPromptsPath = path.join(__dirname, 'fta-prompts', 'frontend-project.md');
-const ftaPromptsNewPath = path.join(__dirname, 'fta-prompts', 'frontend-project-new.md');
+const ftaPromptsNewPath = path.join(__dirname, 'fta-prompts', 'frontend-project.md');
 const ftaRulesPath = path.join(__dirname, 'fta-prompts', 'fta-project-spec-4agent.md');
 const ftaComponentsDir = path.join(__dirname, 'fta-components');
 
@@ -138,7 +137,9 @@ export class FrontendWorkflowService {
             ]);
             dataModels = models;
             restApis = apis;
-            console.log(`frontend-workflow: [${sessionId}] 📊 获取到 ${dataModels.length} 个数据模型，${restApis.length} 个 REST API`);
+            console.log(
+              `frontend-workflow: [${sessionId}] 📊 获取到 ${dataModels.length} 个数据模型，${restApis.length} 个 REST API`
+            );
           }
         } catch (error) {
           console.warn(`frontend-workflow: [${sessionId}] ⚠️ 获取数据模型失败，继续执行工作流`, error);
@@ -178,7 +179,7 @@ export class FrontendWorkflowService {
         specDirectories: [ftaSpecsDir],
         componentDocDirectories: [ftaComponentsDir],
         promptFilePath: ftaPromptsNewPath,
-        rulesFilePath: ftaRulesPath,
+        rulesFilePath: null,
         configOverrides: {
           model: this.modelConfig.model,
           planModel: this.modelConfig.model,
