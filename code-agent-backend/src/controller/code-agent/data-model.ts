@@ -1,16 +1,14 @@
 import { Body, Controller, Del, Get, Inject, Param, Post, Put } from '@midwayjs/decorator';
 import { Context } from '@midwayjs/web';
-import { CreateNewDataModelRequest, ParseSchemaRequest, UpdateNewDataModelRequest } from '../../dto/code-agent/req';
+import { CreateNewDataModelRequest, UpdateNewDataModelRequest } from '../../dto/code-agent/req';
 import {
   CreateNewDataModelResponse,
   DeleteNewDataModelResponse,
   NewDataModelDetailResponse,
   NewDataModelListResponse,
-  ParseSchemaResponse,
   UpdateNewDataModelResponse,
 } from '../../dto/code-agent/res';
 import { DataModelService } from '../../service/code-agent/data-model';
-import { SchemaParserService } from '../../service/code-agent/schema-parser';
 
 @Controller('/code-agent/data-model')
 export class DataModelController {
@@ -19,9 +17,6 @@ export class DataModelController {
 
   @Inject()
   private dataModelService: DataModelService;
-
-  @Inject()
-  private schemaParserService: SchemaParserService;
 
   /**
    * 创建数据模型
@@ -123,20 +118,6 @@ export class DataModelController {
       if (this.ctx.status !== 404) {
         this.ctx.status = 500;
       }
-      throw error;
-    }
-  }
-
-  /**
-   * 使用 AI 解析文本生成 Schema
-   */
-  @Post('/parse-schema')
-  async parseSchema(@Body() body: ParseSchemaRequest): Promise<ParseSchemaResponse> {
-    try {
-      const schema = await this.schemaParserService.parseText(body.text, body.hint);
-      return new ParseSchemaResponse(schema);
-    } catch (error) {
-      this.ctx.status = 400;
       throw error;
     }
   }

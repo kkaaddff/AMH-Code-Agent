@@ -433,9 +433,3 @@ export class DeleteRestApiResponse extends BaseResponse<boolean> {
   }
 }
 
-// AI 解析 Schema 响应
-export class ParseSchemaResponse extends BaseResponse<any[]> {
-  constructor(schema: any[]) {
-    super(schema, true, 'Schema parsed successfully');
-  }
-}

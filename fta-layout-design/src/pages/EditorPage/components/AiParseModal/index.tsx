@@ -1,8 +1,8 @@
-import { dataModelService } from '@/services/dataModelService';
 import type { SchemaField } from '@/types/dataModel';
 import { RobotOutlined } from '@ant-design/icons';
 import { App, Button, Input, Modal, Radio, Space, Typography } from 'antd';
 import React, { useState } from 'react';
+import { aiParseSchema } from '../../services/AiParsing';
 import { validateSchema } from '../../utils/schema';
 import './index.css';
 
@@ -39,7 +39,8 @@ const AiParseModal: React.FC<AiParseModalProps> = ({ open, onClose, onParse, loa
 
     setParsing(true);
     try {
-      const parsedSchema = await dataModelService.parseSchema({
+      // 直接调用前端 AI 解析服务，通过 model-gateway-sync 调用统一大模型
+      const parsedSchema = await aiParseSchema({
         text: aiText.trim(),
         hint: aiHint,
       });

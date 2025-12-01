@@ -6,7 +6,6 @@
 import { buildApiUrl, currentApiConfig, API_ENDPOINTS } from '@/config/api';
 import type { DocumentReference } from '@/types/project';
 import { DSLData } from '@/types/dsl';
-import type { SchemaField } from '@/types/interfaceDataModel';
 import type {
   DataModel,
   DataModelGroup,
@@ -14,7 +13,6 @@ import type {
   UpdateDataModelGroupRequest,
   CreateDataModelRequest,
   UpdateDataModelRequest,
-  ParseSchemaRequest,
 } from '@/types/dataModel';
 import type {
   RestApi,
@@ -592,12 +590,6 @@ export const api = {
      * 获取单个数据模型详情
      */
     detail: (id: string) => ApiService.get<DataModel>(API_ENDPOINTS.dataModel.detail(id)),
-
-    /**
-     * 使用 AI 解析文本生成 Schema
-     */
-    parseSchema: (data: ParseSchemaRequest) =>
-      ApiService.post<SchemaField[]>(API_ENDPOINTS.dataModel.parseSchema, data),
   },
 
   // REST API 接口相关

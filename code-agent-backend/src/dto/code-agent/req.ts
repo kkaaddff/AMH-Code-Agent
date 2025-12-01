@@ -641,11 +641,3 @@ export class UpdateRestApiRequest {
   responseModelIds?: string[];
 }
 
-// AI 解析 Schema 请求
-export class ParseSchemaRequest {
-  @ApiProperty({ description: '待解析的文本内容', example: '{ "name": "string", "age": 18 }', required: true })
-  text: string;
-
-  @ApiProperty({ description: '文本类型提示', example: 'json', enum: ['json', 'typescript', 'text'] })
-  hint?: 'json' | 'typescript' | 'text';
-}

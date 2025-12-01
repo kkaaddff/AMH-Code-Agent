@@ -104,7 +104,6 @@ export const API_ENDPOINTS = {
     listByGroup: (groupId: string) => `/code-agent/data-model/group/${groupId}`,
     listUngrouped: (projectId: string) => `/code-agent/data-model/project/${projectId}/ungrouped`,
     detail: (id: string) => `/code-agent/data-model/${id}`,
-    parseSchema: '/code-agent/data-model/parse-schema',
   },
   // REST API 接口组相关
   restApiGroup: {

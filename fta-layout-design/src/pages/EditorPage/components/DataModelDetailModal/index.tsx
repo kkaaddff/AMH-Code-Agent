@@ -92,6 +92,7 @@ const DataModelDetailModal: React.FC<DataModelDetailModalProps> = ({ open, model
       editorPageActions.updateDataModel(dataModel.id, updated);
       setHasChanges(false);
       message.success('保存成功');
+      onClose();
     } catch (error: any) {
       console.error('保存失败:', error);
       message.error(error.message || '保存失败');

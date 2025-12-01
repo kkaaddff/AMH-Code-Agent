@@ -11,8 +11,6 @@ import type {
   UpdateDataModelGroupRequest,
   CreateDataModelRequest,
   UpdateDataModelRequest,
-  ParseSchemaRequest,
-  SchemaField,
 } from '@/types/dataModel';
 
 /**
@@ -124,14 +122,6 @@ export const dataModelService = {
     } catch {
       return null;
     }
-  },
-
-  /**
-   * 使用 AI 解析文本生成 Schema
-   */
-  async parseSchema(data: ParseSchemaRequest): Promise<SchemaField[]> {
-    const response = await api.dataModel.parseSchema(data);
-    return response.data || [];
   },
 };
 
