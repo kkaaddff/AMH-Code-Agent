@@ -108,6 +108,8 @@ const parseSmartDetectionEvents = (events: Array<{ type: string; text?: string }
 
 const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
   ({ onDetectingChange }, ref: React.Ref<SmartDetectionHandle>) => {
+    const { modal } = App.useApp();
+
     const { designData, rootAnnotation, dslRootNode } = useSnapshot(designDetectionStore);
     const editorPageStoreSnapshot = useSnapshot(editorPageStore);
     const selectedDocumentId =
@@ -233,6 +235,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         const dslData = designData.dsl as DSLData;
         const detectionEvents = await smartDetection(dslData);
         const parsedEntries = parseSmartDetectionEvents(detectionEvents);
+        setIsDetecting(false);
 
         if (!parsedEntries.length) {
           message.warning('未能从智能识别中解析出有效的标注结果');
@@ -253,7 +256,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
           const created = await designDetectionActions.createAnnotation(
             dslNode,
             entry.component,
-            entry.name ? { name: entry.name, force: true } : undefined
+            entry.name ? { name: entry.name, force: true, modal } : { modal }
           );
           if (created) {
             createdCount += 1;

@@ -5,6 +5,7 @@ import { api } from '@/utils/apiService';
 import { componentDetectionDebugLog } from '@/utils/componentDetectionDebug';
 import { FileImageOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Typography } from 'antd';
+import type { HookAPI } from 'antd/es/modal/useModal';
 import type { DataNode } from 'antd/es/tree';
 import { useMemo } from 'react';
 import { proxy, useSnapshot } from 'valtio';
@@ -318,6 +319,7 @@ export const designDetectionActions = {
       props?: Record<string, any>;
       layout?: any;
       force?: boolean;
+      modal?: HookAPI;
     }
   ): Promise<boolean> => {
     if (!designDetectionStore.rootAnnotation) {
@@ -355,12 +357,13 @@ export const designDetectionActions = {
 
     if (hasAnnotatedChildren && isNonContainer) {
       const confirmed = await new Promise<boolean>((resolve) => {
-        const instance = Modal.confirm({
+        const instance = (additionalProps?.modal ?? Modal).confirm({
           title: '检测到内部已有标注',
           content: `该节点内部存在 ${descendantAnnotations.length} 个已标注节点。若创建为非容器组件，将清空其内部标注。`,
           okText: '强制创建并清空',
           cancelText: '取消',
           centered: true,
+          zIndex: 1000,
           onOk: () => {
             resolve(true);
             instance.destroy();

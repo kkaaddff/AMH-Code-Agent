@@ -124,4 +124,3 @@ const AiParseModal: React.FC<AiParseModalProps> = ({ open, onClose, onParse, loa
 };
 
 export default AiParseModal;
-
