@@ -325,7 +325,7 @@ const EditorPageContent: React.FC = () => {
     const hasExistingAnnotations = rootAnnotation && rootAnnotation.children?.length > 0;
 
     if (!hasExistingAnnotations) {
-      modal.confirm({
+      const instance = modal.confirm({
         title: '智能识别是什么？',
         content: (
           <div>
@@ -347,17 +347,23 @@ const EditorPageContent: React.FC = () => {
         cancelText: '取消',
         okType: 'primary',
         centered: true,
-        onOk: () => smartDetectionRef.current?.runDetection(),
+        onOk: () => {
+          smartDetectionRef.current?.runDetection();
+          instance.destroy();
+        },
       });
     } else {
-      modal.confirm({
+      const instance = modal.confirm({
         title: '确认重新执行智能识别？',
         content: '当前设计稿已存在标注，重新识别可能产生重复或冲突，请确认是否继续。',
         okText: '继续识别',
         cancelText: '取消',
         okType: 'danger',
         centered: true,
-        onOk: () => smartDetectionRef.current?.runDetection(),
+        onOk: () => {
+          smartDetectionRef.current?.runDetection();
+          instance.destroy();
+        },
       });
     }
   };

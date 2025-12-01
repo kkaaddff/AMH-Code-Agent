@@ -43,7 +43,7 @@ export class DesignDSLService {
   /**
    * 生成随机ID
    */
-  private generateId(prefix: string = 'paint_1'): string {
+  private generateId(prefix = 'paint_1'): string {
     const randomNum = Math.floor(Math.random() * 99999);
     return `${prefix}:${randomNum.toString().padStart(5, '0')}`;
   }

@@ -8,20 +8,18 @@ import { isNodeVisible } from '../utils/nodeUtils';
 const filterHiddenNodes = (nodes?: DSLNode[]): DSLNode[] => {
   if (!nodes) return [];
 
-  return nodes
-    .filter(isNodeVisible)
-    .map((node) => {
-      const sanitizedNode: DSLNode = { ...node };
-      const filteredChildren = filterHiddenNodes(node.children);
+  return nodes.filter(isNodeVisible).map((node) => {
+    const sanitizedNode: DSLNode = { ...node };
+    const filteredChildren = filterHiddenNodes(node.children);
 
-      if (filteredChildren.length) {
-        sanitizedNode.children = filteredChildren;
-      } else {
-        delete sanitizedNode.children;
-      }
+    if (filteredChildren.length) {
+      sanitizedNode.children = filteredChildren;
+    } else {
+      delete sanitizedNode.children;
+    }
 
-      return sanitizedNode;
-    });
+    return sanitizedNode;
+  });
 };
 
 export const smartDetection = async (DesignData: DSLData) => {
