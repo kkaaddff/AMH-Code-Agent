@@ -1,6 +1,7 @@
 import type { DSLNode, DesignData, AnnotationNode } from '@/types/dsl';
 import { useState, useEffect, useCallback } from 'react';
 import { GRID_CONFIG, COLORS } from '../constants/CanvasConstant';
+import { isNodeHidden } from './nodeUtils';
 
 /**
  * 带绝对坐标的扁平化 DSL 节点类型。
@@ -460,7 +461,7 @@ export const flattenDSLNodeTree = (root: DSLNode | null, hidden = false): Flatte
   if (!root) return [];
   const result: FlattenedDSLNode[] = [];
   const traverse = (node: DSLNode, parentX = 0, parentY = 0) => {
-    if (hidden && (node.hidden || node.mask === 'outline')) return;
+    if (hidden && isNodeHidden(node)) return;
     const absoluteX = parentX + (node.layoutStyle?.relativeX || 0);
     const absoluteY = parentY + (node.layoutStyle?.relativeY || 0);
     result.push({ ...node, absoluteX, absoluteY });

@@ -309,7 +309,6 @@ export const designDetectionActions = {
     updateDSLNodeHiddenState(id);
   },
 
-  // 创建标注
   createAnnotation: async (
     dslNode: DSLNode,
     ftaComponent: string,
@@ -481,7 +480,6 @@ export const designDetectionActions = {
     return true;
   },
 
-  // 删除标注
   deleteAnnotation: (annotationId: string, options: { docId: string; deleteChildren?: boolean }) => {
     const { docId, deleteChildren = false } = options;
 
@@ -557,7 +555,6 @@ export const designDetectionActions = {
     designDetectionStore.expandedKeys = designDetectionStore.expandedKeys.filter((key) => !idsToDelete.includes(key));
   },
 
-  // 更新标注
   updateAnnotation: async (annotationId: string, updates: Partial<AnnotationNode>): Promise<boolean> => {
     const targetAnnotation = findAnnotationById(annotationId, designDetectionStore.rootAnnotation);
     if (!targetAnnotation) {
@@ -655,7 +652,6 @@ export const designDetectionActions = {
     return true;
   },
 
-  // 选择标注
   selectAnnotation: (annotationId: string | null, multiSelect: boolean = false) => {
     if (annotationId === null) {
       designDetectionStore.selectedNodeIds = [];
@@ -692,7 +688,6 @@ export const designDetectionActions = {
     }
   },
 
-  // 选择DSL节点
   selectDSLNode: (dslNode: DSLNode | null, multiSelect: boolean = false) => {
     if (dslNode === null) {
       designDetectionStore.selectedNodeIds = [];
@@ -721,14 +716,12 @@ export const designDetectionActions = {
     }
   },
 
-  // Hover标注
   hoverAnnotation: (annotationId: string | null) => {
     designDetectionStore.hoveredAnnotation = annotationId
       ? findAnnotationById(annotationId, designDetectionStore.rootAnnotation)
       : null;
   },
 
-  // Hover DSL节点
   hoverDSLNode: (dslNodeId: string | null) => {
     designDetectionStore.hoveredDSLNode = dslNodeId
       ? findDSLNodeById(dslNodeId, designDetectionStore.dslRootNode)

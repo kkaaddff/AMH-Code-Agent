@@ -9,6 +9,7 @@ import {
 } from '../../contexts/DesignDetectionContext';
 import type { AnnotationNode, LabelInstruction, SelectedNodeItem } from '../../types/componentDetection';
 import { NodeType } from '../../types/componentDetection';
+import { isNodeHidden } from '../../utils/nodeUtils';
 import {
   drawBorder,
   drawGridBackground,
@@ -685,7 +686,7 @@ export class DetectionCanvasScene {
     });
 
     const traverseDSLNodes = (node: DSLNode, parentX = 0, parentY = 0) => {
-      if (node.hidden || node.mask === 'outline') {
+      if (isNodeHidden(node)) {
         return;
       }
       const bounds = getNodeBounds(node, parentX, parentY);

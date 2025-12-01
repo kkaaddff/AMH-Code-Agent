@@ -18,6 +18,8 @@ import {
 } from '../utils/styleUtils';
 import { parseImageUrl } from '../utils/imageUtils';
 import { parseBorderStyle, parseEffectStyle } from '../utils/layoutUtils';
+import { isNodeVisible } from '../pages/EditorPage/utils/nodeUtils';
+import { getPathViewBox } from '../utils/svgPathUtils';
 
 interface DSLElementProps {
   node?: DSLNode;
@@ -56,7 +58,7 @@ const DSLElement: React.FC<DSLElementProps> = ({
     return <div>Empty DSL</div>;
   }
 
-  if (currentNode.hidden) {
+  if (!isNodeVisible(currentNode)) {
     return null;
   }
 
@@ -244,6 +246,10 @@ const DSLElement: React.FC<DSLElementProps> = ({
       const width = pathNode.layoutStyle?.width || 100;
       const height = pathNode.layoutStyle?.height || 100;
 
+      // 计算 path data 的实际边界框来设置正确的 viewBox
+      // 这样可以确保即使 path 坐标范围与容器尺寸不一致也能正确渲染
+      const viewBox = getPathViewBox(pathData.data);
+
       return (
         <div
           style={{
@@ -256,7 +262,8 @@ const DSLElement: React.FC<DSLElementProps> = ({
           <svg
             width={width}
             height={height}
-            viewBox={`0 0 ${width} ${height}`}
+            viewBox={viewBox}
+            preserveAspectRatio='xMidYMid meet'
             style={{ position: 'absolute', top: 0, left: 0 }}>
             <path
               d={pathData.data}

@@ -8,6 +8,7 @@ import { useSnapshot } from 'valtio';
 import { designDetectionActions, designDetectionStore } from '../../contexts/DesignDetectionContext';
 import { editorPageStore } from '../../contexts/EditorPageContext';
 import { DSL3DScene, DSLNodeInfo } from './DSL3DScene';
+import { isNodeHidden } from '../../utils/nodeUtils';
 
 import { DocumentReference } from '@/types/project';
 import './style.css';
@@ -81,7 +82,7 @@ const HiddenNodePreview: React.FC<{ dsl: DesignData | null }> = ({ dsl }) => {
 const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) => {
   const { message, modal } = App.useApp();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { designData: dslData } = useSnapshot(designDetectionStore);
+  const { designData } = useSnapshot(designDetectionStore);
   const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
   const sceneRef = useRef<DSL3DScene | null>(null);
 
@@ -97,7 +98,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
   }, [currentPage, selectedDocument]);
 
   const flatNodes = useMemo(() => {
-    if (!dslData) return [];
+    if (!designData) return [];
 
     const nodes: DSLNodeInfo[] = [];
 
@@ -105,7 +106,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       if (!node) return;
 
       // 前置过滤：对于 hidden 或 mask 为 outline 的节点，直接跳过其本身及子节点
-      if (node.hidden || node.mask === 'outline') {
+      if (isNodeHidden(node)) {
         return;
       }
 
@@ -135,31 +136,31 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
 
     let rootNodes: DSLNode[] = [];
 
-    if (dslData && typeof dslData === 'object' && 'dsl' in dslData && (dslData as DesignData).dsl?.nodes) {
-      rootNodes = (dslData as DesignData).dsl.nodes;
+    if (designData && typeof designData === 'object' && 'dsl' in designData && (designData as DesignData).dsl?.nodes) {
+      rootNodes = (designData as DesignData).dsl.nodes;
     }
 
     rootNodes.forEach((item) => traverse(item, 0, 0, 0));
 
     return nodes;
-  }, [dslData]);
+  }, [designData]);
 
   const tmpDSLData: DesignData | null = useMemo(() => {
-    if (!selectedNode || !dslData) return null;
+    if (!selectedNode || !designData) return null;
 
     const targetNode = selectedNode.rawNode as DSLNode;
 
     return {
-      ...dslData,
+      ...designData,
       dsl: {
-        ...dslData.dsl,
+        ...designData.dsl,
         nodes: [targetNode],
       },
     };
-  }, [selectedNode, dslData]);
+  }, [selectedNode, designData]);
 
   const hiddenNodes = useMemo(() => {
-    if (!dslData?.dsl?.nodes?.length) return [];
+    if (!designData?.dsl?.nodes?.length) return [];
 
     const nodes: DSLNode[] = [];
     const traverse = (node: DSLNode) => {
@@ -173,9 +174,9 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
       }
     };
 
-    dslData.dsl.nodes.forEach((node) => traverse(node as DSLNode));
+    designData.dsl.nodes.forEach((node) => traverse(node as DSLNode));
     return nodes;
-  }, [dslData]);
+  }, [designData]);
 
   // Initialize Scene
   useEffect(() => {
@@ -235,7 +236,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
     try {
       await apiServices.project.updateDocument({
         id: selectedDesignDocument!.id,
-        data: dslData as DesignData,
+        data: designData as DesignData,
       });
       message.success('DSL 已保存');
       await finalizeClose();
@@ -304,7 +305,7 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
               ) : (
                 <div className='dsl-3d-inspect-modal__hidden-grid'>
                   {hiddenNodes.map((node) => {
-                    const previewDSL = buildPreviewDSL(node, dslData as DesignData);
+                    const previewDSL = buildPreviewDSL(node, designData as DesignData);
                     return (
                       <div key={node.id} className='dsl-3d-inspect-modal__hidden-item'>
                         <HiddenNodePreview dsl={previewDSL} />
@@ -332,10 +333,10 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
               <span>DSL 全局预览</span>
             </div>
             <div className='dsl-3d-inspect-modal__sidebar-body'>
-              {dslData ? (
+              {designData ? (
                 <div className='dsl-3d-inspect-modal__preview-wrapper1'>
                   <div className='dsl-3d-inspect-modal__preview1' style={{ transform: 'scale(0.5)' }}>
-                    <DSLElement dslData={dslData as DesignData} />
+                    <DSLElement dslData={designData as DesignData} />
                   </div>
                 </div>
               ) : (
@@ -354,8 +355,11 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
                   onClick={() => {
                     navigator.clipboard.writeText(tmpDSLData.dsl.nodes[0].id);
                     message.success('已复制节点 ID');
-                  }}>
-                  {tmpDSLData.dsl.nodes[0].id}
+                  }}
+                  title={tmpDSLData.dsl.nodes[0].id}>
+                  {tmpDSLData.dsl.nodes[0].id.length > 16
+                    ? `${tmpDSLData.dsl.nodes[0].id.slice(0, 8)}...${tmpDSLData.dsl.nodes[0].id.slice(-4)}`
+                    : tmpDSLData.dsl.nodes[0].id}
                 </Button>
               )}
               {tmpDSLData?.dsl?.nodes?.[0]?.id ? (

@@ -3,12 +3,13 @@ import { callModelAPI } from './CodeGenerationLoop/index.AgentScheduler.backup';
 import { Message, RequestBody } from './CodeGenerationLoop/types';
 import intelliPrompt from './intelli-prompt';
 import api from '@/utils/apiService';
+import { isNodeVisible } from '../utils/nodeUtils';
 
 const filterHiddenNodes = (nodes?: DSLNode[]): DSLNode[] => {
   if (!nodes) return [];
 
   return nodes
-    .filter((node) => !(node.hidden || node.mask === 'outline'))
+    .filter(isNodeVisible)
     .map((node) => {
       const sanitizedNode: DSLNode = { ...node };
       const filteredChildren = filterHiddenNodes(node.children);

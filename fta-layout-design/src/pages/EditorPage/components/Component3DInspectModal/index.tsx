@@ -19,9 +19,10 @@ import {
   PANEL_MATERIAL_CONFIG,
   RENDERER_CONFIG,
   SCENE_LAYOUT,
-} from '../constants/Three3DInspectConstants';
-import { designDetectionStore } from '../contexts/DesignDetectionContext';
-import type { AnnotationNode } from '../types/componentDetection';
+} from '../../constants/Three3DInspectConstants';
+import { designDetectionStore } from '../../contexts/DesignDetectionContext';
+import type { AnnotationNode } from '../../types/componentDetection';
+import './index.css';
 
 interface Component3DInspectModalProps {
   open: boolean;
@@ -548,32 +549,14 @@ const Component3DInspectModal: React.FC<Component3DInspectModalProps> = ({ open,
       width={MODAL_CONFIG.WIDTH}
       centered
       maskClosable={false}
-      destroyOnHidden
-      styles={{
-        content: { background: COLOR_CONFIG.MODAL_CONTENT_BG },
-        header: {
-          background: COLOR_CONFIG.MODAL_HEADER_BG,
-          borderBottom: `1px solid ${COLOR_CONFIG.MODAL_HEADER_BORDER}`,
-          color: COLOR_CONFIG.MODAL_HEADER_TEXT,
-        },
-        body: { padding: 0 },
-      }}>
-      <div style={{ height: MODAL_CONFIG.HEIGHT, position: 'relative', background: COLOR_CONFIG.MODAL_BG }}>
-        <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
+      destroyOnClose
+      className='component-3d-inspect-modal'>
+      <div className='component-3d-inspect-modal__container'>
+        <div ref={containerRef} className='component-3d-inspect-modal__canvas' />
         {initializing && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: `rgba(255, 255, 255, ${LOADING_CONFIG.BACKGROUND_OPACITY})`,
-              pointerEvents: 'none',
-              backdropFilter: LOADING_CONFIG.BACKDROP_BLUR,
-            }}>
+          <div className='component-3d-inspect-modal__loading'>
             <Spin size='large' />
-            <div style={{ marginTop: 16, color: '#999', fontSize: 14 }}>{LOADING_CONFIG.SPIN_TIP}</div>
+            <div className='component-3d-inspect-modal__loading-tip'>{LOADING_CONFIG.SPIN_TIP}</div>
           </div>
         )}
       </div>

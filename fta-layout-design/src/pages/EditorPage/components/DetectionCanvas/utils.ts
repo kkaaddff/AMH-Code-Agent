@@ -3,6 +3,7 @@ import { COLORS, DASH_PATTERNS, DRAW_STYLES } from '../../constants/CanvasConsta
 import { designDetectionStore, findAnnotationByDSLNodeId } from '../../contexts/DesignDetectionContext';
 import type { LabelInstruction } from '../../types/componentDetection';
 import { drawBorder, getNodeBounds } from '../../utils/DetectionCanvasV2Helper';
+import { isNodeHidden } from '../../utils/nodeUtils';
 
 export const drawLabel = (ctx: CanvasRenderingContext2D, instruction: LabelInstruction) => {
   ctx.font = instruction.style.FONT;
@@ -19,7 +20,7 @@ export const drawLabel = (ctx: CanvasRenderingContext2D, instruction: LabelInstr
 };
 
 export const drawDSLNodeBorders = (ctx: CanvasRenderingContext2D, node: DSLNode, parentX = 0, parentY = 0) => {
-  if (node.hidden || node.mask === 'outline') return;
+  if (isNodeHidden(node)) return;
 
   const bounds = getNodeBounds(node, parentX, parentY);
 

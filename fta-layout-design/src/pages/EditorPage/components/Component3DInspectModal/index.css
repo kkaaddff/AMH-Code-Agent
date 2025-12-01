@@ -1,0 +1,48 @@
+/* Component3DInspectModal 样式 */
+
+/* Modal 容器样式 */
+.component-3d-inspect-modal .ant-modal-content {
+  background: #f8f9fa;
+}
+
+/* Modal 头部样式 */
+.component-3d-inspect-modal .ant-modal-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e8e8e8;
+  color: #262626;
+}
+
+/* Modal body 样式 */
+.component-3d-inspect-modal .ant-modal-body {
+  padding: 0;
+}
+
+/* 3D 场景容器 */
+.component-3d-inspect-modal__container {
+  height: 600px;
+  position: relative;
+  background: #fafafa;
+}
+
+.component-3d-inspect-modal__canvas {
+  height: 100%;
+  width: 100%;
+}
+
+/* 加载状态样式 */
+.component-3d-inspect-modal__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+
+.component-3d-inspect-modal__loading-tip {
+  margin-top: 16px;
+  color: #999;
+  font-size: 14px;
+}
