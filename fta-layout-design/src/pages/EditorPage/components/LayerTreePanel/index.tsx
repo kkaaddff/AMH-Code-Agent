@@ -485,26 +485,6 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
         <div className='layer-tree-panel__data-menu'>
           <div
             className={`layer-tree-panel__data-menu-item${
-              selectedDocument?.type === 'openapi' && dataViewType === 'restApi'
-                ? ' layer-tree-panel__data-menu-item--active'
-                : ''
-            }`}
-            onClick={() => handleDataViewSelect('restApi')}
-            role='button'
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                handleDataViewSelect('restApi');
-              }
-            }}>
-            <Space>
-              <ApiOutlined />
-              <span>接口</span>
-            </Space>
-            <RightOutlined className='layer-tree-panel__data-menu-arrow' />
-          </div>
-          <div
-            className={`layer-tree-panel__data-menu-item${
               selectedDocument?.type === 'openapi' && dataViewType === 'dataModel'
                 ? ' layer-tree-panel__data-menu-item--active'
                 : ''
@@ -520,6 +500,26 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
             <Space>
               <DatabaseOutlined />
               <span>数据模型</span>
+            </Space>
+            <RightOutlined className='layer-tree-panel__data-menu-arrow' />
+          </div>
+          <div
+            className={`layer-tree-panel__data-menu-item${
+              selectedDocument?.type === 'openapi' && dataViewType === 'restApi'
+                ? ' layer-tree-panel__data-menu-item--active'
+                : ''
+            }`}
+            onClick={() => handleDataViewSelect('restApi')}
+            role='button'
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleDataViewSelect('restApi');
+              }
+            }}>
+            <Space>
+              <ApiOutlined />
+              <span>接口</span>
             </Space>
             <RightOutlined className='layer-tree-panel__data-menu-arrow' />
           </div>

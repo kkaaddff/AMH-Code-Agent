@@ -37,8 +37,7 @@ const DataModelListPanel: React.FC<DataModelListPanelProps> = ({ onCreateClick, 
       const lowerSearch = searchText.toLowerCase();
       models = models.filter(
         (m) =>
-          m.name.toLowerCase().includes(lowerSearch) ||
-          (m.description?.toLowerCase().includes(lowerSearch) ?? false)
+          m.name.toLowerCase().includes(lowerSearch) || (m.description?.toLowerCase().includes(lowerSearch) ?? false)
       );
     }
 
@@ -109,7 +108,9 @@ const DataModelListPanel: React.FC<DataModelListPanelProps> = ({ onCreateClick, 
                 return (
                   <List.Item
                     key={model.id}
-                    className={`data-model-list-panel__item${isSelected ? ' data-model-list-panel__item--selected' : ''}`}
+                    className={`data-model-list-panel__item${
+                      isSelected ? ' data-model-list-panel__item--selected' : ''
+                    }`}
                     onClick={() => handleSelect(model)}>
                     <List.Item.Meta
                       title={
@@ -162,4 +163,3 @@ const DataModelListPanel: React.FC<DataModelListPanelProps> = ({ onCreateClick, 
 };
 
 export default DataModelListPanel;
-
