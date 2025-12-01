@@ -54,53 +54,25 @@ const parseSmartDetectionEvents = (events: Array<{ type: string; text?: string }
     )
     .filter((line) => line.length > 0)
     .forEach((line) => {
-      const parts = line
-        .split(':')
-        .map((part) => part.trim())
-        .filter((part) => part.length > 0);
+      const parts = line.split(';').map((part) => part.trim());
+
       if (parts.length < 2) {
         return;
       }
 
-      const normalizeNodeId = (value: string) => value.replace(/^['"]+|['"]+$/g, '');
+      const nodeId = parts[0].replace(/^['"]+|['"]+$/g, '');
+      const component = parts[1];
+      const businessName = parts[2] || undefined;
 
-      const parseWithBusinessName = (): SmartDetectionEntry | null => {
-        if (parts.length < 3) return null;
-
-        const componentPart = parts[parts.length - 2];
-        const businessName = parts[parts.length - 1];
-        const nodeId = normalizeNodeId(parts.slice(0, parts.length - 2).join(':'));
-
-        if (!nodeId || !SMART_DETECTION_COMPONENT_REGEX.test(componentPart)) {
-          return null;
-        }
-
-        return {
-          nodeId,
-          component: componentPart.match(SMART_DETECTION_COMPONENT_REGEX)![0],
-          name: businessName || undefined,
-        };
-      };
-
-      const parseWithoutBusinessName = (): SmartDetectionEntry | null => {
-        const componentPart = parts[parts.length - 1];
-        const nodeId = normalizeNodeId(parts.slice(0, parts.length - 1).join(':'));
-
-        if (!nodeId || !SMART_DETECTION_COMPONENT_REGEX.test(componentPart)) {
-          return null;
-        }
-
-        return {
-          nodeId,
-          component: componentPart.match(SMART_DETECTION_COMPONENT_REGEX)![0],
-        };
-      };
-
-      const parsedEntry = parseWithBusinessName() ?? parseWithoutBusinessName();
-
-      if (parsedEntry) {
-        resultMap.set(parsedEntry.nodeId, parsedEntry);
+      if (!nodeId || !SMART_DETECTION_COMPONENT_REGEX.test(component)) {
+        return;
       }
+
+      resultMap.set(nodeId, {
+        nodeId,
+        component: component.match(SMART_DETECTION_COMPONENT_REGEX)![0],
+        name: businessName,
+      });
     });
 
   return Array.from(resultMap.values());

@@ -288,55 +288,25 @@ export const streamModelGateway = async ({ body, onChunk, onComplete }: StreamMo
 export const syncModelGateway = async ({ body }: SyncModelGatewayOptions): Promise<StreamModelGatewayEvent[]> => {
   const requestPayload = JSON.stringify(body);
   let result = null;
-  if (import.meta.env.MODE !== 'development') {
-    const response = await fetch(MODEL_GATEWAY_SYNC_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: requestPayload,
-    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`模型连接失败: ${response.status} ${response.statusText} ${errorText}`);
-    }
+  const response = await fetch(MODEL_GATEWAY_SYNC_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: requestPayload,
+  });
 
-    result = await response.json();
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`模型连接失败: ${response.status} ${response.statusText} ${errorText}`);
+  }
 
-    if (!result.success) {
-      throw new Error(`模型调用失败: ${result.error || '未知错误'}`);
-    }
-  } else {
-    result = {
-      success: true,
-      data: {
-        choices: [
-          {
-            finish_reason: 'stop',
-            index: 0,
-            message: {
-              content:
-                '\n677:12796:View:\n677:12841:Text:\n677:13276:Icon:\n677:12961:Text:\n677:12957:Text:\n677:12965:Text:\n677:12913:Card:ShipmentInfoCard\n677:13020:Card:OrderPricingBar\n677:13082:Card:CargoOwnerInfoCard\n677:13185:Card:ServiceFeeCard\n677:13143:Text:\n677:13147:Text:\n677:13172:Text:\n677:13155:Text:\n677:13159:Text:\n677:13163:Text:\n677:13139:Text:\n677:13167:Text:\n677:13134:Text:\n677:13181:Text:\n677:13131:Text:\n677:13205:Text:\n677:13111:View:\n677:13098:View:\n677:13051:Text:\n677:13055:Text:\n677:13037:Text:\n677:13041:Text:\n677:12894:Text:\n677:12990:Avatar:OwnerAvatar\n677:12992:Text:\n677:12999:Text:\n677:13012:Text:\n677:13004:Text:\n677:13016:Text:\n677:13008:Text:\n677:13061:Icon:',
-              role: 'assistant',
-            },
-          },
-        ],
-        created: 1764574564,
-        id: '202512011532257eec8508348246be',
-        model: 'glm-4.6',
-        request_id: '202512011532257eec8508348246be',
-        usage: {
-          completion_tokens: 8967,
-          prompt_tokens: 25775,
-          prompt_tokens_details: {
-            cached_tokens: 4,
-          },
-          total_tokens: 34742,
-        },
-      },
-    };
+  result = await response.json();
+
+  if (!result.success) {
+    throw new Error(`模型调用失败: ${result.error || '未知错误'}`);
   }
 
   // 从后端返回的 data 字段中提取事件
