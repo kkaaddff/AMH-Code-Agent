@@ -454,9 +454,9 @@ const ComponentPropertyPanelV2: React.FC = () => {
         id: selectedDocument!.id!,
         data: designData as DesignData,
       });
-      message.success('DSL 已保存');
+      message.success('设计稿已保存');
     } catch (error: any) {
-      message.error(error?.message ?? '保存 DSL 失败');
+      message.error(error?.message ?? '保存设计稿失败');
     } finally {
       designDetectionActions.clearSelection();
     }

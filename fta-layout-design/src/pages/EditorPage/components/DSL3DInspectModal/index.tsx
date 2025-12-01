@@ -238,10 +238,10 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
         id: selectedDesignDocument!.id,
         data: designData as DesignData,
       });
-      message.success('DSL 已保存');
+      message.success('设计稿已保存');
       await finalizeClose();
     } catch (error: any) {
-      message.error(error?.message ?? '保存 DSL 失败');
+      message.error(error?.message ?? '保存设计稿失败');
     } finally {
       setSaving(false);
     }
