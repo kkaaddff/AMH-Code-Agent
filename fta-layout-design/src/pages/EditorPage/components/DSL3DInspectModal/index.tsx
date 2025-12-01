@@ -347,8 +347,8 @@ const DSL3DInspectModal: React.FC<DSL3DInspectModalProps> = ({ open, onClose }) 
 
           <div className='dsl-3d-inspect-modal__sidebar-section'>
             <div className='dsl-3d-inspect-modal__sidebar-header'>
-              <span>当前节点预览</span>
-              <span>按 Esc 键取消选择</span>
+              <span>节点预览</span>
+              <span>按 Esc 键取消</span>
               {tmpDSLData?.dsl?.nodes?.[0]?.id && (
                 <Button
                   size='small'

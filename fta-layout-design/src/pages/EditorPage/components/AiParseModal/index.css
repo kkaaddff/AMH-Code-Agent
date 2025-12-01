@@ -1,0 +1,16 @@
+.ai-parse-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-parse-modal__hint {
+  display: flex;
+  align-items: center;
+}
+
+.ai-parse-modal__input {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+}
+
