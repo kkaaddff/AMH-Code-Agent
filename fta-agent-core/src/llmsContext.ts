@@ -1,9 +1,8 @@
 import fs from 'fs';
 import path from 'pathe';
-import { platform } from 'process';
 import type { Context } from './context';
 import { resolveLlmsRules } from './rules';
-import { createLSTool } from './tools/ls';
+import { createLSTool } from './tools-unadapted/ls';
 import { getGitStatus, getLlmGitStatus } from './utils/git';
 import { isProjectDirectory } from './utils/project';
 

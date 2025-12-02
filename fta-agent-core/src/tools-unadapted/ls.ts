@@ -1,13 +1,7 @@
 import path from 'pathe';
 import { z } from 'zod';
 import { createTool } from '../tool';
-import {
-  createFileTree,
-  listDirectory,
-  MAX_FILES,
-  printTree,
-  TRUNCATED_MESSAGE,
-} from '../utils/list';
+import { createFileTree, listDirectory, MAX_FILES, printTree, TRUNCATED_MESSAGE } from '../utils/list';
 
 export function createLSTool(opts: { cwd: string; productName: string }) {
   return createTool({
@@ -24,14 +18,8 @@ export function createLSTool(opts: { cwd: string; productName: string }) {
     },
     execute: async (params) => {
       const { dir_path } = params;
-      const fullFilePath = path.isAbsolute(dir_path)
-        ? dir_path
-        : path.resolve(opts.cwd, dir_path);
-      const result = listDirectory(
-        fullFilePath,
-        opts.cwd,
-        opts.productName,
-      ).sort();
+      const fullFilePath = path.isAbsolute(dir_path) ? dir_path : path.resolve(opts.cwd, dir_path);
+      const result = listDirectory(fullFilePath, opts.cwd, opts.productName).sort();
       const tree = createFileTree(result);
       const userTree = printTree(opts.cwd, tree);
       if (result.length < MAX_FILES) {

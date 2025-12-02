@@ -52,9 +52,7 @@ Remembers:
 
         const response = await fetch(url);
         if (!response.ok) {
-          throw new Error(
-            `Failed to fetch ${url}: ${response.status} ${response.statusText}`,
-          );
+          throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
         }
         const rawText = await response.text();
         const contentType = response.headers.get('content-type') ?? '';
@@ -68,8 +66,7 @@ Remembers:
         }
 
         if (content.length > MAX_CONTENT_LENGTH) {
-          content =
-            content.substring(0, MAX_CONTENT_LENGTH) + '...[content truncated]';
+          content = content.substring(0, MAX_CONTENT_LENGTH) + '...[content truncated]';
         }
 
         const input = buildFetchPrompt({ content, prompt });
@@ -78,9 +75,7 @@ Remembers:
           model: opts.model,
           systemPrompt: '',
         });
-        const llmResult = result.success
-          ? result.data.text
-          : `Failed to fetch content from ${url}`;
+        const llmResult = result.success ? result.data.text : `Failed to fetch content from ${url}`;
 
         const code = response.status;
         const codeText = response.statusText;

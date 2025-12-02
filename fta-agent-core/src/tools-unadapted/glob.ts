@@ -17,11 +17,7 @@ Glob
 `.trim(),
     parameters: z.object({
       pattern: z.string().describe('The glob pattern to match files against'),
-      path: z
-        .string()
-        .optional()
-        .nullable()
-        .describe('The directory to search in'),
+      path: z.string().optional().nullable().describe('The directory to search in'),
     }),
     getDescription: ({ params }) => {
       if (!params.pattern || typeof params.pattern !== 'string') {
@@ -39,13 +35,9 @@ Glob
           stat: true,
           withFileTypes: true,
         });
-        const sortedPaths = paths.sort(
-          (a, b) => (a.mtimeMs ?? 0) - (b.mtimeMs ?? 0),
-        );
+        const sortedPaths = paths.sort((a, b) => (a.mtimeMs ?? 0) - (b.mtimeMs ?? 0));
         const truncated = sortedPaths.length > LIMIT;
-        const filenames = sortedPaths
-          .slice(0, LIMIT)
-          .map((path) => path.fullpath());
+        const filenames = sortedPaths.slice(0, LIMIT).map((path) => path.fullpath());
         const message = truncated
           ? `Found ${filenames.length} files in ${Date.now() - start}ms, truncating to ${LIMIT}.`
           : `Found ${filenames.length} files in ${Date.now() - start}ms.`;

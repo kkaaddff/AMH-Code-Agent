@@ -41,36 +41,29 @@ function createImageResponse(buffer: Buffer, ext: string): ToolResult {
   };
 }
 
-async function processImage(
-  filePath: string,
-  cwd: string,
-): Promise<ToolResult> {
-  try {
-    const stats = fs.statSync(filePath);
-    const ext = path.extname(filePath).toLowerCase();
+async function processImage(filePath: string, cwd: string): Promise<ToolResult> {
+  const stats = fs.statSync(filePath);
+  const ext = path.extname(filePath).toLowerCase();
 
-    // Security: Validate file path to prevent traversal attacks
-    const resolvedPath = path.resolve(filePath);
-    if (!resolvedPath.startsWith(cwd)) {
-      throw new Error('Invalid file path: path traversal detected');
-    }
-
-    const buffer = fs.readFileSync(filePath);
-
-    // If file is within size limit, return as-is
-    if (stats.size <= MAX_IMAGE_SIZE) {
-      return createImageResponse(buffer, ext);
-    }
-
-    // If file is too large, return error with helpful message
-    throw new Error(
-      `Image file is too large (${Math.round((stats.size / 1024 / 1024) * 100) / 100}MB). ` +
-        `Maximum supported size is ${Math.round((MAX_IMAGE_SIZE / 1024 / 1024) * 100) / 100}MB. ` +
-        `Please resize the image and try again.`,
-    );
-  } catch (error) {
-    throw error;
+  // Security: Validate file path to prevent traversal attacks
+  const resolvedPath = path.resolve(filePath);
+  if (!resolvedPath.startsWith(cwd)) {
+    throw new Error('Invalid file path: path traversal detected');
   }
+
+  const buffer = fs.readFileSync(filePath);
+
+  // If file is within size limit, return as-is
+  if (stats.size <= MAX_IMAGE_SIZE) {
+    return createImageResponse(buffer, ext);
+  }
+
+  // If file is too large, return error with helpful message
+  throw new Error(
+    `Image file is too large (${Math.round((stats.size / 1024 / 1024) * 100) / 100}MB). ` +
+      `Maximum supported size is ${Math.round((MAX_IMAGE_SIZE / 1024 / 1024) * 100) / 100}MB. ` +
+      'Please resize the image and try again.'
+  );
 }
 
 const MAX_LINES_TO_READ = 2000;
@@ -95,16 +88,12 @@ Usage:
         .number()
         .optional()
         .nullable()
-        .describe(
-          'The line number to start reading from. Only provide if the file is too large to read at once',
-        ),
+        .describe('The line number to start reading from. Only provide if the file is too large to read at once'),
       limit: z
         .number()
         .optional()
         .nullable()
-        .describe(
-          `The number of lines to read. Only provide if the file is too large to read at once`,
-        ),
+        .describe('The number of lines to read. Only provide if the file is too large to read at once'),
     }),
     getDescription: ({ params, cwd }) => {
       if (!params.file_path || typeof params.file_path !== 'string') {
@@ -161,9 +150,7 @@ Usage:
 
         // Truncate long lines
         const truncatedLines = selectedLines.map((line) =>
-          line.length > MAX_LINE_LENGTH
-            ? line.substring(0, MAX_LINE_LENGTH) + '...'
-            : line,
+          line.length > MAX_LINE_LENGTH ? line.substring(0, MAX_LINE_LENGTH) + '...' : line
         );
 
         const processedContent = truncatedLines.join('\n');

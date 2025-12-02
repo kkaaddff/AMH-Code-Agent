@@ -20,9 +20,7 @@ Usage:
     parameters: z.object({
       file_path: z.string().describe('The path of the file to modify'),
       old_string: z.string().describe('The text to replace'),
-      new_string: z
-        .string()
-        .describe('The text to replace the old_string with'),
+      new_string: z.string().describe('The text to replace the old_string with'),
     }),
     getDescription: ({ params, cwd }) => {
       if (!params.file_path || typeof params.file_path !== 'string') {
@@ -33,17 +31,9 @@ Usage:
     execute: async ({ file_path, old_string, new_string }) => {
       try {
         const cwd = opts.cwd;
-        const fullFilePath = path.isAbsolute(file_path)
-          ? file_path
-          : path.resolve(cwd, file_path);
+        const fullFilePath = path.isAbsolute(file_path) ? file_path : path.resolve(cwd, file_path);
         const relativeFilePath = path.relative(cwd, fullFilePath);
-        const { patch, updatedFile } = applyEdit(
-          cwd,
-          fullFilePath,
-          old_string,
-          new_string,
-          'search-replace',
-        );
+        const { patch, updatedFile } = applyEdit(cwd, fullFilePath, old_string, new_string, 'search-replace');
         const dir = path.dirname(fullFilePath);
         fs.mkdirSync(dir, { recursive: true });
         fs.writeFileSync(fullFilePath, updatedFile, 'utf-8');
