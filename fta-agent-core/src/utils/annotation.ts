@@ -31,8 +31,8 @@ export function formatAnnotationSummary(nodes: AnnotationNodeSummary[]): string 
     const labelParts = [
       `[${node.id}]`,
       node.dslNodeId ? `(DSL:${node.dslNodeId})` : '',
-      node.name ?? '未命名节点',
-      node.component ? `<${node.component}>` : '',
+      node.name ?? 'unnamed',
+      node.component ?? '',
       node.isContainer ? '(容器)' : '',
     ].filter(Boolean);
 

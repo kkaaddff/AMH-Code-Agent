@@ -29,8 +29,7 @@ const getAnnotationUtils = () => {
 };
 
 const ftaSpecsDir = path.join(__dirname, 'fta-specs');
-const ftaPromptsNewPath = path.join(__dirname, 'fta-prompts', 'frontend-project.md');
-const ftaRulesPath = path.join(__dirname, 'fta-prompts', 'fta-project-spec-4agent.md');
+const ftaPromptsNewPath = path.join(__dirname, 'fta-prompts', 'frontend-project-new.md');
 const ftaComponentsDir = path.join(__dirname, 'fta-components');
 
 export interface FrontendWorkflowOptions {

@@ -362,7 +362,7 @@ export class DesignDSLService {
                   filters: '',
                 },
               ],
-              token: `转换的SVG图像/${pathNode.name}`,
+              token: `SVG图像-${pathNode.name}`,
             } as LayerStyle;
 
             // 返回新的LAYER节点

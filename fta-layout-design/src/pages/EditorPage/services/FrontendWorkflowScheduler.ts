@@ -8,7 +8,7 @@
  */
 import { buildApiUrl } from '@/config/api';
 import { callService } from '@/utils/workstationConnector';
-import { TodoItem } from './CodeGenerationLoop/types';
+import { TodoItem } from './types';
 
 export interface FrontendWorkflowParams {
   designDocId: string;
@@ -183,9 +183,42 @@ export class FrontendWorkflowScheduler {
         break;
 
       case 'tool_approve':
-        // 工具批准事件
-        if (data.toolName === 'todoWrite' && data.params?.todos && Array.isArray(data.params.todos)) {
-          callbacks.onTodoUpdate?.(data.params.todos);
+        if (
+          data.toolName === 'todoWrite' &&
+          data.params?.todos &&
+          (Array.isArray(data.params.todos) || typeof data.params.todos === 'string')
+        ) {
+          let todos = data.params.todos;
+          if (typeof todos === 'string') {
+            try {
+              todos = JSON.parse(todos);
+            } catch (err) {
+              console.error('解析 todos 字符串失败:', err, todos);
+              todos = [];
+            }
+          }
+          // 将 todos 统一转换为 TodoItem 类型后回调
+          // 标准 TodoItem 至少应包含 id、name、status，防御性转换
+          let normalizedTodos: TodoItem[] = [];
+          if (Array.isArray(todos)) {
+            normalizedTodos = todos.map((item: any, idx: number) => {
+              if (typeof item === 'object' && item !== null) {
+                return {
+                  id: item.id ?? `todo-${idx}`,
+                  content: item.content ?? item.name ?? item.task ?? item.description ?? '',
+                  status: item.status ?? 'pending',
+                  ...item,
+                };
+              }
+              // 如果是字符串等非对象类型，转为空 todo
+              return {
+                id: `todo-${idx}`,
+                name: String(item),
+                status: 'pending',
+              };
+            });
+            callbacks.onTodoUpdate?.(normalizedTodos);
+          }
         } else if (data.toolName === 'propose_file' && data.params) {
           // 处理 propose_file 工具调用
           const fileProposal: FileProposal = {

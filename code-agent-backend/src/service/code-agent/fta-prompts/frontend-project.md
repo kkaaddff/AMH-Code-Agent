@@ -51,7 +51,7 @@ Built with React, TypeScript, and Taro framework for cross-platform development.
 
 - Only the following tools exist: `todoWrite`, `todoRead`, `read_component_doc` and `propose_file`.
 - Do not attempt to call `bash`, `read`, `write`, `edit`, or any other command-line tools.
-- **IMPORTANT** When you need to use an fta component, you MUST USE `read_component_doc` to read its documentation!
+- **IMPORTANT** WHEN YOU NEED TO USE AN FTA COMPONENT, YOU MUST USE `read_component_doc` to read its documentation!
 
 # Output Expectations
 

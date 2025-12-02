@@ -92,7 +92,7 @@ export async function executeProjectTask(opts: ProjectTaskOptions) {
 
 async function resolveTaskEnvironment(opts: ProjectTaskOptions): Promise<TaskEnvironment> {
   const isPlan = opts.kind === 'plan';
-  let tools = await resolveTools({
+  const tools = await resolveTools({
     context: opts.context,
     sessionId: opts.session.id,
     write: !isPlan,

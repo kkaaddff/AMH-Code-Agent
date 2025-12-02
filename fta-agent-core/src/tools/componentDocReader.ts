@@ -23,20 +23,22 @@ export function createComponentDocReaderTool(opts: ComponentDocReaderOptions) {
 
   return createTool({
     name: 'read_component_doc',
-    description: `
-读取 fta-component 组件库中指定组件的使用文档。需要了解组件的属性、使用方式与注意事项时，可调用该工具读取对应文档后再做实现决策。
-`.trim(),
+    description:
+      "Read the usage documentation of specified components from the fta-component library. Call this tool to fetch the relevant documentation when you need to understand a component's props, usage patterns, and important notes before making implementation decisions.",
     parameters: z.object({
-      component_names: z.array(z.string()).min(1).describe('需要读取的组件名称列表，例如 ["Button", "Modal"]'),
+      component_names: z
+        .array(z.string())
+        .min(1)
+        .describe('List of component names to read documentation for, e.g., ["Button", "Modal"]'),
     }),
     getDescription: ({ params }) => {
       if (!params.component_names || params.component_names.length === 0) {
-        return '读取组件使用文档';
+        return 'Read component usage documentation';
       }
       if (params.component_names.length === 1) {
-        return `读取组件文档：${params.component_names[0]}`;
+        return `Read component documentation: ${params.component_names[0]}`;
       }
-      return `读取多个组件文档：${params.component_names.join(', ')}`;
+      return `Read documentation for multiple components: ${params.component_names.join(', ')}`;
     },
     execute: async ({ component_names }) => {
       const uniqueNames = Array.from(new Set(component_names));

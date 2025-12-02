@@ -26,13 +26,13 @@ export function formatAnnotationSummary(nodes: AnnotationNodeSummary[]): string 
     const indent = '  '.repeat(Math.max(node.depth - 1, 0));
     const labelParts = [
       `[${node.id}]`,
-      node.name ?? '未命名节点',
-      node.component ? `<${node.component}>` : '',
+      node.name ?? 'unnamed',
+      node.component ?? '',
       node.isContainer ? '(容器)' : '',
     ].filter(Boolean);
     const metrics =
-      node.width && node.height ? `尺寸：${Math.round(node.width)}×${Math.round(node.height)}` : undefined;
-    const childInfo = node.childCount ? `子节点：${node.childCount}` : undefined;
+      node.width && node.height ? `size: ${Math.round(node.width)}×${Math.round(node.height)}` : undefined;
+    const childInfo = node.childCount ? `children: ${node.childCount}` : undefined;
     const info = [metrics, childInfo].filter(Boolean).join('，');
     lines.push(`${indent}- ${labelParts.join(' ')}${info ? `（${info}）` : ''}`);
   });

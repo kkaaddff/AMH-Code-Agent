@@ -151,9 +151,9 @@ The assistant did not use the todo list because this is a single command executi
 </reasoning>
 </example>
 
-## Task States and Management
+## Task Status and Management
 
-1. **Task States**: Use these states to track progress:
+1. **Task Status**: Use these status to track progress:
    - pending: Task not yet started
    - in_progress: Currently working on (limit to ONE task at a time)
    - completed: Task finished successfully
@@ -183,7 +183,7 @@ The assistant did not use the todo list because this is a single command executi
 When in doubt, use this tool. Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully.
 `;
 
-const TODO_READ_PROMPT = `Use this tool to read your todo list`;
+const TODO_READ_PROMPT = 'Use this tool to read your todo list';
 
 const TodoItemSchema = z.object({
   id: z.string(),
@@ -253,6 +253,14 @@ export function createInMemoryTodoStorage(initialTodos: TodoList = []): TodoStor
       return currentTodos.map((todo) => ({ ...todo }));
     },
     async write(todos) {
+      if (typeof todos === 'string') {
+        try {
+          todos = JSON.parse(todos);
+        } catch (err) {
+          console.error('解析 todos 字符串失败:', err, todos);
+          todos = [];
+        }
+      }
       currentTodos = todos.map((todo) => ({ ...todo }));
     },
   };

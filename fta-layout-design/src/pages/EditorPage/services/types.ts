@@ -7,12 +7,16 @@ export type TodoStatus = 'pending' | 'in_progress' | 'completed';
 
 /**
  * TODO 项
+ * - id: 唯一标识，必填
+ * - content: 任务内容，必填，不可为空
+ * - status: 任务状态，必填
+ * - priority: 优先级，必填
  */
 export interface TodoItem {
-  id?: string;
+  id: string;
   content: string;
-  status?: TodoStatus;
-  activeForm?: string;
+  status: TodoStatus;
+  priority: 'low' | 'medium' | 'high';
 }
 
 /**

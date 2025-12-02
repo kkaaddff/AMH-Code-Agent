@@ -1,5 +1,5 @@
 import { proxy } from 'valtio';
-import { TodoItem } from '../services/CodeGenerationLoop/types';
+import { TodoItem } from '../services/types';
 
 export interface ThoughtChainItem {
   id: string;
@@ -99,7 +99,7 @@ export const codeGenerationActions = {
 
       return {
         id: todoId,
-        title: todo.activeForm || todo.content || '任务',
+        title: todo.content || 'Task',
         status,
         content: todo.content || existing?.content || '',
         startedAt: existing?.startedAt || now,

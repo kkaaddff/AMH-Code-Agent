@@ -292,7 +292,7 @@ export async function runFrontendProjectWorkflow(
         });
       },
       thinking: {
-        effort: 'medium',
+        effort: 'high',
       },
     });
 

@@ -1,9 +1,17 @@
 import { DSLData, DSLNode } from '@/types/dsl';
-import { callModelAPI } from './CodeGenerationLoop/index.AgentScheduler.backup';
-import { Message, RequestBody } from './CodeGenerationLoop/types';
-import intelliPrompt from './intelli-prompt';
 import api from '@/utils/apiService';
 import { isNodeVisible } from '../utils/nodeUtils';
+import { Message, RequestBody } from './types';
+import intelliPrompt from './intelli-prompt';
+import { StreamModelGatewayEvent, syncModelGateway } from '../utils/modelGateway';
+
+/**
+ * 发送消息到模型 使用 syncModelGateway 中转
+ */
+export async function callModelAPI(requestBody: RequestBody): Promise<StreamModelGatewayEvent[]> {
+  const events = await syncModelGateway({ body: requestBody });
+  return events;
+}
 
 const filterHiddenNodes = (nodes?: DSLNode[]): DSLNode[] => {
   if (!nodes) return [];
