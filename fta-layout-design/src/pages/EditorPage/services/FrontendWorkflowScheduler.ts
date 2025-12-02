@@ -8,12 +8,15 @@
  */
 import { buildApiUrl } from '@/config/api';
 import { callService } from '@/utils/workstationConnector';
+import { getModelConfig } from '@/utils/modelConfig';
 import { TodoItem } from './types';
 
 export interface FrontendWorkflowParams {
   designDocId: string;
   productName?: string;
   srcTree?: TreeNode;
+  apiKey?: string;
+  baseURL?: string;
 }
 
 export interface FileProposal {
@@ -49,6 +52,11 @@ export class FrontendWorkflowScheduler {
     this.currentIteration = 0;
 
     try {
+      // 优先使用请求参数，如果没有则从 localStorage 读取
+      const storedConfig = getModelConfig();
+      const apiKey = params.apiKey || storedConfig.apiKey;
+      const baseURL = params.baseURL || storedConfig.baseURL;
+
       const response = await fetch(buildApiUrl('/code-agent/frontend-workflow'), {
         method: 'POST',
         headers: {
@@ -59,6 +67,8 @@ export class FrontendWorkflowScheduler {
           designDocId: params.designDocId,
           productName: params.productName || 'FTA-Frontend',
           srcTree: params.srcTree || undefined,
+          ...(apiKey && { apiKey }),
+          ...(baseURL && { baseURL }),
         }),
         signal: this.abortController.signal,
       });

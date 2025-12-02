@@ -39,6 +39,8 @@ export interface FrontendWorkflowOptions {
   signal?: AbortSignal;
   callbacks?: FrontendProjectWorkflowCallbacks;
   srcTree?: TreeNode;
+  apiKey?: string;
+  baseURL?: string;
 }
 
 export interface FrontendWorkflowResult {
@@ -82,8 +84,26 @@ export class FrontendWorkflowService {
    * 执行前端项目生成工作流
    */
   async runWorkflow(options: FrontendWorkflowOptions): Promise<FrontendWorkflowResult> {
-    const { designDocId, productName, sessionId, signal, callbacks, srcTree } = options;
+    const { designDocId, productName, sessionId, signal, callbacks, srcTree, apiKey, baseURL } = options;
     const workflowStartTime = Date.now();
+
+    // 优先使用入参，其次使用 modelConfig，都没有则报错
+    const finalApiKey = apiKey || this.modelConfig?.apiKey;
+    const finalBaseURL = baseURL || this.modelConfig?.baseURL;
+
+    if (!finalApiKey || !finalBaseURL) {
+      const missingParams: string[] = [];
+      if (!finalApiKey) missingParams.push('apiKey');
+      if (!finalBaseURL) missingParams.push('baseURL');
+      return {
+        success: false,
+        sessionId,
+        error: {
+          message: `缺少必需的模型配置参数: ${missingParams.join(', ')}。请通过请求参数或配置文件提供。`,
+          name: 'MissingModelConfigError',
+        },
+      };
+    }
 
     console.log(`frontend-workflow: [${sessionId}] 🏭 开始执行前端工作流服务`);
 
@@ -212,8 +232,8 @@ export class FrontendWorkflowService {
                 : undefined,
             }
           : callbacks,
-        apiKey: this.modelConfig.apiKey,
-        baseURL: this.modelConfig.baseURL,
+        apiKey: finalApiKey,
+        baseURL: finalBaseURL,
       });
 
       const workflowEngineDuration = Date.now() - workflowEngineStart;

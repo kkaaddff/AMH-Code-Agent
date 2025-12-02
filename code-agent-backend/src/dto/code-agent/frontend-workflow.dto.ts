@@ -32,4 +32,20 @@ export class FrontendWorkflowRequestDTO {
   })
   @Rule(RuleType.object().optional())
   srcTree?: TreeNode;
+
+  @ApiProperty({
+    required: false,
+    example: 'sk-xxx',
+    description: 'API Key（可选，优先使用）',
+  })
+  @Rule(RuleType.string().optional())
+  apiKey?: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'https://api.openai.com/v1',
+    description: 'Base URL（可选，优先使用）',
+  })
+  @Rule(RuleType.string().optional())
+  baseURL?: string;
 }

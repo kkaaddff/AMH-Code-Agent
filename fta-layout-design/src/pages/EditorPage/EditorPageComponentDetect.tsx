@@ -1,3 +1,4 @@
+import { ModelConfigModal } from '@/components/ModelConfigModal';
 import type { DesignData } from '@/types/dsl';
 import {
   AppstoreOutlined,
@@ -6,6 +7,7 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
   QuestionCircleOutlined,
+  SettingOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { App as AntApp, App, Button, Dropdown, Layout, Spin, Switch, Typography } from 'antd';
@@ -24,9 +26,9 @@ import DSL3DInspectModal from './components/DSL3DInspectModal';
 import InteractionGuideOverlay from './components/InteractionGuideOverlay';
 import LayerTreePanel from './components/LayerTreePanel';
 import PRDEditorPanel from './components/PRDEditorPanel';
-import RestApiGroupPanel from './components/RestApiGroupPanel';
 import RestApiCreateModal from './components/RestApiCreateModal';
 import RestApiDetailModal from './components/RestApiDetailModal';
+import RestApiGroupPanel from './components/RestApiGroupPanel';
 import RestApiListPanel from './components/RestApiListPanel';
 import type { SmartDetectionHandle } from './components/SmartDetection';
 import SmartDetection from './components/SmartDetection';
@@ -79,7 +81,8 @@ const EditorPageContent: React.FC = () => {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isAnnotationConfirmOpen, setIsAnnotationConfirmOpen] = useState(false);
   const [isSmartDetecting, setIsSmartDetecting] = useState(false);
-
+  // 数据管理相关弹窗状态
+  const [modelConfigModalOpen, setModelConfigModalOpen] = useState(false);
   // 数据管理相关弹窗状态
   const [dataModelCreateModalOpen, setDataModelCreateModalOpen] = useState(false);
   const [dataModelDetailModalOpen, setDataModelDetailModalOpen] = useState(false);
@@ -487,6 +490,14 @@ const EditorPageContent: React.FC = () => {
                         className='editor-page-button'>
                         交互引导
                       </Button>
+                      <Button
+                        type='default'
+                        size='small'
+                        icon={<SettingOutlined />}
+                        onClick={() => setModelConfigModalOpen(true)}
+                        className='editor-page-button'>
+                        模型配置
+                      </Button>
                       <Dropdown
                         menu={{
                           items: SCALE_OPTIONS,
@@ -613,6 +624,7 @@ const EditorPageContent: React.FC = () => {
       <DSL3DInspectModal open={isDSL3DModalOpen} onClose={() => setIsDSL3DModalOpen(false)} />
       <InteractionGuideOverlay open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
       <CodeGenerationDrawer abortGeneration={abortGeneration} />
+      <ModelConfigModal open={modelConfigModalOpen} onClose={() => setModelConfigModalOpen(false)} />
 
       {/* 智能识别动画组件 */}
       <SmartDetection ref={smartDetectionRef} onDetectingChange={handleSmartDetectionChange} />
