@@ -8,6 +8,7 @@ const STORAGE_KEY = 'fta_model_config';
 export interface ModelConfig {
   apiKey?: string;
   baseURL?: string;
+  model?: string;
 }
 
 /**

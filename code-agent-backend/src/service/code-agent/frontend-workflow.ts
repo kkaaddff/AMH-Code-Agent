@@ -41,6 +41,7 @@ export interface FrontendWorkflowOptions {
   srcTree?: TreeNode;
   apiKey?: string;
   baseURL?: string;
+  model?: string;
 }
 
 export interface FrontendWorkflowResult {
@@ -84,12 +85,13 @@ export class FrontendWorkflowService {
    * 执行前端项目生成工作流
    */
   async runWorkflow(options: FrontendWorkflowOptions): Promise<FrontendWorkflowResult> {
-    const { designDocId, productName, sessionId, signal, callbacks, srcTree, apiKey, baseURL } = options;
+    const { designDocId, productName, sessionId, signal, callbacks, srcTree, apiKey, baseURL, model } = options;
     const workflowStartTime = Date.now();
 
     // 优先使用入参，其次使用 modelConfig，都没有则报错
     const finalApiKey = apiKey || this.modelConfig?.apiKey;
     const finalBaseURL = baseURL || this.modelConfig?.baseURL;
+    const finalModel = model || this.modelConfig?.model;
 
     if (!finalApiKey || !finalBaseURL) {
       const missingParams: string[] = [];
@@ -200,8 +202,8 @@ export class FrontendWorkflowService {
         promptFilePath: ftaPromptsNewPath,
         rulesFilePath: null,
         configOverrides: {
-          model: this.modelConfig.model,
-          planModel: this.modelConfig.model,
+          model: finalModel,
+          planModel: finalModel,
         },
         todoStorageMode: 'memory',
         callbacks: signal

@@ -20,12 +20,14 @@ export interface StreamModelGatewayOptions {
   onComplete?: () => void;
   apiKey?: string;
   baseURL?: string;
+  model?: string;
 }
 
 export interface SyncModelGatewayOptions {
   body: Record<string, any>;
   apiKey?: string;
   baseURL?: string;
+  model?: string;
 }
 
 const extractChunkContent = (payload: any): string => {
@@ -207,16 +209,19 @@ export const streamModelGateway = async ({
   onComplete,
   apiKey,
   baseURL,
+  model,
 }: StreamModelGatewayOptions): Promise<void> => {
   // 优先使用请求参数，如果没有则从 localStorage 读取
   const storedConfig = getModelConfig();
   const finalApiKey = apiKey || storedConfig.apiKey;
   const finalBaseURL = baseURL || storedConfig.baseURL;
+  const finalModel = model || storedConfig.model;
 
   const requestPayload = JSON.stringify({
     ...body,
     ...(finalApiKey && { apiKey: finalApiKey }),
     ...(finalBaseURL && { baseURL: finalBaseURL }),
+    ...(finalModel && { model: finalModel }),
     stream: true,
   });
 
@@ -312,16 +317,19 @@ export const syncModelGateway = async ({
   body,
   apiKey,
   baseURL,
+  model,
 }: SyncModelGatewayOptions): Promise<StreamModelGatewayEvent[]> => {
   // 优先使用请求参数，如果没有则从 localStorage 读取
   const storedConfig = getModelConfig();
   const finalApiKey = apiKey || storedConfig.apiKey;
   const finalBaseURL = baseURL || storedConfig.baseURL;
+  const finalModel = model || storedConfig.model;
 
   const requestPayload = JSON.stringify({
     ...body,
     ...(finalApiKey && { apiKey: finalApiKey }),
     ...(finalBaseURL && { baseURL: finalBaseURL }),
+    ...(finalModel && { model: finalModel }),
   });
   let result = null;
 

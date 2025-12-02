@@ -48,4 +48,12 @@ export class FrontendWorkflowRequestDTO {
   })
   @Rule(RuleType.string().optional())
   baseURL?: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'gpt-4',
+    description: 'Model ID（可选，优先使用）',
+  })
+  @Rule(RuleType.string().optional())
+  model?: string;
 }

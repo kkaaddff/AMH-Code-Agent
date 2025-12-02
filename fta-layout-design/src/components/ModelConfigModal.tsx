@@ -63,6 +63,9 @@ export const ModelConfigModal: React.FC<ModelConfigModalProps> = ({ open, onClos
           ]}>
           <Input placeholder='例如: https://api.openai.com/v1' />
         </Form.Item>
+        <Form.Item label='Model ID' name='model' rules={[{ required: false, message: '请输入 Model ID' }]}>
+          <Input placeholder='例如: gpt-4, claude-3-opus-20240229' />
+        </Form.Item>
         <div style={{ color: '#999', fontSize: '12px', marginTop: '-16px' }}>
           提示：配置将保存在本地浏览器中，优先使用请求参数中的配置
         </div>

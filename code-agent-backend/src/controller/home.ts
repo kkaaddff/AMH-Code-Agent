@@ -63,13 +63,16 @@ export class HomeController {
     }
   }
 
-  private buildOpenAIRequest(payload: Record<string, any>, stream: boolean): Record<string, any> {
+  private buildOpenAIRequest(payload: Record<string, any>, stream: boolean, model?: string): Record<string, any> {
     const requestPayload: Record<string, any> = {
       ...payload,
       stream,
     };
 
-    if (!requestPayload.model && this.modelGatewayConfig?.model) {
+    // 优先使用传入的 model，其次使用 payload 中的 model，最后使用配置中的 model
+    if (model) {
+      requestPayload.model = model;
+    } else if (!requestPayload.model && this.modelGatewayConfig?.model) {
       requestPayload.model = this.modelGatewayConfig.model;
     }
 
@@ -86,12 +89,14 @@ export class HomeController {
   private extractAndValidateConfig(normalizedBody: Record<string, any>): {
     apiKey: string;
     baseURL: string;
+    model?: string;
     restBody: Record<string, any>;
   } {
-    const { apiKey, baseURL, ...restBody } = normalizedBody;
+    const { apiKey, baseURL, model, ...restBody } = normalizedBody;
 
     const finalApiKey = apiKey || this.modelGatewayConfig?.apiKey;
     const finalBaseURL = baseURL || this.modelGatewayConfig?.baseURL;
+    const finalModel = model || this.modelGatewayConfig?.model;
 
     if (!finalApiKey || !finalBaseURL) {
       const missingParams: string[] = [];
@@ -103,6 +108,7 @@ export class HomeController {
     return {
       apiKey: finalApiKey,
       baseURL: finalBaseURL,
+      model: finalModel,
       restBody,
     };
   }
@@ -143,9 +149,9 @@ export class HomeController {
   async modelGateway(@Body() questionBody: any) {
     try {
       const normalizedBody = this.normalizeRequestBody(questionBody);
-      const { apiKey, baseURL, restBody } = this.extractAndValidateConfig(normalizedBody);
+      const { apiKey, baseURL, model, restBody } = this.extractAndValidateConfig(normalizedBody);
 
-      const payload = this.buildOpenAIRequest(restBody, true);
+      const payload = this.buildOpenAIRequest(restBody, true, model);
       const headers = this.getModelHeaders(apiKey);
       const endpoint = this.getModelEndpoint(baseURL);
 
@@ -192,8 +198,8 @@ export class HomeController {
   async modelGatewaySync(@Body() questionBody: any) {
     const normalizedBody = this.normalizeRequestBody(questionBody);
 
-    const { apiKey, baseURL, restBody } = this.extractAndValidateConfig(normalizedBody);
-    const payload = this.buildOpenAIRequest(restBody, false);
+    const { apiKey, baseURL, model, restBody } = this.extractAndValidateConfig(normalizedBody);
+    const payload = this.buildOpenAIRequest(restBody, false, model);
 
     const start = Date.now();
 

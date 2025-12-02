@@ -16,7 +16,7 @@ export class FrontendWorkflowController {
   @Post('/frontend-workflow')
   @Validate()
   async startFrontendWorkflow(@Body() body: FrontendWorkflowRequestDTO) {
-    const { designDocId, productName = 'FTA-Frontend', srcTree, apiKey, baseURL } = body;
+    const { designDocId, productName = 'FTA-Frontend', srcTree, apiKey, baseURL, model } = body;
 
     // 生成会话ID并开始日志记录
     const sessionId = uuid();
@@ -79,6 +79,7 @@ export class FrontendWorkflowController {
         srcTree,
         apiKey,
         baseURL,
+        model,
         sessionId,
         signal: abortController.signal,
         callbacks: {

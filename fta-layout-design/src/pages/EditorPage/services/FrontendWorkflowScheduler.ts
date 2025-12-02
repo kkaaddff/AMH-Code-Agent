@@ -17,6 +17,7 @@ export interface FrontendWorkflowParams {
   srcTree?: TreeNode;
   apiKey?: string;
   baseURL?: string;
+  model?: string;
 }
 
 export interface FileProposal {
@@ -56,6 +57,7 @@ export class FrontendWorkflowScheduler {
       const storedConfig = getModelConfig();
       const apiKey = params.apiKey || storedConfig.apiKey;
       const baseURL = params.baseURL || storedConfig.baseURL;
+      const model = params.model || storedConfig.model;
 
       const response = await fetch(buildApiUrl('/code-agent/frontend-workflow'), {
         method: 'POST',
@@ -69,6 +71,7 @@ export class FrontendWorkflowScheduler {
           srcTree: params.srcTree || undefined,
           ...(apiKey && { apiKey }),
           ...(baseURL && { baseURL }),
+          ...(model && { model }),
         }),
         signal: this.abortController.signal,
       });
