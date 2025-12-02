@@ -71,9 +71,9 @@ ${Object.entries(llmsContext)
     `.trim();
 
     const llmsEnv = {
-      'Working directory': opts.context.cwd,
-      'Is directory a git repo': gitStatus ? 'YES' : 'NO',
-      Platform: platform,
+      // 'Working directory': opts.context.cwd,
+      // 'Is directory a git repo': gitStatus ? 'YES' : 'NO',
+      // Platform: platform,
       "Today's date": new Date().toLocaleDateString(),
     };
     const llmsEnvStr = `

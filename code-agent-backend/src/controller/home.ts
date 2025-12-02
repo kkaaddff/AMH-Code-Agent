@@ -14,23 +14,23 @@ export class HomeController {
   @Config('modelGateway.default')
   private modelGatewayConfig: ModelGatewayConfig;
 
-  private getModelEndpoint(): string {
-    const baseURL = this.modelGatewayConfig?.baseURL;
-    if (!baseURL) {
+  private getModelEndpoint(baseURL?: string): string {
+    const finalBaseURL = baseURL || this.modelGatewayConfig?.baseURL;
+    if (!finalBaseURL) {
       throw new Error('Model gateway baseURL is not configured');
     }
-    return `${baseURL.replace(/\/$/, '')}/chat/completions`;
+    return `${finalBaseURL.replace(/\/$/, '')}/chat/completions`;
   }
 
-  private getModelHeaders(): Record<string, string> {
-    const apiKey = this.modelGatewayConfig?.apiKey;
-    if (!apiKey) {
+  private getModelHeaders(apiKey?: string, accept?: string): Record<string, string> {
+    const finalApiKey = apiKey || this.modelGatewayConfig?.apiKey;
+    if (!finalApiKey) {
       throw new Error('Model gateway apiKey is not configured');
     }
     return {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${finalApiKey}`,
       'Content-Type': 'application/json',
-      Accept: 'text/event-stream',
+      Accept: accept || 'text/event-stream',
       Connection: 'keep-alive',
     };
   }
@@ -78,6 +78,52 @@ export class HomeController {
     return requestPayload;
   }
 
+  /**
+   * 从请求体中提取并验证模型配置参数
+   * @param normalizedBody 规范化后的请求体
+   * @returns 提取的配置和剩余请求体
+   */
+  private extractAndValidateConfig(normalizedBody: Record<string, any>): {
+    apiKey: string;
+    baseURL: string;
+    restBody: Record<string, any>;
+  } {
+    const { apiKey, baseURL, ...restBody } = normalizedBody;
+
+    const finalApiKey = apiKey || this.modelGatewayConfig?.apiKey;
+    const finalBaseURL = baseURL || this.modelGatewayConfig?.baseURL;
+
+    if (!finalApiKey || !finalBaseURL) {
+      const missingParams: string[] = [];
+      if (!finalApiKey) missingParams.push('apiKey');
+      if (!finalBaseURL) missingParams.push('baseURL');
+      throw new Error(`缺少必需的模型配置参数: ${missingParams.join(', ')}。请通过请求参数或配置文件提供。`);
+    }
+
+    return {
+      apiKey: finalApiKey,
+      baseURL: finalBaseURL,
+      restBody,
+    };
+  }
+
+  /**
+   * 发送 SSE 格式的错误响应
+   */
+  private sendSSEError(status: number, error: string): void {
+    this.ctx.status = status;
+    if (!this.ctx.res.headersSent) {
+      this.ctx.res.writeHead(status, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'close',
+      });
+    }
+    this.ctx.res.write(`data: ${JSON.stringify({ error })}\n\n`);
+    this.ctx.res.write('data: [DONE]\n\n');
+    this.ctx.res.end();
+  }
+
   @Get('/')
   @Redirect('/swagger-ui/index.html')
   async home() {}
@@ -96,9 +142,12 @@ export class HomeController {
   @Post('/model-gateway')
   async modelGateway(@Body() questionBody: any) {
     try {
-      const payload = this.buildOpenAIRequest(this.normalizeRequestBody(questionBody), true);
-      const headers = this.getModelHeaders();
-      const endpoint = this.getModelEndpoint();
+      const normalizedBody = this.normalizeRequestBody(questionBody);
+      const { apiKey, baseURL, restBody } = this.extractAndValidateConfig(normalizedBody);
+
+      const payload = this.buildOpenAIRequest(restBody, true);
+      const headers = this.getModelHeaders(apiKey);
+      const endpoint = this.getModelEndpoint(baseURL);
 
       this.ctx.res.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -135,55 +184,22 @@ export class HomeController {
       });
     } catch (error: any) {
       const message = error?.message || 'Model gateway request failed';
-      if (!this.ctx.res.headersSent) {
-        this.ctx.res.writeHead(500, {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          Connection: 'close',
-        });
-      }
-      this.ctx.res.write(`data: ${JSON.stringify({ error: message })}\n\n`);
-      this.ctx.res.write('data: [DONE]\n\n');
-      this.ctx.res.end();
+      this.sendSSEError(500, message);
     }
   }
 
   @Post('/model-gateway-sync')
   async modelGatewaySync(@Body() questionBody: any) {
-    let payload: Record<string, any>;
-    try {
-      payload = this.buildOpenAIRequest(this.normalizeRequestBody(questionBody), false);
-    } catch (error: any) {
-      this.ctx.status = 400;
-      return {
-        success: false,
-        error: error?.message || 'Invalid request payload',
-      };
-    }
+    const normalizedBody = this.normalizeRequestBody(questionBody);
 
-    const logDir = path.join(process.cwd(), 'logs', 'api');
-    const timestamp = new Date().toISOString();
-    const logFile = path.join(logDir, `model-gateway-sync-${new Date().toISOString().split('T')[0]}.log`);
-
-    // 确保日志目录存在
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true });
-    }
-
-    // 记录入参
-    const requestLog = {
-      timestamp,
-      type: 'REQUEST',
-      method: 'POST',
-      endpoint: '/model-gateway-sync',
-      payload,
-    };
+    const { apiKey, baseURL, restBody } = this.extractAndValidateConfig(normalizedBody);
+    const payload = this.buildOpenAIRequest(restBody, false);
 
     const start = Date.now();
 
     try {
-      const headers = this.getModelHeaders();
-      const endpoint = this.getModelEndpoint();
+      const headers = this.getModelHeaders(apiKey, 'application/json');
+      const endpoint = this.getModelEndpoint(baseURL);
 
       const response = await axios({
         method: 'POST',
@@ -196,48 +212,20 @@ export class HomeController {
         timeout: this.modelGatewayConfig?.timeout ?? 600_000,
       });
 
-      const duration = Date.now() - start;
-      // 控制台输出耗时
-      console.log(`[model-gateway-sync] 请求耗时: ${duration}ms`);
-
-      // 记录出参
-      const responseLog = {
-        timestamp: new Date().toISOString(),
-        type: 'RESPONSE',
-        method: 'POST',
-        endpoint: '/model-gateway-sync',
-        status: response.status,
-        responseData: response.data,
-        durationMs: duration,
-      };
-
-      // 写入日志文件
-      const logEntry = JSON.stringify(requestLog) + '\n' + JSON.stringify(responseLog) + '\n' + '---\n';
-      fs.appendFileSync(logFile, logEntry, 'utf8');
+      const durationMs = Date.now() - start;
+      const durationS = (durationMs / 1000).toFixed(2);
+      // 控制台输出耗时（单位：秒）
+      console.log(`[model-gateway-sync] 请求耗时: ${durationS}s`);
 
       return {
         success: true,
         data: response.data,
       };
     } catch (error: any) {
-      const duration = Date.now() - start;
-      // 控制台输出耗时
-      console.log(`[model-gateway-sync] 请求耗时: ${duration}ms`);
-
-      // 记录错误日志
-      const errorLog = {
-        timestamp: new Date().toISOString(),
-        type: 'ERROR',
-        method: 'POST',
-        endpoint: '/model-gateway-sync',
-        status: error.response?.status || 500,
-        error: error.response?.data || error.message || 'Request Error',
-        durationMs: duration,
-      };
-
-      // 写入日志文件
-      const logEntry = JSON.stringify(requestLog) + '\n' + JSON.stringify(errorLog) + '\n' + '---\n';
-      fs.appendFileSync(logFile, logEntry, 'utf8');
+      const durationMs = Date.now() - start;
+      const durationS = (durationMs / 1000).toFixed(2);
+      // 控制台输出耗时（单位：秒）
+      console.log(`[model-gateway-sync] 请求耗时: ${durationS}s`);
 
       this.ctx.status = error.response?.status || 500;
       return {

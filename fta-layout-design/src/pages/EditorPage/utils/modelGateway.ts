@@ -1,3 +1,5 @@
+import { getModelConfig } from '@/utils/modelConfig';
+
 const MODEL_GATEWAY_ENDPOINT = import.meta.env.VITE_API_BASE_URL + '/model-gateway';
 const MODEL_GATEWAY_SYNC_ENDPOINT = import.meta.env.VITE_API_BASE_URL + '/model-gateway-sync';
 
@@ -16,10 +18,14 @@ export interface StreamModelGatewayOptions {
   body: Record<string, any>;
   onChunk?: (chunk: StreamModelGatewayEvent) => void;
   onComplete?: () => void;
+  apiKey?: string;
+  baseURL?: string;
 }
 
 export interface SyncModelGatewayOptions {
   body: Record<string, any>;
+  apiKey?: string;
+  baseURL?: string;
 }
 
 const extractChunkContent = (payload: any): string => {
@@ -191,11 +197,26 @@ const extractEventsFromPayload = (payload: any): StreamModelGatewayEvent[] => {
  * @param body 请求体内容，可为对象或字符串
  * @param onChunk 每次收到事件片段时的回调
  * @param onComplete 流结束后的回调
+ * @param apiKey API Key（可选，优先使用）
+ * @param baseURL Base URL（可选，优先使用）
  * @returns 异步执行的 Promise
  */
-export const streamModelGateway = async ({ body, onChunk, onComplete }: StreamModelGatewayOptions): Promise<void> => {
+export const streamModelGateway = async ({
+  body,
+  onChunk,
+  onComplete,
+  apiKey,
+  baseURL,
+}: StreamModelGatewayOptions): Promise<void> => {
+  // 优先使用请求参数，如果没有则从 localStorage 读取
+  const storedConfig = getModelConfig();
+  const finalApiKey = apiKey || storedConfig.apiKey;
+  const finalBaseURL = baseURL || storedConfig.baseURL;
+
   const requestPayload = JSON.stringify({
     ...body,
+    ...(finalApiKey && { apiKey: finalApiKey }),
+    ...(finalBaseURL && { baseURL: finalBaseURL }),
     stream: true,
   });
 
@@ -283,10 +304,25 @@ export const streamModelGateway = async ({ body, onChunk, onComplete }: StreamMo
 /**
  * 调用模型网关的同步接口，一次性获取模型输出。
  * @param body 请求体内容，可为对象或字符串
+ * @param apiKey API Key（可选，优先使用）
+ * @param baseURL Base URL（可选，优先使用）
  * @returns 模型返回的事件数组
  */
-export const syncModelGateway = async ({ body }: SyncModelGatewayOptions): Promise<StreamModelGatewayEvent[]> => {
-  const requestPayload = JSON.stringify(body);
+export const syncModelGateway = async ({
+  body,
+  apiKey,
+  baseURL,
+}: SyncModelGatewayOptions): Promise<StreamModelGatewayEvent[]> => {
+  // 优先使用请求参数，如果没有则从 localStorage 读取
+  const storedConfig = getModelConfig();
+  const finalApiKey = apiKey || storedConfig.apiKey;
+  const finalBaseURL = baseURL || storedConfig.baseURL;
+
+  const requestPayload = JSON.stringify({
+    ...body,
+    ...(finalApiKey && { apiKey: finalApiKey }),
+    ...(finalBaseURL && { baseURL: finalBaseURL }),
+  });
   let result = null;
 
   const response = await fetch(MODEL_GATEWAY_SYNC_ENDPOINT, {
