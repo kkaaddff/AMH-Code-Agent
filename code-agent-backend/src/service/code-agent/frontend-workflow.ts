@@ -1,4 +1,6 @@
 import type { FrontendProjectWorkflowCallbacks } from '@fta/agent-core';
+import { runFrontendProjectWorkflow } from '@fta/agent-core';
+import { flattenAnnotation, formatAnnotationSummary } from '@fta/agent-core/dist/utils/annotation';
 import { Config, Inject, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import path from 'path';
 import { DesignData, DesignNode } from '../../types';
@@ -10,23 +12,6 @@ import { RestApiService } from './rest-api';
 import { TreeNode } from '../../dto/code-agent/frontend-workflow.dto';
 import { DataModel } from '../../entity/code-agent/data-model';
 import { RestApi } from '../../entity/code-agent/rest-api';
-
-let agentCorePromise: Promise<typeof import('@fta/agent-core')> | null = null;
-let annotationUtilsPromise: Promise<typeof import('@fta/agent-core/dist/utils/annotation')> | null = null;
-
-const getAgentCore = () => {
-  if (!agentCorePromise) {
-    agentCorePromise = import('@fta/agent-core');
-  }
-  return agentCorePromise;
-};
-
-const getAnnotationUtils = () => {
-  if (!annotationUtilsPromise) {
-    annotationUtilsPromise = import('@fta/agent-core/dist/utils/annotation');
-  }
-  return annotationUtilsPromise;
-};
 
 const ftaSpecsDir = path.join(__dirname, 'fta-specs');
 const ftaPromptsNewPath = path.join(__dirname, 'fta-prompts', 'frontend-project-new.md');
@@ -108,11 +93,6 @@ export class FrontendWorkflowService {
     }
 
     console.log(`frontend-workflow: [${sessionId}] 🏭 开始执行前端工作流服务`);
-
-    const [{ runFrontendProjectWorkflow }, { flattenAnnotation, formatAnnotationSummary }] = await Promise.all([
-      getAgentCore(),
-      getAnnotationUtils(),
-    ]);
 
     try {
       // 获取 DSL 数据

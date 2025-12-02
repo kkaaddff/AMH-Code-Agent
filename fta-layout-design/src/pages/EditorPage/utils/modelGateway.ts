@@ -279,7 +279,7 @@ export const syncModelGateway = async ({
 
   try {
     // 使用 apiService.ts 中的普通请求方法 - 需要通过 ApiService 类调用
-    const result = await ApiService.post('/model-gateway-sync', requestPayload);
+    const result = await ApiService.post('/model-gateway-sync', requestPayload, { timeout: 5 * 60 * 1000 });
 
     // 从后端返回的 data 字段中提取事件
     const events = extractEventsFromPayload(result.data);
