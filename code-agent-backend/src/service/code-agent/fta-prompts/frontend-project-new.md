@@ -188,7 +188,7 @@ const BusinessCard: React.FC<CardProps> = ({ data }) => {
 - **Constants**: `UPPER_SNAKE_CASE` (e.g., `MAX_COUNT`).
 - **Boolean**: Prefix with `is`, `has`, `can`, `should`.
 
-IMPORTANT!! ALL Files/Folders MUST BE `kebab-case`
+IMPORTANT: All files and folders—including Classes, Components, and Constants—MUST use `kebab-case` for naming. This rule is mandatory and applies universally.
 
 ### 6.2 Logic & Syntax
 
