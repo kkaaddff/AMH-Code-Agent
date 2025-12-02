@@ -252,13 +252,13 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         } else {
           message.warning(summaryMessage);
         }
+        designDetectionActions.saveAnnotations(selectedDocumentId!);
       } catch (error: any) {
         console.error('智能识别失败:', error);
         message.error(error?.message || '智能识别失败');
       } finally {
         setIsDetecting(false);
         onDetectingChange?.(false);
-        designDetectionActions.saveAnnotations(selectedDocumentId!);
       }
     }, [designData, isDetecting, rootAnnotation, selectedDocumentId]);
 
