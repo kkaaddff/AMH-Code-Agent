@@ -32,7 +32,6 @@ export class FrontendWorkflowController {
     this.ctx.set('Content-Type', 'text/event-stream; charset=utf-8');
     this.ctx.set('Cache-Control', 'no-cache');
     this.ctx.set('Connection', 'keep-alive');
-    this.ctx.set('Access-Control-Allow-Origin', '*');
 
     // 监听客户端断开连接
     const req = this.ctx.req;

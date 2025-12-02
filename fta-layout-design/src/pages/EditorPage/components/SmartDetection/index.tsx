@@ -255,7 +255,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         designDetectionActions.saveAnnotations(selectedDocumentId!);
       } catch (error: any) {
         console.error('智能识别失败:', error);
-        message.error(error?.message || '智能识别失败');
+        message.error(error?.message || '智能识别失败', 5);
       } finally {
         setIsDetecting(false);
         onDetectingChange?.(false);
