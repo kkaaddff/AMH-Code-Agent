@@ -1,4 +1,5 @@
-import type { DesignDSL } from '@/types/dsl';
+import { ModelConfigModal } from '@/components/ModelConfigModal';
+import type { DesignData } from '@/types/dsl';
 import {
   AppstoreOutlined,
   DeploymentUnitOutlined,
@@ -6,22 +7,29 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
   QuestionCircleOutlined,
+  SettingOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { App as AntApp, App, Button, Dropdown, Layout, Spin, Typography } from 'antd';
+import { App as AntApp, App, Button, Dropdown, Layout, Spin, Switch, Typography } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio/react';
 import AnnotationConfirmModal from './components/AnnotationConfirmModal';
 import CodeGenerationDrawer from './components/CodeGenerationDrawer';
 import Component3DInspectModal from './components/Component3DInspectModal';
 import ComponentPropertyPanel from './components/ComponentPropertyPanel';
+import DataModelCreateModal from './components/DataModelCreateModal';
+import DataModelDetailModal from './components/DataModelDetailModal';
+import DataModelGroupPanel from './components/DataModelGroupPanel';
+import DataModelListPanel from './components/DataModelListPanel';
 import DetectionCanvas from './components/DetectionCanvas';
 import DSL3DInspectModal from './components/DSL3DInspectModal';
 import InteractionGuideOverlay from './components/InteractionGuideOverlay';
 import LayerTreePanel from './components/LayerTreePanel';
-import OpenAPIDataPanel from './components/OpenAPIDataPanel';
-import OpenAPIUrlPanel from './components/OpenAPIUrlPanel';
 import PRDEditorPanel from './components/PRDEditorPanel';
+import RestApiCreateModal from './components/RestApiCreateModal';
+import RestApiDetailModal from './components/RestApiDetailModal';
+import RestApiGroupPanel from './components/RestApiGroupPanel';
+import RestApiListPanel from './components/RestApiListPanel';
 import type { SmartDetectionHandle } from './components/SmartDetection';
 import SmartDetection from './components/SmartDetection';
 import { TDocumentKeys } from './constants';
@@ -29,7 +37,7 @@ import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGener
 import { designDetectionActions, designDetectionStore } from './contexts/DesignDetectionContext';
 import { editorPageActions, editorPageStore } from './contexts/EditorPageContext';
 import { FrontendWorkflowScheduler } from './services/FrontendWorkflowScheduler';
-import './styles/EditorPageStyles.css';
+import './EditorPageComponentDetect.css';
 import type { AnnotationNode } from './types/componentDetection';
 
 const { Sider, Content } = Layout;
@@ -73,6 +81,13 @@ const EditorPageContent: React.FC = () => {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isAnnotationConfirmOpen, setIsAnnotationConfirmOpen] = useState(false);
   const [isSmartDetecting, setIsSmartDetecting] = useState(false);
+  // 数据管理相关弹窗状态
+  const [modelConfigModalOpen, setModelConfigModalOpen] = useState(false);
+  // 数据管理相关弹窗状态
+  const [dataModelCreateModalOpen, setDataModelCreateModalOpen] = useState(false);
+  const [dataModelDetailModalOpen, setDataModelDetailModalOpen] = useState(false);
+  const [restApiCreateModalOpen, setRestApiCreateModalOpen] = useState(false);
+  const [restApiDetailModalOpen, setRestApiDetailModalOpen] = useState(false);
 
   // Frontend Workflow Scheduler
   const schedulerRef = useRef<FrontendWorkflowScheduler | null>(null);
@@ -92,8 +107,8 @@ const EditorPageContent: React.FC = () => {
       }
       try {
         await fetchPageDetail(_pageId);
-        // 加载接口数据模型
-        editorPageActions.loadInterfaceDataModels();
+        // 加载数据模型和 REST API
+        editorPageActions.loadAllDataView();
       } catch (error: any) {
         message.error('获取页面数据失败');
       }
@@ -313,7 +328,7 @@ const EditorPageContent: React.FC = () => {
     const hasExistingAnnotations = rootAnnotation && rootAnnotation.children?.length > 0;
 
     if (!hasExistingAnnotations) {
-      modal.confirm({
+      const instance = modal.confirm({
         title: '智能识别是什么？',
         content: (
           <div>
@@ -335,17 +350,23 @@ const EditorPageContent: React.FC = () => {
         cancelText: '取消',
         okType: 'primary',
         centered: true,
-        onOk: () => smartDetectionRef.current?.runDetection(),
+        onOk: () => {
+          smartDetectionRef.current?.runDetection();
+          instance.destroy();
+        },
       });
     } else {
-      modal.confirm({
+      const instance = modal.confirm({
         title: '确认重新执行智能识别？',
         content: '当前设计稿已存在标注，重新识别可能产生重复或冲突，请确认是否继续。',
         okText: '继续识别',
         cancelText: '取消',
         okType: 'danger',
         centered: true,
-        onOk: () => smartDetectionRef.current?.runDetection(),
+        onOk: () => {
+          smartDetectionRef.current?.runDetection();
+          instance.destroy();
+        },
       });
     }
   };
@@ -364,11 +385,6 @@ const EditorPageContent: React.FC = () => {
       console.error('删除文档失败:', error);
       message.error(error.message || '删除文档失败');
     }
-  };
-
-  // 处理 OpenAPI 接口选择
-  const handleSelectOpenApi = (id: string) => {
-    editorPageActions.setSelectedApiId(id || null);
   };
 
   // 如果页面数据加载失败
@@ -424,32 +440,31 @@ const EditorPageContent: React.FC = () => {
                     <Title level={5} className='editor-page-title'>
                       组件标注编辑器
                     </Title>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div
-                        role='button'
-                        tabIndex={isSmartDetecting ? -1 : 0}
-                        aria-disabled={isSmartDetecting}
-                        className={`gradient-action-button ${isSmartDetecting ? 'is-disabled' : ''}`}
-                        onClick={isSmartDetecting ? undefined : handleSmartDetection}
-                        onKeyDown={(e) => {
-                          if ((e.key === 'Enter' || e.key === ' ') && !isSmartDetecting) {
-                            e.preventDefault();
-                            handleSmartDetection();
-                          }
-                        }}>
-                        <ThunderboltOutlined />
-                        <span>{isSmartDetecting ? '智能识别中...' : '智能识别'}</span>
-                      </div>
+                    <div className='editor-page-toolbar-actions'>
                       <Button
+                        type='primary'
                         size='small'
-                        type={componentDetectionStoreSnapshot.showAllBorders ? 'primary' : 'default'}
-                        icon={
-                          componentDetectionStoreSnapshot.showAllBorders ? <EyeOutlined /> : <EyeInvisibleOutlined />
-                        }
-                        onClick={toggleShowAllBorders}
-                        className='editor-page-button'>
-                        框线
+                        icon={<DeploymentUnitOutlined />}
+                        onClick={() => setIsDSL3DModalOpen(true)}
+                        className='editor-page-button'
+                        data-testid='dsl-3d-button'>
+                        设计稿优化
                       </Button>
+
+                      <Switch
+                        checked={componentDetectionStoreSnapshot.showAllBorders}
+                        onChange={toggleShowAllBorders}
+                        checkedChildren={
+                          <>
+                            <EyeOutlined /> 显示框线
+                          </>
+                        }
+                        unCheckedChildren={
+                          <>
+                            <EyeInvisibleOutlined /> 隐藏框线
+                          </>
+                        }
+                      />
                       <Button
                         type={is3DModalOpen ? 'primary' : 'default'}
                         size='small'
@@ -458,15 +473,15 @@ const EditorPageContent: React.FC = () => {
                         className='editor-page-button'>
                         3D 检视
                       </Button>
-                      <Button
-                        type={isDSL3DModalOpen ? 'primary' : 'default'}
-                        size='small'
-                        icon={<DeploymentUnitOutlined />}
-                        onClick={() => setIsDSL3DModalOpen(true)}
-                        className='editor-page-button'
-                        data-testid='dsl-3d-button'>
-                        DSL 3D
-                      </Button>
+                      <div
+                        role='button'
+                        tabIndex={isSmartDetecting ? -1 : 0}
+                        aria-disabled={isSmartDetecting}
+                        className={`gradient-action-button ${isSmartDetecting ? 'is-disabled' : ''}`}
+                        onClick={isSmartDetecting ? undefined : handleSmartDetection}>
+                        <ThunderboltOutlined />
+                        <span>{isSmartDetecting ? '智能识别中...' : '智能识别'}</span>
+                      </div>
                       <Button
                         type={isGuideOpen ? 'primary' : 'default'}
                         size='small'
@@ -474,6 +489,14 @@ const EditorPageContent: React.FC = () => {
                         onClick={() => setIsGuideOpen(true)}
                         className='editor-page-button'>
                         交互引导
+                      </Button>
+                      <Button
+                        type='default'
+                        size='small'
+                        icon={<SettingOutlined />}
+                        onClick={() => setModelConfigModalOpen(true)}
+                        className='editor-page-button'>
+                        模型配置
                       </Button>
                       <Dropdown
                         menu={{
@@ -491,7 +514,7 @@ const EditorPageContent: React.FC = () => {
                   <div className='editor-page-canvas-container'>
                     <div id='detection-canvas-container' className='editor-page-detection-canvas-container'>
                       <DetectionCanvas
-                        dslData={designDetectionStore.dslData as DesignDSL}
+                        designData={designDetectionStore.designData as DesignData}
                         scale={scale}
                         onScaleChange={handleScaleChange}
                         highlightedNodeId={null}
@@ -512,11 +535,21 @@ const EditorPageContent: React.FC = () => {
               </Layout>
             )}
 
-            {/* OpenAPI 数据面板 */}
+            {/* 数据管理面板 - 根据 dataViewType 显示 */}
             {editorPageStoreSnapshot.selectedDocument?.type === 'openapi' && (
               <Layout className='editor-page-flex-layout'>
                 <Content className='editor-page-content editor-page-content--no-padding'>
-                  <OpenAPIDataPanel selectedApiId={editorPageStoreSnapshot.selectedApiId || undefined} />
+                  {editorPageStoreSnapshot.dataViewType === 'dataModel' ? (
+                    <DataModelListPanel
+                      onCreateClick={() => setDataModelCreateModalOpen(true)}
+                      onItemClick={() => setDataModelDetailModalOpen(true)}
+                    />
+                  ) : (
+                    <RestApiListPanel
+                      onCreateClick={() => setRestApiCreateModalOpen(true)}
+                      onItemClick={() => setRestApiDetailModalOpen(true)}
+                    />
+                  )}
                 </Content>
               </Layout>
             )}
@@ -544,16 +577,38 @@ const EditorPageContent: React.FC = () => {
             {editorPageStoreSnapshot.selectedDocument?.type === 'design' ? (
               <ComponentPropertyPanel />
             ) : editorPageStoreSnapshot.selectedDocument?.type === 'openapi' ? (
-              <OpenAPIUrlPanel
-                selectedApiId={editorPageStoreSnapshot.selectedApiId || undefined}
-                onSelectApi={handleSelectOpenApi}
-              />
+              editorPageStoreSnapshot.dataViewType === 'dataModel' ? (
+                <DataModelGroupPanel />
+              ) : (
+                <RestApiGroupPanel />
+              )
             ) : (
               <div style={{ padding: 24, textAlign: 'center', color: '#aaa' }}>暂无内容</div>
             )}
           </Sider>
         </Layout>
       </Spin>
+
+      {/* 数据模型创建弹窗 */}
+      <DataModelCreateModal open={dataModelCreateModalOpen} onClose={() => setDataModelCreateModalOpen(false)} />
+
+      {/* 数据模型详情弹窗 */}
+      <DataModelDetailModal
+        open={dataModelDetailModalOpen}
+        modelId={editorPageStoreSnapshot.selectedDataModelId}
+        onClose={() => setDataModelDetailModalOpen(false)}
+      />
+
+      {/* REST API 创建弹窗 */}
+      <RestApiCreateModal open={restApiCreateModalOpen} onClose={() => setRestApiCreateModalOpen(false)} />
+
+      {/* REST API 详情弹窗 */}
+      <RestApiDetailModal
+        open={restApiDetailModalOpen}
+        apiId={editorPageStoreSnapshot.selectedRestApiId}
+        onClose={() => setRestApiDetailModalOpen(false)}
+      />
+
       <AnnotationConfirmModal
         open={isAnnotationConfirmOpen}
         rootAnnotation={componentDetectionStoreSnapshot.rootAnnotation as AnnotationNode | null}
@@ -569,6 +624,7 @@ const EditorPageContent: React.FC = () => {
       <DSL3DInspectModal open={isDSL3DModalOpen} onClose={() => setIsDSL3DModalOpen(false)} />
       <InteractionGuideOverlay open={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
       <CodeGenerationDrawer abortGeneration={abortGeneration} />
+      <ModelConfigModal open={modelConfigModalOpen} onClose={() => setModelConfigModalOpen(false)} />
 
       {/* 智能识别动画组件 */}
       <SmartDetection ref={smartDetectionRef} onDetectingChange={handleSmartDetectionChange} />

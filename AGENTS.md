@@ -20,17 +20,17 @@
 
 ## Build & Test Commands
 
-| Package                | Develop                | Build/Start                                  | Quality & Tests                                                     |
-| ---------------------- | ---------------------- | -------------------------------------------- | ------------------------------------------------------------------- |
-| `shared-types/`        | `yarn workspace @fta/shared-types typecheck` | `yarn workspace @fta/shared-types build` | —                                                                   |
-| `code-agent-backend/`  | `npm run dev`          | `npm run build && npm start`                 | `npm run lint`, `npm run lint:fix`, `npm run prettier`, `npm run test`, `npm run cov` |
-| `fta-layout-design/`   | `npm run dev`          | `npm run build` / `npm run preview`          | Add Vitest/RTL when touching logic; otherwise manual verification   |
-| `fta-agent-core/`      | —                      | `yarn build`                                 | `yarn typecheck` (use `npx vitest` for specs)                       |
-| `messages-replayer/`   | `npm run replay`       | —                                            | `npm run parse`; live mode via `npm run replay:live`                |
+| Package               | Develop                                      | Build/Start                              | Quality & Tests                                                                       |
+| --------------------- | -------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| `shared-types/`       | `yarn workspace @fta/shared-types typecheck` | `yarn workspace @fta/shared-types build` | —                                                                                     |
+| `code-agent-backend/` | `npm run dev`                                | `npm run build && npm start`             | `npm run lint`, `npm run lint:fix`, `npm run prettier`, `npm run test`, `npm run cov` |
+| `fta-layout-design/`  | `npm run dev`                                | `npm run build` / `npm run preview`      | Add Vitest/RTL when touching logic; otherwise manual verification                     |
+| `fta-agent-core/`     | —                                            | `yarn build`                             | `yarn typecheck` (use `npx vitest` for specs)                                         |
+| `messages-replayer/`  | `npm run replay`                             | —                                        | `npm run parse`; live mode via `npm run replay:live`                                  |
 
 ## Backend Highlights (`code-agent-backend/`)
 
-- Controllers: `/model-gateway` (SSE proxy) and `/model-gateway-sync` (buffered) hit `OPENAI_BASE_URL`; `/code-agent/dsl` reads/normalizes `DesignDSL.json` and converts PATH→LAYER via a remote PNG service + OSS upload with Redis/Mongo caching; `/code-agent/dsl/cache` get/set; `/code-agent/gitlab/project-id` resolves GitLab ID; `/code-agent/project/*` handles projects/pages/docs (design sync via MasterGo); `/code-agent/interface-data-model/*` CRUD; `/code-agent/frontend-workflow` streams `runFrontendProjectWorkflow`; `/code-agent/metrics` serves cached vLLM metrics.
+- Controllers: `/model-gateway` (SSE proxy) and `/model-gateway-sync` (buffered) hit `OPENAI_BASE_URL`; `/code-agent/dsl` reads/normalizes `DesignData.json` and converts PATH→LAYER via a remote PNG service + OSS upload with Redis/Mongo caching; `/code-agent/dsl/cache` get/set; `/code-agent/gitlab/project-id` resolves GitLab ID; `/code-agent/project/*` handles projects/pages/docs (design sync via MasterGo); `/code-agent/interface-data-model/*` CRUD; `/code-agent/frontend-workflow` streams `runFrontendProjectWorkflow`; `/code-agent/metrics` serves cached vLLM metrics.
 - Services use Mongo (projects, documents, annotations, path assets), Redis (caches + metrics lock), and MasterGo token/base URL. Design annotations and diff utilities live under `src/service/design/*` even if not exposed by current routes.
 - Config: see `src/config/config.default.ts` for Redis/Mongo/mastergo/model-gateway defaults and OSS buckets. Respect production hosts and tokens.
 
@@ -63,8 +63,10 @@
 - 采用 Angular Conventional Commit，提交信息使用中文，保持祈使句、简洁明了。
 - 基本结构：`<type>(scope): <subject>`，常见 type：`feat`、`fix`、`docs`、`refactor`、`chore`、`test`、`style`、`perf`。
 - 示例：
-  - `feat(editor): 支持 PATH 节点转 PNG 后缓存`  
-  - `fix(backend): 修复 model-gateway 超时未写入日志的问题`
+  - feat(editor):
+    - 支持 PATH 节点转 PNG 后缓存
+  - fix(backend):
+    - 修复 model-gateway 超时未写入日志的问题
 
 ## Testing & Verification
 

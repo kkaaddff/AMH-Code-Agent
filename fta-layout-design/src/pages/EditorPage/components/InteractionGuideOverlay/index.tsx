@@ -15,6 +15,7 @@ const InteractionGuideOverlay: React.FC<InteractionGuideOverlayProps> = ({ open,
       open={open}
       onCancel={onClose}
       onOk={onClose}
+      maskClosable={false}
       okText='知道了'
       cancelButtonProps={{ style: { display: 'none' } }}
       width={860}

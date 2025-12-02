@@ -421,7 +421,7 @@ Content-Type: application/json
 ### DesignDocumentEntity - 设计稿文档
 
 ```typescript
-@Entity("design_documents")
+@Entity('design_documents')
 export class DesignDocumentEntity {
   @ObjectIdColumn()
   _id: ObjectId;
@@ -439,7 +439,7 @@ export class DesignDocumentEntity {
   version: number;
 
   @Column()
-  status: "draft" | "published" | "archived";
+  status: 'draft' | 'published' | 'archived';
 
   @Column()
   createdBy: string;
@@ -455,7 +455,7 @@ export class DesignDocumentEntity {
 ### ProjectEntity - 项目实体
 
 ```typescript
-@Entity("projects")
+@Entity('projects')
 export class ProjectEntity {
   @ObjectIdColumn()
   _id: ObjectId;
@@ -467,10 +467,10 @@ export class ProjectEntity {
   description: string;
 
   @Column()
-  type: "web" | "mobile" | "desktop";
+  type: 'web' | 'mobile' | 'desktop';
 
   @Column()
-  status: "active" | "inactive" | "archived";
+  status: 'active' | 'inactive' | 'archived';
 
   @Column()
   members: ProjectMember[];
@@ -486,7 +486,7 @@ export class ProjectEntity {
 ### RequirementDocumentEntity - 需求文档实体
 
 ```typescript
-@Entity("requirement_documents")
+@Entity('requirement_documents')
 export class RequirementDocumentEntity {
   @ObjectIdColumn()
   _id: ObjectId;
@@ -501,10 +501,10 @@ export class RequirementDocumentEntity {
   content: string;
 
   @Column()
-  format: "markdown" | "pdf" | "docx";
+  format: 'markdown' | 'pdf' | 'docx';
 
   @Column()
-  status: "draft" | "published" | "archived";
+  status: 'draft' | 'published' | 'archived';
 
   @Column()
   version: number;
@@ -529,17 +529,17 @@ export class AuthMiddleware {
 
   resolve() {
     return async (err?: Error) => {
-      const token = this.ctx.get("SonicToken") || this.ctx.get("FTAToken");
+      const token = this.ctx.get('SonicToken') || this.ctx.get('FTAToken');
 
       if (!token) {
-        throw new ForbiddenError("未提供认证令牌");
+        throw new ForbiddenError('未提供认证令牌');
       }
 
       try {
         const user = await this.verifyToken(token);
         this.ctx.user = user;
       } catch (error) {
-        throw new ForbiddenError("认证令牌无效");
+        throw new ForbiddenError('认证令牌无效');
       }
     };
   }
@@ -553,19 +553,10 @@ export class AuthMiddleware {
 export class CorsMiddleware {
   resolve() {
     return async (err?: Error) => {
-      this.ctx.set(
-        "Access-Control-Allow-Origin",
-        this.ctx.get("Origin") || "*"
-      );
-      this.ctx.set(
-        "Access-Control-Allow-Headers",
-        "Content-Type, SonicToken, FTAToken"
-      );
-      this.ctx.set(
-        "Access-Control-Allow-Methods",
-        "GET,POST,PUT,DELETE,OPTIONS"
-      );
-      this.ctx.set("Access-Control-Allow-Credentials", "true");
+      this.ctx.set('Access-Control-Allow-Origin', this.ctx.get('Origin') || '*');
+      this.ctx.set('Access-Control-Allow-Headers', 'Content-Type, SonicToken, FTAToken');
+      this.ctx.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+      this.ctx.set('Access-Control-Allow-Credentials', 'true');
     };
   }
 }
@@ -579,7 +570,7 @@ export class ErrorHandlerMiddleware {
   resolve() {
     return async (err: Error, ctx: Context) => {
       const status = err.status || 500;
-      const message = err.message || "服务器内部错误";
+      const message = err.message || '服务器内部错误';
 
       ctx.status = status;
       ctx.body = {
@@ -610,18 +601,18 @@ export class CodeGenerationQueue {
 
     try {
       // 更新任务状态
-      await this.updateTaskStatus(job.id, "processing");
+      await this.updateTaskStatus(job.id, 'processing');
 
       // 执行代码生成
       const result = await this.performCodeGeneration(designId, options);
 
       // 更新任务完成状态
-      await this.updateTaskStatus(job.id, "completed", result);
+      await this.updateTaskStatus(job.id, 'completed', result);
 
       return result;
     } catch (error) {
       // 更新任务失败状态
-      await this.updateTaskStatus(job.id, "failed", { error: error.message });
+      await this.updateTaskStatus(job.id, 'failed', { error: error.message });
       throw error;
     }
   }
@@ -650,19 +641,15 @@ export class DocumentGenerationQueue {
     const { designId, template, format } = job.data;
 
     try {
-      await this.updateTaskStatus(job.id, "processing");
+      await this.updateTaskStatus(job.id, 'processing');
 
       const designDoc = await this.designService.findById(designId);
-      const document = await this.documentGenerator.generate(
-        designDoc.dslData,
-        template,
-        format
-      );
+      const document = await this.documentGenerator.generate(designDoc.dslData, template, format);
 
-      await this.updateTaskStatus(job.id, "completed", document);
+      await this.updateTaskStatus(job.id, 'completed', document);
       return document;
     } catch (error) {
-      await this.updateTaskStatus(job.id, "failed", { error: error.message });
+      await this.updateTaskStatus(job.id, 'failed', { error: error.message });
       throw error;
     }
   }
@@ -674,10 +661,10 @@ export class DocumentGenerationQueue {
 ### 单元测试示例
 
 ```typescript
-import { createApp, close, createHttpRequest } from "@midwayjs/mock";
-import { Framework } from "@midwayjs/koa";
+import { createApp, close, createHttpRequest } from '@midwayjs/mock';
+import { Framework } from '@midwayjs/koa';
 
-describe("test/controller/design.test.ts", () => {
+describe('test/controller/design.test.ts', () => {
   let app: Application;
 
   beforeAll(async () => {
@@ -688,22 +675,22 @@ describe("test/controller/design.test.ts", () => {
     await close(app);
   });
 
-  it("should POST /design/create", async () => {
+  it('should POST /design/create', async () => {
     const result = await createHttpRequest(app)
-      .post("/design/create")
+      .post('/design/create')
       .send({
-        name: "测试设计稿",
-        description: "这是一个测试设计稿",
+        name: '测试设计稿',
+        description: '这是一个测试设计稿',
         dslData: { styles: {}, nodes: [] },
       });
 
     expect(result.status).toBe(200);
     expect(result.body.code).toBe(200);
-    expect(result.body.data.name).toBe("测试设计稿");
+    expect(result.body.data.name).toBe('测试设计稿');
   });
 
-  it("should GET /design/list", async () => {
-    const result = await createHttpRequest(app).get("/design/list");
+  it('should GET /design/list', async () => {
+    const result = await createHttpRequest(app).get('/design/list');
 
     expect(result.status).toBe(200);
     expect(result.body.code).toBe(200);
@@ -715,10 +702,10 @@ describe("test/controller/design.test.ts", () => {
 ### 集成测试示例
 
 ```typescript
-import { createApp, close, createHttpRequest } from "@midwayjs/mock";
-import { Framework } from "@midwayjs/koa";
+import { createApp, close, createHttpRequest } from '@midwayjs/mock';
+import { Framework } from '@midwayjs/koa';
 
-describe("test/integration/design-flow.test.ts", () => {
+describe('test/integration/design-flow.test.ts', () => {
   let app: Application;
   let designId: string;
 
@@ -727,9 +714,9 @@ describe("test/integration/design-flow.test.ts", () => {
 
     // 创建测试设计稿
     const createResult = await createHttpRequest(app)
-      .post("/design/create")
+      .post('/design/create')
       .send({
-        name: "流程测试设计稿",
+        name: '流程测试设计稿',
         dslData: { styles: {}, nodes: [] },
       });
 
@@ -740,35 +727,29 @@ describe("test/integration/design-flow.test.ts", () => {
     await close(app);
   });
 
-  it("should complete full design workflow", async () => {
+  it('should complete full design workflow', async () => {
     // 1. 获取设计稿详情
     const getResult = await createHttpRequest(app).get(`/design/${designId}`);
     expect(getResult.status).toBe(200);
 
     // 2. 更新设计稿
-    const updateResult = await createHttpRequest(app)
-      .put(`/design/${designId}`)
-      .send({
-        name: "更新的设计稿",
-      });
+    const updateResult = await createHttpRequest(app).put(`/design/${designId}`).send({
+      name: '更新的设计稿',
+    });
     expect(updateResult.status).toBe(200);
 
     // 3. 生成需求文档
-    const docResult = await createHttpRequest(app)
-      .post(`/design/${designId}/requirement-docs`)
-      .send({
-        template: "standard",
-        format: "markdown",
-      });
+    const docResult = await createHttpRequest(app).post(`/design/${designId}/requirement-docs`).send({
+      template: 'standard',
+      format: 'markdown',
+    });
     expect(docResult.status).toBe(200);
 
     // 4. 提交代码生成任务
-    const codeResult = await createHttpRequest(app)
-      .post(`/design/${designId}/code-generation`)
-      .send({
-        framework: "react",
-        language: "typescript",
-      });
+    const codeResult = await createHttpRequest(app).post(`/design/${designId}/code-generation`).send({
+      framework: 'react',
+      language: 'typescript',
+    });
     expect(codeResult.status).toBe(200);
   });
 });
@@ -797,13 +778,13 @@ CMD ["npm", "start"]
 ### Docker Compose
 
 ```yaml
-version: "3.8"
+version: '3.8'
 
 services:
   app:
     build: .
     ports:
-      - "7001:7001"
+      - '7001:7001'
     environment:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://mongo:27017/fta
@@ -817,14 +798,14 @@ services:
     volumes:
       - mongo_data:/data/db
     ports:
-      - "27017:27017"
+      - '27017:27017'
 
   redis:
     image: redis:4.28-alpine
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - '6379:6379'
 
 volumes:
   mongo_data:
@@ -862,20 +843,20 @@ LOG_FILE_PATH=/var/log/fta/app.log
 ### 链路追踪
 
 ```typescript
-import { trace } from "@opentelemetry/api";
+import { trace } from '@opentelemetry/api';
 
-const tracer = trace.getTracer("fta-backend");
+const tracer = trace.getTracer('fta-backend');
 
 export class DesignService {
   async getDesignList() {
-    const span = tracer.startSpan("design.getDesignList");
+    const span = tracer.startSpan('design.getDesignList');
 
     try {
       // 业务逻辑
       const result = await this.designRepository.find();
       span.setAttributes({
-        "design.count": result.length,
-        "design.duration": Date.now() - startTime,
+        'design.count': result.length,
+        'design.duration': Date.now() - startTime,
       });
       return result;
     } catch (error) {
@@ -891,16 +872,16 @@ export class DesignService {
 ### 性能指标
 
 ```typescript
-import { Meter } from "@opentelemetry/api";
+import { Meter } from '@opentelemetry/api';
 
-const meter = Meter.getMeter("fta-backend");
+const meter = Meter.getMeter('fta-backend');
 
-const requestCounter = meter.createCounter("http_requests_total", {
-  description: "Total number of HTTP requests",
+const requestCounter = meter.createCounter('http_requests_total', {
+  description: 'Total number of HTTP requests',
 });
 
-const responseTimeHistogram = meter.createHistogram("http_response_time", {
-  description: "HTTP response time in milliseconds",
+const responseTimeHistogram = meter.createHistogram('http_response_time', {
+  description: 'HTTP response time in milliseconds',
 });
 
 // 在中间件中使用
@@ -910,7 +891,7 @@ export class MetricsMiddleware {
     return async (err?: Error) => {
       const startTime = Date.now();
 
-      this.ctx.res.on("finish", () => {
+      this.ctx.res.on('finish', () => {
         const duration = Date.now() - startTime;
 
         requestCounter.add(1, {
@@ -941,18 +922,18 @@ export class MetricsMiddleware {
 ### 控制器规范
 
 ```typescript
-@Controller("/api/design")
+@Controller('/api/design')
 export class DesignController {
   @Inject()
   designService: DesignService;
 
-  @Post("/create")
+  @Post('/create')
   async createDesign(@Body() createDto: CreateDesignDto) {
     try {
       const result = await this.designService.create(createDto);
       return {
         code: 200,
-        message: "创建成功",
+        message: '创建成功',
         data: result,
       };
     } catch (error) {
@@ -978,7 +959,7 @@ export class DesignService {
   async findById(id: string): Promise<DesignDocumentEntity> {
     const design = await this.designModel.findById(id);
     if (!design) {
-      throw new NotFoundError("设计稿不存在");
+      throw new NotFoundError('设计稿不存在');
     }
     return design;
   }

@@ -6,7 +6,22 @@
 import { buildApiUrl, currentApiConfig, API_ENDPOINTS } from '@/config/api';
 import type { DocumentReference } from '@/types/project';
 import { DSLData } from '@/types/dsl';
-import type { InterfaceDataModel, CreateDataModelRequest, UpdateDataModelRequest } from '@/types/interfaceDataModel';
+import type {
+  DataModel,
+  DataModelGroup,
+  CreateDataModelGroupRequest,
+  UpdateDataModelGroupRequest,
+  CreateDataModelRequest,
+  UpdateDataModelRequest,
+} from '@/types/dataModel';
+import type {
+  RestApi,
+  RestApiGroup,
+  CreateRestApiRequest,
+  UpdateRestApiRequest,
+  CreateRestApiGroupRequest,
+  UpdateRestApiGroupRequest,
+} from '@/types/restApi';
 
 // 请求配置接口
 export interface RequestConfig {
@@ -14,6 +29,14 @@ export interface RequestConfig {
   headers?: Record<string, string>;
   params?: Record<string, any>;
   data?: any;
+}
+
+// 流式请求配置接口
+export interface StreamingRequestConfig extends RequestConfig {
+  onChunk?: (chunk: string) => void;
+  onError?: (error: Error) => void;
+  onComplete?: () => void;
+  signal?: AbortSignal; // 支持外部传入的 AbortSignal
 }
 
 // API 响应接口
@@ -127,6 +150,150 @@ async function request<T = any>(
 }
 
 /**
+ * 流式 HTTP 请求函数 (支持 Server-Sent Events)
+ */
+async function streamingRequest(
+  endpoint: string,
+  options: StreamingRequestConfig & { method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' } = { method: 'GET' }
+): Promise<void> {
+  const url = buildApiUrl(endpoint);
+  const {
+    timeout = currentApiConfig.timeout,
+    headers = {},
+    params,
+    data,
+    method,
+    onChunk,
+    onError,
+    onComplete,
+    signal: externalSignal,
+  } = options;
+
+  // 构建请求头
+  const requestHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    ...headers,
+  };
+
+  // 从 window.userInfo 中获取 cookies 并添加到自定义请求头
+  if (window.userInfo?.cookies) {
+    const cookiesJson = JSON.stringify(window.userInfo.cookies);
+    requestHeaders['X-User-Cookies'] = cookiesJson;
+  }
+
+  // 构建查询参数
+  let finalUrl = url;
+  if (params && Object.keys(params).length > 0) {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value));
+      }
+    });
+    finalUrl = `${url}?${searchParams.toString()}`;
+  }
+
+  // 创建 AbortController 用于超时控制和手动取消
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  // 如果外部传入了 signal，当外部 signal 触发时也中止内部请求
+  if (externalSignal) {
+    externalSignal.addEventListener('abort', () => {
+      controller.abort();
+    });
+  }
+
+  try {
+    const response = await fetch(finalUrl, {
+      method,
+      headers: requestHeaders,
+      body: data ? JSON.stringify(data) : undefined,
+      signal: controller.signal,
+      credentials: 'include', // 允许携带 cookies
+    });
+
+    clearTimeout(timeoutId);
+
+    // 检查响应状态
+    if (!response.ok) {
+      const error = new ApiError(`HTTP Error: ${response.status} ${response.statusText}`, response.status, response);
+      onError?.(error);
+      throw error;
+    }
+
+    // 检查是否支持流式响应
+    if (!response.body) {
+      const error = new ApiError('Response body is not available for streaming', 400);
+      onError?.(error);
+      throw error;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          // 处理缓冲区中剩余的数据
+          if (buffer.trim()) {
+            onChunk?.(buffer);
+          }
+          onComplete?.();
+          break;
+        }
+
+        // 解码数据块
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+
+        // 按 SSE 格式处理数据块 (data: ...\n\n)
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // 保留最后一个可能不完整的行
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data) {
+              onChunk?.(data);
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof ApiError) {
+      onError?.(error);
+      throw error;
+    }
+
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        const timeoutError = new ApiError('请求超时', 408);
+        onError?.(timeoutError);
+        throw timeoutError;
+      }
+      const apiError = new ApiError(error.message, 500);
+      onError?.(apiError);
+      throw apiError;
+    }
+
+    const unknownError = new ApiError('未知错误', 500);
+    onError?.(unknownError);
+    throw unknownError;
+  }
+}
+
+/**
  * API 服务类
  */
 export class ApiService {
@@ -163,6 +330,41 @@ export class ApiService {
    */
   static async patch<T = any>(endpoint: string, data?: any, config?: RequestConfig): Promise<ApiResponse<T>> {
     return request<T>(endpoint, { ...config, method: 'PATCH', data });
+  }
+
+  /**
+   * 流式 GET 请求
+   */
+  static async streamingGet(endpoint: string, config: StreamingRequestConfig): Promise<void> {
+    return streamingRequest(endpoint, { ...config, method: 'GET' });
+  }
+
+  /**
+   * 流式 POST 请求
+   */
+  static async streamingPost(endpoint: string, data?: any, config?: StreamingRequestConfig): Promise<void> {
+    return streamingRequest(endpoint, { ...config, method: 'POST', data });
+  }
+
+  /**
+   * 流式 PUT 请求
+   */
+  static async streamingPut(endpoint: string, data?: any, config?: StreamingRequestConfig): Promise<void> {
+    return streamingRequest(endpoint, { ...config, method: 'PUT', data });
+  }
+
+  /**
+   * 流式 DELETE 请求
+   */
+  static async streamingDelete(endpoint: string, config: StreamingRequestConfig): Promise<void> {
+    return streamingRequest(endpoint, { ...config, method: 'DELETE' });
+  }
+
+  /**
+   * 流式 PATCH 请求
+   */
+  static async streamingPatch(endpoint: string, data?: any, config?: StreamingRequestConfig): Promise<void> {
+    return streamingRequest(endpoint, { ...config, method: 'PATCH', data });
   }
 
   /**
@@ -503,45 +705,202 @@ export const api = {
     latest: <T = any>() => ApiService.get<T>(API_ENDPOINTS.metrics.latest),
   },
 
-  // 接口数据模型相关
-  interfaceDataModel: {
+  // 数据模型组相关
+  dataModelGroup: {
     /**
-     * 创建接口数据模型
-     * @param data 创建请求体
-     * @returns 创建结果响应 Promise
+     * 创建数据模型组
      */
-    create: (data: CreateDataModelRequest) =>
-      ApiService.post<InterfaceDataModel>(API_ENDPOINTS.interfaceDataModel.create, data),
+    create: (data: CreateDataModelGroupRequest) =>
+      ApiService.post<DataModelGroup>(API_ENDPOINTS.dataModelGroup.create, data),
 
     /**
-     * 更新接口数据模型
-     * @param id 数据模型 ID
-     * @param data 更新请求体
-     * @returns 更新结果响应 Promise
+     * 更新数据模型组
+     */
+    update: (id: string, data: UpdateDataModelGroupRequest) =>
+      ApiService.put<DataModelGroup>(API_ENDPOINTS.dataModelGroup.update(id), data),
+
+    /**
+     * 删除数据模型组
+     */
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.dataModelGroup.delete(id)),
+
+    /**
+     * 获取项目的所有数据模型组
+     */
+    list: (projectId: string) => ApiService.get<DataModelGroup[]>(API_ENDPOINTS.dataModelGroup.list(projectId)),
+
+    /**
+     * 获取单个数据模型组详情
+     */
+    detail: (id: string) => ApiService.get<DataModelGroup>(API_ENDPOINTS.dataModelGroup.detail(id)),
+  },
+
+  // 数据模型相关（项目级别）
+  dataModel: {
+    /**
+     * 创建数据模型
+     */
+    create: (data: CreateDataModelRequest) => ApiService.post<DataModel>(API_ENDPOINTS.dataModel.create, data),
+
+    /**
+     * 更新数据模型
      */
     update: (id: string, data: UpdateDataModelRequest) =>
-      ApiService.put<InterfaceDataModel>(API_ENDPOINTS.interfaceDataModel.update(id), data),
+      ApiService.put<DataModel>(API_ENDPOINTS.dataModel.update(id), data),
 
     /**
-     * 删除接口数据模型
-     * @param id 数据模型 ID
-     * @returns 删除结果响应 Promise
+     * 删除数据模型
      */
-    delete: (id: string) => ApiService.delete(API_ENDPOINTS.interfaceDataModel.delete(id)),
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.dataModel.delete(id)),
 
     /**
-     * 获取页面的所有接口数据模型
-     * @param pageId 页面 ID
-     * @returns 数据模型列表响应 Promise
+     * 获取项目的所有数据模型
      */
-    list: (pageId: string) => ApiService.get<InterfaceDataModel[]>(API_ENDPOINTS.interfaceDataModel.list(pageId)),
+    list: (projectId: string) => ApiService.get<DataModel[]>(API_ENDPOINTS.dataModel.list(projectId)),
 
     /**
-     * 获取单个接口数据模型详情
-     * @param id 数据模型 ID
-     * @returns 数据模型详情响应 Promise
+     * 获取分组内的数据模型
      */
-    detail: (id: string) => ApiService.get<InterfaceDataModel>(API_ENDPOINTS.interfaceDataModel.detail(id)),
+    listByGroup: (groupId: string) => ApiService.get<DataModel[]>(API_ENDPOINTS.dataModel.listByGroup(groupId)),
+
+    /**
+     * 获取未分组的数据模型
+     */
+    listUngrouped: (projectId: string) => ApiService.get<DataModel[]>(API_ENDPOINTS.dataModel.listUngrouped(projectId)),
+
+    /**
+     * 获取单个数据模型详情
+     */
+    detail: (id: string) => ApiService.get<DataModel>(API_ENDPOINTS.dataModel.detail(id)),
+  },
+
+  // REST API 接口相关
+  // REST API 组相关
+  restApiGroup: {
+    /**
+     * 创建 REST API 组
+     */
+    create: (data: CreateRestApiGroupRequest) => ApiService.post<RestApiGroup>(API_ENDPOINTS.restApiGroup.create, data),
+
+    /**
+     * 更新 REST API 组
+     */
+    update: (id: string, data: UpdateRestApiGroupRequest) =>
+      ApiService.put<RestApiGroup>(API_ENDPOINTS.restApiGroup.update(id), data),
+
+    /**
+     * 删除 REST API 组
+     */
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.restApiGroup.delete(id)),
+
+    /**
+     * 获取项目的所有 REST API 组
+     */
+    list: (projectId: string) => ApiService.get<RestApiGroup[]>(API_ENDPOINTS.restApiGroup.list(projectId)),
+
+    /**
+     * 获取单个 REST API 组详情
+     */
+    detail: (id: string) => ApiService.get<RestApiGroup>(API_ENDPOINTS.restApiGroup.detail(id)),
+
+    /**
+     * 同步远程 OpenAPI 文档
+     */
+    sync: (id: string, syncUrl?: string) =>
+      ApiService.post<{ syncedCount: number; apis: RestApi[] }>(API_ENDPOINTS.restApiGroup.sync(id), { syncUrl }),
+  },
+
+  // REST API 相关
+  restApi: {
+    /**
+     * 创建 REST API
+     */
+    create: (data: CreateRestApiRequest) => ApiService.post<RestApi>(API_ENDPOINTS.restApi.create, data),
+
+    /**
+     * 更新 REST API
+     */
+    update: (id: string, data: UpdateRestApiRequest) => ApiService.put<RestApi>(API_ENDPOINTS.restApi.update(id), data),
+
+    /**
+     * 删除 REST API
+     */
+    delete: (id: string) => ApiService.delete(API_ENDPOINTS.restApi.delete(id)),
+
+    /**
+     * 获取项目的所有 REST API
+     */
+    list: (projectId: string) => ApiService.get<RestApi[]>(API_ENDPOINTS.restApi.list(projectId)),
+
+    /**
+     * 获取组内的所有 REST API
+     */
+    listByGroup: (groupId: string) => ApiService.get<RestApi[]>(API_ENDPOINTS.restApi.listByGroup(groupId)),
+
+    /**
+     * 获取项目内未分组的 REST API
+     */
+    listUngrouped: (projectId: string) => ApiService.get<RestApi[]>(API_ENDPOINTS.restApi.listUngrouped(projectId)),
+
+    /**
+     * 获取单个 REST API 详情
+     */
+    detail: (id: string) => ApiService.get<RestApi>(API_ENDPOINTS.restApi.detail(id)),
+  },
+
+  // 流式请求相关
+  streaming: {
+    /**
+     * 流式模型网关请求 (SSE)
+     */
+    modelGateway: (data: any, config: StreamingRequestConfig) =>
+      ApiService.streamingPost('/model-gateway', data, config),
+
+    /**
+     * 流式前端工作流
+     */
+    frontendWorkflow: (data: any, config: StreamingRequestConfig) =>
+      ApiService.streamingPost('/code-agent/frontend-workflow', data, config),
+
+    /**
+     * 流式组件检测
+     */
+    componentDetect: (data: any, config: StreamingRequestConfig) =>
+      ApiService.streamingPost('/code-agent/component/detect', data, config),
+
+    /**
+     * 流式需求文档生成
+     */
+    generateRequirement: (data: any, config: StreamingRequestConfig) =>
+      ApiService.streamingPost('/code-agent/requirement/generate', data, config),
+
+    /**
+     * 通用流式 GET 请求
+     */
+    get: (endpoint: string, config: StreamingRequestConfig) => ApiService.streamingGet(endpoint, config),
+
+    /**
+     * 通用流式 POST 请求
+     */
+    post: (endpoint: string, data?: any, config?: StreamingRequestConfig) =>
+      ApiService.streamingPost(endpoint, data, config || {}),
+
+    /**
+     * 通用流式 PUT 请求
+     */
+    put: (endpoint: string, data?: any, config?: StreamingRequestConfig) =>
+      ApiService.streamingPut(endpoint, data, config || {}),
+
+    /**
+     * 通用流式 DELETE 请求
+     */
+    delete: (endpoint: string, config: StreamingRequestConfig) => ApiService.streamingDelete(endpoint, config),
+
+    /**
+     * 通用流式 PATCH 请求
+     */
+    patch: (endpoint: string, data?: any, config?: StreamingRequestConfig) =>
+      ApiService.streamingPatch(endpoint, data, config || {}),
   },
 };
 

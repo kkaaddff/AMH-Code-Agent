@@ -233,6 +233,7 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
       }
 
       try {
+        debugger;
         const result = await m.doStream({
           prompt: prompt,
           tools,
@@ -290,7 +291,9 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
                   if (message) {
                     return message;
                   }
-                } catch (_e) {}
+                } catch (e) {
+                  console.error('Error parsing error message', e);
+                }
                 return JSON.stringify(chunk.error);
               })();
               const error = new Error(message);

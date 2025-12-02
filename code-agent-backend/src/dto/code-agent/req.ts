@@ -1,3 +1,4 @@
+import { SchemaFieldType } from '@fta/shared-types';
 import { ApiProperty } from '@midwayjs/swagger';
 
 // Project Request DTOs
@@ -410,7 +411,7 @@ export class SchemaFieldDto {
     enum: ['string', 'number', 'boolean', 'object', 'array'],
     required: true,
   })
-  type: string;
+  type: SchemaFieldType;
 
   @ApiProperty({ description: '字段描述', example: '用户名' })
   description?: string;
@@ -496,3 +497,147 @@ export class DeleteDataModelRequest {
   @ApiProperty({ description: '数据模型 ID', example: 'dm_123', required: true })
   id: string;
 }
+
+// ============ 新数据模型相关 DTO ============
+
+// DataModelGroup Request DTOs
+export class CreateDataModelGroupRequest {
+  @ApiProperty({ description: '项目 ID', example: 'project_123', required: true })
+  projectId: string;
+
+  @ApiProperty({ description: '分组名称', example: '用户相关', required: true })
+  name: string;
+
+  @ApiProperty({ description: '分组描述', example: '用户相关的数据模型' })
+  description?: string;
+}
+
+export class UpdateDataModelGroupRequest {
+  @ApiProperty({ description: '分组名称', example: '用户相关' })
+  name?: string;
+
+  @ApiProperty({ description: '分组描述', example: '用户相关的数据模型' })
+  description?: string;
+}
+
+// New DataModel Request DTOs (项目级别)
+export class CreateNewDataModelRequest {
+  @ApiProperty({ description: '项目 ID', example: 'project_123', required: true })
+  projectId: string;
+
+  @ApiProperty({ description: '分组 ID（可选）', example: 'dmg_123' })
+  groupId?: string;
+
+  @ApiProperty({ description: '数据模型名称', example: '用户信息', required: true })
+  name: string;
+
+  @ApiProperty({ description: '数据模型描述', example: '用户相关的数据结构' })
+  description?: string;
+
+  @ApiProperty({ description: '数据结构 Schema', type: [SchemaFieldDto] })
+  schema?: SchemaFieldDto[];
+}
+
+export class UpdateNewDataModelRequest {
+  @ApiProperty({ description: '分组 ID（设为 null 可移出分组）', example: 'dmg_123' })
+  groupId?: string | null;
+
+  @ApiProperty({ description: '数据模型名称', example: '用户信息' })
+  name?: string;
+
+  @ApiProperty({ description: '数据模型描述', example: '用户相关的数据结构' })
+  description?: string;
+
+  @ApiProperty({ description: '数据结构 Schema', type: [SchemaFieldDto] })
+  schema?: SchemaFieldDto[];
+}
+
+// RestApiGroup Request DTOs
+export class CreateRestApiGroupRequest {
+  @ApiProperty({ description: '项目 ID', example: 'project_123', required: true })
+  projectId: string;
+
+  @ApiProperty({ description: '组名称', example: '用户模块接口', required: true })
+  name: string;
+
+  @ApiProperty({ description: '组描述', example: '用户相关的所有接口' })
+  description?: string;
+
+  @ApiProperty({ description: '远程同步 URL（OpenAPI/Swagger 文档地址）', example: 'https://api.example.com/swagger.json' })
+  syncUrl?: string;
+}
+
+export class UpdateRestApiGroupRequest {
+  @ApiProperty({ description: '组名称', example: '用户模块接口' })
+  name?: string;
+
+  @ApiProperty({ description: '组描述', example: '用户相关的所有接口' })
+  description?: string;
+
+  @ApiProperty({ description: '远程同步 URL（OpenAPI/Swagger 文档地址）', example: 'https://api.example.com/swagger.json' })
+  syncUrl?: string;
+}
+
+export class SyncRestApiGroupRequest {
+  @ApiProperty({ description: '同步 URL（可选，不传则使用组已配置的 URL）', example: 'https://api.example.com/swagger.json' })
+  syncUrl?: string;
+}
+
+// RestApi Request DTOs
+export class CreateRestApiRequest {
+  @ApiProperty({ description: '项目 ID', example: 'project_123', required: true })
+  projectId: string;
+
+  @ApiProperty({ description: '接口组 ID', example: 'rag_123' })
+  groupId?: string;
+
+  @ApiProperty({ description: '接口名称', example: '获取用户信息', required: true })
+  name: string;
+
+  @ApiProperty({ description: '接口描述', example: '获取当前登录用户的详细信息' })
+  description?: string;
+
+  @ApiProperty({ description: 'API 地址', example: '/api/v1/users/me' })
+  url?: string;
+
+  @ApiProperty({
+    description: 'HTTP 方法',
+    example: 'GET',
+    enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
+  })
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+
+  @ApiProperty({ description: '请求参数关联的数据模型 ID 列表', type: [String] })
+  requestModelIds?: string[];
+
+  @ApiProperty({ description: '响应数据关联的数据模型 ID 列表', type: [String] })
+  responseModelIds?: string[];
+}
+
+export class UpdateRestApiRequest {
+  @ApiProperty({ description: '接口组 ID', example: 'rag_123' })
+  groupId?: string;
+
+  @ApiProperty({ description: '接口名称', example: '获取用户信息' })
+  name?: string;
+
+  @ApiProperty({ description: '接口描述', example: '获取当前登录用户的详细信息' })
+  description?: string;
+
+  @ApiProperty({ description: 'API 地址', example: '/api/v1/users/me' })
+  url?: string;
+
+  @ApiProperty({
+    description: 'HTTP 方法',
+    example: 'GET',
+    enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
+  })
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+
+  @ApiProperty({ description: '请求参数关联的数据模型 ID 列表', type: [String] })
+  requestModelIds?: string[];
+
+  @ApiProperty({ description: '响应数据关联的数据模型 ID 列表', type: [String] })
+  responseModelIds?: string[];
+}
+

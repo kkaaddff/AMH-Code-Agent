@@ -4,13 +4,114 @@ import { Context, NextFunction } from '@midwayjs/web';
 import { MidwayHttpError } from '@midwayjs/core';
 import axios from 'axios';
 
-const cookieName = 'ymmoa_passport';
-const ssoHost = 'https://sso.amh-group.com';
-
 interface User {
   id: string;
   name?: string;
   jobNumber?: string;
+}
+
+interface AuthConfig {
+  cookieName: string;
+  ssoHost: string;
+}
+
+/**
+ * 根据环境变量获取鉴权配置
+ */
+function getAuthConfig(): AuthConfig {
+  const hostname = process.env.HOSTNAME || '';
+  const isDev = hostname.includes('dev');
+  const isQa = hostname.includes('qa');
+
+  if (isDev) {
+    return {
+      cookieName: 'dev_passport',
+      ssoHost: 'https://dev-sso.amh-group.com',
+    };
+  }
+
+  if (isQa) {
+    return {
+      cookieName: 'qa_passport',
+      ssoHost: 'https://qa-sso.amh-group.com',
+    };
+  }
+
+  // 生产环境
+  return {
+    cookieName: 'ymmoa_passport',
+    ssoHost: 'https://sso.amh-group.com',
+  };
+}
+
+/**
+ * 从 X-User-Cookies header 中提取 cookie 值
+ */
+function getCookieFromHeader(ctx: Context, cookieName: string): string | null {
+  const userCookiesHeader = ctx.get('x-user-cookies');
+  if (!userCookiesHeader) {
+    return null;
+  }
+
+  try {
+    const cookies = JSON.parse(userCookiesHeader);
+    return cookies[cookieName] || cookies.ymmoa_online || null;
+  } catch (error) {
+    ctx.logger.warn('解析 X-User-Cookies header 失败:', error);
+    return null;
+  }
+}
+
+/**
+ * 从 Cookie 中获取 cookie 值
+ */
+function getCookieFromRequest(ctx: Context, cookieName: string): string | null {
+  return ctx.cookies.get(cookieName) || null;
+}
+
+/**
+ * 通过 SSO 验证用户身份
+ */
+async function verifyUserBySSO(ctx: Context, passport: string, ssoHost: string): Promise<User | null> {
+  try {
+    const response = await axios.get(`${ssoHost}/sso/verify`, {
+      params: {
+        passport: '',
+      },
+      headers: {
+        passport,
+      },
+      timeout: 5000,
+    });
+
+    if (response.data?.result?.user?.id) {
+      return response.data.result.user as User;
+    }
+    return null;
+  } catch (error) {
+    ctx.logger.warn('SSO 验证失败:', error);
+    return null;
+  }
+}
+
+/**
+ * 尝试从指定来源获取并验证用户
+ */
+async function tryAuthFromSource(
+  ctx: Context,
+  passport: string | null,
+  ssoHost: string,
+  sourceName: string
+): Promise<User | null> {
+  if (!passport) {
+    return null;
+  }
+
+  const user = await verifyUserBySSO(ctx, passport, ssoHost);
+  if (!user) {
+    ctx.logger.warn(`${sourceName} 验证失败`);
+  }
+  return user;
 }
 
 /**
@@ -22,60 +123,19 @@ interface User {
  * 4. 本地开发模式 (NODE_ENV=local)
  */
 async function authValidate(ctx: Context): Promise<void> {
+  const authConfig = getAuthConfig();
   let user: User | null = null;
 
   // 尝试从自定义 header 获取 cookies
   if (!user) {
-    const userCookiesHeader = ctx.get('x-user-cookies');
-    if (userCookiesHeader) {
-      try {
-        const cookies = JSON.parse(userCookiesHeader);
-        const userCookie = cookies.ymmoa_passport || cookies.ymmoa_online;
-        if (userCookie) {
-          const response = await axios.get(`${ssoHost}/sso/verify`, {
-            params: {
-              passport: '',
-            },
-            headers: {
-              passport: userCookie,
-            },
-            timeout: 5000,
-          });
-
-          if (response.data?.result?.user?.id) {
-            user = response.data.result.user as User;
-          }
-        }
-      } catch (error) {
-        // 自定义 header 验证失败，继续尝试其他方式
-        ctx.logger.warn('自定义 header 验证失败:', error);
-      }
-    }
+    const passport = getCookieFromHeader(ctx, authConfig.cookieName);
+    user = await tryAuthFromSource(ctx, passport, authConfig.ssoHost, '自定义 header');
   }
 
   // 尝试使用 Cookie 鉴权
   if (!user) {
-    const userCookie = ctx.cookies.get(cookieName);
-    if (userCookie) {
-      try {
-        const response = await axios.get(`${ssoHost}/sso/verify`, {
-          params: {
-            passport: '',
-          },
-          headers: {
-            passport: userCookie,
-          },
-          timeout: 5000,
-        });
-
-        if (response.data?.result?.user?.id) {
-          user = response.data.result.user as User;
-        }
-      } catch (error) {
-        // SSO 验证失败，继续尝试其他方式
-        ctx.logger.warn('SSO验证失败:', error);
-      }
-    }
+    const passport = getCookieFromRequest(ctx, authConfig.cookieName);
+    user = await tryAuthFromSource(ctx, passport, authConfig.ssoHost, 'Cookie');
   }
 
   // 本地开发模式

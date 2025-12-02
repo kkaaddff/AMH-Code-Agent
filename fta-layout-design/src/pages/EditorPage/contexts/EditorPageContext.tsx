@@ -1,11 +1,16 @@
 import type { Page, DocumentReference } from '@/types/project';
-import type { InterfaceDataModel } from '@/types/interfaceDataModel';
+import type { DataModel, DataModelGroup } from '@/types/dataModel';
+import type { RestApi, RestApiGroup } from '@/types/restApi';
 import { proxy } from 'valtio';
 import { TDocumentKeys } from '../constants';
 import { designDetectionActions } from './DesignDetectionContext';
 import { createRootAnnotationFromDesignDoc } from '../components/LayerTreePanel/utils';
-import { interfaceDataModelService } from '@/services/interfaceDataModelService';
+import { dataModelService, dataModelGroupService } from '@/services/dataModelService';
+import { restApiService, restApiGroupService } from '@/services/restApiService';
 import { projectService } from '@/services/projectService';
+
+/** 数据视图类型：接口或数据模型 */
+export type DataViewType = 'restApi' | 'dataModel';
 
 export interface SelectedDocument {
   type: keyof typeof TDocumentKeys;
@@ -17,10 +22,17 @@ interface EditorPageState {
   projectId: string;
   currentPage: Page | null;
   selectedDocument: SelectedDocument | null;
-  // 接口数据模型相关
-  interfaceDataModels: InterfaceDataModel[];
-  loadingDataModels: boolean;
-  selectedApiId: string | null;
+  // 数据管理（项目级别）
+  dataViewType: DataViewType;
+  dataModels: DataModel[];
+  dataModelGroups: DataModelGroup[];
+  restApis: RestApi[];
+  restApiGroups: RestApiGroup[];
+  loadingDataView: boolean;
+  selectedDataModelId: string | null;
+  selectedRestApiId: string | null;
+  selectedGroupId: string | null;
+  selectedRestApiGroupId: string | null;
   // 页面加载状态
   pageLoading: boolean;
   pageError: string | null;
@@ -31,10 +43,17 @@ export const editorPageStore = proxy<EditorPageState>({
   projectId: '',
   currentPage: null,
   selectedDocument: null,
-  // 接口数据模型
-  interfaceDataModels: [],
-  loadingDataModels: false,
-  selectedApiId: null,
+  // 数据管理
+  dataViewType: 'dataModel',
+  dataModels: [],
+  dataModelGroups: [],
+  restApis: [],
+  restApiGroups: [],
+  loadingDataView: false,
+  selectedDataModelId: null,
+  selectedRestApiId: null,
+  selectedGroupId: null,
+  selectedRestApiGroupId: null,
   // 页面加载状态
   pageLoading: false,
   pageError: null,
@@ -203,73 +222,263 @@ export const editorPageActions = {
     await editorPageActions.refreshCurrentPage();
   },
 
-  // 接口数据模型相关 actions
-  setInterfaceDataModels: (models: InterfaceDataModel[]) => {
-    editorPageStore.interfaceDataModels = models;
-  },
+  // ========== 数据管理 Actions ==========
 
-  setLoadingDataModels: (loading: boolean) => {
-    editorPageStore.loadingDataModels = loading;
-  },
-
-  setSelectedApiId: (id: string | null) => {
-    editorPageStore.selectedApiId = id;
+  /**
+   * 设置数据视图类型
+   */
+  setDataViewType: (type: DataViewType) => {
+    editorPageStore.dataViewType = type;
+    // 切换视图时清空选中状态
+    editorPageStore.selectedDataModelId = null;
+    editorPageStore.selectedRestApiId = null;
   },
 
   /**
-   * 加载当前页面的接口数据模型
+   * 设置选中的分组
    */
-  loadInterfaceDataModels: async () => {
-    const { pageId } = editorPageStore;
-    if (!pageId) {
-      editorPageStore.interfaceDataModels = [];
+  setSelectedGroupId: (id: string | null) => {
+    editorPageStore.selectedGroupId = id;
+  },
+
+  /**
+   * 设置选中的数据模型
+   */
+  setSelectedDataModelId: (id: string | null) => {
+    editorPageStore.selectedDataModelId = id;
+  },
+
+  /**
+   * 设置选中的 REST API
+   */
+  setSelectedRestApiId: (id: string | null) => {
+    editorPageStore.selectedRestApiId = id;
+  },
+
+  /**
+   * 加载项目的数据模型和分组
+   */
+  loadDataModels: async () => {
+    const { projectId } = editorPageStore;
+    if (!projectId) {
+      editorPageStore.dataModels = [];
+      editorPageStore.dataModelGroups = [];
       return;
     }
 
-    editorPageStore.loadingDataModels = true;
+    editorPageStore.loadingDataView = true;
     try {
-      const models = await interfaceDataModelService.getByPageId(pageId);
-      editorPageStore.interfaceDataModels = models;
+      const [models, groups] = await Promise.all([
+        dataModelService.getByProjectId(projectId),
+        dataModelGroupService.getByProjectId(projectId),
+      ]);
+      editorPageStore.dataModels = models;
+      editorPageStore.dataModelGroups = groups;
     } catch (error) {
-      console.error('加载接口数据模型失败:', error);
-      editorPageStore.interfaceDataModels = [];
+      console.error('加载数据模型失败:', error);
+      editorPageStore.dataModels = [];
+      editorPageStore.dataModelGroups = [];
     } finally {
-      editorPageStore.loadingDataModels = false;
+      editorPageStore.loadingDataView = false;
     }
   },
 
   /**
-   * 添加新的接口数据模型
+   * 加载项目的 REST API 和 REST API 组
    */
-  addInterfaceDataModel: (model: InterfaceDataModel) => {
-    editorPageStore.interfaceDataModels = [model, ...editorPageStore.interfaceDataModels];
+  loadRestApis: async () => {
+    const { projectId } = editorPageStore;
+    if (!projectId) {
+      editorPageStore.restApis = [];
+      editorPageStore.restApiGroups = [];
+      return;
+    }
+
+    editorPageStore.loadingDataView = true;
+    try {
+      const [apis, groups] = await Promise.all([
+        restApiService.getByProjectId(projectId),
+        restApiGroupService.getByProjectId(projectId),
+      ]);
+      editorPageStore.restApis = apis;
+      editorPageStore.restApiGroups = groups;
+    } catch (error) {
+      console.error('加载 REST API 失败:', error);
+      editorPageStore.restApis = [];
+      editorPageStore.restApiGroups = [];
+    } finally {
+      editorPageStore.loadingDataView = false;
+    }
   },
 
   /**
-   * 更新接口数据模型
+   * 加载所有数据视图数据
    */
-  updateInterfaceDataModel: (id: string, model: InterfaceDataModel) => {
-    const index = editorPageStore.interfaceDataModels.findIndex((m) => m.id === id);
+  loadAllDataView: async () => {
+    const { projectId } = editorPageStore;
+    if (!projectId) {
+      return;
+    }
+
+    editorPageStore.loadingDataView = true;
+    try {
+      const [models, dataGroups, apis, apiGroups] = await Promise.all([
+        dataModelService.getByProjectId(projectId),
+        dataModelGroupService.getByProjectId(projectId),
+        restApiService.getByProjectId(projectId),
+        restApiGroupService.getByProjectId(projectId),
+      ]);
+      editorPageStore.dataModels = models;
+      editorPageStore.dataModelGroups = dataGroups;
+      editorPageStore.restApis = apis;
+      editorPageStore.restApiGroups = apiGroups;
+    } catch (error) {
+      console.error('加载数据视图失败:', error);
+    } finally {
+      editorPageStore.loadingDataView = false;
+    }
+  },
+
+  /**
+   * 设置选中的 REST API 组
+   */
+  setSelectedRestApiGroupId: (id: string | null) => {
+    editorPageStore.selectedRestApiGroupId = id;
+  },
+
+  // 数据模型 CRUD
+  addDataModel: (model: DataModel) => {
+    editorPageStore.dataModels = [model, ...editorPageStore.dataModels];
+  },
+
+  updateDataModel: (id: string, model: DataModel) => {
+    const index = editorPageStore.dataModels.findIndex((m) => m.id === id);
     if (index !== -1) {
-      editorPageStore.interfaceDataModels[index] = model;
+      editorPageStore.dataModels[index] = model;
     }
   },
 
-  /**
-   * 删除接口数据模型
-   */
-  removeInterfaceDataModel: (id: string) => {
-    editorPageStore.interfaceDataModels = editorPageStore.interfaceDataModels.filter((m) => m.id !== id);
-    // 如果删除的是当前选中的，清空选中
-    if (editorPageStore.selectedApiId === id) {
-      editorPageStore.selectedApiId = null;
+  removeDataModel: (id: string) => {
+    editorPageStore.dataModels = editorPageStore.dataModels.filter((m) => m.id !== id);
+    if (editorPageStore.selectedDataModelId === id) {
+      editorPageStore.selectedDataModelId = null;
+    }
+  },
+
+  // 数据模型组 CRUD
+  addDataModelGroup: (group: DataModelGroup) => {
+    editorPageStore.dataModelGroups = [group, ...editorPageStore.dataModelGroups];
+  },
+
+  updateDataModelGroup: (id: string, group: DataModelGroup) => {
+    const index = editorPageStore.dataModelGroups.findIndex((g) => g.id === id);
+    if (index !== -1) {
+      editorPageStore.dataModelGroups[index] = group;
+    }
+  },
+
+  removeDataModelGroup: (id: string) => {
+    editorPageStore.dataModelGroups = editorPageStore.dataModelGroups.filter((g) => g.id !== id);
+    if (editorPageStore.selectedGroupId === id) {
+      editorPageStore.selectedGroupId = null;
+    }
+  },
+
+  // REST API 组 CRUD
+  addRestApiGroup: (group: RestApiGroup) => {
+    editorPageStore.restApiGroups = [group, ...editorPageStore.restApiGroups];
+  },
+
+  updateRestApiGroup: (id: string, group: RestApiGroup) => {
+    const index = editorPageStore.restApiGroups.findIndex((g) => g.id === id);
+    if (index !== -1) {
+      editorPageStore.restApiGroups[index] = group;
+    }
+  },
+
+  removeRestApiGroup: (id: string) => {
+    editorPageStore.restApiGroups = editorPageStore.restApiGroups.filter((g) => g.id !== id);
+    // 同时移除该组下的所有接口
+    editorPageStore.restApis = editorPageStore.restApis.filter((a) => a.groupId !== id);
+    if (editorPageStore.selectedRestApiGroupId === id) {
+      editorPageStore.selectedRestApiGroupId = null;
+    }
+  },
+
+  // REST API CRUD
+  addRestApi: (api: RestApi) => {
+    editorPageStore.restApis = [api, ...editorPageStore.restApis];
+  },
+
+  addRestApis: (apis: RestApi[]) => {
+    editorPageStore.restApis = [...apis, ...editorPageStore.restApis];
+  },
+
+  updateRestApi: (id: string, api: RestApi) => {
+    const index = editorPageStore.restApis.findIndex((a) => a.id === id);
+    if (index !== -1) {
+      editorPageStore.restApis[index] = api;
+    }
+  },
+
+  removeRestApi: (id: string) => {
+    editorPageStore.restApis = editorPageStore.restApis.filter((a) => a.id !== id);
+    if (editorPageStore.selectedRestApiId === id) {
+      editorPageStore.selectedRestApiId = null;
     }
   },
 
   /**
    * 根据 ID 获取数据模型
    */
-  getInterfaceDataModelById: (id: string): InterfaceDataModel | undefined => {
-    return editorPageStore.interfaceDataModels.find((m) => m.id === id);
+  getDataModelById: (id: string): DataModel | undefined => {
+    return editorPageStore.dataModels.find((m) => m.id === id);
+  },
+
+  /**
+   * 根据 ID 获取数据模型组
+   */
+  getDataModelGroupById: (id: string): DataModelGroup | undefined => {
+    return editorPageStore.dataModelGroups.find((g) => g.id === id);
+  },
+
+  /**
+   * 根据 ID 获取 REST API
+   */
+  getRestApiById: (id: string): RestApi | undefined => {
+    return editorPageStore.restApis.find((a) => a.id === id);
+  },
+
+  /**
+   * 获取指定分组的数据模型
+   */
+  getDataModelsByGroupId: (groupId: string | null): DataModel[] => {
+    if (groupId === null) {
+      // 返回未分组的数据模型
+      return editorPageStore.dataModels.filter((m) => !m.groupId);
+    }
+    return editorPageStore.dataModels.filter((m) => m.groupId === groupId);
+  },
+
+  /**
+   * 根据 ID 获取 REST API 组
+   */
+  getRestApiGroupById: (id: string): RestApiGroup | undefined => {
+    return editorPageStore.restApiGroups.find((g) => g.id === id);
+  },
+
+  /**
+   * 获取指定组的 REST API
+   */
+  getRestApisByGroupId: (groupId: string | null): RestApi[] => {
+    if (groupId === null) {
+      // 返回全部
+      return editorPageStore.restApis;
+    }
+    if (groupId === '__ungrouped__') {
+      // 返回未分组的接口
+      return editorPageStore.restApis.filter((a) => !a.groupId);
+    }
+    return editorPageStore.restApis.filter((a) => a.groupId === groupId);
   },
 };

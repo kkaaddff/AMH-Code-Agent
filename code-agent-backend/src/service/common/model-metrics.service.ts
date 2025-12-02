@@ -29,8 +29,8 @@ export class ModelMetricsService {
       return;
     }
     // 立即执行一次，确保缓存尽快可用
-    await this.runPollingCycle();
-    this.startLoop();
+    // await this.runPollingCycle();
+    // this.startLoop();
   }
 
   @Destroy()

@@ -1,25 +1,43 @@
-import { useMemo } from 'react';
-import { proxy, useSnapshot } from 'valtio';
-import type { DataNode } from 'antd/es/tree';
-import { FileImageOutlined, ReloadOutlined } from '@ant-design/icons';
-import { App, Button, Space, Typography } from 'antd';
-import { DesignDSL, DSLNode } from '@/types/dsl';
+import { dslService } from '@/services/dslService';
+import { DesignData, DSLNode } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import { api } from '@/utils/apiService';
 import { componentDetectionDebugLog } from '@/utils/componentDetectionDebug';
-import { dslService } from '@/services/dslService';
+import { FileImageOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Modal, Space, Typography } from 'antd';
+import type { HookAPI } from 'antd/es/modal/useModal';
+import type { DataNode } from 'antd/es/tree';
+import { useMemo } from 'react';
+import { proxy, useSnapshot } from 'valtio';
 import {
-  AnnotationState,
+  calculateContainerBounds,
+  calculateDSLNodeAbsolutePosition,
+  findAnnotationByDSLNodeId,
+  findAnnotationById,
+  findIntersectingAnnotations,
+  findNearestParentContainer,
+  findContainingDSLNode,
+  findDSLNodeById,
+  findParentAnnotation,
+  flattenAnnotationTree,
+  flattenDSLNodeTree,
+  isAnnotationContaining,
+  sortAnnotationChildren,
+  type FlattenedDSLNode,
+} from '../utils/DetectionCanvasV2Helper';
+
+import { convertToTreeData, createRootAnnotationFromDesignDoc } from '../components/LayerTreePanel/utils';
+import {
   AnnotationNode,
-  isContainerComponent,
-  SelectedNodeItem,
-  NodeType,
+  AnnotationState,
   ComponentCategory,
   getComponentCategory,
+  isContainerComponent,
+  NodeType,
+  SelectedNodeItem,
 } from '../types/componentDetection';
 import { saveAnnotationState } from '../utils/componentStorage';
 import { editorPageStore } from './EditorPageContext';
-import { convertToTreeData, createRootAnnotationFromDesignDoc } from '../components/LayerTreePanel/utils';
 
 type PartialExcept<T, K extends keyof T> = Partial<T> & Pick<T, K>;
 
@@ -27,274 +45,12 @@ const { Text } = Typography;
 
 const VIRTUAL_ANNOTATION_PREFIX = 'virtual-annotation-';
 
-//#region ==================== 工具函数 ====================
-
-// 排序 AnnotationNode 的 children，按照坐标顺序：从上到下，从左到右
-const sortAnnotationChildren = (node: AnnotationNode): AnnotationNode => {
-  const sortedChildren = [...node.children].sort((a, b) => {
-    const yDiff = a.absoluteY - b.absoluteY;
-    if (Math.abs(yDiff) > 1) {
-      return yDiff;
-    }
-    return a.absoluteX - b.absoluteX;
-  });
-
-  return {
-    ...node,
-    children: sortedChildren.map(sortAnnotationChildren),
-  };
-};
-
-// 扁平化 Annotation 树
-const flattenAnnotationTree = (root: AnnotationNode): AnnotationNode[] => {
-  const result: AnnotationNode[] = [];
-  const traverse = (node: AnnotationNode) => {
-    result.push(node);
-    node.children.forEach(traverse);
-  };
-  traverse(root);
-  return result;
-};
-
-// 查找标注节点
-const findAnnotationById = (id: string): AnnotationNode | null => {
-  const search = (node: AnnotationNode): AnnotationNode | null => {
-    if (node.id === id) return node;
-    for (const child of node.children) {
-      const found = search(child);
-      if (found) return found;
-    }
-    return null;
-  };
-
-  if (designDetectionStore.rootAnnotation) {
-    return search(designDetectionStore.rootAnnotation);
-  }
-  return null;
-};
-
-// 通过DSL节点ID查找标注
-const findAnnotationByDSLNodeId = (dslNodeId: string): AnnotationNode | null => {
-  const search = (node: AnnotationNode): AnnotationNode | null => {
-    if (node.dslNodeId === dslNodeId) return node;
-    for (const child of node.children) {
-      const found = search(child);
-      if (found) return found;
-    }
-    return null;
-  };
-
-  if (designDetectionStore.rootAnnotation) {
-    return search(designDetectionStore.rootAnnotation);
-  }
-  return null;
-};
-
-// 统一的DSL节点查找函数
-const findDSLNodeById = (id: string): DSLNode | null => {
-  if (!designDetectionStore.dslData) return null;
-
-  const search = (node: DSLNode | null): DSLNode | null => {
-    if (!node) return null;
-    if (node.id === id) return node;
-    if (node.children) {
-      for (const child of node.children) {
-        const found = search(child);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  return search(designDetectionStore.dslRootNode);
-};
-
-// 计算DSL节点的绝对坐标
-const calculateDSLNodeAbsolutePosition = (targetNode: DSLNode): { x: number; y: number } => {
-  if (!designDetectionStore.dslRootNode) return { x: 0, y: 0 };
-
-  const findPath = (node: DSLNode, parentX = 0, parentY = 0): { x: number; y: number } | null => {
-    const relativeX = node.layoutStyle?.relativeX || 0;
-    const relativeY = node.layoutStyle?.relativeY || 0;
-    const absoluteX = parentX + relativeX;
-    const absoluteY = parentY + relativeY;
-
-    if (node.id === targetNode.id) {
-      return { x: absoluteX, y: absoluteY };
-    }
-
-    if (node.children) {
-      for (const child of node.children) {
-        const found = findPath(child, absoluteX, absoluteY);
-        if (found) return found;
-      }
-    }
-
-    return null;
-  };
-
-  return findPath(designDetectionStore.dslRootNode) || { x: 0, y: 0 };
-};
-
-// 查找最佳父节点
-const findBestParent = (dslNode: DSLNode, rootAnnotation: AnnotationNode): AnnotationNode => {
-  const dslAbsolutePos = calculateDSLNodeAbsolutePosition(dslNode);
-  const dslX = dslAbsolutePos.x;
-  const dslY = dslAbsolutePos.y;
-  const dslWidth = dslNode.layoutStyle?.width || 0;
-  const dslHeight = dslNode.layoutStyle?.height || 0;
-
-  let bestParent = rootAnnotation;
-  let smallestArea = rootAnnotation.width * rootAnnotation.height;
-
-  const search = (node: AnnotationNode) => {
-    if (!node.isContainer) return;
-
-    const isInside =
-      dslX >= node.absoluteX &&
-      dslY >= node.absoluteY &&
-      dslX + dslWidth <= node.absoluteX + node.width &&
-      dslY + dslHeight <= node.absoluteY + node.height;
-
-    if (isInside) {
-      const area = node.width * node.height;
-      if (area < smallestArea) {
-        smallestArea = area;
-        bestParent = node;
-      }
-      node.children.forEach(search);
-    }
-  };
-
-  rootAnnotation.children.forEach(search);
-  return bestParent;
-};
-
-// 边界计算辅助函数
-const calculateContainerBounds = (
-  children: AnnotationNode[]
-): { minX: number; minY: number; maxX: number; maxY: number } => {
-  if (children.length === 0) {
-    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
-  }
-
-  const bounds = children.map((child) => ({
-    x1: child.absoluteX,
-    y1: child.absoluteY,
-    x2: child.absoluteX + child.width,
-    y2: child.absoluteY + child.height,
-  }));
-
-  return {
-    minX: Math.min(...bounds.map((b) => b.x1)),
-    minY: Math.min(...bounds.map((b) => b.y1)),
-    maxX: Math.max(...bounds.map((b) => b.x2)),
-    maxY: Math.max(...bounds.map((b) => b.y2)),
-  };
-};
-
-// 查找父节点
-const findParentAnnotation = (childId: string): AnnotationNode | null => {
-  if (!designDetectionStore.rootAnnotation) return null;
-
-  const search = (node: AnnotationNode): AnnotationNode | null => {
-    for (const child of node.children) {
-      if (child.id === childId) {
-        return node;
-      }
-      const found = search(child);
-      if (found) return found;
-    }
-    return null;
-  };
-
-  return search(designDetectionStore.rootAnnotation);
-};
-
-// 检查是否为祖先节点
-const isAncestor = (ancestorId: string, descendantId: string): boolean => {
-  const ancestor = findAnnotationById(ancestorId);
-  if (!ancestor) return false;
-
-  const checkDescendant = (node: AnnotationNode): boolean => {
-    if (node.id === descendantId) return true;
-    return node.children.some(checkDescendant);
-  };
-
-  return checkDescendant(ancestor);
-};
-
-// 查找能够包含所有选中节点的最小DSL节点
-const findContainingDSLNode = (selectedAnnotations: AnnotationNode[], selectedDSLNodes: DSLNode[]): DSLNode | null => {
-  if (!designDetectionStore.dslRootNode) return null;
-
-  const bounds = [
-    ...selectedAnnotations.map((a) => ({
-      x: a.absoluteX,
-      y: a.absoluteY,
-      width: a.width,
-      height: a.height,
-    })),
-    ...selectedDSLNodes.map((node) => {
-      const pos = calculateDSLNodeAbsolutePosition(node);
-      return {
-        x: pos.x,
-        y: pos.y,
-        width: node.layoutStyle?.width || 0,
-        height: node.layoutStyle?.height || 0,
-      };
-    }),
-  ];
-
-  const minX = Math.min(...bounds.map((item) => item.x));
-  const minY = Math.min(...bounds.map((item) => item.y));
-  const maxX = Math.max(...bounds.map((item) => item.x + item.width));
-  const maxY = Math.max(...bounds.map((item) => item.y + item.height));
-
-  let bestNode: DSLNode | null = null;
-  let smallestArea = Infinity;
-
-  const search = (node: DSLNode, parentX = 0, parentY = 0) => {
-    const relativeX = node.layoutStyle?.relativeX || 0;
-    const relativeY = node.layoutStyle?.relativeY || 0;
-    const absoluteX = parentX + relativeX;
-    const absoluteY = parentY + relativeY;
-    const nodeWidth = node.layoutStyle?.width || 0;
-    const nodeHeight = node.layoutStyle?.height || 0;
-
-    const isAnnotated = findAnnotationByDSLNodeId(node.id);
-    const isSelectedNode = selectedDSLNodes.some((n) => n.id === node.id);
-    const contains =
-      !isAnnotated &&
-      !isSelectedNode &&
-      minX >= absoluteX &&
-      minY >= absoluteY &&
-      maxX <= absoluteX + nodeWidth &&
-      maxY <= absoluteY + nodeHeight;
-
-    if (contains) {
-      const area = nodeWidth * nodeHeight;
-      if (area < smallestArea) {
-        smallestArea = area;
-        bestNode = node;
-      }
-    }
-
-    node.children?.forEach((child) => search(child, absoluteX, absoluteY));
-  };
-
-  search(designDetectionStore.dslRootNode);
-  return bestNode;
-};
-
-//#endregion ==================== 工具函数 ====================
-
 // ==================== Valtio 状态存储 ====================
 
 interface DesignDocumentDetectionState {
   rootAnnotation: AnnotationNode | null;
-  annotations: AnnotationNode[];
-  dslData: DesignDSL | null;
+  readonly flatAnnotationList: AnnotationNode[];
+  designData: DesignData | null;
   readonly dslRootNode: DSLNode | null;
   isLoading: boolean;
   error: string | null;
@@ -305,24 +61,25 @@ interface DesignDetectionState extends AnnotationState {
   showAllBorders: boolean;
   selectedNodeIds: SelectedNodeItem[];
   designStoreMap: Record<string, DesignDocumentDetectionState>;
-  dslData: DesignDSL | null;
+  designData: DesignData | null;
+  readonly flatAnnotationList: AnnotationNode[];
   readonly dslRootNode: DSLNode | null;
+  readonly flatDSLNodeList: FlattenedDSLNode[];
   readonly currentDesignId: string | undefined;
 }
 
 const createEmptyDesignDocumentState = (): DesignDocumentDetectionState => {
-  const state = {
+  return {
     rootAnnotation: null,
-    annotations: [],
-    dslData: null as DesignDSL | null,
+    designData: null as DesignData | null,
     isLoading: false,
     error: null,
     versionToken: null,
-  };
-  return {
-    ...state,
+    get flatAnnotationList() {
+      return this.rootAnnotation ? flattenAnnotationTree(this.rootAnnotation) : [];
+    },
     get dslRootNode() {
-      return state.dslData?.dsl.nodes?.[0] ?? null;
+      return this.designData?.dsl.nodes?.[0] ?? null;
     },
   };
 };
@@ -345,41 +102,46 @@ export const designDetectionStore = proxy<DesignDetectionState>({
     }
     const target = this.designStoreMap[this.currentDesignId];
     target.rootAnnotation = value;
-    target.annotations = value ? flattenAnnotationTree(value) : [];
   },
-  get annotations() {
+  get flatAnnotationList() {
     if (!this.currentDesignId) {
       return [];
     }
-    return this.designStoreMap[this.currentDesignId]?.annotations ?? [];
+    return this.designStoreMap[this.currentDesignId]?.flatAnnotationList ?? [];
   },
-  selectedAnnotation: null,
-  hoveredAnnotation: null,
-  selectedDSLNode: null,
-  hoveredDSLNode: null,
+
   expandedKeys: [],
   isLoading: false,
-  get dslData() {
+  get designData() {
     if (!this.currentDesignId) {
       return null;
     }
-    return this.designStoreMap[this.currentDesignId]?.dslData ?? null;
+    return this.designStoreMap[this.currentDesignId]?.designData ?? null;
   },
-  set dslData(value: DesignDSL | null) {
+  set designData(value: DesignData | null) {
     if (!this.currentDesignId) return;
     if (!this.designStoreMap[this.currentDesignId]) {
       this.designStoreMap[this.currentDesignId] = createEmptyDesignDocumentState();
     }
-    this.designStoreMap[this.currentDesignId].dslData = value;
+    this.designStoreMap[this.currentDesignId].designData = value;
   },
-  showAllBorders: false,
-  selectedNodeIds: [],
+
   get dslRootNode() {
     if (!this.currentDesignId) {
       return null;
     }
-    return this.designStoreMap[this.currentDesignId]?.dslData?.dsl.nodes?.[0] ?? null;
+    return this.designStoreMap[this.currentDesignId]?.designData?.dsl.nodes?.[0] ?? null;
   },
+  get flatDSLNodeList() {
+    return flattenDSLNodeTree(this.dslRootNode, true);
+  },
+  // 下面是和 绘制 canvas 相关的状态
+  selectedAnnotation: null,
+  hoveredAnnotation: null,
+  selectedDSLNode: null,
+  hoveredDSLNode: null,
+  showAllBorders: true,
+  selectedNodeIds: [],
 });
 
 const ensureDesignDocumentState = (designId: string): DesignDocumentDetectionState => {
@@ -392,12 +154,11 @@ const ensureDesignDocumentState = (designId: string): DesignDocumentDetectionSta
 const setDesignRootAnnotation = (designId: string, root: AnnotationNode | null) => {
   const target = ensureDesignDocumentState(designId);
   target.rootAnnotation = root;
-  target.annotations = root ? flattenAnnotationTree(root) : [];
 };
 
-const setDesignDslData = (designId: string, data: DesignDSL | null) => {
+const setDesignData = (designId: string, data: DesignData | null) => {
   const target = ensureDesignDocumentState(designId);
-  target.dslData = data;
+  target.designData = data;
 };
 
 const updateDSLNodeHiddenState = (id: string) => {
@@ -406,7 +167,7 @@ const updateDSLNodeHiddenState = (id: string) => {
   }
 
   const designState = designDetectionStore.designStoreMap[designDetectionStore.currentDesignId];
-  if (!designState?.dslData?.dsl?.nodes?.length) {
+  if (!designState?.designData?.dsl?.nodes?.length) {
     return;
   }
 
@@ -427,7 +188,7 @@ const updateDSLNodeHiddenState = (id: string) => {
     return false;
   };
 
-  designState.dslData.dsl.nodes.some((node) => findAndToggleNode(node));
+  designState.designData?.dsl.nodes.some((node) => findAndToggleNode(node));
 };
 
 const getDocumentVersionToken = (doc: PartialExcept<DocumentReference, 'id'>) =>
@@ -441,7 +202,7 @@ const shouldFetchDesignDocument = (doc: PartialExcept<DocumentReference, 'id'>, 
   if (!target) {
     return true;
   }
-  if (!target.dslData || !target.rootAnnotation) {
+  if (!target.designData || !target.rootAnnotation) {
     return true;
   }
   const nextVersion = getDocumentVersionToken(doc);
@@ -456,7 +217,7 @@ const fetchDesignDocumentDSLInternal = async (doc: PartialExcept<DocumentReferen
 
   try {
     const response = await api.project.document.getContent({ documentId: doc.id });
-    const rawDslData: DesignDSL | undefined = response?.data?.data;
+    const rawDslData: DesignData | undefined = response?.data?.data;
     if (!rawDslData) {
       throw new Error('没有获取到DSL数据');
     }
@@ -471,7 +232,7 @@ const fetchDesignDocumentDSLInternal = async (doc: PartialExcept<DocumentReferen
     if (!rootAnnotation) {
       throw new Error('DSL数据中缺少根节点');
     }
-    setDesignDslData(doc.id, {
+    setDesignData(doc.id, {
       dsl: processedDesignDSL.dsl,
     });
     setDesignRootAnnotation(doc.id, rootAnnotation);
@@ -485,13 +246,6 @@ const fetchDesignDocumentDSLInternal = async (doc: PartialExcept<DocumentReferen
 };
 
 // ==================== Actions ====================
-
-// 获取 modal 实例的辅助函数 (需要在组件内调用)
-let modalInstance: ReturnType<typeof App.useApp>['modal'] | null = null;
-
-export const setModalInstance = (modal: ReturnType<typeof App.useApp>['modal']) => {
-  modalInstance = modal;
-};
 
 export const designDetectionActions = {
   // 切换当前设计文档
@@ -517,7 +271,7 @@ export const designDetectionActions = {
     designId: string,
     payload: {
       rootAnnotation?: AnnotationNode | null;
-      dslData?: DesignDSL | null;
+      dslData?: DesignData | null;
     }
   ) => {
     if (!designId) return;
@@ -528,11 +282,11 @@ export const designDetectionActions = {
         convertPaths: true,
       });
 
-      setDesignDslData(designId, {
+      setDesignData(designId, {
         dsl: processedDesignDSL.dsl,
       });
     } else if ('dslData' in payload) {
-      setDesignDslData(designId, null);
+      setDesignData(designId, null);
     }
     if ('rootAnnotation' in payload) {
       setDesignRootAnnotation(designId, payload.rootAnnotation ?? null);
@@ -556,7 +310,6 @@ export const designDetectionActions = {
     updateDSLNodeHiddenState(id);
   },
 
-  // 创建标注
   createAnnotation: async (
     dslNode: DSLNode,
     ftaComponent: string,
@@ -566,6 +319,7 @@ export const designDetectionActions = {
       props?: Record<string, any>;
       layout?: any;
       force?: boolean;
+      modal?: HookAPI;
     }
   ): Promise<boolean> => {
     if (!designDetectionStore.rootAnnotation) {
@@ -578,38 +332,25 @@ export const designDetectionActions = {
       (additionalProps && typeof additionalProps.force === 'undefined') ||
       (additionalProps && additionalProps.force === false);
 
-    if (shouldCheckDuplicate) {
-      const existingAnnotation = designDetectionStore.annotations.find((a) => a.dslNodeId === dslNode.id);
-      if (existingAnnotation) {
+    const existingAnnotation = designDetectionStore.flatAnnotationList.find(
+      (a) => a.id === dslNode.id || a.dslNodeId === dslNode.id
+    );
+
+    if (existingAnnotation) {
+      if (shouldCheckDuplicate) {
         console.warn('This DSL node is already annotated');
         return false;
-      }
-    } else {
-      // 强制创建，删除重复标注
-      const existingAnnotation = designDetectionStore.annotations.find((a) => a.dslNodeId === dslNode.id);
-      if (existingAnnotation) {
+      } else {
+        // 强制创建，删除重复标注
         designDetectionActions.deleteAnnotation(existingAnnotation.id, {
           docId: designDetectionStore.currentDesignId!,
         });
       }
     }
 
-    const collectDescendantDSLIds = (node: DSLNode): Set<string> => {
-      const ids = new Set<string>();
-      const traverse = (current: DSLNode | undefined) => {
-        if (!current?.children) return;
-        current.children.forEach((child) => {
-          ids.add(child.id);
-          traverse(child);
-        });
-      };
-      traverse(node);
-      return ids;
-    };
-
-    const descendantDSLIdSet = collectDescendantDSLIds(dslNode);
-    const descendantAnnotations = designDetectionStore.annotations.filter((annotation) =>
-      descendantDSLIdSet.has(annotation.dslNodeId)
+    const ancestorItem: SelectedNodeItem = { id: dslNode.id, type: NodeType.DSL };
+    const descendantAnnotations = designDetectionStore.flatAnnotationList.filter((annotation) =>
+      designDetectionActions.isAncestorOf(ancestorItem, { id: annotation.id, type: NodeType.ANNOTATION })
     );
 
     const hasAnnotatedChildren = descendantAnnotations.length > 0;
@@ -617,14 +358,15 @@ export const designDetectionActions = {
     const isNonContainer =
       componentCategory === ComponentCategory.ATOMIC || componentCategory === ComponentCategory.BUSINESS;
 
-    if (hasAnnotatedChildren && isNonContainer && modalInstance) {
+    if (hasAnnotatedChildren && isNonContainer) {
       const confirmed = await new Promise<boolean>((resolve) => {
-        const instance = modalInstance!.confirm({
+        const instance = (additionalProps?.modal ?? Modal).confirm({
           title: '检测到内部已有标注',
           content: `该节点内部存在 ${descendantAnnotations.length} 个已标注节点。若创建为非容器组件，将清空其内部标注。`,
           okText: '强制创建并清空',
           cancelText: '取消',
           centered: true,
+          zIndex: 1000,
           onOk: () => {
             resolve(true);
             instance.destroy();
@@ -642,7 +384,7 @@ export const designDetectionActions = {
     }
 
     const now = Date.now();
-    const dslAbsolutePos = calculateDSLNodeAbsolutePosition(dslNode);
+    const dslAbsolutePos = calculateDSLNodeAbsolutePosition(dslNode, designDetectionStore.flatDSLNodeList);
     const annotationId = dslNode.id;
 
     const isContainerLike =
@@ -660,7 +402,7 @@ export const designDetectionActions = {
         const remainingChildren: AnnotationNode[] = [];
 
         node.children.forEach((child) => {
-          if (descendantDSLIdSet.has(child.dslNodeId)) {
+          if (designDetectionActions.isAncestorOf(ancestorItem, { id: child.id, type: NodeType.ANNOTATION })) {
             detached.push(child);
             return;
           }
@@ -688,8 +430,6 @@ export const designDetectionActions = {
 
     const newAnnotation: AnnotationNode = {
       id: annotationId,
-      dslNodeId: dslNode.id,
-      dslNode,
       ftaComponent,
       name: additionalProps?.name,
       comment: additionalProps?.comment,
@@ -702,12 +442,11 @@ export const designDetectionActions = {
       width: dslNode.layoutStyle?.width || 0,
       height: dslNode.layoutStyle?.height || 0,
       props: additionalProps?.props,
-      layout: additionalProps?.layout,
       createdAt: now,
       updatedAt: now,
     };
 
-    const parent = findBestParent(dslNode, updatedRoot);
+    const parent = findNearestParentContainer(newAnnotation, flattenAnnotationTree(updatedRoot)) ?? updatedRoot;
 
     const insertAnnotation = (node: AnnotationNode): AnnotationNode => {
       if (node.id === parent.id) {
@@ -729,7 +468,6 @@ export const designDetectionActions = {
 
     const rootWithInsertion = insertAnnotation(updatedRoot);
     const sortedRootAnnotation = sortAnnotationChildren(rootWithInsertion);
-    // const flattenedAnnotations = flattenAnnotationTree(sortedRootAnnotation);
 
     const expandedKeysSet = new Set(designDetectionStore.expandedKeys);
     expandedKeysSet.add(parent.id);
@@ -748,7 +486,6 @@ export const designDetectionActions = {
     return true;
   },
 
-  // 删除标注
   deleteAnnotation: (annotationId: string, options: { docId: string; deleteChildren?: boolean }) => {
     const { docId, deleteChildren = false } = options;
 
@@ -824,9 +561,8 @@ export const designDetectionActions = {
     designDetectionStore.expandedKeys = designDetectionStore.expandedKeys.filter((key) => !idsToDelete.includes(key));
   },
 
-  // 更新标注
   updateAnnotation: async (annotationId: string, updates: Partial<AnnotationNode>): Promise<boolean> => {
-    const targetAnnotation = findAnnotationById(annotationId);
+    const targetAnnotation = findAnnotationById(annotationId, designDetectionStore.rootAnnotation);
     if (!targetAnnotation) {
       return false;
     }
@@ -835,9 +571,9 @@ export const designDetectionActions = {
     const nextIsContainer = isContainerComponent(nextFTAComponent);
     const shouldClearChildren = targetAnnotation.children.length > 0 && !nextIsContainer;
 
-    if (shouldClearChildren && modalInstance) {
+    if (shouldClearChildren) {
       const confirmed = await new Promise<boolean>((resolve) => {
-        const instance = modalInstance!.confirm({
+        const instance = Modal.confirm({
           title: '检测到内部已有标注',
           content: '当前组件内部存在已标注的子节点，转换为非容器组件将清空这些子标注，是否继续？',
           okText: '强制清空并保存',
@@ -913,7 +649,7 @@ export const designDetectionActions = {
 
     let nextSelected = designDetectionStore.selectedAnnotation;
     if (nextSelected && removedChildIds.includes(nextSelected.id)) {
-      nextSelected = findAnnotationById(annotationId);
+      nextSelected = findAnnotationById(annotationId, designDetectionStore.rootAnnotation);
     }
 
     designDetectionStore.rootAnnotation = sortedRootAnnotation;
@@ -922,7 +658,6 @@ export const designDetectionActions = {
     return true;
   },
 
-  // 选择标注
   selectAnnotation: (annotationId: string | null, multiSelect: boolean = false) => {
     if (annotationId === null) {
       designDetectionStore.selectedNodeIds = [];
@@ -932,9 +667,7 @@ export const designDetectionActions = {
     }
 
     if (multiSelect) {
-      const existingIndex = designDetectionStore.selectedNodeIds.findIndex(
-        (item) => item.id === annotationId && item.type === NodeType.ANNOTATION
-      );
+      const existingIndex = designDetectionStore.selectedNodeIds.findIndex((item) => item.id === annotationId);
 
       if (existingIndex !== -1) {
         designDetectionStore.selectedNodeIds = designDetectionStore.selectedNodeIds.filter(
@@ -942,8 +675,8 @@ export const designDetectionActions = {
         );
         const newIds = designDetectionStore.selectedNodeIds;
         designDetectionStore.selectedAnnotation =
-          newIds.length > 0 && newIds[newIds.length - 1].type === NodeType.ANNOTATION
-            ? findAnnotationById(newIds[newIds.length - 1].id)
+          newIds.length > 0
+            ? findAnnotationById(newIds[newIds.length - 1].id, designDetectionStore.rootAnnotation)
             : null;
         designDetectionStore.selectedDSLNode = null;
       } else {
@@ -951,17 +684,16 @@ export const designDetectionActions = {
           ...designDetectionStore.selectedNodeIds,
           { id: annotationId, type: NodeType.ANNOTATION },
         ];
-        designDetectionStore.selectedAnnotation = findAnnotationById(annotationId);
+        designDetectionStore.selectedAnnotation = findAnnotationById(annotationId, designDetectionStore.rootAnnotation);
         designDetectionStore.selectedDSLNode = null;
       }
     } else {
       designDetectionStore.selectedNodeIds = [{ id: annotationId, type: NodeType.ANNOTATION }];
-      designDetectionStore.selectedAnnotation = findAnnotationById(annotationId);
+      designDetectionStore.selectedAnnotation = findAnnotationById(annotationId, designDetectionStore.rootAnnotation);
       designDetectionStore.selectedDSLNode = null;
     }
   },
 
-  // 选择DSL节点
   selectDSLNode: (dslNode: DSLNode | null, multiSelect: boolean = false) => {
     if (dslNode === null) {
       designDetectionStore.selectedNodeIds = [];
@@ -971,16 +703,14 @@ export const designDetectionActions = {
     }
 
     if (multiSelect) {
-      const existingIndex = designDetectionStore.selectedNodeIds.findIndex(
-        (item) => item.id === dslNode.id && item.type === NodeType.DSL
-      );
+      const existingIndex = designDetectionStore.selectedNodeIds.findIndex((item) => item.id === dslNode.id);
       const isAlreadySelected = existingIndex !== -1;
       const newIds = isAlreadySelected
         ? designDetectionStore.selectedNodeIds.filter((_, index) => index !== existingIndex)
         : [...designDetectionStore.selectedNodeIds, { id: dslNode.id, type: NodeType.DSL }];
 
-      const lastDSLNodeId = [...newIds].reverse().find((item) => item.type === NodeType.DSL)?.id;
-      const lastNode = lastDSLNodeId ? findDSLNodeById(lastDSLNodeId) : null;
+      const lastDSLNodeId = [...newIds].reverse()[0]?.id;
+      const lastNode = lastDSLNodeId ? findDSLNodeById(lastDSLNodeId, designDetectionStore.dslRootNode) : null;
 
       designDetectionStore.selectedNodeIds = newIds;
       designDetectionStore.selectedDSLNode = lastNode;
@@ -992,14 +722,16 @@ export const designDetectionActions = {
     }
   },
 
-  // Hover标注
   hoverAnnotation: (annotationId: string | null) => {
-    designDetectionStore.hoveredAnnotation = annotationId ? findAnnotationById(annotationId) : null;
+    designDetectionStore.hoveredAnnotation = annotationId
+      ? findAnnotationById(annotationId, designDetectionStore.rootAnnotation)
+      : null;
   },
 
-  // Hover DSL节点
   hoverDSLNode: (dslNodeId: string | null) => {
-    designDetectionStore.hoveredDSLNode = dslNodeId ? findDSLNodeById(dslNodeId) : null;
+    designDetectionStore.hoveredDSLNode = dslNodeId
+      ? findDSLNodeById(dslNodeId, designDetectionStore.dslRootNode)
+      : null;
   },
 
   // 清空选择
@@ -1016,7 +748,7 @@ export const designDetectionActions = {
 
   // 展开全部
   expandAll: () => {
-    const allKeys = designDetectionStore.annotations.map((a) => a.id);
+    const allKeys = designDetectionStore.flatAnnotationList.map((a) => a.id);
     designDetectionStore.expandedKeys = allKeys;
   },
 
@@ -1054,7 +786,7 @@ export const designDetectionActions = {
         designDetectionStore.selectedDSLNode = null;
       }
       componentDetectionDebugLog('loadAnnotations:success', {
-        annotationCount: designDetectionStore.designStoreMap[designId]?.annotations.length ?? 0,
+        annotationCount: designDetectionStore.designStoreMap[designId]?.flatAnnotationList.length ?? 0,
       });
     } catch (error) {
       componentDetectionDebugLog('loadAnnotations:failed', { error });
@@ -1065,12 +797,10 @@ export const designDetectionActions = {
   // 组合选中的节点创建标注
   combineSelectedDSLNodes: (ftaComponent: string): boolean => {
     if (designDetectionStore.selectedNodeIds.length === 0) {
-      componentDetectionDebugLog('combineSelectedDSLNodes:skipNoSelection');
       return false;
     }
 
     if (!designDetectionStore.rootAnnotation) {
-      componentDetectionDebugLog('combineSelectedDSLNodes:skipNoRoot');
       return false;
     }
 
@@ -1079,26 +809,20 @@ export const designDetectionActions = {
     const selectedAnnotationIds = designDetectionStore.selectedNodeIds
       .filter((item) => item.type === NodeType.ANNOTATION)
       .map((item) => item.id);
+
     const selectedDSLNodeIds = designDetectionStore.selectedNodeIds
       .filter((item) => item.type === NodeType.DSL)
       .map((item) => item.id);
 
     const selectedAnnotationsRaw = selectedAnnotationIds
-      .map((id) => findAnnotationById(id))
+      .map((id) => findAnnotationById(id, designDetectionStore.rootAnnotation))
       .filter((a): a is AnnotationNode => a !== null && !a.isRoot);
 
     const selectedDSLNodes = selectedDSLNodeIds
-      .map((id) => findDSLNodeById(id))
+      .map((id) => findDSLNodeById(id, designDetectionStore.dslRootNode))
       .filter((n): n is DSLNode => n !== null);
 
-    componentDetectionDebugLog('combineSelectedDSLNodes:start', {
-      ftaComponent,
-      selectedAnnotationCount: selectedAnnotationsRaw.length,
-      selectedDSLCount: selectedDSLNodes.length,
-    });
-
     if (selectedAnnotationsRaw.length === 0 && selectedDSLNodes.length === 0) {
-      componentDetectionDebugLog('combineSelectedDSLNodes:skipNoTargets');
       return false;
     }
 
@@ -1108,24 +832,16 @@ export const designDetectionActions = {
       updatedAt: now,
     });
 
-    const collectAnnotationBounds = (annotation: AnnotationNode) => {
-      const results: Array<{ x: number; y: number; width: number; height: number }> = [];
-      const traverse = (node: AnnotationNode) => {
-        results.push({
-          x: node.absoluteX,
-          y: node.absoluteY,
-          width: node.width,
-          height: node.height,
-        });
-        node.children.forEach(traverse);
-      };
-      traverse(annotation);
-      return results;
-    };
-
-    const annotationBounds = selectedAnnotationsRaw.flatMap(collectAnnotationBounds);
+    // 只收集选中节点本身的边界，不递归遍历子节点
+    // 这样计算的边界才是用户实际选中的范围，而不是整个子树的范围
+    const annotationBounds = selectedAnnotationsRaw.map((annotation) => ({
+      x: annotation.absoluteX,
+      y: annotation.absoluteY,
+      width: annotation.width,
+      height: annotation.height,
+    }));
     const dslBounds = selectedDSLNodes.map((node) => {
-      const pos = calculateDSLNodeAbsolutePosition(node);
+      const pos = calculateDSLNodeAbsolutePosition(node, designDetectionStore.flatDSLNodeList);
       return {
         x: pos.x,
         y: pos.y,
@@ -1136,7 +852,6 @@ export const designDetectionActions = {
 
     const combinedBounds = [...annotationBounds, ...dslBounds];
     if (combinedBounds.length === 0) {
-      componentDetectionDebugLog('combineSelectedDSLNodes:skipNoBounds');
       return false;
     }
 
@@ -1154,7 +869,7 @@ export const designDetectionActions = {
     };
     buildParentMap(designDetectionStore.rootAnnotation);
 
-    const annotationsInBounds = designDetectionStore.annotations.filter((annotation) => {
+    const annotationsInBounds = designDetectionStore.flatAnnotationList.filter((annotation) => {
       if (annotation.isRoot) return false;
       const width = annotation.width || 0;
       const height = annotation.height || 0;
@@ -1164,11 +879,6 @@ export const designDetectionActions = {
         annotation.absoluteX + width <= maxX &&
         annotation.absoluteY + height <= maxY
       );
-    });
-
-    componentDetectionDebugLog('combineSelectedDSLNodes:annotationsInBounds', {
-      count: annotationsInBounds.length,
-      bounds: { minX, minY, maxX, maxY },
     });
 
     const annotationsInBoundsSet = new Set(annotationsInBounds.map((annotation) => annotation.id));
@@ -1194,13 +904,7 @@ export const designDetectionActions = {
       }
     });
 
-    componentDetectionDebugLog('combineSelectedDSLNodes:attachmentsPrepared', {
-      attachmentCount: annotationsToAttach.length,
-      removedCount: nodesToRemove.size,
-    });
-
     if (annotationsToAttach.length === 0 && selectedDSLNodes.length === 0) {
-      componentDetectionDebugLog('combineSelectedDSLNodes:skipNoAttachments');
       return false;
     }
 
@@ -1219,7 +923,6 @@ export const designDetectionActions = {
 
     const createNewAnnotation = (
       dslNodeId: string,
-      dslNode: DSLNode | null,
       absoluteX: number,
       absoluteY: number,
       width: number,
@@ -1228,8 +931,6 @@ export const designDetectionActions = {
       comment?: string
     ): AnnotationNode => ({
       id: dslNodeId,
-      dslNodeId,
-      dslNode,
       ftaComponent,
       name: undefined,
       comment,
@@ -1245,32 +946,30 @@ export const designDetectionActions = {
       updatedAt: now,
     });
 
-    const containingNode = findContainingDSLNode(annotationsToAttach, selectedDSLNodes);
+    const containingNode = findContainingDSLNode(
+      annotationsToAttach,
+      selectedDSLNodes,
+      designDetectionStore.flatDSLNodeList
+    );
 
     let newAnnotation: AnnotationNode;
     let parent: AnnotationNode;
 
     if (containingNode) {
-      const absolutePos = calculateDSLNodeAbsolutePosition(containingNode);
+      const absolutePos = calculateDSLNodeAbsolutePosition(containingNode, designDetectionStore.flatDSLNodeList);
       newAnnotation = createNewAnnotation(
         containingNode.id,
-        containingNode,
         absolutePos.x,
         absolutePos.y,
         containingNode.layoutStyle?.width || 0,
         containingNode.layoutStyle?.height || 0,
         annotationsToAttach
       );
-      parent = findBestParent(containingNode, rootAfterRemoval);
-      componentDetectionDebugLog('combineSelectedDSLNodes:usingContainingNode', {
-        annotationId: newAnnotation.id,
-        parentId: parent.id,
-      });
+      parent = findNearestParentContainer(newAnnotation, flattenAnnotationTree(rootAfterRemoval)) ?? rootAfterRemoval;
     } else {
       const virtualAnnotationId = `${VIRTUAL_ANNOTATION_PREFIX}${now}-${Math.random().toString(36).slice(2, 8)}`;
       newAnnotation = createNewAnnotation(
         virtualAnnotationId,
-        null,
         minX,
         minY,
         maxX - minX,
@@ -1302,10 +1001,39 @@ export const designDetectionActions = {
       };
 
       rootAfterRemoval.children.forEach(searchParent);
-      componentDetectionDebugLog('combineSelectedDSLNodes:usingVirtualContainer', {
-        annotationId: newAnnotation.id,
-        parentId: parent.id,
+
+      // 碰撞检测：检查虚拟容器是否与其他已存在的标注交叉
+      const virtualRect = {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+      };
+
+      // 收集需要排除的节点ID：被合并的节点及其子节点
+      const excludeIds = new Set<string>(nodesToRemove);
+      annotationsToAttach.forEach((attached) => {
+        excludeIds.add(attached.id);
+        const collectChildIds = (node: AnnotationNode) => {
+          excludeIds.add(node.id);
+          node.children.forEach(collectChildIds);
+        };
+        attached.children.forEach(collectChildIds);
       });
+
+      // 检测与移除后剩余标注的碰撞
+      const flatAfterRemoval = flattenAnnotationTree(rootAfterRemoval);
+      const intersectingAnnotations = findIntersectingAnnotations(virtualRect, flatAfterRemoval, excludeIds);
+
+      if (intersectingAnnotations.length > 0) {
+        const intersectingNames = intersectingAnnotations
+          .map((a) => a.name || a.comment || a.id)
+          .slice(0, 3)
+          .join(', ');
+        const moreCount = intersectingAnnotations.length > 3 ? ` 等${intersectingAnnotations.length}个` : '';
+        console.warn(`[combineSelectedDSLNodes] 虚拟容器与已存在的标注交叉: ${intersectingNames}${moreCount}`);
+        return false;
+      }
     }
 
     const insertAnnotation = (node: AnnotationNode): AnnotationNode => {
@@ -1340,8 +1068,6 @@ export const designDetectionActions = {
     designDetectionStore.selectedNodeIds = [];
     designDetectionStore.selectedDSLNode = null;
 
-    componentDetectionDebugLog('combineSelectedDSLNodes:completed', { success: true });
-
     return true;
   },
 
@@ -1351,8 +1077,8 @@ export const designDetectionActions = {
     targetId: string,
     dropPosition: 'before' | 'inside' | 'after'
   ): { valid: boolean; reason?: string } => {
-    const sourceNode = findAnnotationById(sourceId);
-    const targetNode = findAnnotationById(targetId);
+    const sourceNode = findAnnotationById(sourceId, designDetectionStore.rootAnnotation);
+    const targetNode = findAnnotationById(targetId, designDetectionStore.rootAnnotation);
 
     if (!sourceNode || !targetNode) {
       return { valid: false, reason: '节点不存在' };
@@ -1366,7 +1092,12 @@ export const designDetectionActions = {
       return { valid: false, reason: '不能拖拽到自己' };
     }
 
-    if (isAncestor(sourceId, targetId)) {
+    if (
+      designDetectionActions.isAncestorOf(
+        { id: sourceId, type: NodeType.ANNOTATION },
+        { id: targetId, type: NodeType.ANNOTATION }
+      )
+    ) {
       return { valid: false, reason: '不能将父节点拖入子节点' };
     }
 
@@ -1374,13 +1105,14 @@ export const designDetectionActions = {
       return { valid: false, reason: '该组件不支持子节点，无法拖入' };
     }
 
-    const sourceParent = findParentAnnotation(sourceId);
+    const sourceParent = findParentAnnotation(sourceId, designDetectionStore.rootAnnotation);
     if (sourceParent && dropPosition !== 'inside') {
       const siblings = sourceParent.children;
       const sourceIndex = siblings.findIndex((child) => child.id === sourceId);
 
-      const targetParent = findParentAnnotation(targetId);
-      const isEscapeMove = targetParent?.id === findParentAnnotation(sourceParent.id)?.id;
+      const targetParent = findParentAnnotation(targetId, designDetectionStore.rootAnnotation);
+      const isEscapeMove =
+        targetParent?.id === findParentAnnotation(sourceParent.id, designDetectionStore.rootAnnotation)?.id;
 
       if (isEscapeMove && siblings.length > 1) {
         const isFirst = sourceIndex === 0;
@@ -1545,7 +1277,7 @@ export const designDetectionActions = {
     const sortedRoot = sortAnnotationChildren(newRoot);
 
     designDetectionStore.rootAnnotation = sortedRoot;
-    designDetectionStore.selectedAnnotation = findAnnotationById(sourceId);
+    designDetectionStore.selectedAnnotation = findAnnotationById(sourceId, designDetectionStore.rootAnnotation);
 
     return { success: true };
   },
@@ -1553,6 +1285,31 @@ export const designDetectionActions = {
   // 获取选中的DSL节点
   getSelectedDSLNode: () => {
     return designDetectionStore.selectedDSLNode;
+  },
+
+  /**
+   * 判断节点间的祖先关系（基于绝对坐标的包含关系）
+   * 不再依赖 DSL 树结构递归，而是根据节点类型从 flatDSLNodeList 或 flatAnnotationList 中取出节点，使用矩形包含判断。
+   * 在画布中父级区域完全包裹子级区域时，视为存在祖先关系。
+   */
+  isAncestorOf: (ancestor: SelectedNodeItem, descendant: SelectedNodeItem): boolean => {
+    if (ancestor.id === descendant.id && ancestor.type === descendant.type) return false;
+
+    const { flatDSLNodeList, flatAnnotationList } = designDetectionStore;
+
+    const ancestorNode =
+      ancestor.type === NodeType.ANNOTATION
+        ? flatAnnotationList.find((node) => node.id === ancestor.id)
+        : flatDSLNodeList.find((node) => node.id === ancestor.id);
+
+    const descendantNode =
+      descendant.type === NodeType.ANNOTATION
+        ? flatAnnotationList.find((node) => node.id === descendant.id)
+        : flatDSLNodeList.find((node) => node.id === descendant.id);
+
+    if (!ancestorNode || !descendantNode) return false;
+
+    return isAnnotationContaining(ancestorNode, descendantNode);
   },
 };
 
@@ -1638,4 +1395,4 @@ export const useDesignTreeData = (options?: DesignTreeDataOptions): DataNode[] =
 
 // ==================== 工具方法导出 ====================
 
-export { findAnnotationById, findAnnotationByDSLNodeId, findDSLNodeById, calculateDSLNodeAbsolutePosition };
+export { calculateDSLNodeAbsolutePosition, findAnnotationByDSLNodeId, findAnnotationById, findDSLNodeById };

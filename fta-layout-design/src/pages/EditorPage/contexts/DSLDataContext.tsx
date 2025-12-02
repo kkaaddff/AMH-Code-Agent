@@ -107,12 +107,12 @@ export const dslDataStore = proxy<DSLDataState>({
 
 export const dslDataActions: DSLDataActions = {
   updateNodeVisibility: (nodeId: string, hidden: boolean) => {
-    if (!designDetectionStore?.dslData?.dsl?.nodes) {
+    if (!designDetectionStore?.designData?.dsl?.nodes) {
       return;
     }
 
     const { nodes: updatedNodes, changed } = updateNodeInTree(
-      designDetectionStore.dslData?.dsl?.nodes,
+      designDetectionStore.designData?.dsl?.nodes,
       nodeId,
       (node) => {
         if (node.hidden === hidden) {
@@ -129,29 +129,29 @@ export const dslDataActions: DSLDataActions = {
       return;
     }
 
-    designDetectionStore.dslData = {
-      ...designDetectionStore.dslData,
+    designDetectionStore.designData = {
+      ...designDetectionStore.designData,
       dsl: {
-        ...designDetectionStore.dslData.dsl,
+        ...designDetectionStore.designData.dsl,
         nodes: updatedNodes,
       },
     };
   },
 
   resetAllNodeVisibility: () => {
-    if (!designDetectionStore?.dslData?.dsl?.nodes) {
+    if (!designDetectionStore?.designData?.dsl?.nodes) {
       return;
     }
 
-    const { nodes: resetNodes, changed } = resetVisibilityInTree(designDetectionStore.dslData?.dsl?.nodes);
+    const { nodes: resetNodes, changed } = resetVisibilityInTree(designDetectionStore.designData?.dsl?.nodes);
 
     if (!changed) {
       return;
     }
-    designDetectionStore.dslData = {
-      ...designDetectionStore.dslData,
+    designDetectionStore.designData = {
+      ...designDetectionStore.designData,
       dsl: {
-        ...designDetectionStore.dslData.dsl,
+        ...designDetectionStore.designData.dsl,
         nodes: resetNodes,
       },
     };

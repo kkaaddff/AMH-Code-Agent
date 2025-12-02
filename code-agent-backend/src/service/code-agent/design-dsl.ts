@@ -7,7 +7,7 @@ import * as crypto from 'crypto';
 import fs from 'fs/promises';
 import * as path from 'path';
 import { DesignPathAssetEntity } from '../../entity/code-agent/design-dsl/path-asset';
-import { DesignDSL, DesignNode, DSLData, LayerNode, LayerStyle, PathItem, PathNode } from '../../types/design-dsl';
+import { DesignData, DesignNode, DSLData, LayerNode, LayerStyle, PathItem, PathNode } from '../../types/design-dsl';
 import { normalizeNumericValues } from '../../utils/design/dsl';
 import { OssManagement } from '../oss';
 
@@ -43,7 +43,7 @@ export class DesignDSLService {
   /**
    * 生成随机ID
    */
-  private generateId(prefix: string = 'paint_1'): string {
+  private generateId(prefix = 'paint_1'): string {
     const randomNum = Math.floor(Math.random() * 99999);
     return `${prefix}:${randomNum.toString().padStart(5, '0')}`;
   }
@@ -362,7 +362,7 @@ export class DesignDSLService {
                   filters: '',
                 },
               ],
-              token: `转换的SVG图像/${pathNode.name}`,
+              token: `SVG图像-${pathNode.name}`,
             } as LayerStyle;
 
             // 返回新的LAYER节点
@@ -404,9 +404,9 @@ export class DesignDSLService {
   /**
    * 处理DesignDSL数据
    */
-  public async processDesignDSL(dslData: DesignDSL): Promise<DesignDSL> {
+  public async processDesignDSL(dslData: DesignData): Promise<DesignData> {
     // 深拷贝数据
-    const processedDSL = JSON.parse(JSON.stringify(dslData)) as DesignDSL;
+    const processedDSL = JSON.parse(JSON.stringify(dslData)) as DesignData;
 
     // 1. 先进行数值精度处理
     const normalizedDSL = normalizeNumericValues(processedDSL);
@@ -427,7 +427,7 @@ export class DesignDSLService {
       const fileContent = await fs.readFile(filePath, 'utf-8');
       return JSON.parse(fileContent) as DSLData;
     } catch (error) {
-      console.error('Error reading DesignDSL file:', error);
+      console.error('Error reading DesignData file:', error);
       throw error;
     }
   }
@@ -435,7 +435,7 @@ export class DesignDSLService {
   /**
    * 获取DesignDSL的统计信息
    */
-  public async getDSLStats(dslData: DesignDSL): Promise<{
+  public async getDSLStats(dslData: DesignData): Promise<{
     totalNodes: number;
     pathNodes: number;
     convertedNodes: number;

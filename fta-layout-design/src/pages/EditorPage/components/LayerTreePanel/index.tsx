@@ -1,10 +1,9 @@
-import { modelMetricsService } from '@/services/modelMetricsService';
-import type { ModelMetricsSnapshot } from '@/types/modelMetrics';
 import { DocumentReference } from '@/types/project';
 import { getDocumentStatusColor, getDocumentStatusText } from '@/utils/documentStatus';
 import {
   ApiOutlined,
   CloseOutlined,
+  DatabaseOutlined,
   DeleteOutlined,
   DownOutlined,
   FileImageOutlined,
@@ -13,20 +12,22 @@ import {
   LinkOutlined,
   PlusOutlined,
   ReloadOutlined,
+  RightOutlined,
   SaveOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { App, Button, Collapse, Form, Input, List, Modal, Space, Tag, Tooltip, Tree, Typography } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
+import { App, Button, Collapse, Form, Input, List, Modal, Space, Tag, Tree, Typography } from 'antd';
+import React, { useMemo, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { TDocumentKeys } from '../../constants';
 import { designDetectionActions, designDetectionStore, useDesignTreeData } from '../../contexts/DesignDetectionContext';
-import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
+import { DataViewType, editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
 import { extractDesignIdFromTopLevelKey, findTopLevelKey } from './utils';
+import { useModelMetrics } from './useModelMetrics';
+import './index.css';
 
 const { Title, Text } = Typography;
-type ModelStatus = 'busy' | 'idle' | 'unknown' | 'error';
-
+const DEFAULT_ACTIVE_KEY = ['design', 'data'];
 interface LayerTreePanelProps {
   onDeleteDocument: (type: keyof typeof TDocumentKeys, id: string) => void;
   onSave?: () => void;
@@ -35,36 +36,8 @@ interface LayerTreePanelProps {
 
 const showLine = { showLeafIcon: false };
 
-const evaluateModelStatus = (snapshot: ModelMetricsSnapshot | null): ModelStatus => {
-  if (!snapshot) {
-    return 'unknown';
-  }
-  const running = snapshot.numRequestsRunning ?? 0;
-  const waiting = snapshot.numRequestsWaiting ?? 0;
-  const kvUsage = snapshot.kvCacheUsagePerc ?? 0;
-
-  if (waiting > 0 || running > 0 || kvUsage >= 0.85) {
-    return 'busy';
-  }
-  return 'idle';
-};
-
-const formatPercent = (value?: number) => {
-  if (value === undefined || Number.isNaN(value)) {
-    return '未知';
-  }
-  return `${Math.round(value * 1000) / 10}%`;
-};
-
-const formatTimestamp = (value?: number) => {
-  if (!value) {
-    return '未采集';
-  }
-  return new Date(value).toLocaleTimeString();
-};
-
 const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSave, onGenerateCode }) => {
-  const { currentPage, selectedDocument } = useSnapshot(editorPageStore);
+  const { currentPage, selectedDocument, dataViewType } = useSnapshot(editorPageStore);
   const { modal, message } = App.useApp();
   const { selectedAnnotation, expandedKeys } = useSnapshot(designDetectionStore);
 
@@ -72,9 +45,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
   const [addDocType, setAddDocType] = useState<keyof typeof TDocumentKeys>('design');
   const [addDocForm] = Form.useForm();
   const [syncingStatus, setSyncingStatus] = useState<boolean>(false);
-  const [modelMetrics, setModelMetrics] = useState<ModelMetricsSnapshot | null>(null);
-  const [modelStatus, setModelStatus] = useState<ModelStatus>('unknown');
-  const [modelStatusMessage, setModelStatusMessage] = useState<string>('');
+  const { modelStatusTag } = useModelMetrics();
 
   // 设置弹窗状态
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
@@ -187,44 +158,6 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
     syncing: syncingStatus,
   });
 
-  useEffect(() => {
-    let isMounted = true;
-    let polling = false;
-
-    const pollMetrics = async () => {
-      if (polling) {
-        return;
-      }
-      polling = true;
-      try {
-        const response = await modelMetricsService.getLatest();
-        if (!isMounted) {
-          return;
-        }
-        const snapshot = response.data ?? null;
-        setModelMetrics(snapshot);
-        setModelStatus(evaluateModelStatus(snapshot));
-        const nextMessage = response.message && response.message !== 'Success' ? response.message : '';
-        setModelStatusMessage(nextMessage);
-      } catch (error: any) {
-        if (!isMounted) {
-          return;
-        }
-        setModelStatus('error');
-        setModelStatusMessage(error?.message ?? '无法获取模型指标');
-      } finally {
-        polling = false;
-      }
-    };
-
-    // pollMetrics();
-    // const timerId = window.setInterval(pollMetrics, 5000);
-    return () => {
-      isMounted = false;
-      // clearInterval(timerId);
-    };
-  }, []);
-
   // 处理节点选择
   const handleDesignSelect = (selectedKeys: React.Key[]) => {
     if (selectedKeys.length === 0) {
@@ -247,43 +180,6 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
     designDetectionActions.selectAnnotation(nextSelectedKey, false);
   };
 
-  const modelStatusTag = useMemo(() => {
-    const colorMap: Record<ModelStatus, string> = {
-      busy: 'orange',
-      idle: 'green',
-      unknown: 'default',
-      error: 'red',
-    };
-    const textMap: Record<ModelStatus, string> = {
-      busy: '模型繁忙',
-      idle: '模型空闲',
-      unknown: '模型状态未知',
-      error: '模型状态异常',
-    };
-    const running = modelMetrics?.numRequestsRunning ?? 0;
-    const waiting = modelMetrics?.numRequestsWaiting ?? 0;
-    const kvUsage = modelMetrics?.kvCacheUsagePerc;
-
-    return (
-      <Tooltip
-        placement='topRight'
-        title={
-          <div style={{ maxWidth: 240 }}>
-            <div>{textMap[modelStatus]}</div>
-            <div>运行中请求：{running}</div>
-            <div>排队中请求：{waiting}</div>
-            <div>KV 缓存使用率：{formatPercent(kvUsage)}</div>
-            <div>最近采集时间：{formatTimestamp(modelMetrics?.fetchedAt)}</div>
-            {modelStatusMessage && <div>提示：{modelStatusMessage}</div>}
-          </div>
-        }>
-        <Tag color={colorMap[modelStatus]} style={{ marginInlineStart: 4 }}>
-          {textMap[modelStatus]}
-        </Tag>
-      </Tooltip>
-    );
-  }, [modelMetrics, modelStatus, modelStatusMessage]);
-
   // 处理展开/收起
   const handleDesignExpand = (expandedKeysValue: React.Key[]) => {
     designDetectionActions.setExpandedKeys(expandedKeysValue as string[]);
@@ -293,6 +189,19 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
   const handleAddDocumentClick = (type: keyof typeof TDocumentKeys) => {
     setAddDocType(type);
     setAddDocModalVisible(true);
+  };
+
+  // 处理数据视图选择
+  const handleDataViewSelect = (type: DataViewType) => {
+    editorPageActions.setDataViewType(type);
+    // 设置 selectedDocument 为 null，触发中间区域显示对应列表
+    editorPageActions.setSelectedDocument({ type: 'openapi', id: undefined });
+    // 加载对应的数据
+    if (type === 'dataModel') {
+      editorPageActions.loadDataModels();
+    } else {
+      editorPageActions.loadRestApis();
+    }
   };
 
   const handleAddDocumentSubmit = async (values: { url: string; name?: string }) => {
@@ -346,15 +255,11 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
   // 渲染文档列表项
   const renderDocumentItem = (doc: DocumentReference, type: keyof typeof TDocumentKeys) => {
     const isSelected = selectedDocument?.type === type && selectedDocument?.id === doc.id;
+    const itemClassName = `layer-tree-panel__doc-item${isSelected ? ' layer-tree-panel__doc-item--selected' : ''}`;
     return (
       <List.Item
         key={doc.id}
-        style={{
-          cursor: 'pointer',
-          backgroundColor: isSelected ? 'rgb(230, 247, 255)' : 'transparent',
-          padding: '8px 12px',
-          borderRadius: 4,
-        }}
+        className={itemClassName}
         onClick={() => editorPageActions.setSelectedDocument({ type, id: doc.id })}
         actions={[
           <Button
@@ -373,13 +278,13 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
           title={
             <Space>
               <Text strong>{doc.name || `文档 ${doc.id.substring(0, 6)}`}</Text>
-              <Tag color={getDocumentStatusColor(doc.status)} style={{ fontSize: 11 }}>
+              <Tag color={getDocumentStatusColor(doc.status)} className='layer-tree-panel__doc-tag'>
                 {getDocumentStatusText(doc.status)}
               </Tag>
             </Space>
           }
           description={
-            <Text type='secondary' style={{ fontSize: 12 }} ellipsis>
+            <Text type='secondary' className='layer-tree-panel__doc-desc' ellipsis>
               <LinkOutlined /> {doc.url}
             </Text>
           }
@@ -394,7 +299,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
       key: 'design',
       label: (
         <Space>
-          <FileImageOutlined style={{ color: 'rgb(24, 144, 255)' }} />
+          <FileImageOutlined className='layer-tree-panel__icon--design' />
           <span>设计</span>
         </Space>
       ),
@@ -424,7 +329,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
             blockNode
           />
         ) : (
-          <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+          <Text type='secondary' className='layer-tree-panel__empty-text'>
             暂无标注结构
           </Text>
         ),
@@ -433,7 +338,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
       key: 'prd',
       label: (
         <Space>
-          <FileTextOutlined style={{ color: 'rgb(82, 196, 26)' }} />
+          <FileTextOutlined className='layer-tree-panel__icon--prd' />
           <span>文档</span>
         </Space>
       ),
@@ -456,81 +361,95 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
             renderItem={(doc) => renderDocumentItem(doc, 'prd')}
           />
         ) : (
-          <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
+          <Text type='secondary' className='layer-tree-panel__empty-text'>
             暂无PRD文档
           </Text>
         ),
     },
     {
-      key: 'openapi',
+      key: 'data',
       label: (
         <Space>
-          <ApiOutlined style={{ color: 'rgb(250, 140, 22)' }} />
+          <DatabaseOutlined className='layer-tree-panel__icon--data' />
           <span>数据</span>
         </Space>
       ),
-      extra: (
-        <Button
-          type='text'
-          size='small'
-          icon={<PlusOutlined />}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAddDocumentClick('openapi');
-          }}
-        />
+      children: (
+        <div className='layer-tree-panel__data-menu'>
+          <div
+            className={`layer-tree-panel__data-menu-item${
+              selectedDocument?.type === 'openapi' && dataViewType === 'dataModel'
+                ? ' layer-tree-panel__data-menu-item--active'
+                : ''
+            }`}
+            onClick={() => handleDataViewSelect('dataModel')}
+            role='button'
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleDataViewSelect('dataModel');
+              }
+            }}>
+            <Space>
+              <DatabaseOutlined />
+              <span>数据模型</span>
+            </Space>
+            <RightOutlined className='layer-tree-panel__data-menu-arrow' />
+          </div>
+          <div
+            className={`layer-tree-panel__data-menu-item${
+              selectedDocument?.type === 'openapi' && dataViewType === 'restApi'
+                ? ' layer-tree-panel__data-menu-item--active'
+                : ''
+            }`}
+            onClick={() => handleDataViewSelect('restApi')}
+            role='button'
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleDataViewSelect('restApi');
+              }
+            }}>
+            <Space>
+              <ApiOutlined />
+              <span>接口</span>
+            </Space>
+            <RightOutlined className='layer-tree-panel__data-menu-arrow' />
+          </div>
+        </div>
       ),
-      children:
-        currentPage?.openapiDocuments && currentPage.openapiDocuments.length > 0 ? (
-          <List
-            size='small'
-            dataSource={currentPage.openapiDocuments as DocumentReference[]}
-            renderItem={(doc) => renderDocumentItem(doc, 'openapi')}
-          />
-        ) : (
-          <Text type='secondary' style={{ display: 'block', padding: '8px 0', textAlign: 'center' }}>
-            暂无OpenAPI文档
-          </Text>
-        ),
     },
   ];
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'rgb(255, 255, 255)' }}>
+    <div className='layer-tree-panel'>
       {/* Header */}
-      <div style={{ padding: '16px', borderBottom: '1px solid rgb(240, 240, 240)' }}>
-        <Title level={5} style={{ margin: 0 }}>
+      <div className='layer-tree-panel__header'>
+        <Title level={5} className='layer-tree-panel__header-title'>
           页面管理 - {currentPage?.name}
         </Title>
       </div>
 
       {/* Collapse Panels */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
+      <div className='layer-tree-panel__content'>
         <Collapse
           size='small'
-          defaultActiveKey={['design', 'openapi', 'prd']}
+          defaultActiveKey={DEFAULT_ACTIVE_KEY}
           expandIconPosition='end'
-          style={{ background: 'transparent', border: 'none' }}
-          items={collapseItems}
+          className='layer-tree-panel__collapse'
+          items={collapseItems.filter((item) => item.key !== 'prd')}
         />
       </div>
 
       {/* Footer */}
-      <div
-        style={{
-          padding: '16px',
-          borderTop: '1px solid rgb(240, 240, 240)',
-          background: 'rgb(255, 255, 255)',
-        }}>
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 24px',
-          }}>
-          <Button type='primary' size='small' icon={<SaveOutlined />} onClick={onSave} style={{ minWidth: '80px' }}>
+      <div className='layer-tree-panel__footer'>
+        <div className='layer-tree-panel__footer-inner'>
+          <Button
+            type='primary'
+            size='small'
+            icon={<SaveOutlined />}
+            onClick={onSave}
+            className='layer-tree-panel__save-btn'>
             保存
           </Button>
           <div
@@ -559,6 +478,7 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
           setAddDocModalVisible(false);
           addDocForm.resetFields();
         }}
+        maskClosable={false}
         footer={null}>
         <Form form={addDocForm} layout='vertical' onFinish={handleAddDocumentSubmit}>
           <Form.Item label='文档名称' name='name'>
@@ -590,8 +510,8 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
               }
             />
           </Form.Item>
-          <Form.Item style={{ marginBottom: 0 }}>
-            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+          <Form.Item className='layer-tree-panel__form-footer'>
+            <Space className='layer-tree-panel__form-actions'>
               <Button
                 onClick={() => {
                   setAddDocModalVisible(false);
@@ -612,10 +532,11 @@ const LayerTreePanel: React.FC<LayerTreePanelProps> = ({ onDeleteDocument, onSav
         title='设计文档设置'
         open={settingsModalVisible}
         onCancel={handleCloseSettings}
+        maskClosable={false}
         footer={null}
         width={320}
         centered>
-        <Space direction='vertical' style={{ width: '100%' }} size='middle'>
+        <Space direction='vertical' className='layer-tree-panel__settings-actions' size='middle'>
           <Button block icon={<ReloadOutlined />} onClick={handleResyncFromSettings} loading={syncingStatus}>
             重新同步
           </Button>

@@ -38,9 +38,8 @@ const collectContainerAnnotations = (root: AnnotationNode | null): AnnotationNod
 };
 
 const getAnnotationRect = (annotation: AnnotationNode) => {
-  const width = typeof annotation.width === 'number' ? annotation.width : annotation.dslNode?.layoutStyle?.width || 0;
-  const height =
-    typeof annotation.height === 'number' ? annotation.height : annotation.dslNode?.layoutStyle?.height || 0;
+  const width = typeof annotation.width === 'number' ? annotation.width : 0;
+  const height = typeof annotation.height === 'number' ? annotation.height : 0;
 
   return {
     left: annotation.absoluteX || 0,
@@ -223,10 +222,9 @@ const buildAnnotationDetails = (annotation: AnnotationNode): Record<string, unkn
       y: Math.round(annotation.absoluteY || 0),
     },
     size: {
-      width: Math.round(annotation.width || annotation.dslNode?.layoutStyle?.width || 0),
-      height: Math.round(annotation.height || annotation.dslNode?.layoutStyle?.height || 0),
+      width: Math.round(annotation.width || 0),
+      height: Math.round(annotation.height || 0),
     },
-    layout: annotation.layout ?? annotation.dslNode?.layoutStyle ?? {},
     props: annotation.props ?? {},
     childrenCount: annotation.children.length,
     updatedAt: annotation.updatedAt,
@@ -234,7 +232,7 @@ const buildAnnotationDetails = (annotation: AnnotationNode): Record<string, unkn
 };
 
 const captureAnnotationImage = async (annotation: AnnotationNode): Promise<string | null> => {
-  const selectorId = annotation.dslNode?.id || annotation.dslNodeId;
+  const selectorId = annotation.id;
   if (!selectorId) {
     return null;
   }
@@ -245,8 +243,8 @@ const captureAnnotationImage = async (annotation: AnnotationNode): Promise<strin
   }
 
   const rect = element.getBoundingClientRect();
-  const width = Math.round(rect.width || annotation.width || annotation.dslNode?.layoutStyle?.width || 0);
-  const height = Math.round(rect.height || annotation.height || annotation.dslNode?.layoutStyle?.height || 0);
+  const width = Math.round(rect.width || annotation.width || 0);
+  const height = Math.round(rect.height || annotation.height || 0);
 
   const safeWidth = Math.max(width, 16);
   const safeHeight = Math.max(height, 16);
@@ -512,7 +510,7 @@ const AnnotationConfirmModal: React.FC<AnnotationConfirmModalProps> = ({
       open={open}
       width={960}
       centered
-      maskClosable={!loading && !submitting}
+      maskClosable={false}
       destroyOnHidden={false}
       onCancel={handleCancel}
       onOk={handleSubmit}

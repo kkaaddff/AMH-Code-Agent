@@ -1,24 +1,6 @@
-import type { DSLNode } from './dsl';
-
-export interface LayoutProperties {
-  width?: number;
-  height?: number;
-  position?: string;
-  flexDirection?: string;
-  alignItems?: string;
-  justifyContent?: string;
-  flex?: number;
-  gap?: number;
-  padding?: string;
-  margin?: string;
-  backgroundColor?: string;
-  borderRadius?: string;
-}
-
 export interface AnnotationNode {
   id: string;
-  dslNodeId: string;
-  dslNode: DSLNode | null;
+  dslNodeId?: string;
   ftaComponent: string;
   isRoot: boolean;
   isMainPage: boolean;
@@ -30,7 +12,6 @@ export interface AnnotationNode {
   absoluteY: number;
   width: number;
   height: number;
-  layout?: LayoutProperties;
   props?: Record<string, any>;
   createdAt: number;
   updatedAt: number;

@@ -87,13 +87,42 @@ export const API_ENDPOINTS = {
   metrics: {
     latest: '/code-agent/metrics',
   },
-  // 接口数据模型相关
-  interfaceDataModel: {
-    create: '/code-agent/interface-data-model',
-    update: (id: string) => `/code-agent/interface-data-model/${id}`,
-    delete: (id: string) => `/code-agent/interface-data-model/${id}`,
-    list: (pageId: string) => `/code-agent/interface-data-model/page/${pageId}`,
-    detail: (id: string) => `/code-agent/interface-data-model/${id}`,
+  // 数据模型组相关
+  dataModelGroup: {
+    create: '/code-agent/data-model-group',
+    update: (id: string) => `/code-agent/data-model-group/${id}`,
+    delete: (id: string) => `/code-agent/data-model-group/${id}`,
+    list: (projectId: string) => `/code-agent/data-model-group/project/${projectId}`,
+    detail: (id: string) => `/code-agent/data-model-group/${id}`,
+  },
+  // 数据模型相关（新版，项目级别）
+  dataModel: {
+    create: '/code-agent/data-model',
+    update: (id: string) => `/code-agent/data-model/${id}`,
+    delete: (id: string) => `/code-agent/data-model/${id}`,
+    list: (projectId: string) => `/code-agent/data-model/project/${projectId}`,
+    listByGroup: (groupId: string) => `/code-agent/data-model/group/${groupId}`,
+    listUngrouped: (projectId: string) => `/code-agent/data-model/project/${projectId}/ungrouped`,
+    detail: (id: string) => `/code-agent/data-model/${id}`,
+  },
+  // REST API 接口组相关
+  restApiGroup: {
+    create: '/code-agent/rest-api-group',
+    update: (id: string) => `/code-agent/rest-api-group/${id}`,
+    delete: (id: string) => `/code-agent/rest-api-group/${id}`,
+    list: (projectId: string) => `/code-agent/rest-api-group/project/${projectId}`,
+    detail: (id: string) => `/code-agent/rest-api-group/${id}`,
+    sync: (id: string) => `/code-agent/rest-api-group/${id}/sync`,
+  },
+  // REST API 接口相关
+  restApi: {
+    create: '/code-agent/rest-api',
+    update: (id: string) => `/code-agent/rest-api/${id}`,
+    delete: (id: string) => `/code-agent/rest-api/${id}`,
+    list: (projectId: string) => `/code-agent/rest-api/project/${projectId}`,
+    listByGroup: (groupId: string) => `/code-agent/rest-api/group/${groupId}`,
+    listUngrouped: (projectId: string) => `/code-agent/rest-api/project/${projectId}/ungrouped`,
+    detail: (id: string) => `/code-agent/rest-api/${id}`,
   },
 } as const;
 

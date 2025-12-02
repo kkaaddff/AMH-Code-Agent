@@ -6,14 +6,18 @@
  * 2. 解析 SSE 事件流
  * 3. 将新接口事件映射到原有回调函数
  */
-import { buildApiUrl } from '@/config/api';
 import { callService } from '@/utils/workstationConnector';
-import { TodoItem } from './CodeGenerationLoop/types';
+import { getModelConfig } from '@/utils/modelConfig';
+import { api, type StreamingRequestConfig } from '@/utils/apiService';
+import { TodoItem } from './types';
 
 export interface FrontendWorkflowParams {
   designDocId: string;
   productName?: string;
   srcTree?: TreeNode;
+  apiKey?: string;
+  baseURL?: string;
+  model?: string;
 }
 
 export interface FileProposal {
@@ -49,74 +53,45 @@ export class FrontendWorkflowScheduler {
     this.currentIteration = 0;
 
     try {
-      const response = await fetch(buildApiUrl('/code-agent/frontend-workflow'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'text/event-stream',
+      // 优先使用请求参数，如果没有则从 localStorage 读取
+      const storedConfig = getModelConfig();
+      const apiKey = params.apiKey || storedConfig.apiKey;
+      const baseURL = params.baseURL || storedConfig.baseURL;
+      const model = params.model || storedConfig.model;
+
+      const requestBody = {
+        designDocId: params.designDocId,
+        productName: params.productName || 'FTA-Frontend',
+        srcTree: params.srcTree || undefined,
+        ...(apiKey && { apiKey }),
+        ...(baseURL && { baseURL }),
+        ...(model && { model }),
+      };
+
+      // 使用自定义的流式请求处理逻辑，因为这里需要解析特殊的事件格式
+      const streamingConfig: StreamingRequestConfig = {
+        signal: this.abortController.signal, // 传入外部的 AbortSignal
+        onChunk: (_chunk: string) => {
+          // 这里不处理，因为我们需要完整的事件解析逻辑
         },
-        body: JSON.stringify({
-          designDocId: params.designDocId,
-          productName: params.productName || 'FTA-Frontend',
-          srcTree: params.srcTree || undefined,
-        }),
-        signal: this.abortController.signal,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`SSE 连接失败: ${response.status} ${response.statusText} ${errorText}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('SSE 服务未返回可读流');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-
-          // 解析 SSE 事件
-          let newlineIndex = buffer.indexOf('\n');
-          while (newlineIndex !== -1) {
-            const line = buffer.slice(0, newlineIndex).trim();
-            buffer = buffer.slice(newlineIndex + 1);
-
-            if (line.startsWith('event:')) {
-              const eventType = line.slice(6).trim();
-
-              // 读取下一行的 data
-              newlineIndex = buffer.indexOf('\n');
-              if (newlineIndex !== -1) {
-                const dataLine = buffer.slice(0, newlineIndex).trim();
-                buffer = buffer.slice(newlineIndex + 1);
-
-                if (dataLine.startsWith('data:')) {
-                  const dataContent = dataLine.slice(5).trim();
-
-                  try {
-                    const data = JSON.parse(dataContent);
-                    this.handleSSEEvent(eventType, data, callbacks);
-                  } catch (err) {
-                    console.error('解析 SSE 数据失败:', err, dataContent);
-                  }
-                }
-              }
-            }
-
-            newlineIndex = buffer.indexOf('\n');
+        onError: (error: Error) => {
+          if (error.name === 'AbortError') {
+            console.log('SSE 连接已中断');
+            return;
           }
-        }
-      } finally {
-        reader.releaseLock();
-      }
+          const errorMessage = error?.message || 'SSE 连接错误';
+          console.error('SSE 错误:', errorMessage);
+          callbacks.onError?.(errorMessage);
+        },
+        onComplete: () => {
+          console.log('SSE 连接完成');
+        },
+      };
+
+      // 由于 FrontendWorkflowScheduler 需要特殊的事件解析逻辑（event: 和 data: 的配对），
+      // 而 ApiService 的 streamingRequest 只处理标准的 SSE 格式，
+      // 所以这里仍需要自定义实现，但使用统一的错误处理和配置管理
+      await this.executeWithCustomSSEHandling(requestBody, callbacks, streamingConfig);
     } catch (error: any) {
       if (error.name === 'AbortError') {
         console.log('SSE 连接已中断');
@@ -126,6 +101,96 @@ export class FrontendWorkflowScheduler {
       const errorMessage = error?.message || 'SSE 连接错误';
       console.error('SSE 错误:', errorMessage);
       callbacks.onError?.(errorMessage);
+    }
+  }
+
+  /**
+   * 使用自定义 SSE 处理逻辑执行请求
+   */
+  private async executeWithCustomSSEHandling(
+    requestBody: any,
+    callbacks: FrontendWorkflowCallbacks,
+    config: StreamingRequestConfig
+  ): Promise<void> {
+    const { signal } = config;
+
+    // 使用 ApiService 构建请求 URL 和头部，但不使用其流式处理
+    const { buildApiUrl } = await import('@/config/api');
+    const url = buildApiUrl('/code-agent/frontend-workflow');
+
+    // 构建请求头（复用 ApiService 的逻辑）
+    const requestHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    };
+
+    // 从 window.userInfo 中获取 cookies 并添加到自定义请求头
+    if (window.userInfo?.cookies) {
+      const cookiesJson = JSON.stringify(window.userInfo.cookies);
+      requestHeaders['X-User-Cookies'] = cookiesJson;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: requestHeaders,
+      body: JSON.stringify(requestBody),
+      signal,
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`SSE 连接失败: ${response.status} ${response.statusText} ${errorText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('SSE 服务未返回可读流');
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // 解析 SSE 事件（保持原有逻辑）
+        let newlineIndex = buffer.indexOf('\n');
+        while (newlineIndex !== -1) {
+          const line = buffer.slice(0, newlineIndex).trim();
+          buffer = buffer.slice(newlineIndex + 1);
+
+          if (line.startsWith('event:')) {
+            const eventType = line.slice(6).trim();
+
+            // 读取下一行的 data
+            newlineIndex = buffer.indexOf('\n');
+            if (newlineIndex !== -1) {
+              const dataLine = buffer.slice(0, newlineIndex).trim();
+              buffer = buffer.slice(newlineIndex + 1);
+
+              if (dataLine.startsWith('data:')) {
+                const dataContent = dataLine.slice(5).trim();
+
+                try {
+                  const data = JSON.parse(dataContent);
+                  this.handleSSEEvent(eventType, data, callbacks);
+                } catch (err) {
+                  console.error('解析 SSE 数据失败:', err, dataContent);
+                }
+              }
+            }
+          }
+
+          newlineIndex = buffer.indexOf('\n');
+        }
+      }
+    } finally {
+      reader.releaseLock();
     }
   }
 
@@ -183,9 +248,42 @@ export class FrontendWorkflowScheduler {
         break;
 
       case 'tool_approve':
-        // 工具批准事件
-        if (data.toolName === 'todoWrite' && data.params?.todos && Array.isArray(data.params.todos)) {
-          callbacks.onTodoUpdate?.(data.params.todos);
+        if (
+          data.toolName === 'todoWrite' &&
+          data.params?.todos &&
+          (Array.isArray(data.params.todos) || typeof data.params.todos === 'string')
+        ) {
+          let todos = data.params.todos;
+          if (typeof todos === 'string') {
+            try {
+              todos = JSON.parse(todos);
+            } catch (err) {
+              console.error('解析 todos 字符串失败:', err, todos);
+              todos = [];
+            }
+          }
+          // 将 todos 统一转换为 TodoItem 类型后回调
+          // 标准 TodoItem 至少应包含 id、name、status，防御性转换
+          let normalizedTodos: TodoItem[] = [];
+          if (Array.isArray(todos)) {
+            normalizedTodos = todos.map((item: any, idx: number) => {
+              if (typeof item === 'object' && item !== null) {
+                return {
+                  id: item.id ?? `todo-${idx}`,
+                  content: item.content ?? item.name ?? item.task ?? item.description ?? '',
+                  status: item.status ?? 'pending',
+                  ...item,
+                };
+              }
+              // 如果是字符串等非对象类型，转为空 todo
+              return {
+                id: `todo-${idx}`,
+                name: String(item),
+                status: 'pending',
+              };
+            });
+            callbacks.onTodoUpdate?.(normalizedTodos);
+          }
         } else if (data.toolName === 'propose_file' && data.params) {
           // 处理 propose_file 工具调用
           const fileProposal: FileProposal = {

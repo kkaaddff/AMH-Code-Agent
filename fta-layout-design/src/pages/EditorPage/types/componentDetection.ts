@@ -3,7 +3,7 @@ import type { LayoutTreeNode } from '@/types/layout';
 import type { AnnotationNode } from '@fta/shared-types';
 import { LABEL_STYLES } from '../constants/CanvasConstant';
 
-export type { AnnotationNode, LayoutProperties } from '@fta/shared-types';
+export type { AnnotationNode } from '@fta/shared-types';
 
 // 节点类型枚举
 export enum NodeType {
@@ -20,7 +20,6 @@ export interface SelectedNodeItem {
 // Context状态
 export interface AnnotationState {
   rootAnnotation: AnnotationNode | null; // 页面根节点
-  readonly annotations: AnnotationNode[]; // 所有标注（扁平化列表，方便查找）
   selectedAnnotation: AnnotationNode | null; // 选中的标注
   hoveredAnnotation: AnnotationNode | null; // hover的标注
   selectedDSLNode: DSLNode | null; // 选中的DSL节点（未标注的）
@@ -39,68 +38,163 @@ export enum ComponentCategory {
 
 // 判断是否为容器组件的辅助函数
 export function isContainerComponent(ftaComponent: string): boolean {
+  // 包含 SLOT + CONTAINER 类型组件（可包含子元素）
   const containerComponents = [
+    // SLOT 组件
+    'ActionSheet',
+    'AnimatedResult',
+    'AnimatedSlideinout',
+    'BottomTips',
     'Card',
-    'ListItem',
-    'NavBar',
-    'FormItem',
-    'Input',
-    'Search',
+    'Captcha',
     'Collapse',
-    'Timeline.Item',
-    'Result',
+    'Coupon',
+    'Curtain',
+    'Drawer',
+    'Dropdown',
+    'FloatingBubble',
+    'FloatingPanel',
+    'Form',
+    'IndexBar',
+    'Input',
+    'InputNumber',
+    'Intro',
+    'Keyboard',
+    'List',
     'Modal',
-    'Container',
+    'NavBar',
+    'NoticeBar',
+    'Overlay',
+    'Password',
+    'Picker',
+    'Popover',
+    'Protocol',
+    'PullToRefresh',
+    'Result',
+    'RichText',
+    'SafeArea',
+    'Search',
+    'Selector',
+    'Steps',
+    'Style',
+    'SwipeAction',
+    'Swiper',
+    'TabBar',
+    'Tabs',
+    'Textarea',
+    'Timeline',
+    'Toast',
+    'Tooltip',
+    'OptionSelect',
+    // CONTAINER 组件
     'Flex',
+    'FlexScrollView',
+    'Gradient',
     'Grid',
+    'View',
   ];
   return containerComponents.includes(ftaComponent);
 }
 
 // 获取组件类型分类
 export function getComponentCategory(ftaComponent: string): ComponentCategory {
+  // 基础原子组件（完整组件，不需要子元素）
   const atomicComponents = [
-    'Button',
-    'Icon',
-    'Text',
     'Avatar',
     'Badge',
-    'Tag',
-    'Image',
-    'ProgressBar',
+    'Button',
+    'CheckBox',
     'CircularProgress',
-    'InputNumber',
-    'Radio',
-    'Toggle',
+    'CountDown',
+    'DashedLine',
     'Divider',
+    'Empty',
+    'Gap',
+    'Icon',
+    'Image',
+    'ImageBackground',
+    'Line',
     'Loading',
+    'LoadingImage',
+    'PageIndicator',
+    'ProgressBar',
+    'Radio',
+    'Rate',
+    'Skeleton',
+    'Slider',
+    'Tag',
+    'Text',
+    'Toggle',
+    'Typography',
   ];
 
+  // 带插槽组件（容器组件，可包含特定插槽内容）
   const slotComponents = [
+    'ActionSheet',
+    'AnimatedResult',
+    'AnimatedSlideinout',
+    'BottomTips',
     'Card',
-    'ListItem',
-    'NavBar',
-    'FormItem',
-    'Input',
-    'Search',
+    'Captcha',
     'Collapse',
-    'Timeline.Item',
-    'Result',
+    'Coupon',
+    'Curtain',
+    'Drawer',
+    'Dropdown',
+    'FloatingBubble',
+    'FloatingPanel',
+    'Form',
+    'IndexBar',
+    'Input',
+    'InputNumber',
+    'Intro',
+    'Keyboard',
+    'List',
     'Modal',
+    'NavBar',
+    'NoticeBar',
+    'Overlay',
+    'Password',
+    'Picker',
+    'Popover',
+    'Protocol',
+    'PullToRefresh',
+    'Result',
+    'RichText',
+    'SafeArea',
+    'Search',
+    'Selector',
+    'Steps',
+    'Style',
+    'SwipeAction',
+    'Swiper',
+    'TabBar',
+    'Tabs',
+    'Textarea',
+    'Timeline',
+    'Toast',
+    'Tooltip',
+    'OptionSelect',
   ];
 
+  // 业务组件（完整组件，业务相关）
   const businessComponents = [
     'AddressPicker',
-    'CarKeyboard',
-    'ImageUpload',
     'Calendar',
+    'Carkeyboard',
     'Cascader',
-    'SelectorCore',
+    'ImageUpload',
     'InfiniteScroll',
+    'IntersectionObserver',
+    'Layer',
+    'LazyList',
     'Lottie',
+    'Native',
+    'ScrollHelper',
   ];
 
-  const containerComponents = ['Container', 'Flex', 'Grid'];
+  // 基础容器（布局容器组件）
+  const containerComponents = ['Flex', 'FlexScrollView', 'Gradient', 'Grid', 'View'];
 
   if (atomicComponents.includes(ftaComponent)) return ComponentCategory.ATOMIC;
   if (slotComponents.includes(ftaComponent)) return ComponentCategory.SLOT;

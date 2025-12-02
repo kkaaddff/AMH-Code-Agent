@@ -1,5 +1,5 @@
-const MODEL_GATEWAY_ENDPOINT = import.meta.env.VITE_API_BASE_URL + '/model-gateway';
-const MODEL_GATEWAY_SYNC_ENDPOINT = import.meta.env.VITE_API_BASE_URL + '/model-gateway-sync';
+import { getModelConfig } from '@/utils/modelConfig';
+import { api, type StreamingRequestConfig, ApiService } from '@/utils/apiService';
 
 export interface StreamModelGatewayTodo {
   id?: string;
@@ -16,10 +16,16 @@ export interface StreamModelGatewayOptions {
   body: Record<string, any>;
   onChunk?: (chunk: StreamModelGatewayEvent) => void;
   onComplete?: () => void;
+  apiKey?: string;
+  baseURL?: string;
+  model?: string;
 }
 
 export interface SyncModelGatewayOptions {
   body: Record<string, any>;
+  apiKey?: string;
+  baseURL?: string;
+  model?: string;
 }
 
 const extractChunkContent = (payload: any): string => {
@@ -191,75 +197,39 @@ const extractEventsFromPayload = (payload: any): StreamModelGatewayEvent[] => {
  * @param body 请求体内容，可为对象或字符串
  * @param onChunk 每次收到事件片段时的回调
  * @param onComplete 流结束后的回调
+ * @param apiKey API Key（可选，优先使用）
+ * @param baseURL Base URL（可选，优先使用）
  * @returns 异步执行的 Promise
  */
-export const streamModelGateway = async ({ body, onChunk, onComplete }: StreamModelGatewayOptions): Promise<void> => {
-  const requestPayload = JSON.stringify({
+export const streamModelGateway = async ({
+  body,
+  onChunk,
+  onComplete,
+  apiKey,
+  baseURL,
+  model,
+}: StreamModelGatewayOptions): Promise<void> => {
+  // 优先使用请求参数，如果没有则从 localStorage 读取
+  const storedConfig = getModelConfig();
+  const finalApiKey = apiKey || storedConfig.apiKey;
+  const finalBaseURL = baseURL || storedConfig.baseURL;
+  const finalModel = model || storedConfig.model;
+
+  const requestPayload = {
     ...body,
+    ...(finalApiKey && { apiKey: finalApiKey }),
+    ...(finalBaseURL && { baseURL: finalBaseURL }),
+    ...(finalModel && { model: finalModel }),
     stream: true,
-  });
+  };
 
-  const response = await fetch(MODEL_GATEWAY_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'text/event-stream',
-    },
-    body: requestPayload,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`模型连接失败: ${response.status} ${response.statusText} ${errorText}`);
-  }
-
-  const reader = response.body?.getReader();
-  if (!reader) {
-    throw new Error('模型服务未返回可读流');
-  }
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  let hasError = false;
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-
-      let newlineIndex = buffer.indexOf('\n');
-      while (newlineIndex !== -1) {
-        const rawLine = buffer.slice(0, newlineIndex).trim();
-        buffer = buffer.slice(newlineIndex + 1);
-
-        if (rawLine.startsWith('data:')) {
-          const data = rawLine.slice(5).trim();
-          if (data && data !== '[DONE]') {
-            try {
-              const parsed = JSON.parse(data);
-              const events = extractEventsFromPayload(parsed);
-              events.forEach((event) => {
-                onChunk?.(event);
-              });
-            } catch {
-              // ignore malformed data packets
-            }
-          }
-        }
-
-        newlineIndex = buffer.indexOf('\n');
-      }
-    }
-
-    // flush remaining buffer
-    if (buffer.trim().startsWith('data:')) {
-      const data = buffer.trim().slice(5).trim();
-      if (data && data !== '[DONE]') {
+  // 构建流式请求配置
+  const streamingConfig: StreamingRequestConfig = {
+    onChunk: (chunk: string) => {
+      // 处理 SSE 格式的数据块
+      if (chunk && chunk.trim() && chunk.trim() !== '[DONE]') {
         try {
-          const parsed = JSON.parse(data);
+          const parsed = JSON.parse(chunk);
           const events = extractEventsFromPayload(parsed);
           events.forEach((event) => {
             onChunk?.(event);
@@ -268,48 +238,57 @@ export const streamModelGateway = async ({ body, onChunk, onComplete }: StreamMo
           // ignore malformed data packets
         }
       }
-    }
-  } catch (error) {
-    hasError = true;
-    throw error;
-  } finally {
-    reader.releaseLock();
-    if (!hasError) {
+    },
+    onError: (error: Error) => {
+      throw new Error(`模型连接失败: ${error.message}`);
+    },
+    onComplete: () => {
       onComplete?.();
-    }
-  }
+    },
+  };
+
+  // 使用 apiService.ts 中的流式请求方法
+  await api.streaming.modelGateway(requestPayload, streamingConfig);
 };
 
 /**
  * 调用模型网关的同步接口，一次性获取模型输出。
  * @param body 请求体内容，可为对象或字符串
+ * @param apiKey API Key（可选，优先使用）
+ * @param baseURL Base URL（可选，优先使用）
  * @returns 模型返回的事件数组
  */
-export const syncModelGateway = async ({ body }: SyncModelGatewayOptions): Promise<StreamModelGatewayEvent[]> => {
-  const requestPayload = JSON.stringify(body);
+export const syncModelGateway = async ({
+  body,
+  apiKey,
+  baseURL,
+  model,
+}: SyncModelGatewayOptions): Promise<StreamModelGatewayEvent[]> => {
+  // 优先使用请求参数，如果没有则从 localStorage 读取
+  const storedConfig = getModelConfig();
+  const finalApiKey = apiKey || storedConfig.apiKey;
+  const finalBaseURL = baseURL || storedConfig.baseURL;
+  const finalModel = model || storedConfig.model;
 
-  const response = await fetch(MODEL_GATEWAY_SYNC_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: requestPayload,
-  });
+  const requestPayload = {
+    ...body,
+    ...(finalApiKey && { apiKey: finalApiKey }),
+    ...(finalBaseURL && { baseURL: finalBaseURL }),
+    ...(finalModel && { model: finalModel }),
+  };
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`模型连接失败: ${response.status} ${response.statusText} ${errorText}`);
+  try {
+    // 使用 apiService.ts 中的普通请求方法 - 需要通过 ApiService 类调用
+    const result = await ApiService.post('/model-gateway-sync', requestPayload, { timeout: 5 * 60 * 1000 });
+
+    // 从后端返回的 data 字段中提取事件
+    const events = extractEventsFromPayload(result.data);
+
+    return events;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`模型调用失败: ${error.message}`);
+    }
+    throw new Error(`模型调用失败: 未知错误`);
   }
-
-  const result = await response.json();
-
-  if (!result.success) {
-    throw new Error(`模型调用失败: ${result.error || '未知错误'}`);
-  }
-
-  // 从后端返回的 data 字段中提取事件
-  const events = extractEventsFromPayload(result.data);
-
-  return events;
 };

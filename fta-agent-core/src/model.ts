@@ -37,12 +37,7 @@ function resolveModelMeta(modelId: string): ModelMeta {
   );
 }
 
-export async function resolveModelWithContext(
-  name: string | null,
-  context: Context,
-  apiKey: string,
-  baseURL?: string
-) {
+export async function resolveModelWithContext(name: string | null, context: Context, apiKey: string, baseURL?: string) {
   const modelId = name || context.config.model;
   assert(modelId, 'A language model must be specified in config or arguments.');
   const model = await createOpenAIModel(modelId, apiKey, baseURL);

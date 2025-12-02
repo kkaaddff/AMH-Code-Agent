@@ -18,8 +18,8 @@ const PACKAGE_ROOT = path.resolve(__dirname, '..');
 const rootAnnotation = JSON.stringify(
   JSON.parse(fs.readFileSync(path.join(__dirname, 'tests/fixtures/rootAnnotation.json'), 'utf-8'))
 );
-const designDsl = JSON.stringify(
-  JSON.parse(fs.readFileSync(path.join(__dirname, 'tests/fixtures/designDsl.json'), 'utf-8'))
+const designData = JSON.stringify(
+  JSON.parse(fs.readFileSync(path.join(__dirname, 'tests/fixtures/DesignData.json'), 'utf-8'))
 );
 
 const rootAnnotationSummary = formatAnnotationSummary(flattenAnnotation(JSON.parse(rootAnnotation) as AnnotationNode));
@@ -133,7 +133,7 @@ describe('FrontendProjectWorkflow integration (no mocks)', () => {
       },
       callbacks,
       pageAnnotation: rootAnnotationSummary,
-      designDsl: designDsl,
+      designData: designData,
       apiKey: process.env.OPENAI_API_KEY || 'test-api-key',
       baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
     });

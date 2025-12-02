@@ -1,4 +1,4 @@
-import type { AnnotationSnapshot, DesignDSL } from '@fta/shared-types';
+import type { AnnotationSnapshot, DesignData } from '@fta/shared-types';
 
 export type { AnnotationSnapshot } from '@fta/shared-types';
 
@@ -150,7 +150,7 @@ export interface DocumentReference {
   createdAt: string;
   updatedAt: string;
   annotationData?: AnnotationSnapshot;
-  data?: DesignDSL;
+  data?: DesignData;
   pageId?: string;
   userId: string;
   gitId: string;

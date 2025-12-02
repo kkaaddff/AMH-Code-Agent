@@ -16,7 +16,7 @@ export class FrontendWorkflowController {
   @Post('/frontend-workflow')
   @Validate()
   async startFrontendWorkflow(@Body() body: FrontendWorkflowRequestDTO) {
-    const { designDocId, productName = 'FTA-Frontend', srcTree } = body;
+    const { designDocId, productName = 'FTA-Frontend', srcTree, apiKey, baseURL, model } = body;
 
     // 生成会话ID并开始日志记录
     const sessionId = uuid();
@@ -32,7 +32,6 @@ export class FrontendWorkflowController {
     this.ctx.set('Content-Type', 'text/event-stream; charset=utf-8');
     this.ctx.set('Cache-Control', 'no-cache');
     this.ctx.set('Connection', 'keep-alive');
-    this.ctx.set('Access-Control-Allow-Origin', '*');
 
     // 监听客户端断开连接
     const req = this.ctx.req;
@@ -77,6 +76,9 @@ export class FrontendWorkflowController {
         designDocId,
         productName,
         srcTree,
+        apiKey,
+        baseURL,
+        model,
         sessionId,
         signal: abortController.signal,
         callbacks: {

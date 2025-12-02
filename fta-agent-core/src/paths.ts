@@ -28,7 +28,7 @@ export class Paths {
 
   constructor(opts: { productName: string; cwd: string }) {
     const productName = opts.productName.toLowerCase();
-    this.globalConfigDir = path.join(os.homedir(), `.${productName}`);
+    this.globalConfigDir = path.join(process.cwd(), 'logs', productName);
     this.globalProjectDir = path.join(this.globalConfigDir, 'projects', formatPath(opts.cwd));
     this.projectConfigDir = path.join(opts.cwd, `.${productName}`);
   }

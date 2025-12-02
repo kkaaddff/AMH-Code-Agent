@@ -1,4 +1,4 @@
-import { DesignDSL } from '@fta/shared-types';
+import { DesignData } from '@fta/shared-types';
 
 /**
  * 将数字保留两位小数
@@ -11,10 +11,10 @@ export function roundNumber(value: number): number {
 }
 
 /**
- * 递归处理 DesignDSL 数据中的所有数值字段，保留两位小数
+ * 递归处理 DesignData 数据中的所有数值字段，保留两位小数
  * 修复类型：递归处理 DSLData/DesignNode，避免类型错配
  */
-export function normalizeNumericValues(obj: DesignDSL): DesignDSL {
+export function normalizeNumericValues(obj: DesignData): DesignData {
   if (!obj || typeof obj !== 'object' || !('dsl' in obj)) return obj;
 
   const normalize = (value: any): any => {
@@ -40,5 +40,5 @@ export function normalizeNumericValues(obj: DesignDSL): DesignDSL {
   return {
     ...obj,
     dsl: normalize(obj.dsl),
-  } as DesignDSL;
+  } as DesignData;
 }

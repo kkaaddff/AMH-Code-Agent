@@ -1,3 +1,4 @@
+import { DSLData, DSLNode } from '@/types/dsl';
 import { App } from 'antd';
 import confetti from 'canvas-confetti';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
@@ -7,7 +8,6 @@ import { editorPageStore } from '../../contexts/EditorPageContext';
 import { smartDetection } from '../../services/SmartDetection';
 import { CONFETTI_BURSTS, SMART_DETECTION_COMPONENT_REGEX } from './config';
 import './styles.css';
-import { DSLData } from '@/types/dsl';
 
 type SmartDetectionEntry = {
   nodeId: string;
@@ -54,53 +54,25 @@ const parseSmartDetectionEvents = (events: Array<{ type: string; text?: string }
     )
     .filter((line) => line.length > 0)
     .forEach((line) => {
-      const parts = line
-        .split(':')
-        .map((part) => part.trim())
-        .filter((part) => part.length > 0);
+      const parts = line.split(';').map((part) => part.trim());
+
       if (parts.length < 2) {
         return;
       }
 
-      const normalizeNodeId = (value: string) => value.replace(/^['"]+|['"]+$/g, '');
+      const nodeId = parts[0].replace(/^['"]+|['"]+$/g, '');
+      const component = parts[1];
+      const businessName = parts[2] || undefined;
 
-      const parseWithBusinessName = (): SmartDetectionEntry | null => {
-        if (parts.length < 3) return null;
-
-        const componentPart = parts[parts.length - 2];
-        const businessName = parts[parts.length - 1];
-        const nodeId = normalizeNodeId(parts.slice(0, parts.length - 2).join(':'));
-
-        if (!nodeId || !SMART_DETECTION_COMPONENT_REGEX.test(componentPart)) {
-          return null;
-        }
-
-        return {
-          nodeId,
-          component: componentPart.match(SMART_DETECTION_COMPONENT_REGEX)![0],
-          name: businessName || undefined,
-        };
-      };
-
-      const parseWithoutBusinessName = (): SmartDetectionEntry | null => {
-        const componentPart = parts[parts.length - 1];
-        const nodeId = normalizeNodeId(parts.slice(0, parts.length - 1).join(':'));
-
-        if (!nodeId || !SMART_DETECTION_COMPONENT_REGEX.test(componentPart)) {
-          return null;
-        }
-
-        return {
-          nodeId,
-          component: componentPart.match(SMART_DETECTION_COMPONENT_REGEX)![0],
-        };
-      };
-
-      const parsedEntry = parseWithBusinessName() ?? parseWithoutBusinessName();
-
-      if (parsedEntry) {
-        resultMap.set(parsedEntry.nodeId, parsedEntry);
+      if (!nodeId || !SMART_DETECTION_COMPONENT_REGEX.test(component)) {
+        return;
       }
+
+      resultMap.set(nodeId, {
+        nodeId,
+        component: component.match(SMART_DETECTION_COMPONENT_REGEX)![0],
+        name: businessName,
+      });
     });
 
   return Array.from(resultMap.values());
@@ -108,8 +80,9 @@ const parseSmartDetectionEvents = (events: Array<{ type: string; text?: string }
 
 const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
   ({ onDetectingChange }, ref: React.Ref<SmartDetectionHandle>) => {
-    const componentDetectionStoreSnapshot = useSnapshot(designDetectionStore);
-    const { dslData, rootAnnotation } = componentDetectionStoreSnapshot;
+    const { modal } = App.useApp();
+
+    const { designData, rootAnnotation, dslRootNode } = useSnapshot(designDetectionStore);
     const editorPageStoreSnapshot = useSnapshot(editorPageStore);
     const selectedDocumentId =
       editorPageStoreSnapshot.selectedDocument?.type === 'design'
@@ -209,7 +182,6 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
 
         timeoutsRef.current.push(explosionTimeout);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isDetecting]);
 
     const runDetection = useCallback(async () => {
@@ -223,7 +195,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         return;
       }
 
-      if (!dslData?.dsl || !rootAnnotation) {
+      if (!designData?.dsl || !rootAnnotation) {
         message.error('当前文档的 DSL 或标注数据尚未加载完成');
         return;
       }
@@ -232,8 +204,10 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
       onDetectingChange?.(true);
 
       try {
-        const detectionEvents = await smartDetection(dslData.dsl as DSLData);
+        const dslData = designData.dsl as DSLData;
+        const detectionEvents = await smartDetection(dslData);
         const parsedEntries = parseSmartDetectionEvents(detectionEvents);
+        setIsDetecting(false);
 
         if (!parsedEntries.length) {
           message.warning('未能从智能识别中解析出有效的标注结果');
@@ -245,7 +219,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         let missingCount = 0;
 
         for (const entry of parsedEntries) {
-          const dslNode = findDSLNodeById(entry.nodeId);
+          const dslNode = findDSLNodeById(entry.nodeId, dslRootNode as DSLNode);
           if (!dslNode) {
             missingCount += 1;
             continue;
@@ -254,7 +228,7 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
           const created = await designDetectionActions.createAnnotation(
             dslNode,
             entry.component,
-            entry.name ? { name: entry.name, force: true } : undefined
+            entry.name ? { name: entry.name, force: true, modal } : { modal }
           );
           if (created) {
             createdCount += 1;
@@ -278,14 +252,15 @@ const SmartDetection = forwardRef<SmartDetectionHandle, SmartDetectionProps>(
         } else {
           message.warning(summaryMessage);
         }
+        designDetectionActions.saveAnnotations(selectedDocumentId!);
       } catch (error: any) {
         console.error('智能识别失败:', error);
-        message.error(error?.message || '智能识别失败');
+        message.error(error?.message || '智能识别失败', 5);
       } finally {
         setIsDetecting(false);
         onDetectingChange?.(false);
       }
-    }, [dslData, isDetecting, rootAnnotation, selectedDocumentId, onDetectingChange]);
+    }, [designData, isDetecting, rootAnnotation, selectedDocumentId]);
 
     useImperativeHandle(ref, () => ({
       runDetection,

@@ -16,7 +16,7 @@ import type { Tool } from './tool';
 import { Tools } from './tool';
 import { createFileDraftTool, FileDraftStore } from './tools/fileDraft';
 import { createComponentDocReaderTool } from './tools/componentDocReader';
-import { createSpecReaderTool, loadSpecsFromDirectories } from './tools/specReader';
+import { loadSpecsFromDirectories } from './tools/specReader';
 import { createInMemoryTodoStorage, createTodoTool } from './tools/todo';
 import { randomUUID } from './utils/randomUUID';
 
@@ -30,7 +30,7 @@ export interface TreeNode {
 }
 
 export type FrontendProjectWorkflowOptions = {
-  designDsl: string;
+  designData: string;
   srcTree?: TreeNode;
   pageAnnotation: string;
   productName: string;
@@ -181,7 +181,7 @@ export async function runFrontendProjectWorkflow(
     ${opts.pageAnnotation}
 
     # Design DSL
-    ${opts.designDsl}
+    ${opts.designData}
 
     ${opts.srcTree ? `# 项目 src 目录结构\n${formatTreeToCompactList(opts.srcTree)}` : ''}`;
 
@@ -292,7 +292,7 @@ export async function runFrontendProjectWorkflow(
         });
       },
       thinking: {
-        effort: 'medium',
+        effort: 'high',
       },
     });
 

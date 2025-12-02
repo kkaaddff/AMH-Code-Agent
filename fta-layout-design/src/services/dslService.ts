@@ -3,7 +3,7 @@
  * 处理 DSL 文件的上传、解析和导出
  */
 
-import { DesignDSL, DSLData } from '@/types/dsl';
+import { DesignData, DSLData } from '@/types/dsl';
 import { api } from '@/utils/apiService';
 
 /**
@@ -39,6 +39,6 @@ export const dslService = {
    */
   async processDSL(data: { dsl: DSLData; convertPaths?: boolean; keepOriginalPaths?: boolean }) {
     // const response = await api.dsl.process(data);
-    return data as DesignDSL;
+    return data as DesignData;
   },
 };

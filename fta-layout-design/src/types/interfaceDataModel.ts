@@ -1,91 +1,10 @@
 /**
- * 接口数据模型类型定义
+ * 基础数据模型类型定义
  */
+import type { SchemaField, SchemaFieldType, HttpMethod } from '@fta/shared-types';
 
-/**
- * HTTP 请求方法类型
- */
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
-
-/**
- * Schema 字段类型
- */
-export type SchemaFieldType = 'string' | 'number' | 'boolean' | 'object' | 'array';
-
-/**
- * Schema 字段定义
- */
-export interface SchemaField {
-  /** 字段名 */
-  name: string;
-  /** 字段类型 */
-  type: SchemaFieldType;
-  /** 字段描述 */
-  description?: string;
-  /** 是否必填 */
-  required?: boolean;
-  /** 示例值 */
-  example?: any;
-  /** 枚举值（如果是枚举类型） */
-  enum?: string[];
-  /** 子字段（如果是 object 类型） */
-  properties?: SchemaField[];
-  /** 数组元素类型（如果是 array 类型） */
-  items?: SchemaField;
-}
-
-/**
- * 接口数据模型
- */
-export interface InterfaceDataModel {
-  /** 唯一标识 */
-  id: string;
-  /** 关联的页面 ID */
-  pageId: string;
-  /** 数据模型名称 */
-  name: string;
-  /** 数据模型描述 */
-  description?: string;
-  /** API 地址（可选，仅作参考） */
-  url?: string;
-  /** HTTP 请求方法 */
-  method?: HttpMethod;
-  /** 请求参数 Schema */
-  requestSchema: SchemaField[];
-  /** 响应参数 Schema */
-  responseSchema: SchemaField[];
-  /** 创建时间 */
-  createdAt: string;
-  /** 更新时间 */
-  updatedAt: string;
-  /** 用户 ID */
-  userId: string;
-}
-
-/**
- * 创建数据模型请求
- */
-export interface CreateDataModelRequest {
-  pageId: string;
-  name: string;
-  description?: string;
-  url?: string;
-  method?: HttpMethod;
-  requestSchema?: SchemaField[];
-  responseSchema?: SchemaField[];
-}
-
-/**
- * 更新数据模型请求
- */
-export interface UpdateDataModelRequest {
-  name?: string;
-  description?: string;
-  url?: string;
-  method?: HttpMethod;
-  requestSchema?: SchemaField[];
-  responseSchema?: SchemaField[];
-}
+// 重新导出共享类型
+export type { SchemaField, SchemaFieldType, HttpMethod };
 
 /**
  * 空的 Schema 字段模板

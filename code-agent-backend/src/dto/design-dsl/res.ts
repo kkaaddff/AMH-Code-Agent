@@ -1,6 +1,6 @@
 import { ApiProperty } from '@midwayjs/swagger';
 import { AsyncResponse } from '../../types';
-import { DesignDSL, DSLData } from '../../types/design-dsl';
+import { DesignData, DSLData } from '../../types/design-dsl';
 
 export class GetDSLDataResponse extends AsyncResponse {
   @ApiProperty({ description: 'DSLData数据' })
@@ -14,7 +14,7 @@ export class GetDSLDataResponse extends AsyncResponse {
 
 export class ProcessDSLDataResponse extends AsyncResponse {
   @ApiProperty({ description: '处理后的DSLData数据' })
-  public data: DesignDSL;
+  public data: DesignData;
 
   @ApiProperty({ description: '处理统计信息' })
   public stats: {
@@ -24,7 +24,7 @@ export class ProcessDSLDataResponse extends AsyncResponse {
     styleCount: number;
   };
 
-  constructor(data: DesignDSL, stats: any) {
+  constructor(data: DesignData, stats: any) {
     super();
     this.data = data;
     this.stats = stats;
