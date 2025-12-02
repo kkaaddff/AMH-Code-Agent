@@ -36,7 +36,7 @@ export interface StreamingRequestConfig extends RequestConfig {
   onChunk?: (chunk: string) => void;
   onError?: (error: Error) => void;
   onComplete?: () => void;
-  signal?: AbortSignal;  // 支持外部传入的 AbortSignal
+  signal?: AbortSignal; // 支持外部传入的 AbortSignal
 }
 
 // API 响应接口
@@ -152,7 +152,7 @@ async function request<T = any>(
 /**
  * 流式 HTTP 请求函数 (支持 Server-Sent Events)
  */
-async function streamingRequest<T>(
+async function streamingRequest(
   endpoint: string,
   options: StreamingRequestConfig & { method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' } = { method: 'GET' }
 ): Promise<void> {
@@ -335,36 +335,36 @@ export class ApiService {
   /**
    * 流式 GET 请求
    */
-  static async streamingGet<T = any>(endpoint: string, config: StreamingRequestConfig): Promise<void> {
-    return streamingRequest<T>(endpoint, { ...config, method: 'GET' });
+  static async streamingGet(endpoint: string, config: StreamingRequestConfig): Promise<void> {
+    return streamingRequest(endpoint, { ...config, method: 'GET' });
   }
 
   /**
    * 流式 POST 请求
    */
-  static async streamingPost<T = any>(endpoint: string, data?: any, config?: StreamingRequestConfig): Promise<void> {
-    return streamingRequest<T>(endpoint, { ...config, method: 'POST', data });
+  static async streamingPost(endpoint: string, data?: any, config?: StreamingRequestConfig): Promise<void> {
+    return streamingRequest(endpoint, { ...config, method: 'POST', data });
   }
 
   /**
    * 流式 PUT 请求
    */
-  static async streamingPut<T = any>(endpoint: string, data?: any, config?: StreamingRequestConfig): Promise<void> {
-    return streamingRequest<T>(endpoint, { ...config, method: 'PUT', data });
+  static async streamingPut(endpoint: string, data?: any, config?: StreamingRequestConfig): Promise<void> {
+    return streamingRequest(endpoint, { ...config, method: 'PUT', data });
   }
 
   /**
    * 流式 DELETE 请求
    */
-  static async streamingDelete<T = any>(endpoint: string, config: StreamingRequestConfig): Promise<void> {
-    return streamingRequest<T>(endpoint, { ...config, method: 'DELETE' });
+  static async streamingDelete(endpoint: string, config: StreamingRequestConfig): Promise<void> {
+    return streamingRequest(endpoint, { ...config, method: 'DELETE' });
   }
 
   /**
    * 流式 PATCH 请求
    */
-  static async streamingPatch<T = any>(endpoint: string, data?: any, config?: StreamingRequestConfig): Promise<void> {
-    return streamingRequest<T>(endpoint, { ...config, method: 'PATCH', data });
+  static async streamingPatch(endpoint: string, data?: any, config?: StreamingRequestConfig): Promise<void> {
+    return streamingRequest(endpoint, { ...config, method: 'PATCH', data });
   }
 
   /**

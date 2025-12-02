@@ -71,7 +71,7 @@ export class FrontendWorkflowScheduler {
       // 使用自定义的流式请求处理逻辑，因为这里需要解析特殊的事件格式
       const streamingConfig: StreamingRequestConfig = {
         signal: this.abortController.signal, // 传入外部的 AbortSignal
-        onChunk: (chunk: string) => {
+        onChunk: (_chunk: string) => {
           // 这里不处理，因为我们需要完整的事件解析逻辑
         },
         onError: (error: Error) => {
