@@ -186,3 +186,18 @@
   justify-content: center;
   background: rgb(255, 255, 255);
 }
+
+.editor-page-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+/* 响应式布局：当空间不足时，按钮换行显示 */
+@media (max-width: 1000px) {
+  .editor-page-toolbar-actions {
+    flex-wrap: wrap;
+  }
+}

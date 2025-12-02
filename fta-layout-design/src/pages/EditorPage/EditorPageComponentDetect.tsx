@@ -37,7 +37,7 @@ import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGener
 import { designDetectionActions, designDetectionStore } from './contexts/DesignDetectionContext';
 import { editorPageActions, editorPageStore } from './contexts/EditorPageContext';
 import { FrontendWorkflowScheduler } from './services/FrontendWorkflowScheduler';
-import './styles/EditorPageStyles.css';
+import './EditorPageComponentDetect.css';
 import type { AnnotationNode } from './types/componentDetection';
 
 const { Sider, Content } = Layout;
@@ -440,7 +440,7 @@ const EditorPageContent: React.FC = () => {
                     <Title level={5} className='editor-page-title'>
                       组件标注编辑器
                     </Title>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div className='editor-page-toolbar-actions'>
                       <Button
                         type='primary'
                         size='small'
