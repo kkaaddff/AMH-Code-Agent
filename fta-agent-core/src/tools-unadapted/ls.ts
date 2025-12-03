@@ -3,7 +3,11 @@ import { z } from 'zod';
 import { createTool } from '../tool';
 import { createFileTree, listDirectory, MAX_FILES, printTree, TRUNCATED_MESSAGE } from '../utils/list';
 
-export function createLSTool(opts: { cwd: string; productName: string }) {
+export function createLSTool(opts: {
+  cwd: string;
+  productName: string;
+  toolProxy?: (toolName: string, params: any) => Promise<any>;
+}) {
   return createTool({
     name: 'ls',
     description: 'Lists files and directories in a given path.',
@@ -17,6 +21,20 @@ export function createLSTool(opts: { cwd: string; productName: string }) {
       return path.relative(opts.cwd, params.dir_path);
     },
     execute: async (params) => {
+      // If toolProxy is available, delegate to frontend
+      if (opts.toolProxy) {
+        try {
+          const result = await opts.toolProxy('ls', params);
+          return result;
+        } catch (error) {
+          return {
+            isError: true,
+            llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+          };
+        }
+      }
+
+      // Otherwise, execute locally
       const { dir_path } = params;
       const fullFilePath = path.isAbsolute(dir_path) ? dir_path : path.resolve(opts.cwd, dir_path);
       const result = listDirectory(fullFilePath, opts.cwd, opts.productName).sort();

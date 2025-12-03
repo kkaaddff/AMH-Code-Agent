@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { createTool } from '../tool';
 import { applyEdit } from '../utils/applyEdit';
 
-export function createEditTool(opts: { cwd: string }) {
+export function createEditTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
   return createTool({
     name: 'edit',
     description: `
@@ -29,6 +29,20 @@ Usage:
       return path.relative(cwd, params.file_path);
     },
     execute: async ({ file_path, old_string, new_string }) => {
+      // If toolProxy is available, delegate to frontend
+      if (opts.toolProxy) {
+        try {
+          const result = await opts.toolProxy('edit', { file_path, old_string, new_string });
+          return result;
+        } catch (error) {
+          return {
+            isError: true,
+            llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+          };
+        }
+      }
+
+      // Otherwise, execute locally
       try {
         const cwd = opts.cwd;
         const fullFilePath = path.isAbsolute(file_path) ? file_path : path.resolve(cwd, file_path);

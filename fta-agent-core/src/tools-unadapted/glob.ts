@@ -5,7 +5,7 @@ import { safeStringify } from '../utils/safeStringify';
 
 const LIMIT = 100;
 
-export function createGlobTool(opts: { cwd: string }) {
+export function createGlobTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
   return createTool({
     name: 'glob',
     description: `
@@ -26,6 +26,20 @@ Glob
       return params.pattern;
     },
     execute: async ({ pattern, path }) => {
+      // If toolProxy is available, delegate to frontend
+      if (opts.toolProxy) {
+        try {
+          const result = await opts.toolProxy('glob', { pattern, path });
+          return result;
+        } catch (error) {
+          return {
+            isError: true,
+            llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+          };
+        }
+      }
+
+      // Otherwise, execute locally
       try {
         const start = Date.now();
         const paths = await glob([pattern], {

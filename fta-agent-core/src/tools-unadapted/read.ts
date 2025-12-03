@@ -69,7 +69,11 @@ async function processImage(filePath: string, cwd: string): Promise<ToolResult> 
 const MAX_LINES_TO_READ = 2000;
 const MAX_LINE_LENGTH = 2000;
 
-export function createReadTool(opts: { cwd: string; productName: string }) {
+export function createReadTool(opts: {
+  cwd: string;
+  productName: string;
+  toolProxy?: (toolName: string, params: any) => Promise<any>;
+}) {
   const productName = opts.productName.toLowerCase();
   return createTool({
     name: 'read',
@@ -102,6 +106,20 @@ Usage:
       return path.relative(cwd, params.file_path);
     },
     execute: async ({ file_path, offset, limit }) => {
+      // If toolProxy is available, delegate to frontend
+      if (opts.toolProxy) {
+        try {
+          const result = await opts.toolProxy('read', { file_path, offset, limit });
+          return result;
+        } catch (error) {
+          return {
+            isError: true,
+            llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+          };
+        }
+      }
+
+      // Otherwise, execute locally
       try {
         // Validate parameters
         if (offset !== undefined && offset !== null && offset < 1) {

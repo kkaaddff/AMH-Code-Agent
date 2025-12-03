@@ -13,11 +13,11 @@ import type { ProjectTaskCallbacks } from './project';
 import { generateFrontendProjectPrompt } from './prompts/frontendProject';
 import { Session } from './session';
 import type { Tool } from './tool';
-import { Tools } from './tool';
-import { createFileDraftTool, FileDraftStore } from './tools/fileDraft';
+import { resolveBaseTools, Tools } from './tool';
+import { FileDraftStore } from './tools/fileDraft';
 import { createComponentDocReaderTool } from './tools/componentDocReader';
 import { loadSpecsFromDirectories } from './tools/specReader';
-import { createInMemoryTodoStorage, createTodoTool } from './tools/todo';
+import { createTodoTool } from './tools/todo';
 import { randomUUID } from './utils/randomUUID';
 
 export type FrontendProjectWorkflowCallbacks = ProjectTaskCallbacks;
@@ -45,6 +45,7 @@ export type FrontendProjectWorkflowOptions = {
   apiKey: string;
   baseURL: string;
   todoStorageMode?: 'file' | 'memory';
+  toolProxy?: (toolName: string, params: any) => Promise<any>;
 };
 
 export type FrontendProjectWorkflowResult =
@@ -143,6 +144,7 @@ export async function runFrontendProjectWorkflow(
     productName: opts.productName,
     version: opts.version,
     argvConfig: opts.configOverrides || {},
+    toolProxy: opts.toolProxy,
   });
   const session = Session.create();
   const fileDraftStore = new FileDraftStore();
@@ -157,32 +159,35 @@ export async function runFrontendProjectWorkflow(
 
   try {
     const todoFilePath = path.join(context.paths.globalConfigDir, 'todos', `${session.id}-frontend.json`);
-    const useMemoryTodoStorage = opts.todoStorageMode === 'memory';
-    const todoToolConfig = useMemoryTodoStorage ? { storage: createInMemoryTodoStorage() } : { filePath: todoFilePath };
-
-    const { todoReadTool, todoWriteTool } = createTodoTool(todoToolConfig);
-
+    const { todoReadTool, todoWriteTool } = createTodoTool({
+      filePath: todoFilePath,
+      toolProxy: opts.toolProxy,
+    });
+    const baseTools = resolveBaseTools({ context, sessionId: session.id, todo: false });
     // const specReaderTool = createSpecReaderTool({
     //   specDirectories: opts.specDirectories,
     //   cwd: context.cwd,
     // });
-
     const componentDocReaderTool = createComponentDocReaderTool({
       docDirectories: opts.componentDocDirectories,
       cwd: context.cwd,
     });
 
-    const fileDraftTool = createFileDraftTool(fileDraftStore);
-    // specReaderTool,
-    const toolset: Tool[] = [todoReadTool, todoWriteTool, componentDocReaderTool, fileDraftTool];
+    const toolset: Tool[] = [
+      // specReaderTool,
+      todoReadTool,
+      todoWriteTool,
+      componentDocReaderTool,
+      ...baseTools,
+    ];
     const toolsManager = new Tools(toolset);
 
     const userInitPrompt = `# Page Layout Annotation
     ${opts.pageAnnotation}
-
+---
     # Design DSL
     ${opts.designData}
-
+---
     ${opts.srcTree ? `# 项目 src 目录结构\n${formatTreeToCompactList(opts.srcTree)}` : ''}`;
 
     const llmsContext = await LlmsContext.create({

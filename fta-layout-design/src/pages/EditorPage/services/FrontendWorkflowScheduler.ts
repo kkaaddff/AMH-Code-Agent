@@ -6,10 +6,28 @@
  * 2. 解析 SSE 事件流
  * 3. 将新接口事件映射到原有回调函数
  */
-import { callService } from '@/utils/workstationConnector';
+import { ApiService, type StreamingRequestConfig } from '@/utils/apiService';
 import { getModelConfig } from '@/utils/modelConfig';
-import { api, type StreamingRequestConfig } from '@/utils/apiService';
+import { callService } from '@/utils/workstationConnector';
 import { TodoItem } from './types';
+
+// ToolResult 类型定义（与 agent-core 保持一致）
+export type TextPart = {
+  type: 'text';
+  text: string;
+};
+
+export type ImagePart = {
+  type: 'image';
+  data: string;
+  mimeType: string;
+};
+
+export type ToolResult = {
+  llmContent: string | (TextPart | ImagePart)[];
+  returnDisplay?: string | any;
+  isError?: boolean;
+};
 
 export interface FrontendWorkflowParams {
   designDocId: string;
@@ -44,6 +62,7 @@ export interface FrontendWorkflowCallbacks {
 export class FrontendWorkflowScheduler {
   private abortController: AbortController | null = null;
   private currentIteration = 0;
+  private todos: TodoItem[] = [];
 
   /**
    * 执行前端工作流 SSE 会话
@@ -51,6 +70,7 @@ export class FrontendWorkflowScheduler {
   async execute(params: FrontendWorkflowParams, callbacks: FrontendWorkflowCallbacks = {}): Promise<void> {
     this.abortController = new AbortController();
     this.currentIteration = 0;
+    this.todos = []; // 重置 todo list
 
     try {
       // 优先使用请求参数，如果没有则从 localStorage 读取
@@ -247,63 +267,6 @@ export class FrontendWorkflowScheduler {
         }
         break;
 
-      case 'tool_approve':
-        if (
-          data.toolName === 'todoWrite' &&
-          data.params?.todos &&
-          (Array.isArray(data.params.todos) || typeof data.params.todos === 'string')
-        ) {
-          let todos = data.params.todos;
-          if (typeof todos === 'string') {
-            try {
-              todos = JSON.parse(todos);
-            } catch (err) {
-              console.error('解析 todos 字符串失败:', err, todos);
-              todos = [];
-            }
-          }
-          // 将 todos 统一转换为 TodoItem 类型后回调
-          // 标准 TodoItem 至少应包含 id、name、status，防御性转换
-          let normalizedTodos: TodoItem[] = [];
-          if (Array.isArray(todos)) {
-            normalizedTodos = todos.map((item: any, idx: number) => {
-              if (typeof item === 'object' && item !== null) {
-                return {
-                  id: item.id ?? `todo-${idx}`,
-                  content: item.content ?? item.name ?? item.task ?? item.description ?? '',
-                  status: item.status ?? 'pending',
-                  ...item,
-                };
-              }
-              // 如果是字符串等非对象类型，转为空 todo
-              return {
-                id: `todo-${idx}`,
-                name: String(item),
-                status: 'pending',
-              };
-            });
-            callbacks.onTodoUpdate?.(normalizedTodos);
-          }
-        } else if (data.toolName === 'propose_file' && data.params) {
-          // 处理 propose_file 工具调用
-          const fileProposal: FileProposal = {
-            path: data.params.path || '',
-            kind: data.params.kind || 'file',
-            description: data.params.description,
-            content: data.params.content,
-            tags: data.params.tags,
-            callId: data.callId,
-          };
-          console.log('文件工具调用:', fileProposal);
-          if (fileProposal.kind === 'file' && fileProposal.content) {
-            callService?.('common', 'writeFile', {
-              filePath: `${fileProposal.path}`,
-              content: fileProposal.content,
-            });
-          }
-        }
-        break;
-
       case 'complete':
         // 会话完成
         console.log('会话完成');
@@ -323,6 +286,12 @@ export class FrontendWorkflowScheduler {
         callbacks.onError?.(data.message || '工作流已被用户中断');
         break;
 
+      case 'tool_call':
+        if (data.toolName && data.callId) {
+          this.handleToolCall(data.toolName, data.params, data.callId, callbacks);
+        }
+        break;
+
       default:
         // 忽略其他事件类型（如 stream_result, info, warning 等）
         break;
@@ -334,6 +303,197 @@ export class FrontendWorkflowScheduler {
    */
   getAbortController(): AbortController | null {
     return this.abortController;
+  }
+
+  /**
+   * 将工具执行结果转换为字符串，用于构造 ToolResult 的 llmContent
+   */
+  private normalizeToolResultContent(result: any): string {
+    return typeof result === 'string' ? result : JSON.stringify(result);
+  }
+
+  /**
+   * Handle tool call from backend
+   */
+  private async handleToolCall(
+    toolName: string,
+    params: any,
+    callId: string,
+    callbacks: FrontendWorkflowCallbacks
+  ): Promise<void> {
+    let toolResult: ToolResult;
+
+    try {
+      // Execute the tool using callService - switch case 只专注于获取工具执行结果
+      let toolExecutionResult: any;
+      let specialResult: { llmContent: string; returnDisplay?: any } | null = null;
+
+      switch (toolName) {
+        case 'todoWrite': {
+          // 保存旧的 todos
+          const oldTodos = [...this.todos];
+
+          let todos = params.todos;
+          if (typeof todos === 'string') {
+            try {
+              todos = JSON.parse(todos);
+            } catch (err) {
+              console.error('解析 todos 字符串失败:', err, todos);
+              todos = [];
+            }
+          }
+
+          // 将 todos 统一转换为 TodoItem 类型
+          let normalizedTodos: TodoItem[] = [];
+          if (Array.isArray(todos)) {
+            normalizedTodos = todos.map((item: any, idx: number) => {
+              if (typeof item === 'object' && item !== null) {
+                return {
+                  id: item.id ?? `todo-${idx}`,
+                  content: item.content ?? item.name ?? item.task ?? item.description ?? '',
+                  status: (item.status ?? 'pending') as TodoItem['status'],
+                  priority: (item.priority ?? 'medium') as TodoItem['priority'],
+                };
+              }
+              // 如果是字符串等非对象类型，转为空 todo
+              return {
+                id: `todo-${idx}`,
+                content: String(item),
+                status: 'pending' as TodoItem['status'],
+                priority: 'medium' as TodoItem['priority'],
+              };
+            });
+
+            // 更新内部存储的 todos
+            this.todos = normalizedTodos;
+
+            // 触发回调通知前端更新
+            callbacks.onTodoUpdate?.(normalizedTodos);
+          }
+
+          // todoWrite 需要特殊的 ToolResult 格式
+          specialResult = {
+            llmContent:
+              'Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable',
+            returnDisplay: { type: 'todo_write', oldTodos, newTodos: normalizedTodos },
+          };
+          break;
+        }
+
+        case 'todoRead': {
+          // todoRead 需要特殊的 ToolResult 格式
+          specialResult = {
+            llmContent: this.todos.length === 0 ? 'Todo list is empty' : `Found ${this.todos.length} todos`,
+            returnDisplay: { type: 'todo_read', todos: this.todos },
+          };
+          break;
+        }
+
+        case 'read':
+          toolExecutionResult = await callService('common', 'readFile', {
+            filePath: params.file_path,
+          });
+          break;
+
+        case 'write':
+          toolExecutionResult = await callService('common', 'writeFile', {
+            filePath: params.file_path,
+            content: params.content,
+          });
+          break;
+
+        case 'ls':
+          toolExecutionResult = await callService('common', 'listDirectory', {
+            dirPath: params.dir_path,
+          });
+          break;
+
+        case 'grep':
+          toolExecutionResult = await callService('common', 'grep', {
+            pattern: params.pattern,
+            search_path: params.search_path,
+            include: params.include,
+            limit: params.limit,
+          });
+          break;
+
+        case 'glob':
+          toolExecutionResult = await callService('common', 'glob', {
+            pattern: params.pattern,
+            path: params.path,
+          });
+          break;
+
+        case 'edit':
+          toolExecutionResult = await callService('common', 'editFile', {
+            file_path: params.file_path,
+            old_string: params.old_string,
+            new_string: params.new_string,
+          });
+          break;
+
+        case 'bash':
+          toolExecutionResult = await callService('common', 'executeCommand', {
+            command: params.command,
+            timeout: params.timeout,
+            run_in_background: params.run_in_background,
+          });
+          break;
+
+        case 'bash_output':
+          toolExecutionResult = await callService('common', 'getBackgroundTaskOutput', {
+            task_id: params.task_id,
+          });
+          break;
+
+        case 'kill_bash':
+          toolExecutionResult = await callService('common', 'killBackgroundTask', {
+            task_id: params.task_id,
+          });
+          break;
+
+        default:
+          throw new Error(`Unknown tool: ${toolName}`);
+      }
+
+      if (specialResult) {
+        // 特殊工具（todoWrite/todoRead）使用预定义的格式
+        toolResult = specialResult;
+      } else {
+        // 普通工具统一处理：将执行结果转换为字符串
+        toolResult = {
+          llmContent: this.normalizeToolResultContent(toolExecutionResult),
+        };
+      }
+    } catch (err) {
+      // 捕获工具执行错误，构造错误 ToolResult
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toolResult = {
+        llmContent: errorMessage,
+        isError: true,
+      };
+    }
+
+    // 统一发送 ToolResult，如果发送失败只记录日志，避免重复请求
+    try {
+      await this.sendToolResult(callId, toolName, params, toolResult);
+    } catch (sendError) {
+      // sendToolResult 失败时只记录日志，不再重试，避免触发重复请求
+      console.error('发送工具结果失败:', sendError, {
+        callId,
+        toolName,
+        toolResult,
+      });
+    }
+  }
+
+  private async sendToolResult(callId: string, toolName: string, params: any, toolResult: ToolResult): Promise<void> {
+    await ApiService.post('/code-agent/frontend-workflow/tool-result', {
+      callId,
+      toolName,
+      params,
+      toolResult,
+    });
   }
 
   /**

@@ -1,4 +1,5 @@
 import type { LanguageModelV2FunctionTool } from '@ai-sdk/provider';
+import assert from 'assert';
 import path from 'pathe';
 import * as z from 'zod';
 import type { Context } from './context';
@@ -11,9 +12,8 @@ import { createGlobTool } from './tools-unadapted/glob';
 import { createGrepTool } from './tools-unadapted/grep';
 import { createLSTool } from './tools-unadapted/ls';
 import { createReadTool } from './tools-unadapted/read';
-import { createTodoTool, type TodoItem } from './tools/todo';
 import { createWriteTool } from './tools-unadapted/write';
-import { assert } from 'console';
+import { createTodoTool, type TodoItem } from './tools/todo';
 
 type ResolveToolsOpts = {
   context: Context;
@@ -22,37 +22,35 @@ type ResolveToolsOpts = {
   todo?: boolean;
 };
 
-export async function resolveTools(opts: ResolveToolsOpts) {
-  const { cwd, productName, paths } = opts.context;
+export function resolveBaseTools(opts: ResolveToolsOpts): Tool[] {
+  const { cwd, productName, paths, toolProxy } = opts.context;
   const sessionId = opts.sessionId;
-  const apiKey = process.env.OPENAI_API_KEY;
-  const baseURL = process.env.OPENAI_BASE_URL;
-  assert(apiKey, 'OPENAI_API_KEY is required to call the agent.');
-  const model = (await resolveModelWithContext(opts.context.config.model, opts.context, apiKey!, baseURL)).model!;
   const readonlyTools = [
-    createReadTool({ cwd, productName }),
-    createLSTool({ cwd, productName }),
-    createGlobTool({ cwd }),
-    createGrepTool({ cwd }),
-    createFetchTool({ model }),
+    createReadTool({ cwd, productName, toolProxy }),
+    createLSTool({ cwd, productName, toolProxy }),
+    createGlobTool({ cwd, toolProxy }),
+    createGrepTool({ cwd, toolProxy }),
   ];
+
   const writeTools = opts.write
     ? [
-        createWriteTool({ cwd }),
-        createEditTool({ cwd }),
+        createWriteTool({ cwd, toolProxy }),
+        createEditTool({ cwd, toolProxy }),
         createBashTool({
           cwd,
           backgroundTaskManager: opts.context.backgroundTaskManager,
         }),
       ]
     : [];
-  const todoTools = (() => {
-    if (!opts.todo) return [];
+
+  let todoTools: Tool[] = [];
+  if (opts.todo) {
     const { todoWriteTool, todoReadTool } = createTodoTool({
       filePath: path.join(paths.globalConfigDir, 'todos', `${sessionId}.json`),
     });
-    return [todoReadTool, todoWriteTool];
-  })();
+    todoTools = [todoReadTool, todoWriteTool];
+  }
+
   const backgroundTools = opts.write
     ? [
         createBashOutputTool({
@@ -63,8 +61,25 @@ export async function resolveTools(opts: ResolveToolsOpts) {
         }),
       ]
     : [];
-  const mcpTools = await getMcpTools(opts.context);
-  return [...readonlyTools, ...writeTools, ...todoTools, ...backgroundTools, ...mcpTools];
+  return [...readonlyTools, ...writeTools, ...todoTools, ...backgroundTools];
+}
+
+async function resolveModelDependentTools(opts: ResolveToolsOpts): Promise<Tool[]> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  const baseURL = process.env.OPENAI_BASE_URL;
+  assert(apiKey, 'OPENAI_API_KEY is required to call the agent.');
+  const model = (await resolveModelWithContext(opts.context.config.model, opts.context, apiKey!, baseURL)).model!;
+  return [createFetchTool({ model })];
+}
+
+async function resolveMcpTools(opts: ResolveToolsOpts): Promise<Tool[]> {
+  return await getMcpTools(opts.context);
+}
+
+export async function resolveTools(opts: ResolveToolsOpts) {
+  const baseTools = resolveBaseTools(opts);
+  const [modelDependentTools, mcpTools] = await Promise.all([resolveModelDependentTools(opts), resolveMcpTools(opts)]);
+  return [...baseTools, ...modelDependentTools, ...mcpTools];
 }
 
 async function getMcpTools(context: Context): Promise<Tool[]> {
