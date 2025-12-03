@@ -46,7 +46,7 @@ export const callService = async (service: string, method: string, params?: any)
   console.log(`[Mock] ${service}.${method}`, params);
 
   switch (service) {
-    case 'common':
+    case 'tools':
       switch (method) {
         case 'readFile':
           return getMockFileContent(params?.filePath || '');

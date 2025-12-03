@@ -1,16 +1,8 @@
-import type {
-  NormalizedMessage,
-  ReasoningPart,
-  TextPart,
-  ToolResultPart2,
-} from '../message';
+import type { NormalizedMessage, ReasoningPart, TextPart, ToolResultPart2 } from '../message';
 
 function formatToolResultContent(llmContent: unknown): string {
   if (typeof llmContent === 'string') {
-    const truncatedText =
-      llmContent.length > 200
-        ? `${llmContent.substring(0, 200)}...`
-        : llmContent;
+    const truncatedText = llmContent.length > 200 ? `${llmContent.substring(0, 200)}...` : llmContent;
     return `: ${truncatedText}`;
   }
   if (Array.isArray(llmContent)) {
@@ -18,8 +10,7 @@ function formatToolResultContent(llmContent: unknown): string {
       .filter((part): part is TextPart => part.type === 'text')
       .map((part) => part.text)
       .join(' ');
-    const truncatedText =
-      textParts.length > 200 ? `${textParts.substring(0, 200)}...` : textParts;
+    const truncatedText = textParts.length > 200 ? `${textParts.substring(0, 200)}...` : textParts;
     if (truncatedText) {
       return `: ${truncatedText}`;
     }
@@ -38,16 +29,13 @@ function formatToolResultContent(llmContent: unknown): string {
  * @param messages - Array of normalized messages to process
  * @returns Array of normalized messages with tool content converted to summaries
  */
-export function normalizeMessagesForCompact(
-  messages: NormalizedMessage[],
-): NormalizedMessage[] {
+export function normalizeMessagesForCompact(messages: NormalizedMessage[]): NormalizedMessage[] {
   return messages
     .map((message) => {
       if (message.role === 'assistant') {
         if (Array.isArray(message.content)) {
           const filteredContent = message.content.filter(
-            (part): part is TextPart | ReasoningPart =>
-              part.type === 'text' || part.type === 'reasoning',
+            (part): part is TextPart | ReasoningPart => part.type === 'text' || part.type === 'reasoning'
           );
 
           if (filteredContent.length === 0) {
@@ -77,14 +65,8 @@ export function normalizeMessagesForCompact(
               const result = part.result;
               let summary = `Tool ${part.toolName} executed`;
 
-              if (
-                result &&
-                typeof result === 'object' &&
-                'llmContent' in result
-              ) {
-                const contentSuffix = formatToolResultContent(
-                  result.llmContent,
-                );
+              if (result && typeof result === 'object' && 'llmContent' in result) {
+                const contentSuffix = formatToolResultContent(result.llmContent);
                 summary += contentSuffix || ' successfully';
               } else {
                 summary += ' successfully';

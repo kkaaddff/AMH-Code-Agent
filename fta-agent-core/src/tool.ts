@@ -5,7 +5,7 @@ import * as z from 'zod';
 import type { Context } from './context';
 import type { ImagePart, TextPart } from './message';
 import { resolveModelWithContext } from './model';
-import { createBashOutputTool, createBashTool, createKillBashTool } from './tools-unadapted/bash';
+import { createBashOutputTool, createKillBashTool } from './tools-unadapted/bash';
 import { createEditTool } from './tools-unadapted/edit';
 import { createFetchTool } from './tools-unadapted/fetch';
 import { createGlobTool } from './tools-unadapted/glob';
@@ -36,10 +36,10 @@ export function resolveBaseTools(opts: ResolveToolsOpts): Tool[] {
     ? [
         createWriteTool({ cwd, toolProxy }),
         createEditTool({ cwd, toolProxy }),
-        createBashTool({
-          cwd,
-          backgroundTaskManager: opts.context.backgroundTaskManager,
-        }),
+        // createBashTool({
+        //   cwd,
+        //   backgroundTaskManager: opts.context.backgroundTaskManager,
+        // }),
       ]
     : [];
 

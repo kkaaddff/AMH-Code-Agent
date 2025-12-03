@@ -390,26 +390,28 @@ export class FrontendWorkflowScheduler {
         }
 
         case 'read':
-          toolExecutionResult = await callService('common', 'readFile', {
-            filePath: params.file_path,
+          toolExecutionResult = await callService('tools', 'read', {
+            file_path: params.file_path,
+            offset: params.offset ?? null,
+            limit: params.limit ?? null,
           });
           break;
 
         case 'write':
-          toolExecutionResult = await callService('common', 'writeFile', {
-            filePath: params.file_path,
+          toolExecutionResult = await callService('tools', 'write', {
+            file_path: params.file_path,
             content: params.content,
           });
           break;
 
         case 'ls':
-          toolExecutionResult = await callService('common', 'listDirectory', {
-            dirPath: params.dir_path,
+          toolExecutionResult = await callService('tools', 'ls', {
+            dir_path: params.dir_path,
           });
           break;
 
         case 'grep':
-          toolExecutionResult = await callService('common', 'grep', {
+          toolExecutionResult = await callService('tools', 'grep', {
             pattern: params.pattern,
             search_path: params.search_path,
             include: params.include,
@@ -418,14 +420,14 @@ export class FrontendWorkflowScheduler {
           break;
 
         case 'glob':
-          toolExecutionResult = await callService('common', 'glob', {
+          toolExecutionResult = await callService('tools', 'glob', {
             pattern: params.pattern,
             path: params.path,
           });
           break;
 
         case 'edit':
-          toolExecutionResult = await callService('common', 'editFile', {
+          toolExecutionResult = await callService('tools', 'edit', {
             file_path: params.file_path,
             old_string: params.old_string,
             new_string: params.new_string,
@@ -433,7 +435,7 @@ export class FrontendWorkflowScheduler {
           break;
 
         case 'bash':
-          toolExecutionResult = await callService('common', 'executeCommand', {
+          toolExecutionResult = await callService('tools', 'executeCommand', {
             command: params.command,
             timeout: params.timeout,
             run_in_background: params.run_in_background,
@@ -441,13 +443,13 @@ export class FrontendWorkflowScheduler {
           break;
 
         case 'bash_output':
-          toolExecutionResult = await callService('common', 'getBackgroundTaskOutput', {
+          toolExecutionResult = await callService('tools', 'getBackgroundTaskOutput', {
             task_id: params.task_id,
           });
           break;
 
         case 'kill_bash':
-          toolExecutionResult = await callService('common', 'killBackgroundTask', {
+          toolExecutionResult = await callService('tools', 'killBackgroundTask', {
             task_id: params.task_id,
           });
           break;

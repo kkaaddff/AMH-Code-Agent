@@ -163,7 +163,7 @@ export async function runFrontendProjectWorkflow(
       filePath: todoFilePath,
       toolProxy: opts.toolProxy,
     });
-    const baseTools = resolveBaseTools({ context, sessionId: session.id, todo: false });
+    const baseTools = resolveBaseTools({ context, sessionId: session.id, todo: false, write: true });
     // const specReaderTool = createSpecReaderTool({
     //   specDirectories: opts.specDirectories,
     //   cwd: context.cwd,
