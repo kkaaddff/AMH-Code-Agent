@@ -1,0 +1,153 @@
+import Editor, { OnMount, OnChange, OnValidate, BeforeMount, Monaco } from '@monaco-editor/react';
+import { Spin } from 'antd';
+import React, { useCallback, useRef, useImperativeHandle, forwardRef, useMemo } from 'react';
+import type { editor } from 'monaco-editor';
+
+export interface TypeScriptEditorProps {
+  /** 编辑器内容 */
+  value: string;
+  /** 内容变更回调 */
+  onChange?: (value: string) => void;
+  /** 校验状态变更回调 */
+  onValidate?: (hasErrors: boolean, markers: editor.IMarker[]) => void;
+  /** 编辑器高度 */
+  height?: string | number;
+  /** 是否只读 */
+  readOnly?: boolean;
+  /** 占位符文本（当内容为空时显示） */
+  placeholder?: string;
+  /** 自定义类名 */
+  className?: string;
+  /** 忽略的 TypeScript 诊断代码列表 */
+  ignoreDiagnosticCodes?: number[];
+}
+
+export interface TypeScriptEditorRef {
+  /** 获取当前是否有错误 */
+  hasErrors: () => boolean;
+  /** 获取错误列表 */
+  getErrors: () => editor.IMarker[];
+}
+
+/**
+ * TypeScript 代码编辑器组件
+ * 封装 Monaco Editor，提供 TypeScript 语法高亮和基础验证
+ */
+const TypeScriptEditor = forwardRef<TypeScriptEditorRef, TypeScriptEditorProps>(
+  (
+    {
+      value,
+      onChange,
+      onValidate,
+      height = 300,
+      readOnly = false,
+      placeholder,
+      className,
+      ignoreDiagnosticCodes = [2792],
+    },
+    ref
+  ) => {
+    const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+    const markersRef = useRef<editor.IMarker[]>([]);
+    // 使用稳定的路径确保模型正确注册到 TypeScript 语言服务
+    const modelPath = useMemo(() => `file:///typescript-editor-${Date.now()}.ts`, []);
+
+    // 编辑器挂载前配置 TypeScript
+    const handleBeforeMount: BeforeMount = useCallback(
+      (monaco) => {
+        // 配置 TypeScript 编译选项（使用枚举值而不是字符串）
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+          target: monaco.languages.typescript.ScriptTarget.ES2020,
+          module: monaco.languages.typescript.ModuleKind.ESNext,
+          moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeNext,
+          strict: true,
+          skipLibCheck: true,
+          jsx: monaco.languages.typescript.JsxEmit.React,
+        });
+
+        // 配置诊断选项（校验规则）
+        monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+          noUnusedLocals: true,
+          noUnusedParameters: true,
+          noFallthroughCasesInSwitch: true,
+          diagnosticCodesToIgnore: ignoreDiagnosticCodes,
+        });
+      },
+      [ignoreDiagnosticCodes]
+    );
+
+    // 暴露给父组件的方法
+    useImperativeHandle(ref, () => ({
+      hasErrors: () => markersRef.current.some((m) => m.severity === 8), // 8 = Error
+      getErrors: () => markersRef.current.filter((m) => m.severity === 8),
+    }));
+
+    const handleEditorMount: OnMount = useCallback((editor) => {
+      editorRef.current = editor;
+      // 设置编辑器选项
+      editor.updateOptions({
+        minimap: { enabled: false },
+        fontSize: 13,
+        lineNumbers: 'on',
+        scrollBeyondLastLine: false,
+        automaticLayout: true,
+        tabSize: 2,
+        wordWrap: 'on',
+        folding: true,
+        renderWhitespace: 'selection',
+      });
+    }, []);
+
+    const handleChange: OnChange = useCallback(
+      (newValue) => {
+        onChange?.(newValue || '');
+      },
+      [onChange]
+    );
+
+    // 处理校验结果
+    const handleValidate: OnValidate = useCallback(
+      (markers) => {
+        markersRef.current = markers;
+        const hasErrors = markers.some((m) => m.severity === 8); // 8 = MarkerSeverity.Error
+        onValidate?.(hasErrors, markers);
+      },
+      [onValidate]
+    );
+
+    return (
+      <div className={className} style={{ border: '1px solid #d9d9d9', borderRadius: 6, overflow: 'hidden' }}>
+        <Editor
+          height={height}
+          defaultLanguage='typescript'
+          path={modelPath}
+          value={value}
+          onChange={handleChange}
+          beforeMount={handleBeforeMount}
+          onMount={handleEditorMount}
+          onValidate={handleValidate}
+          loading={<Spin size='small' tip='加载编辑器...' />}
+          options={{
+            readOnly,
+            minimap: { enabled: false },
+            fontSize: 13,
+            lineNumbers: 'on',
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            tabSize: 2,
+            wordWrap: 'on',
+            folding: true,
+            renderWhitespace: 'selection',
+            placeholder: placeholder,
+            padding: { top: 20 },
+          }}
+          theme='light'
+        />
+      </div>
+    );
+  }
+);
+
+TypeScriptEditor.displayName = 'TypeScriptEditor';
+
+export default TypeScriptEditor;

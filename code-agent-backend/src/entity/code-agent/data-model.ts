@@ -1,10 +1,9 @@
 import { modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { EntityModel } from '@midwayjs/typegoose';
-import type { SchemaField } from '@fta/shared-types';
 
 /**
  * 数据模型实体
- * 用于存储数据结构定义，与 API 接口解耦
+ * 使用 TypeScript Interfaces 作为单一事实来源
  */
 @EntityModel()
 @modelOptions({
@@ -37,9 +36,9 @@ export class DataModel {
   @prop()
   description?: string;
 
-  /** 数据结构 Schema */
-  @prop({ type: () => [Object], default: () => [] })
-  schema: SchemaField[];
+  /** TypeScript 接口定义内容 */
+  @prop({ default: '' })
+  tsContent: string;
 
   /** 创建时间 */
   @prop({ required: true })

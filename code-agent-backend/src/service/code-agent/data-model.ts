@@ -2,7 +2,6 @@ import { Inject, Provide } from '@midwayjs/decorator';
 import { InjectEntityModel } from '@midwayjs/typegoose';
 import { Context } from '@midwayjs/web';
 import { ReturnModelType } from '@typegoose/typegoose';
-import type { SchemaField } from '@fta/shared-types';
 import { DataModel } from '../../entity/code-agent/data-model';
 import { Project } from '../../entity/code-agent/project';
 
@@ -14,7 +13,8 @@ export interface CreateDataModelRequest {
   groupId?: string;
   name: string;
   description?: string;
-  schema?: SchemaField[];
+  /** TypeScript 接口定义内容 */
+  tsContent?: string;
 }
 
 /**
@@ -24,7 +24,8 @@ export interface UpdateDataModelRequest {
   groupId?: string | null;
   name?: string;
   description?: string;
-  schema?: SchemaField[];
+  /** TypeScript 接口定义内容 */
+  tsContent?: string;
 }
 
 @Provide()
@@ -76,7 +77,7 @@ export class DataModelService {
       groupId: data.groupId,
       name: data.name,
       description: data.description,
-      schema: data.schema || [],
+      tsContent: data.tsContent || '',
       createdAt: timestamp,
       updatedAt: timestamp,
       userId,
@@ -102,7 +103,7 @@ export class DataModelService {
 
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
-    if (data.schema !== undefined) updateData.schema = data.schema;
+    if (data.tsContent !== undefined) updateData.tsContent = data.tsContent;
     // groupId 支持设为 null（移出分组）
     if (data.groupId !== undefined) updateData.groupId = data.groupId || undefined;
 

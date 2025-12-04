@@ -1,4 +1,3 @@
-import { SchemaFieldType } from '@fta/shared-types';
 import { ApiProperty } from '@midwayjs/swagger';
 
 // Project Request DTOs
@@ -401,37 +400,6 @@ export class GetGitlabProjectIdRequest {
 }
 
 // Interface Data Model Request DTOs
-export class SchemaFieldDto {
-  @ApiProperty({ description: '字段名', example: 'username', required: true })
-  name: string;
-
-  @ApiProperty({
-    description: '字段类型',
-    example: 'string',
-    enum: ['string', 'number', 'boolean', 'object', 'array'],
-    required: true,
-  })
-  type: SchemaFieldType;
-
-  @ApiProperty({ description: '字段描述', example: '用户名' })
-  description?: string;
-
-  @ApiProperty({ description: '是否必填', example: true })
-  required?: boolean;
-
-  @ApiProperty({ description: '示例值', example: 'zhangsan' })
-  example?: any;
-
-  @ApiProperty({ description: '枚举值', example: ['admin', 'user'], type: [String] })
-  enum?: string[];
-
-  @ApiProperty({ description: '子字段（object 类型时）', type: [SchemaFieldDto] })
-  properties?: SchemaFieldDto[];
-
-  @ApiProperty({ description: '数组元素类型（array 类型时）' })
-  items?: SchemaFieldDto;
-}
-
 export class CreateDataModelRequest {
   @ApiProperty({ description: '页面 ID', example: 'page_123', required: true })
   pageId: string;
@@ -441,22 +409,6 @@ export class CreateDataModelRequest {
 
   @ApiProperty({ description: '数据模型描述', example: '用户相关的数据结构' })
   description?: string;
-
-  @ApiProperty({ description: 'API 地址（可选）', example: '/api/v1/users' })
-  url?: string;
-
-  @ApiProperty({
-    description: 'HTTP 方法',
-    example: 'GET',
-    enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
-  })
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
-
-  @ApiProperty({ description: '请求参数 Schema', type: [SchemaFieldDto] })
-  requestSchema?: SchemaFieldDto[];
-
-  @ApiProperty({ description: '响应参数 Schema', type: [SchemaFieldDto] })
-  responseSchema?: SchemaFieldDto[];
 }
 
 export class UpdateDataModelRequest {
@@ -465,22 +417,6 @@ export class UpdateDataModelRequest {
 
   @ApiProperty({ description: '数据模型描述', example: '用户相关的数据结构' })
   description?: string;
-
-  @ApiProperty({ description: 'API 地址（可选）', example: '/api/v1/users' })
-  url?: string;
-
-  @ApiProperty({
-    description: 'HTTP 方法',
-    example: 'GET',
-    enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
-  })
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
-
-  @ApiProperty({ description: '请求参数 Schema', type: [SchemaFieldDto] })
-  requestSchema?: SchemaFieldDto[];
-
-  @ApiProperty({ description: '响应参数 Schema', type: [SchemaFieldDto] })
-  responseSchema?: SchemaFieldDto[];
 }
 
 export class GetDataModelsRequest {
@@ -534,8 +470,8 @@ export class CreateNewDataModelRequest {
   @ApiProperty({ description: '数据模型描述', example: '用户相关的数据结构' })
   description?: string;
 
-  @ApiProperty({ description: '数据结构 Schema', type: [SchemaFieldDto] })
-  schema?: SchemaFieldDto[];
+  @ApiProperty({ description: 'TypeScript 接口定义内容', example: 'interface User {\n  id: string;\n  name: string;\n}' })
+  tsContent?: string;
 }
 
 export class UpdateNewDataModelRequest {
@@ -548,8 +484,8 @@ export class UpdateNewDataModelRequest {
   @ApiProperty({ description: '数据模型描述', example: '用户相关的数据结构' })
   description?: string;
 
-  @ApiProperty({ description: '数据结构 Schema', type: [SchemaFieldDto] })
-  schema?: SchemaFieldDto[];
+  @ApiProperty({ description: 'TypeScript 接口定义内容', example: 'interface User {\n  id: string;\n  name: string;\n}' })
+  tsContent?: string;
 }
 
 // RestApiGroup Request DTOs

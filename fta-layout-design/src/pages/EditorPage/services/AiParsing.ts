@@ -1,85 +1,86 @@
 /**
- * AI Schema 解析服务
+ * AI TypeScript Interface 生成服务
  * 将 prompt 和结构处理逻辑放在前端，通过 model-gateway-sync 调用统一大模型
  */
 
-import type { SchemaField, ParseSchemaRequest } from '@/types/dataModel';
 import { syncModelGateway, StreamModelGatewayEvent } from '../utils/modelGateway';
 
+export interface ParseTypeScriptRequest {
+  /** 输入文本（JSON、TypeScript 或自然语言描述） */
+  text: string;
+  /** 输入类型提示 */
+  hint?: 'json' | 'typescript' | 'text';
+  /** 接口名称（可选，如果不提供则从输入中推断） */
+  interfaceName?: string;
+}
+
 /**
- * 构建 AI Schema 解析的 prompt
+ * 构建 AI TypeScript Interface 生成的 prompt
  */
-const buildSchemaParsePrompt = (hint: 'json' | 'typescript' | 'text'): string => {
+const buildTypeScriptParsePrompt = (hint: 'json' | 'typescript' | 'text', interfaceName?: string): string => {
   const hintDescription = {
     json: 'JSON 数据格式',
     typescript: 'TypeScript 类型定义',
     text: '自然语言描述',
   }[hint];
 
-  return `## 角色：数据结构解析专家
+  const nameHint = interfaceName
+    ? `接口名称应为：\`${interfaceName}\``
+    : '请根据输入内容推断合适的接口名称（使用 PascalCase 命名）';
 
-你是一个专业的数据结构解析专家，擅长从各种格式的输入中提取并标准化数据结构定义。
+  return `## 角色：TypeScript 类型定义专家
+
+你是一个专业的 TypeScript 类型定义专家，擅长从各种格式的输入中生成标准、规范的 TypeScript 接口定义。
 
 ## 核心任务
 
-分析用户提供的 **${hintDescription}** 输入，将其转换为标准化的 Schema 字段数组。
+分析用户提供的 **${hintDescription}** 输入，将其转换为标准的 TypeScript 接口定义。
 
 ## 输出格式
 
-你的输出**必须**是一个有效的 JSON 数组，包含 SchemaField 对象。每个 SchemaField 对象的结构如下：
+你的输出**必须**是有效的 TypeScript 代码，包含一个或多个 interface 定义。${nameHint}
 
-\`\`\`typescript
-interface SchemaField {
-  /** 字段名 */
-  name: string;
-  /** 字段类型: 'string' | 'number' | 'boolean' | 'object' | 'array' */
-  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
-  /** 字段描述 */
-  description?: string;
-  /** 是否必填 */
-  required?: boolean;
-  /** 示例值 */
-  example?: any;
-  /** 枚举值（如果是枚举类型） */
-  enum?: string[];
-  /** 子字段（如果是 object 类型） */
-  properties?: SchemaField[];
-  /** 数组元素类型（如果是 array 类型） */
-  items?: SchemaField;
-}
-\`\`\`
-
-## 解析规则
+## 生成规则
 
 ### 1. 类型映射
-- JSON 中的 \`string\` → type: 'string'
-- JSON 中的 \`number\`/\`integer\` → type: 'number'
-- JSON 中的 \`boolean\` → type: 'boolean'
-- JSON 中的嵌套对象 \`{}\` → type: 'object'，子字段放入 \`properties\`
-- JSON 中的数组 \`[]\` → type: 'array'，元素类型放入 \`items\`
+- JSON 中的 \`string\` → \`string\`
+- JSON 中的 \`number\`/\`integer\` → \`number\`
+- JSON 中的 \`boolean\` → \`boolean\`
+- JSON 中的嵌套对象 \`{}\` → 嵌套的 interface 或内联对象类型
+- JSON 中的数组 \`[]\` → \`Array<ElementType>\` 或 \`ElementType[]\`
+- JSON 中的 \`null\` → 使用联合类型，如 \`string | null\`
 
-### 2. 字段名规范
+### 2. 字段命名规范
 - 保持原始字段名的命名风格（camelCase、snake_case 等）
-- 如果是自然语言描述，推断合理的英文字段名
+- 如果是自然语言描述，推断合理的英文字段名（使用 camelCase）
 
-### 3. 必填字段判断
-- 如果输入中明确标注了 "必填"、"required" 等，设置 \`required: true\`
-- 从 JSON 示例中无法判断时，默认 \`required: false\`
+### 3. 可选字段
+- 如果输入中明确标注了 "必填"、"required" 等，字段为必填（不加 \`?\`）
+- 如果输入中明确标注了 "可选"、"optional" 等，字段为可选（加 \`?\`）
+- 从 JSON 示例中无法判断时，默认设为可选（加 \`?\`）
 
-### 4. 示例值提取
-- 从 JSON 数据中提取实际的值作为 \`example\`
-- 对于嵌套对象和数组，也要递归提取示例值
+### 4. 注释和文档
+- 为每个字段添加 JSDoc 注释，说明字段的用途
+- 从字段名和示例值推断合理的描述
+- 如果有枚举值，在注释中说明
 
-### 5. 描述字段
-- 如果有注释或文档说明，提取作为 \`description\`
-- 从字段名推断可能的用途描述
+### 5. 嵌套结构处理
+- 对于嵌套对象，优先创建独立的 interface
+- 如果嵌套结构简单且只使用一次，可以使用内联对象类型
+- 为嵌套的 interface 使用有意义的名称
+
+### 6. 数组类型
+- 使用 \`Array<Type>\` 或 \`Type[]\` 格式
+- 为数组元素类型创建合适的 interface（如果元素是对象）
 
 ## 输出要求
 
-1. **只输出 JSON 数组**，不要包含任何其他文字、标题或说明
-2. JSON 必须是有效的，可以直接被 \`JSON.parse()\` 解析
-3. 不要使用 markdown 代码块包裹，直接输出纯 JSON
-4. 数组为空时返回 \`[]\`
+1. **只输出 TypeScript 代码**，不要包含任何其他文字、标题或说明
+2. 代码必须是有效的 TypeScript，可以直接被 TypeScript 编译器解析
+3. 不要使用 markdown 代码块包裹，直接输出纯 TypeScript 代码
+4. 使用 2 个空格缩进
+5. 每个 interface 之间用空行分隔
+6. 确保所有类型都是明确的，避免使用 \`any\`
 
 ## 示例
 
@@ -96,11 +97,27 @@ interface SchemaField {
 \`\`\`
 
 输出:
-[{"name":"name","type":"string","description":"姓名","required":false,"example":"张三"},{"name":"age","type":"number","description":"年龄","required":false,"example":18},{"name":"address","type":"object","description":"地址信息","required":false,"properties":[{"name":"city","type":"string","description":"城市","required":false,"example":"北京"},{"name":"street","type":"string","description":"街道","required":false,"example":"朝阳路"}]}]
+\`\`\`typescript
+interface Address {
+  /** 城市 */
+  city: string;
+  /** 街道 */
+  street: string;
+}
+
+interface User {
+  /** 姓名 */
+  name: string;
+  /** 年龄 */
+  age: number;
+  /** 地址信息 */
+  address?: Address;
+}
+\`\`\`
 
 ---
 
-请立即开始解析。严格按照上述规则，仅输出 JSON 数组格式的解析结果。`;
+请立即开始生成。严格按照上述规则，仅输出 TypeScript 代码。`;
 };
 
 /**
@@ -118,68 +135,61 @@ const extractTextFromEvents = (events: StreamModelGatewayEvent[]): string => {
 };
 
 /**
- * 解析模型返回的文本为 SchemaField 数组
+ * 清理模型返回的 TypeScript 代码
+ * 移除可能的 markdown 代码块标记和其他非代码内容
  */
-const parseSchemaFromText = (text: string): SchemaField[] => {
+const cleanTypeScriptCode = (text: string): string => {
   if (!text.trim()) {
-    return [];
+    return '';
   }
 
-  // 清理文本，移除可能的 markdown 代码块标记
   let cleanedText = text.trim();
 
-  // 移除 markdown 代码块
-  if (cleanedText.startsWith('```json')) {
-    cleanedText = cleanedText.slice(7);
-  } else if (cleanedText.startsWith('```')) {
-    cleanedText = cleanedText.slice(3);
-  }
+  // 移除 markdown 代码块标记
+  const codeBlockPatterns = [/^```typescript\s*\n?/i, /^```ts\s*\n?/i, /^```\s*\n?/, /\n?```\s*$/];
 
-  if (cleanedText.endsWith('```')) {
-    cleanedText = cleanedText.slice(0, -3);
-  }
+  codeBlockPatterns.forEach((pattern) => {
+    cleanedText = cleanedText.replace(pattern, '');
+  });
 
   cleanedText = cleanedText.trim();
 
-  // 尝试找到 JSON 数组的开始和结束
-  const startIndex = cleanedText.indexOf('[');
-  const endIndex = cleanedText.lastIndexOf(']');
+  // 尝试找到第一个 interface 或 type 关键字的位置
+  const interfaceIndex = cleanedText.indexOf('interface ');
+  const typeIndex = cleanedText.indexOf('type ');
+  const startIndex = interfaceIndex !== -1 ? interfaceIndex : typeIndex !== -1 ? typeIndex : 0;
 
-  if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
-    console.error('无法在响应中找到有效的 JSON 数组');
-    return [];
+  if (startIndex > 0) {
+    cleanedText = cleanedText.slice(startIndex);
   }
 
-  const jsonStr = cleanedText.slice(startIndex, endIndex + 1);
+  // 移除末尾可能的非代码内容（如解释性文字）
+  // 查找最后一个 } 或 ; 的位置
+  const lastBraceIndex = cleanedText.lastIndexOf('}');
+  const lastSemicolonIndex = cleanedText.lastIndexOf(';');
+  const endIndex = Math.max(lastBraceIndex, lastSemicolonIndex);
 
-  try {
-    const parsed = JSON.parse(jsonStr);
-
-    if (!Array.isArray(parsed)) {
-      console.error('解析结果不是数组');
-      return [];
-    }
-
-    return parsed as SchemaField[];
-  } catch (error) {
-    console.error('JSON 解析失败:', error);
-    return [];
+  if (endIndex !== -1 && endIndex < cleanedText.length - 10) {
+    // 如果最后一个 } 或 ; 之后还有较多内容，可能是解释性文字，截断
+    cleanedText = cleanedText.slice(0, endIndex + 1);
   }
+
+  return cleanedText.trim();
 };
 
 /**
- * AI Schema 解析主函数
- * @param request 解析请求，包含文本和类型提示
- * @returns 解析后的 SchemaField 数组
+ * AI TypeScript Interface 生成主函数
+ * @param request 解析请求，包含文本、类型提示和可选的接口名称
+ * @returns 生成的 TypeScript 接口代码字符串
  */
-export const aiParseSchema = async (request: ParseSchemaRequest): Promise<SchemaField[]> => {
-  const { text, hint = 'json' } = request;
+export const aiParseTypeScript = async (request: ParseTypeScriptRequest): Promise<string> => {
+  const { text, hint = 'json', interfaceName } = request;
 
   if (!text.trim()) {
     throw new Error('输入文本不能为空');
   }
 
-  const systemPrompt = buildSchemaParsePrompt(hint);
+  const systemPrompt = buildTypeScriptParsePrompt(hint, interfaceName);
 
   const requestBody = {
     messages: [
@@ -198,7 +208,9 @@ export const aiParseSchema = async (request: ParseSchemaRequest): Promise<Schema
         content: [
           {
             type: 'text',
-            text: `请解析以下 ${hint === 'json' ? 'JSON' : hint === 'typescript' ? 'TypeScript' : '文字描述'}：\n\n${text}`,
+            text: `请生成以下 ${
+              hint === 'json' ? 'JSON' : hint === 'typescript' ? 'TypeScript' : '文字描述'
+            } 对应的 TypeScript 接口定义：\n\n${text}`,
           },
         ],
       },
@@ -219,11 +231,25 @@ export const aiParseSchema = async (request: ParseSchemaRequest): Promise<Schema
     throw new Error('模型未返回有效内容');
   }
 
-  // 解析为 SchemaField 数组
-  const schema = parseSchemaFromText(responseText);
+  // 清理并返回 TypeScript 代码
+  const cleanedCode = cleanTypeScriptCode(responseText);
 
-  return schema;
+  if (!cleanedCode) {
+    throw new Error('未能从模型响应中提取有效的 TypeScript 代码');
+  }
+
+  return cleanedCode;
 };
 
-export default aiParseSchema;
+// 为了向后兼容，保留旧的函数名（已废弃）
+/**
+ * @deprecated 请使用 aiParseTypeScript 代替
+ */
+export const aiParseSchema = async (request: {
+  text: string;
+  hint?: 'json' | 'typescript' | 'text';
+}): Promise<string> => {
+  return aiParseTypeScript(request);
+};
 
+export default aiParseTypeScript;
