@@ -75,9 +75,12 @@ const cleanStyle = (style: any, oldId: string): any => {
 const cleanFont = (font: any): any => {
   const newFont = { ...font };
 
-  // Remove defaults
   if (newFont.family) delete newFont.family;
   if (newFont.decoration === 'none') delete newFont.decoration;
+  if (newFont.size) {
+    newFont.fontSize = newFont.size;
+    delete newFont.size;
+  }
   if (newFont.case === 'none') delete newFont.case;
   if (newFont.letterSpacing === 'auto') delete newFont.letterSpacing;
   if (newFont.style === '常规体' || newFont.style === 'Regular') delete newFont.style;
