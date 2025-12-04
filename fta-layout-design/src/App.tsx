@@ -1,12 +1,20 @@
+import { loader } from '@monaco-editor/react';
 import { App as AntApp, ConfigProvider, Spin, theme } from 'antd';
 import 'antd/dist/reset.css';
 import zhCN from 'antd/locale/zh_CN';
 import { useEffect, useState } from 'react';
-import { data, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Routes } from 'react-router-dom';
 import './App.css';
 import { routes } from './config/routes';
 import { renderRoutes } from './utils/routerUtils';
 import { callService } from './utils/workstationConnector';
+
+// 配置 CDN 地址
+loader.config({
+  paths: {
+    vs: 'https://unpkg.com/monaco-editor@0.55.1/min/vs',
+  },
+});
 
 function App() {
   const [initializing, setInitializing] = useState<boolean>(true);

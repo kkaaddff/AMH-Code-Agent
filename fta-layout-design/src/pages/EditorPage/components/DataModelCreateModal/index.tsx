@@ -1,13 +1,13 @@
 import { dataModelService } from '@/services/dataModelService';
-import type { CreateDataModelRequest, DataModelGroup, SchemaField } from '@/types/dataModel';
-import { EMPTY_SCHEMA_FIELD } from '@/types/dataModel';
-import { PlusOutlined, RobotOutlined } from '@ant-design/icons';
-import { App, Button, Form, Input, Modal, Select, Space, Tabs, Typography } from 'antd';
+import type { CreateDataModelRequest, DataModelGroup } from '@/types/dataModel';
+import { DEFAULT_TS_TEMPLATE } from '@/types/dataModel';
+import { RobotOutlined, WarningOutlined } from '@ant-design/icons';
+import { App, Button, Form, Input, Modal, Select, Space, Tabs, Tooltip, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
+import TypeScriptEditor from '@/components/TypeScriptEditor';
 import AiParseModal from '../AiParseModal';
-import SchemaFieldEditor from '../SchemaFieldEditor';
 import './index.css';
 
 const { Text } = Typography;
@@ -24,15 +24,14 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
 
   const [creating, setCreating] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
+  const [aiParseModalOpen, setAiParseModalOpen] = useState(false);
 
   // 表单状态
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [groupId, setGroupId] = useState<string | undefined>();
-  const [schema, setSchema] = useState<SchemaField[]>([]);
-
-  // AI 解析弹窗状态
-  const [aiParseModalOpen, setAiParseModalOpen] = useState(false);
+  const [tsContent, setTsContent] = useState(DEFAULT_TS_TEMPLATE);
+  const [hasValidationErrors, setHasValidationErrors] = useState(false);
 
   // 当弹窗打开时，设置默认分组为当前选中的分组
   useEffect(() => {
@@ -50,32 +49,17 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
     setName('');
     setDescription('');
     setGroupId(undefined);
-    setSchema([]);
+    setTsContent(DEFAULT_TS_TEMPLATE);
+    setHasValidationErrors(false);
     setActiveTab('basic');
     setAiParseModalOpen(false);
   };
 
-  // 处理 AI 解析按钮点击
-  const handleAiParseClick = () => {
-    if (schema.length > 0) {
-      // 已有数据时二次确认
-      modal.confirm({
-        title: '确认覆盖',
-        content: '当前已有字段数据，使用 AI 解析将覆盖现有数据结构。确定要继续吗？',
-        okText: '继续',
-        cancelText: '取消',
-        onOk: () => {
-          setAiParseModalOpen(true);
-        },
-      });
-    } else {
-      setAiParseModalOpen(true);
-    }
-  };
-
-  // 处理 AI 解析结果
-  const handleAiParseResult = (parsedSchema: SchemaField[]) => {
-    setSchema(parsedSchema);
+  const handleAiParseSuccess = (typescriptCode: string) => {
+    // 将生成的 TypeScript 代码填充到编辑器
+    setTsContent(typescriptCode);
+    // 切换到 TypeScript 标签页以便用户查看
+    setActiveTab('typescript');
   };
 
   const handleClose = () => {
@@ -94,6 +78,12 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
       return;
     }
 
+    if (hasValidationErrors) {
+      message.error('TypeScript 代码存在语法错误，请修复后再创建');
+      setActiveTab('typescript');
+      return;
+    }
+
     setCreating(true);
     try {
       const createData: CreateDataModelRequest = {
@@ -101,7 +91,7 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
         name: name.trim(),
         description: description.trim() || undefined,
         groupId: groupId || undefined,
-        schema,
+        tsContent,
       };
 
       const newModel = await dataModelService.create(createData);
@@ -154,27 +144,32 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
       ),
     },
     {
-      key: 'schema',
-      label: `数据结构${schema.length > 0 ? ` (${schema.length})` : ''}`,
+      key: 'typescript',
+      label: 'TypeScript 接口',
       children: (
         <div className='data-model-create-modal__tab-content'>
-          {schema.length === 0 ? (
-            <div className='data-model-create-modal__schema-empty'>
-              <RobotOutlined style={{ fontSize: 32, color: '#8c8c8c', marginBottom: 12 }} />
-              <Text type='secondary' style={{ marginBottom: 16 }}>
-                暂无字段，可以手动添加或使用 AI 快速创建
-              </Text>
-              <Space>
-                <Button type='dashed' icon={<PlusOutlined />} onClick={() => setSchema([{ ...EMPTY_SCHEMA_FIELD }])}>
-                  手动添加
-                </Button>
-                <Button type='primary' icon={<RobotOutlined />} onClick={handleAiParseClick}>
-                  AI 快速创建
-                </Button>
-              </Space>
+          <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text type='secondary'>请在下方编辑器中定义 TypeScript 接口：</Text>
+            <Button
+              type='default'
+              icon={<RobotOutlined />}
+              size='small'
+              onClick={() => setAiParseModalOpen(true)}
+              style={{ marginLeft: 8 }}>
+              AI 智能解析
+            </Button>
+          </div>
+          <TypeScriptEditor
+            value={tsContent}
+            onChange={setTsContent}
+            onValidate={(hasErrors) => setHasValidationErrors(hasErrors)}
+            height={350}
+          />
+          {hasValidationErrors && (
+            <div style={{ marginTop: 8, color: '#ff4d4f' }}>
+              <WarningOutlined style={{ marginRight: 4 }} />
+              TypeScript 代码存在语法错误
             </div>
-          ) : (
-            <SchemaFieldEditor fields={schema} onChange={setSchema} showAiParseButton onAiParse={handleAiParseClick} />
           )}
         </div>
       ),
@@ -182,26 +177,31 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
   ];
 
   return (
-    <>
-      <Modal
-        title='新建数据模型'
-        open={open}
-        onCancel={handleClose}
-        maskClosable={false}
-        width={800}
-        footer={
-          <Space>
-            <Button onClick={handleClose}>取消</Button>
-            <Button type='primary' onClick={handleCreate} loading={creating} disabled={!name.trim()}>
+    <Modal
+      title='新建数据模型'
+      open={open}
+      onCancel={handleClose}
+      maskClosable={false}
+      width={800}
+      footer={
+        <Space>
+          <Button onClick={handleClose}>取消</Button>
+          <Tooltip title={hasValidationErrors ? 'TypeScript 代码存在语法错误' : ''} placement='top'>
+            <Button type='primary' onClick={handleCreate} loading={creating} disabled={!name.trim() || hasValidationErrors}>
               创建
             </Button>
-          </Space>
-        }
-        destroyOnHidden>
-        <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
-      </Modal>
-      <AiParseModal open={aiParseModalOpen} onClose={() => setAiParseModalOpen(false)} onParse={handleAiParseResult} />
-    </>
+          </Tooltip>
+        </Space>
+      }
+      destroyOnHidden>
+      <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
+      <AiParseModal
+        open={aiParseModalOpen}
+        onClose={() => setAiParseModalOpen(false)}
+        onParse={handleAiParseSuccess}
+        interfaceName={name.trim() ? name.trim() : undefined}
+      />
+    </Modal>
   );
 };
 

@@ -5,7 +5,7 @@ import { ReturnModelType } from '@typegoose/typegoose';
 import { RestApiGroup } from '../../entity/code-agent/rest-api-group';
 import { RestApi } from '../../entity/code-agent/rest-api';
 import { Project } from '../../entity/code-agent/project';
-import type { HttpMethod, SchemaField } from '@fta/shared-types';
+import type { HttpMethod } from '@fta/shared-types';
 
 /**
  * 创建 REST API 组请求

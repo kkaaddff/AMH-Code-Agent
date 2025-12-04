@@ -1,10 +1,17 @@
 /**
  * 数据模型相关类型定义
+ * 使用 TypeScript Interfaces 作为单一事实来源
  */
-import type { SchemaField, SchemaFieldType, ParseSchemaRequest } from '@fta/shared-types';
+import type {
+  DataModelDefinition,
+  CreateDataModelRequest as SharedCreateDataModelRequest,
+  UpdateDataModelRequest as SharedUpdateDataModelRequest,
+} from '@fta/shared-types';
 
 // 重新导出共享类型
-export type { SchemaField, SchemaFieldType, ParseSchemaRequest };
+export type { DataModelDefinition };
+export type CreateDataModelRequest = SharedCreateDataModelRequest;
+export type UpdateDataModelRequest = SharedUpdateDataModelRequest;
 
 /**
  * 数据模型组
@@ -27,7 +34,7 @@ export interface DataModelGroup {
 }
 
 /**
- * 数据模型
+ * 数据模型（使用 TypeScript Interfaces）
  */
 export interface DataModel {
   /** 唯一标识 */
@@ -40,8 +47,8 @@ export interface DataModel {
   name: string;
   /** 数据模型描述 */
   description?: string;
-  /** 数据结构 Schema */
-  schema: SchemaField[];
+  /** TypeScript 接口定义内容 */
+  tsContent: string;
   /** 创建时间 */
   createdAt: string;
   /** 更新时间 */
@@ -68,43 +75,14 @@ export interface UpdateDataModelGroupRequest {
 }
 
 /**
- * 创建数据模型请求
+ * 默认的 TypeScript 接口模板
  */
-export interface CreateDataModelRequest {
-  projectId: string;
-  groupId?: string;
-  name: string;
-  description?: string;
-  schema?: SchemaField[];
+export const DEFAULT_TS_TEMPLATE = `/**
+ * 数据模型定义
+ * 请在此处定义您的 TypeScript 接口
+ */
+export interface DataModel {
+  id: string;
+  // 在此处添加其他字段...
 }
-
-/**
- * 更新数据模型请求
- */
-export interface UpdateDataModelRequest {
-  groupId?: string | null;
-  name?: string;
-  description?: string;
-  schema?: SchemaField[];
-}
-
-/**
- * Schema 字段类型选项
- */
-export const SCHEMA_FIELD_TYPE_OPTIONS: { value: SchemaFieldType; label: string }[] = [
-  { value: 'string', label: '字符串' },
-  { value: 'number', label: '数字' },
-  { value: 'boolean', label: '布尔' },
-  { value: 'object', label: '对象' },
-  { value: 'array', label: '数组' },
-];
-
-/**
- * 空的 Schema 字段模板
- */
-export const EMPTY_SCHEMA_FIELD: SchemaField = {
-  name: '',
-  type: 'string',
-  description: '',
-  required: false,
-};
+`;
