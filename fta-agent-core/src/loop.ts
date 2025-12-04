@@ -233,7 +233,6 @@ export async function runLoop(opts: RunLoopOpts): Promise<LoopResult> {
       }
 
       try {
-        debugger;
         const result = await m.doStream({
           prompt: prompt,
           tools,

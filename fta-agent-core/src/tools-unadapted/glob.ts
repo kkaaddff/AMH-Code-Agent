@@ -5,7 +5,7 @@ import { safeStringify } from '../utils/safeStringify';
 
 const LIMIT = 100;
 
-export function createGlobTool(opts: { cwd: string }) {
+export function createGlobTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
   return createTool({
     name: 'glob',
     description: `
@@ -17,11 +17,7 @@ Glob
 `.trim(),
     parameters: z.object({
       pattern: z.string().describe('The glob pattern to match files against'),
-      path: z
-        .string()
-        .optional()
-        .nullable()
-        .describe('The directory to search in'),
+      path: z.string().optional().nullable().describe('The directory to search in'),
     }),
     getDescription: ({ params }) => {
       if (!params.pattern || typeof params.pattern !== 'string') {
@@ -30,6 +26,20 @@ Glob
       return params.pattern;
     },
     execute: async ({ pattern, path }) => {
+      // If toolProxy is available, delegate to frontend
+      if (opts.toolProxy) {
+        try {
+          const result = await opts.toolProxy('glob', { pattern, path });
+          return result;
+        } catch (error) {
+          return {
+            isError: true,
+            llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+          };
+        }
+      }
+
+      // Otherwise, execute locally
       try {
         const start = Date.now();
         const paths = await glob([pattern], {
@@ -39,13 +49,9 @@ Glob
           stat: true,
           withFileTypes: true,
         });
-        const sortedPaths = paths.sort(
-          (a, b) => (a.mtimeMs ?? 0) - (b.mtimeMs ?? 0),
-        );
+        const sortedPaths = paths.sort((a, b) => (a.mtimeMs ?? 0) - (b.mtimeMs ?? 0));
         const truncated = sortedPaths.length > LIMIT;
-        const filenames = sortedPaths
-          .slice(0, LIMIT)
-          .map((path) => path.fullpath());
+        const filenames = sortedPaths.slice(0, LIMIT).map((path) => path.fullpath());
         const message = truncated
           ? `Found ${filenames.length} files in ${Date.now() - start}ms, truncating to ${LIMIT}.`
           : `Found ${filenames.length} files in ${Date.now() - start}ms.`;

@@ -21,6 +21,9 @@
     "dev:replayer": "yarn workspace messages-replayer replay",
     "typecheck": "yarn workspace @fta/agent-core typecheck"
   },
+  "resolutions": {
+    "zod": "4.1.12"
+  },
   "engines": {
     "node": "=20"
   }

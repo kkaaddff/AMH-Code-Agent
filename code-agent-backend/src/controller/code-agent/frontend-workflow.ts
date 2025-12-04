@@ -5,6 +5,24 @@ import { v4 as uuid } from 'uuid';
 import { FrontendWorkflowRequestDTO } from '../../dto/code-agent/frontend-workflow.dto';
 import { FrontendWorkflowService } from '../../service/code-agent/frontend-workflow';
 
+// ToolResult 类型定义（与 agent-core 保持一致）
+type TextPart = {
+  type: 'text';
+  text: string;
+};
+
+type ImagePart = {
+  type: 'image';
+  data: string;
+  mimeType: string;
+};
+
+type ToolResult = {
+  llmContent: string | (TextPart | ImagePart)[];
+  returnDisplay?: string | any;
+  isError?: boolean;
+};
+
 @Controller('/code-agent')
 export class FrontendWorkflowController {
   @Inject()
@@ -12,6 +30,41 @@ export class FrontendWorkflowController {
 
   @Inject()
   private frontendWorkflowService: FrontendWorkflowService;
+
+  // Global map to track pending tool calls across all sessions
+  private static pendingToolCalls = new Map<
+    string,
+    {
+      resolve: (value: any) => void;
+      reject: (reason?: any) => void;
+      timestamp: number;
+    }
+  >();
+
+  @Post('/frontend-workflow/tool-result')
+  async handleToolResult(@Body() body: { callId: string; toolName: string; params: any; toolResult: ToolResult }) {
+    const { callId, toolResult } = body;
+    const pending = FrontendWorkflowController.pendingToolCalls.get(callId);
+
+    if (!pending) {
+      return { success: false, message: 'Tool call not found or expired' };
+    }
+
+    FrontendWorkflowController.pendingToolCalls.delete(callId);
+
+    // 根据 ToolResult 的 isError 字段判断是 resolve 还是 reject
+    if (toolResult.isError) {
+      // 错误情况：从 llmContent 提取错误信息
+      const errorMessage =
+        typeof toolResult.llmContent === 'string' ? toolResult.llmContent : JSON.stringify(toolResult.llmContent);
+      pending.reject(new Error(errorMessage));
+    } else {
+      // 成功情况：resolve ToolResult 对象
+      pending.resolve(toolResult);
+    }
+
+    return { success: true };
+  }
 
   @Post('/frontend-workflow')
   @Validate()
@@ -81,6 +134,33 @@ export class FrontendWorkflowController {
         model,
         sessionId,
         signal: abortController.signal,
+        toolProxy: async (toolName: string, params: any) => {
+          const callId = uuid();
+
+          // Send SSE event requesting tool execution
+          sendSSE('tool_call', {
+            callId,
+            toolName,
+            params,
+          });
+
+          // Create and store promise
+          return new Promise((resolve, reject) => {
+            FrontendWorkflowController.pendingToolCalls.set(callId, {
+              resolve,
+              reject,
+              timestamp: Date.now(),
+            });
+
+            // Optional: Set timeout to reject after 60 seconds
+            setTimeout(() => {
+              if (FrontendWorkflowController.pendingToolCalls.has(callId)) {
+                FrontendWorkflowController.pendingToolCalls.delete(callId);
+                reject(new Error('Tool execution timeout'));
+              }
+            }, 60000);
+          });
+        },
         callbacks: {
           onMessage: async (opts) => {
             const { message } = opts;
@@ -168,19 +248,8 @@ export class FrontendWorkflowController {
             console.log(
               `frontend-workflow: [${sessionId}] 🔧 工具调用审批: toolName=${toolUse.name}, callId=${toolUse.callId}, category=${category}`
             );
-            sendSSE('tool_approve', {
-              toolName: toolUse.name,
-              callId: toolUse.callId,
-              params: toolUse.params,
-              category,
-            });
-            logSSEEvent('tool_approve', {
-              toolName: toolUse.name,
-              callId: toolUse.callId,
-              params: toolUse.params,
-              category,
-            });
             // 自动批准所有工具调用
+            // 注意：文件系统工具的实际执行通过 toolProxy 的 tool_call 事件处理
             return true;
           },
         },

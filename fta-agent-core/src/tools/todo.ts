@@ -198,11 +198,6 @@ type TodoList = z.infer<typeof TodoListSchema>;
 
 export type TodoItem = z.infer<typeof TodoItemSchema>;
 
-type TodoStorage = {
-  read: () => Promise<TodoList>;
-  write: (todos: TodoList) => Promise<void>;
-};
-
 async function loadTodosFromFile(filePath: string) {
   if (!fs.existsSync(filePath)) return [];
   let fileContent = '';
@@ -221,64 +216,58 @@ async function saveTodos(todos: TodoList, filePath: string) {
   await writeFile(filePath, JSON.stringify(todos, null, 2));
 }
 
-function createFileTodoStorage(filePath: string): TodoStorage {
+export function createTodoTool(opts: {
+  filePath: string;
+  toolProxy?: (toolName: string, params: any) => Promise<any>;
+}) {
   function ensureTodoDirectory() {
-    const todoDir = path.dirname(filePath);
+    const todoDir = path.dirname(opts.filePath);
     if (!fs.existsSync(todoDir)) {
       fs.mkdirSync(todoDir, { recursive: true });
     }
     return todoDir;
   }
 
-  async function read() {
+  function getTodoFilePath() {
     ensureTodoDirectory();
-    return await loadTodosFromFile(filePath);
+    return opts.filePath;
   }
-
-  async function write(todos: TodoList) {
-    ensureTodoDirectory();
-    await saveTodos(todos, filePath);
-  }
-
-  return {
-    read,
-    write,
-  };
-}
-
-export function createInMemoryTodoStorage(initialTodos: TodoList = []): TodoStorage {
-  let currentTodos = initialTodos.map((todo) => ({ ...todo }));
-  return {
-    async read() {
-      return currentTodos.map((todo) => ({ ...todo }));
-    },
-    async write(todos) {
-      if (typeof todos === 'string') {
-        try {
-          todos = JSON.parse(todos);
-        } catch (err) {
-          console.error('解析 todos 字符串失败:', err, todos);
-          todos = [];
-        }
-      }
-      currentTodos = todos.map((todo) => ({ ...todo }));
-    },
-  };
-}
-
-type TodoToolOptions =
-  | {
-      filePath: string;
-    }
-  | {
-      storage: TodoStorage;
-    };
-
-export function createTodoTool(opts: TodoToolOptions) {
-  const storage = 'storage' in opts ? opts.storage : createFileTodoStorage(opts.filePath);
 
   async function readTodos() {
-    return await storage.read();
+    // If toolProxy is available, delegate to frontend
+    if (opts.toolProxy) {
+      try {
+        const result = await opts.toolProxy(TOOL_NAMES.TODO_READ, {});
+        if (result.isError) {
+          return [];
+        }
+        return result.returnDisplay?.todos || [];
+      } catch (error) {
+        console.error('Tool proxy read failed:', error);
+        return [];
+      }
+    }
+
+    return await loadTodosFromFile(getTodoFilePath());
+  }
+
+  async function writeTodos(todos: TodoList) {
+    // If toolProxy is available, delegate to frontend
+    if (opts.toolProxy) {
+      try {
+        const result = await opts.toolProxy(TOOL_NAMES.TODO_WRITE, { todos });
+        return result;
+      } catch (error) {
+        return {
+          isError: true,
+          llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+        };
+      }
+    }
+
+    // Otherwise, write to file
+    await saveTodos(todos, getTodoFilePath());
+    return null; // Indicate that local write was used
   }
 
   const todoWriteTool = createTool({
@@ -291,8 +280,14 @@ export function createTodoTool(opts: TodoToolOptions) {
       try {
         const oldTodos = await readTodos();
         const newTodos = todos;
-        await storage.write(newTodos);
+        const writeResult = await writeTodos(newTodos);
 
+        // If toolProxy was used, return its result
+        if (opts.toolProxy && writeResult) {
+          return writeResult;
+        }
+
+        // Otherwise, return local write result
         return {
           llmContent:
             'Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable',

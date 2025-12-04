@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { createTool } from '../tool';
 import { applyEdit } from '../utils/applyEdit';
 
-export function createEditTool(opts: { cwd: string }) {
+export function createEditTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
   return createTool({
     name: 'edit',
     description: `
@@ -20,9 +20,7 @@ Usage:
     parameters: z.object({
       file_path: z.string().describe('The path of the file to modify'),
       old_string: z.string().describe('The text to replace'),
-      new_string: z
-        .string()
-        .describe('The text to replace the old_string with'),
+      new_string: z.string().describe('The text to replace the old_string with'),
     }),
     getDescription: ({ params, cwd }) => {
       if (!params.file_path || typeof params.file_path !== 'string') {
@@ -31,19 +29,25 @@ Usage:
       return path.relative(cwd, params.file_path);
     },
     execute: async ({ file_path, old_string, new_string }) => {
+      // If toolProxy is available, delegate to frontend
+      if (opts.toolProxy) {
+        try {
+          const result = await opts.toolProxy('edit', { file_path, old_string, new_string });
+          return result;
+        } catch (error) {
+          return {
+            isError: true,
+            llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+          };
+        }
+      }
+
+      // Otherwise, execute locally
       try {
         const cwd = opts.cwd;
-        const fullFilePath = path.isAbsolute(file_path)
-          ? file_path
-          : path.resolve(cwd, file_path);
+        const fullFilePath = path.isAbsolute(file_path) ? file_path : path.resolve(cwd, file_path);
         const relativeFilePath = path.relative(cwd, fullFilePath);
-        const { patch, updatedFile } = applyEdit(
-          cwd,
-          fullFilePath,
-          old_string,
-          new_string,
-          'search-replace',
-        );
+        const { patch, updatedFile } = applyEdit(cwd, fullFilePath, old_string, new_string, 'search-replace');
         const dir = path.dirname(fullFilePath);
         fs.mkdirSync(dir, { recursive: true });
         fs.writeFileSync(fullFilePath, updatedFile, 'utf-8');

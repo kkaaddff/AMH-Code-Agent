@@ -7,10 +7,10 @@ import { safeStringify } from '../utils/safeStringify';
 
 const DEFAULT_LIMIT = 1000;
 
-export function createGrepTool(opts: { cwd: string }) {
+export function createGrepTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
   return createTool({
     name: 'grep',
-    description: `Search for a pattern in a file or directory.`,
+    description: 'Search for a pattern in a file or directory.',
     parameters: z.object({
       pattern: z.string().describe('The pattern to search for'),
       search_path: z.string().optional().nullable().describe('The path to search in'),
@@ -29,6 +29,20 @@ export function createGrepTool(opts: { cwd: string }) {
       return params.pattern;
     },
     execute: async ({ pattern, search_path, include, limit }) => {
+      // If toolProxy is available, delegate to frontend
+      if (opts.toolProxy) {
+        try {
+          const result = await opts.toolProxy('grep', { pattern, search_path, include, limit });
+          return result;
+        } catch (error) {
+          return {
+            isError: true,
+            llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+          };
+        }
+      }
+
+      // Otherwise, execute locally
       try {
         const start = Date.now();
         const args = ['-li', pattern];

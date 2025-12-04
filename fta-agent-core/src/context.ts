@@ -13,6 +13,7 @@ type ContextOpts = {
   argvConfig: Record<string, any>;
   mcpManager: MCPManager;
   backgroundTaskManager: BackgroundTaskManager;
+  toolProxy?: (toolName: string, params: any) => Promise<any>;
 };
 
 export type ContextCreateOpts = {
@@ -21,6 +22,7 @@ export type ContextCreateOpts = {
   productASCIIArt?: string;
   version: string;
   argvConfig: Record<string, any>;
+  toolProxy?: (toolName: string, params: any) => Promise<any>;
 };
 
 export class Context {
@@ -33,6 +35,7 @@ export class Context {
   argvConfig: Record<string, any>;
   mcpManager: MCPManager;
   backgroundTaskManager: BackgroundTaskManager;
+  toolProxy?: (toolName: string, params: any) => Promise<any>;
 
   constructor(opts: ContextOpts) {
     this.cwd = opts.cwd;
@@ -44,6 +47,7 @@ export class Context {
     this.argvConfig = opts.argvConfig;
     this.mcpManager = opts.mcpManager;
     this.backgroundTaskManager = opts.backgroundTaskManager;
+    this.toolProxy = opts.toolProxy;
   }
 
   async destroy() {
@@ -75,6 +79,7 @@ export class Context {
       argvConfig: opts.argvConfig,
       mcpManager,
       backgroundTaskManager,
+      toolProxy: opts.toolProxy,
     });
   }
 }

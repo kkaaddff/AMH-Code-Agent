@@ -41,42 +41,39 @@ function createImageResponse(buffer: Buffer, ext: string): ToolResult {
   };
 }
 
-async function processImage(
-  filePath: string,
-  cwd: string,
-): Promise<ToolResult> {
-  try {
-    const stats = fs.statSync(filePath);
-    const ext = path.extname(filePath).toLowerCase();
+async function processImage(filePath: string, cwd: string): Promise<ToolResult> {
+  const stats = fs.statSync(filePath);
+  const ext = path.extname(filePath).toLowerCase();
 
-    // Security: Validate file path to prevent traversal attacks
-    const resolvedPath = path.resolve(filePath);
-    if (!resolvedPath.startsWith(cwd)) {
-      throw new Error('Invalid file path: path traversal detected');
-    }
-
-    const buffer = fs.readFileSync(filePath);
-
-    // If file is within size limit, return as-is
-    if (stats.size <= MAX_IMAGE_SIZE) {
-      return createImageResponse(buffer, ext);
-    }
-
-    // If file is too large, return error with helpful message
-    throw new Error(
-      `Image file is too large (${Math.round((stats.size / 1024 / 1024) * 100) / 100}MB). ` +
-        `Maximum supported size is ${Math.round((MAX_IMAGE_SIZE / 1024 / 1024) * 100) / 100}MB. ` +
-        `Please resize the image and try again.`,
-    );
-  } catch (error) {
-    throw error;
+  // Security: Validate file path to prevent traversal attacks
+  const resolvedPath = path.resolve(filePath);
+  if (!resolvedPath.startsWith(cwd)) {
+    throw new Error('Invalid file path: path traversal detected');
   }
+
+  const buffer = fs.readFileSync(filePath);
+
+  // If file is within size limit, return as-is
+  if (stats.size <= MAX_IMAGE_SIZE) {
+    return createImageResponse(buffer, ext);
+  }
+
+  // If file is too large, return error with helpful message
+  throw new Error(
+    `Image file is too large (${Math.round((stats.size / 1024 / 1024) * 100) / 100}MB). ` +
+      `Maximum supported size is ${Math.round((MAX_IMAGE_SIZE / 1024 / 1024) * 100) / 100}MB. ` +
+      'Please resize the image and try again.'
+  );
 }
 
 const MAX_LINES_TO_READ = 2000;
 const MAX_LINE_LENGTH = 2000;
 
-export function createReadTool(opts: { cwd: string; productName: string }) {
+export function createReadTool(opts: {
+  cwd: string;
+  productName: string;
+  toolProxy?: (toolName: string, params: any) => Promise<any>;
+}) {
   const productName = opts.productName.toLowerCase();
   return createTool({
     name: 'read',
@@ -95,16 +92,12 @@ Usage:
         .number()
         .optional()
         .nullable()
-        .describe(
-          'The line number to start reading from. Only provide if the file is too large to read at once',
-        ),
+        .describe('The line number to start reading from. Only provide if the file is too large to read at once'),
       limit: z
         .number()
         .optional()
         .nullable()
-        .describe(
-          `The number of lines to read. Only provide if the file is too large to read at once`,
-        ),
+        .describe('The number of lines to read. Only provide if the file is too large to read at once'),
     }),
     getDescription: ({ params, cwd }) => {
       if (!params.file_path || typeof params.file_path !== 'string') {
@@ -113,6 +106,20 @@ Usage:
       return path.relative(cwd, params.file_path);
     },
     execute: async ({ file_path, offset, limit }) => {
+      // If toolProxy is available, delegate to frontend
+      if (opts.toolProxy) {
+        try {
+          const result = await opts.toolProxy('read', { file_path, offset, limit });
+          return result;
+        } catch (error) {
+          return {
+            isError: true,
+            llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+          };
+        }
+      }
+
+      // Otherwise, execute locally
       try {
         // Validate parameters
         if (offset !== undefined && offset !== null && offset < 1) {
@@ -161,9 +168,7 @@ Usage:
 
         // Truncate long lines
         const truncatedLines = selectedLines.map((line) =>
-          line.length > MAX_LINE_LENGTH
-            ? line.substring(0, MAX_LINE_LENGTH) + '...'
-            : line,
+          line.length > MAX_LINE_LENGTH ? line.substring(0, MAX_LINE_LENGTH) + '...' : line
         );
 
         const processedContent = truncatedLines.join('\n');

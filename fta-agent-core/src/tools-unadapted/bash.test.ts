@@ -48,8 +48,7 @@ describe('bash tool with run_in_background', () => {
       backgroundTaskManager,
     });
 
-    const command =
-      'echo "line 1"; sleep 2; echo "line 2"; sleep 2; echo "line 3"';
+    const command = 'echo "line 1"; sleep 2; echo "line 2"; sleep 2; echo "line 3"';
 
     const startTime = Date.now();
     const result = (await bashTool.execute({

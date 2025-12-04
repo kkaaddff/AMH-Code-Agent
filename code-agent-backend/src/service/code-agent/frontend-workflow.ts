@@ -27,6 +27,7 @@ export interface FrontendWorkflowOptions {
   apiKey?: string;
   baseURL?: string;
   model?: string;
+  toolProxy?: (toolName: string, params: any) => Promise<any>;
 }
 
 export interface FrontendWorkflowResult {
@@ -155,7 +156,7 @@ export class FrontendWorkflowService {
       const cwd = this.getWorkflowCwd(sessionId);
       // 如果收到 abort 信号，抛出 AbortError
       if (signal?.aborted) {
-        console.log(`frontend-workflow: [${sessionId}] ⏹️ 检测到中断信号，工作流在启动前被中止`);
+        console.log(`frontend-workflow: [${sessionId}] ⛔️ 检测到中断信号，工作流在启动前被中止`);
         const error = new Error('Workflow aborted before start');
         error.name = 'AbortError';
         throw error;
@@ -216,6 +217,7 @@ export class FrontendWorkflowService {
           : callbacks,
         apiKey: finalApiKey,
         baseURL: finalBaseURL,
+        toolProxy: options.toolProxy,
       });
 
       const workflowEngineDuration = Date.now() - workflowEngineStart;

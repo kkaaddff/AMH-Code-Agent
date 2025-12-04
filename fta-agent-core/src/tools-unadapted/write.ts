@@ -3,7 +3,7 @@ import path from 'pathe';
 import { z } from 'zod';
 import { createTool } from '../tool';
 
-export function createWriteTool(opts: { cwd: string }) {
+export function createWriteTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
   return createTool({
     name: 'write',
     description: 'Write a file to the local filesystem',
@@ -18,6 +18,20 @@ export function createWriteTool(opts: { cwd: string }) {
       return path.relative(cwd, params.file_path);
     },
     execute: async ({ file_path, content }) => {
+      // If toolProxy is available, delegate to frontend
+      if (opts.toolProxy) {
+        try {
+          const result = await opts.toolProxy('write', { file_path, content });
+          return result;
+        } catch (error) {
+          return {
+            isError: true,
+            llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+          };
+        }
+      }
+
+      // Otherwise, execute locally
       try {
         const fullFilePath = path.isAbsolute(file_path) ? file_path : path.resolve(opts.cwd, file_path);
         const oldFileExists = fs.existsSync(fullFilePath);

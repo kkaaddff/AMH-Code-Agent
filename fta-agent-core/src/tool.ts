@@ -1,21 +1,19 @@
-import assert from 'assert';
 import type { LanguageModelV2FunctionTool } from '@ai-sdk/provider';
-import type { JSONSchema7 } from 'json-schema';
+import assert from 'assert';
 import path from 'pathe';
 import * as z from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { Context } from './context';
 import type { ImagePart, TextPart } from './message';
 import { resolveModelWithContext } from './model';
-import { createBashOutputTool, createBashTool, createKillBashTool } from './tools/bash';
-import { createEditTool } from './tools/edit';
-import { createFetchTool } from './tools/fetch';
-import { createGlobTool } from './tools/glob';
-import { createGrepTool } from './tools/grep';
-import { createLSTool } from './tools/ls';
-import { createReadTool } from './tools/read';
+import { createBashOutputTool, createKillBashTool } from './tools-unadapted/bash';
+import { createEditTool } from './tools-unadapted/edit';
+import { createFetchTool } from './tools-unadapted/fetch';
+import { createGlobTool } from './tools-unadapted/glob';
+import { createGrepTool } from './tools-unadapted/grep';
+import { createLSTool } from './tools-unadapted/ls';
+import { createReadTool } from './tools-unadapted/read';
+import { createWriteTool } from './tools-unadapted/write';
 import { createTodoTool, type TodoItem } from './tools/todo';
-import { createWriteTool } from './tools/write';
 
 type ResolveToolsOpts = {
   context: Context;
@@ -24,37 +22,35 @@ type ResolveToolsOpts = {
   todo?: boolean;
 };
 
-export async function resolveTools(opts: ResolveToolsOpts) {
-  const { cwd, productName, paths } = opts.context;
+export function resolveBaseTools(opts: ResolveToolsOpts): Tool[] {
+  const { cwd, productName, paths, toolProxy } = opts.context;
   const sessionId = opts.sessionId;
-  const apiKey = process.env.OPENAI_API_KEY;
-  const baseURL = process.env.OPENAI_BASE_URL;
-  assert(apiKey, 'OPENAI_API_KEY is required to call the agent.');
-  const model = (await resolveModelWithContext(opts.context.config.model, opts.context, apiKey, baseURL)).model!;
   const readonlyTools = [
-    createReadTool({ cwd, productName }),
-    createLSTool({ cwd, productName }),
-    createGlobTool({ cwd }),
-    createGrepTool({ cwd }),
-    createFetchTool({ model }),
+    createReadTool({ cwd, productName, toolProxy }),
+    createLSTool({ cwd, productName, toolProxy }),
+    createGlobTool({ cwd, toolProxy }),
+    createGrepTool({ cwd, toolProxy }),
   ];
+
   const writeTools = opts.write
     ? [
-        createWriteTool({ cwd }),
-        createEditTool({ cwd }),
-        createBashTool({
-          cwd,
-          backgroundTaskManager: opts.context.backgroundTaskManager,
-        }),
+        createWriteTool({ cwd, toolProxy }),
+        createEditTool({ cwd, toolProxy }),
+        // createBashTool({
+        //   cwd,
+        //   backgroundTaskManager: opts.context.backgroundTaskManager,
+        // }),
       ]
     : [];
-  const todoTools = (() => {
-    if (!opts.todo) return [];
+
+  let todoTools: Tool[] = [];
+  if (opts.todo) {
     const { todoWriteTool, todoReadTool } = createTodoTool({
       filePath: path.join(paths.globalConfigDir, 'todos', `${sessionId}.json`),
     });
-    return [todoReadTool, todoWriteTool];
-  })();
+    todoTools = [todoReadTool, todoWriteTool];
+  }
+
   const backgroundTools = opts.write
     ? [
         createBashOutputTool({
@@ -65,8 +61,25 @@ export async function resolveTools(opts: ResolveToolsOpts) {
         }),
       ]
     : [];
-  const mcpTools = await getMcpTools(opts.context);
-  return [...readonlyTools, ...writeTools, ...todoTools, ...backgroundTools, ...mcpTools];
+  return [...readonlyTools, ...writeTools, ...todoTools, ...backgroundTools];
+}
+
+async function resolveModelDependentTools(opts: ResolveToolsOpts): Promise<Tool[]> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  const baseURL = process.env.OPENAI_BASE_URL;
+  assert(apiKey, 'OPENAI_API_KEY is required to call the agent.');
+  const model = (await resolveModelWithContext(opts.context.config.model, opts.context, apiKey!, baseURL)).model!;
+  return [createFetchTool({ model })];
+}
+
+async function resolveMcpTools(opts: ResolveToolsOpts): Promise<Tool[]> {
+  return await getMcpTools(opts.context);
+}
+
+export async function resolveTools(opts: ResolveToolsOpts) {
+  const baseTools = resolveBaseTools(opts);
+  const [modelDependentTools, mcpTools] = await Promise.all([resolveModelDependentTools(opts), resolveMcpTools(opts)]);
+  return [...baseTools, ...modelDependentTools, ...mcpTools];
 }
 
 async function getMcpTools(context: Context): Promise<Tool[]> {
@@ -126,21 +139,23 @@ export class Tools {
   }
 
   toLanguageV2Tools(): LanguageModelV2FunctionTool[] {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     return Object.entries(this.tools).map(([key, tool]) => {
+      // parameters of mcp tools is not zod object
       const isMCP = key.startsWith('mcp__');
-      const schema: JSONSchema7 = (() => {
-        if (isMCP) {
-          return (tool.parameters as JSONSchema7) || {};
-        }
-        const jsonSchema = isZodSchema(tool.parameters)
-          ? zodToJsonSchema(tool.parameters as any, { target: 'jsonSchema7' })
-          : {};
-        return jsonSchema as JSONSchema7;
-      })();
+      const schema = isMCP ? tool.parameters : z.toJSONSchema(tool.parameters);
+      // some providers have a limit on the description length, so we need to truncate it
+      // e.g. megallm.io has a limit of 1024 characters
+      const limit = process.env.TOOL_DESCRIPTION_LIMIT
+        ? Math.floor(parseInt(process.env.TOOL_DESCRIPTION_LIMIT, 10))
+        : 0;
+      const desc =
+        limit > 0 && tool.description.length > limit ? tool.description.slice(0, limit - 3) + '...' : tool.description;
       return {
         type: 'function',
         name: key,
-        description: tool.description,
+        description: desc,
         inputSchema: schema,
         providerOptions: {},
       };
@@ -188,20 +203,14 @@ export type ToolUseResult = {
   approved: boolean;
 };
 
-type ToolParams<TSchema> = TSchema extends z.ZodTypeAny ? z.output<TSchema> : any;
-
-export interface Tool<TSchema extends z.ZodTypeAny | JSONSchema7 = z.ZodTypeAny | JSONSchema7> {
+export interface Tool<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
   name: string;
   description: string;
-  getDescription?: ({ params, cwd }: { params: ToolParams<TSchema>; cwd: string }) => string;
+  getDescription?: ({ params, cwd }: { params: z.output<TSchema>; cwd: string }) => string;
   displayName?: string;
-  execute: (params: ToolParams<TSchema>) => Promise<ToolResult> | ToolResult;
+  execute: (params: z.output<TSchema>) => Promise<ToolResult> | ToolResult;
   approval?: ToolApprovalInfo;
-  parameters: TSchema | JSONSchema7;
-}
-
-function isZodSchema(value: unknown): value is z.ZodTypeAny {
-  return Boolean(value && typeof value === 'object' && '_def' in (value as Record<string, unknown>));
+  parameters: TSchema;
 }
 
 type ApprovalContext = {

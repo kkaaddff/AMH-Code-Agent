@@ -7,7 +7,7 @@ import { BrowserRouter as Router, Routes } from 'react-router-dom';
 import './App.css';
 import { routes } from './config/routes';
 import { renderRoutes } from './utils/routerUtils';
-import { callService } from './utils/workstationConnector';
+import { callService, isInVscode } from './utils/workstationConnector';
 
 // 配置 CDN 地址
 loader.config({
@@ -22,8 +22,8 @@ function App() {
   useEffect(() => {
     const initUserInfo = async () => {
       try {
-        if (!callService) {
-          // 如果是开发环境，从环境变量读取配置
+        if (!isInVscode) {
+          // 如果不是 VSCode 环境，从环境变量读取配置
 
           const devWorkspaceInfo = import.meta.env.VITE_DEV_WORKSPACE_INFO;
           const devUserInfo = import.meta.env.VITE_DEV_USER_INFO;
