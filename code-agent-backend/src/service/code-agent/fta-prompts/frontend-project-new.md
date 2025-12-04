@@ -76,8 +76,7 @@ import styles from './index.module.scss';
 // Import Header, Body, Footer...
 
 const PageComponent: React.FC = () => {
-  const { state } = usePageStore();
-  const { pageData } = state;
+  const { pageData } = usePageStore();
 
   useInit(); // Initialization Logic
 
@@ -126,12 +125,8 @@ function reducer(state: PageState, action: PageAction): PageState {
       return state;
   }
 }
-
-const { usePageStore, withStore } = createStore<PageState, PageAction>(initialState, reducer);
-
+export const { usePageStore, withStore } = createStore<PageState, PageAction>(initialState, reducer);
 export type UsePageStoreType = ReturnType<typeof usePageStore>;
-export { withStore };
-export default usePageStore;
 ```
 
 ### 4.3 Service Layer (`services/`)
