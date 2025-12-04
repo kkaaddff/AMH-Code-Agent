@@ -166,7 +166,7 @@ export class FrontendWorkflowService {
 
       // 组合页面标注和数据上下文信息
       const fullPageContext = dataContextSummary
-        ? `${annotationSummary}\n\n---\n\n${dataContextSummary}`
+        ? annotationSummary + '\n\n---\n\n' + dataContextSummary
         : annotationSummary;
 
       // 调用 workflow
@@ -311,47 +311,29 @@ export class FrontendWorkflowService {
   }
 
   /**
-   * 格式化数据模型
+   * 格式化数据模型（使用 TypeScript Interfaces）
    */
   private formatDataModels(dataModels: DataModel[]): string {
-    const formatSchema = (fields: any[], indent = 2): string => {
-      if (!fields || fields.length === 0) return '无';
+    const modelSections = dataModels
+      .filter((model) => model.tsContent && model.tsContent.trim())
+      .map((model) => {
+        const lines: string[] = [];
+        lines.push(`## ${model.name}`);
+        if (model.description) lines.push(`描述: ${model.description}`);
+        lines.push(`ID: ${model.id}`);
+        lines.push('');
+        lines.push('### TypeScript 接口定义');
+        lines.push('```typescript');
+        lines.push(model.tsContent.trim());
+        lines.push('```');
+        return lines.join('\n');
+      });
 
-      return fields
-        .map((field) => {
-          const prefix = ' '.repeat(indent);
-          let result = `${prefix}- ${field.name}: ${field.type}`;
-          if (field.description) result += ` // ${field.description}`;
-          if (field.required) result += ' (必填)';
-          if (field.enum?.length) result += ` [${field.enum.join(', ')}]`;
+    if (modelSections.length === 0) {
+      return '';
+    }
 
-          if (field.properties?.length) {
-            result += '\n' + formatSchema(field.properties, indent + 2);
-          }
-          if (field.items) {
-            result += ` (元素类型: ${field.items.type})`;
-            if (field.items.properties?.length) {
-              result += '\n' + formatSchema(field.items.properties, indent + 2);
-            }
-          }
-
-          return result;
-        })
-        .join('\n');
-    };
-
-    const modelSections = dataModels.map((model) => {
-      const lines: string[] = [];
-      lines.push(`## ${model.name}`);
-      if (model.description) lines.push(`描述: ${model.description}`);
-      lines.push(`ID: ${model.id}`);
-      lines.push('');
-      lines.push('### Schema');
-      lines.push(formatSchema(model.schema));
-      return lines.join('\n');
-    });
-
-    return `# 数据模型\n\n${modelSections.join('\n\n---\n\n')}`;
+    return '# 数据模型\n\n' + modelSections.join('\n\n---\n\n');
   }
 
   /**
@@ -363,25 +345,25 @@ export class FrontendWorkflowService {
 
     const apiSections = restApis.map((api) => {
       const lines: string[] = [];
-      lines.push(`## ${api.name}`);
-      if (api.description) lines.push(`描述: ${api.description}`);
-      if (api.url) lines.push(`API 地址: ${api.method || 'GET'} ${api.url}`);
-      lines.push(`ID: ${api.id}`);
+      lines.push('## ' + api.name);
+      if (api.description) lines.push('描述: ' + api.description);
+      if (api.url) lines.push('API 地址: ' + (api.method || 'GET') + ' ' + api.url);
+      lines.push('ID: ' + api.id);
 
       // 关联的请求数据模型
       if (api.requestModelIds && api.requestModelIds.length > 0) {
         const modelNames = api.requestModelIds.map((id) => modelMap.get(id) || id).join(', ');
-        lines.push(`请求数据模型: ${modelNames}`);
+        lines.push('请求数据模型: ' + modelNames);
       }
       // 关联的响应数据模型
       if (api.responseModelIds && api.responseModelIds.length > 0) {
         const modelNames = api.responseModelIds.map((id) => modelMap.get(id) || id).join(', ');
-        lines.push(`响应数据模型: ${modelNames}`);
+        lines.push('响应数据模型: ' + modelNames);
       }
 
       return lines.join('\n');
     });
 
-    return `# REST API 接口\n\n${apiSections.join('\n\n---\n\n')}`;
+    return '# REST API 接口\n\n' + apiSections.join('\n\n---\n\n');
   }
 }

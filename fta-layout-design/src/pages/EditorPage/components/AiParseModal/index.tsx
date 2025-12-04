@@ -1,9 +1,7 @@
-import type { SchemaField } from '@/types/dataModel';
 import { RobotOutlined } from '@ant-design/icons';
 import { App, Button, Input, Modal, Radio, Space, Typography } from 'antd';
 import React, { useState } from 'react';
-import { aiParseSchema } from '../../services/AiParsing';
-import { validateSchema } from '../../utils/schema';
+import { aiParseTypeScript } from '../../services/AiParsing';
 import './index.css';
 
 const { Text } = Typography;
@@ -11,16 +9,19 @@ const { Text } = Typography;
 export interface AiParseModalProps {
   open: boolean;
   onClose: () => void;
-  onParse: (schema: SchemaField[]) => void;
+  /** 解析成功回调，返回生成的 TypeScript 代码 */
+  onParse: (typescriptCode: string) => void;
   /** 外部 loading 状态（可选） */
   loading?: boolean;
+  /** 接口名称（可选，如果不提供则从输入中推断） */
+  interfaceName?: string;
 }
 
 /**
  * AI 智能解析弹窗组件
- * 支持 JSON、TypeScript、文字描述三种输入方式
+ * 支持 JSON、TypeScript、文字描述三种输入方式，生成 TypeScript 接口定义
  */
-const AiParseModal: React.FC<AiParseModalProps> = ({ open, onClose, onParse, loading = false }) => {
+const AiParseModal: React.FC<AiParseModalProps> = ({ open, onClose, onParse, loading = false, interfaceName }) => {
   const { message } = App.useApp();
   const [aiText, setAiText] = useState('');
   const [aiHint, setAiHint] = useState<'json' | 'typescript' | 'text'>('json');
@@ -40,29 +41,25 @@ const AiParseModal: React.FC<AiParseModalProps> = ({ open, onClose, onParse, loa
     setParsing(true);
     try {
       // 直接调用前端 AI 解析服务，通过 model-gateway-sync 调用统一大模型
-      const parsedSchema = await aiParseSchema({
+      const typescriptCode = await aiParseTypeScript({
         text: aiText.trim(),
         hint: aiHint,
+        interfaceName,
       });
 
       // 校验解析结果
-      if (!parsedSchema || !Array.isArray(parsedSchema)) {
-        message.error('解析结果格式不正确');
+      if (!typescriptCode || !typescriptCode.trim()) {
+        message.error('未能生成有效的 TypeScript 代码');
         return;
       }
 
-      if (!validateSchema(parsedSchema)) {
-        message.error('解析结果数据结构校验失败，请检查输入格式');
-        return;
+      // 简单校验：检查是否包含 interface 或 type 关键字
+      if (!typescriptCode.includes('interface ') && !typescriptCode.includes('type ')) {
+        message.warning('生成的代码可能不包含接口定义，请检查输入格式');
       }
 
-      if (parsedSchema.length === 0) {
-        message.warning('未能解析出字段，请检查输入格式');
-        return;
-      }
-
-      onParse(parsedSchema);
-      message.success(`成功解析出 ${parsedSchema.length} 个字段`);
+      onParse(typescriptCode);
+      message.success('TypeScript 接口生成成功');
       handleClose();
     } catch (error: any) {
       console.error('AI 解析失败:', error);
@@ -96,7 +93,7 @@ const AiParseModal: React.FC<AiParseModalProps> = ({ open, onClose, onParse, loa
       destroyOnHidden>
       <div className='ai-parse-modal__content'>
         <Text type='secondary' style={{ marginBottom: 8, display: 'block' }}>
-          粘贴 JSON、TypeScript 类型定义或文字描述，AI 将自动解析生成数据结构
+          粘贴 JSON、TypeScript 类型定义或文字描述，AI 将自动生成 TypeScript 接口定义
         </Text>
         <div className='ai-parse-modal__hint'>
           <Text style={{ marginRight: 8 }}>内容类型：</Text>
