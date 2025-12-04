@@ -13,6 +13,8 @@ import { createGrepTool } from './tools/grep';
 import { createLSTool } from './tools/ls';
 import { createReadTool } from './tools/read';
 import { createWriteTool } from './tools/write';
+import { createRmTool } from './tools/rm';
+import { createVerifyTool } from './tools/verify';
 import { createTodoTool, type TodoItem } from './tools/todo';
 
 type ResolveToolsOpts = {
@@ -20,6 +22,7 @@ type ResolveToolsOpts = {
   sessionId: string;
   write?: boolean;
   todo?: boolean;
+  bash?: boolean;
 };
 
 export function resolveBaseTools(opts: ResolveToolsOpts): Tool[] {
@@ -33,26 +36,24 @@ export function resolveBaseTools(opts: ResolveToolsOpts): Tool[] {
   ];
 
   const writeTools = opts.write
+    ? [createWriteTool({ cwd, toolProxy }), createEditTool({ cwd, toolProxy }), createRmTool({ cwd, toolProxy })]
+    : [];
+
+  const todoTools: Tool[] = opts.todo
+    ? (() => {
+        const { todoWriteTool, todoReadTool } = createTodoTool({
+          filePath: path.join(paths.globalConfigDir, 'todos', `${sessionId}.json`),
+        });
+        return [todoReadTool, todoWriteTool];
+      })()
+    : [];
+
+  const backgroundTools = opts.bash
     ? [
-        createWriteTool({ cwd, toolProxy }),
-        createEditTool({ cwd, toolProxy }),
         createBashTool({
           cwd,
           backgroundTaskManager: opts.context.backgroundTaskManager,
         }),
-      ]
-    : [];
-
-  let todoTools: Tool[] = [];
-  if (opts.todo) {
-    const { todoWriteTool, todoReadTool } = createTodoTool({
-      filePath: path.join(paths.globalConfigDir, 'todos', `${sessionId}.json`),
-    });
-    todoTools = [todoReadTool, todoWriteTool];
-  }
-
-  const backgroundTools = opts.write
-    ? [
         createBashOutputTool({
           backgroundTaskManager: opts.context.backgroundTaskManager,
         }),
@@ -60,7 +61,7 @@ export function resolveBaseTools(opts: ResolveToolsOpts): Tool[] {
           backgroundTaskManager: opts.context.backgroundTaskManager,
         }),
       ]
-    : [];
+    : [createVerifyTool({ cwd, toolProxy })];
   return [...readonlyTools, ...writeTools, ...todoTools, ...backgroundTools];
 }
 

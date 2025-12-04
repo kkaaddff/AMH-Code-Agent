@@ -48,12 +48,12 @@ export const callService = async (service: string, method: string, params?: any)
   switch (service) {
     case 'tools':
       switch (method) {
-        case 'readFile':
-          return getMockFileContent(params?.filePath || '');
-        case 'writeFile':
-          return `File ${params?.filePath || ''} written successfully (mock)`;
-        case 'listDirectory':
-          return getMockDirectoryList(params?.dirPath || '');
+        case 'read':
+          return getMockFileContent(params?.file_path || '');
+        case 'write':
+          return `File ${params?.file_path || ''} written successfully (mock)`;
+        case 'ls':
+          return getMockDirectoryList(params?.dir_path || '');
         case 'grep':
           // 返回与后端 grep 工具一致的格式
           return {
@@ -77,7 +77,7 @@ export const callService = async (service: string, method: string, params?: any)
               truncated: false,
             }),
           };
-        case 'editFile':
+        case 'edit':
           // 返回与后端 edit 工具一致的格式
           return {
             llmContent: `File ${params?.file_path || ''} successfully edited. (mock)`,
@@ -89,7 +89,7 @@ export const callService = async (service: string, method: string, params?: any)
               absoluteFilePath: params?.file_path || '',
             },
           };
-        case 'executeCommand':
+        case 'bash':
           // 返回与后端 bash 工具一致的格式
           return {
             llmContent: [
@@ -105,7 +105,7 @@ export const callService = async (service: string, method: string, params?: any)
             ].join('\n'),
             returnDisplay: 'Command executed successfully. (mock)',
           };
-        case 'getBackgroundTaskOutput':
+        case 'bash_output':
           // 返回与后端 bash_output 工具一致的格式
           return {
             llmContent: [
@@ -118,7 +118,7 @@ export const callService = async (service: string, method: string, params?: any)
               '(mock output)',
             ].join('\n'),
           };
-        case 'killBackgroundTask':
+        case 'kill_bash':
           // 返回与后端 kill_bash 工具一致的格式
           return {
             llmContent: `Successfully terminated task ${params?.task_id || ''} (mock)`,

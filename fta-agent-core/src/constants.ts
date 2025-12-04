@@ -8,6 +8,7 @@ export enum TOOL_NAMES {
   BASH = 'bash',
   BASH_OUTPUT = 'bash_output',
   KILL_BASH = 'kill_bash',
+  VERIFY = 'verify',
 }
 
 // Reserve 20% buffer for small models

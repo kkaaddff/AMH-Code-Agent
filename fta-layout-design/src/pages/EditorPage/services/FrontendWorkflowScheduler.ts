@@ -434,6 +434,16 @@ export class FrontendWorkflowScheduler {
           });
           break;
 
+        case 'rm':
+          toolExecutionResult = await callService('tools', 'rm', {
+            file_path: params.file_path,
+          });
+          break;
+
+        case 'verify':
+          toolExecutionResult = await callService('tools', 'verify', {});
+          break;
+
         case 'bash':
           toolExecutionResult = await callService('tools', 'executeCommand', {
             command: params.command,
