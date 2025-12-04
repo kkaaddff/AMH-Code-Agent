@@ -5,14 +5,14 @@ import * as z from 'zod';
 import type { Context } from './context';
 import type { ImagePart, TextPart } from './message';
 import { resolveModelWithContext } from './model';
-import { createBashOutputTool, createKillBashTool } from './tools-unadapted/bash';
-import { createEditTool } from './tools-unadapted/edit';
+import { createBashOutputTool, createBashTool, createKillBashTool } from './tools-unadapted/bash';
+import { createEditTool } from './tools/edit';
 import { createFetchTool } from './tools-unadapted/fetch';
-import { createGlobTool } from './tools-unadapted/glob';
-import { createGrepTool } from './tools-unadapted/grep';
-import { createLSTool } from './tools-unadapted/ls';
-import { createReadTool } from './tools-unadapted/read';
-import { createWriteTool } from './tools-unadapted/write';
+import { createGlobTool } from './tools/glob';
+import { createGrepTool } from './tools/grep';
+import { createLSTool } from './tools/ls';
+import { createReadTool } from './tools/read';
+import { createWriteTool } from './tools/write';
 import { createTodoTool, type TodoItem } from './tools/todo';
 
 type ResolveToolsOpts = {
@@ -36,10 +36,10 @@ export function resolveBaseTools(opts: ResolveToolsOpts): Tool[] {
     ? [
         createWriteTool({ cwd, toolProxy }),
         createEditTool({ cwd, toolProxy }),
-        // createBashTool({
-        //   cwd,
-        //   backgroundTaskManager: opts.context.backgroundTaskManager,
-        // }),
+        createBashTool({
+          cwd,
+          backgroundTaskManager: opts.context.backgroundTaskManager,
+        }),
       ]
     : [];
 
