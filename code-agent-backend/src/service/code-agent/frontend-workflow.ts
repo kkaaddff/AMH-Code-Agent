@@ -12,6 +12,7 @@ import { RestApiService } from './rest-api';
 import { TreeNode } from '../../dto/code-agent/frontend-workflow.dto';
 import { DataModel } from '../../entity/code-agent/data-model';
 import { RestApi } from '../../entity/code-agent/rest-api';
+import { minifyDSL } from 'src/utils/minify';
 
 const ftaSpecsDir = path.join(__dirname, 'fta-specs');
 const ftaPromptsNewPath = path.join(__dirname, 'fta-prompts', 'frontend-project-new.md');
@@ -116,10 +117,10 @@ export class FrontendWorkflowService {
       const processedDSL = await this.designDSLService.processDesignDSL(dsl as DesignData);
       const filteredDSL = {
         ...processedDSL,
-        dsl: {
+        dsl: minifyDSL({
           ...processedDSL.dsl,
           nodes: this.filterVisibleNodes(processedDSL.dsl.nodes),
-        },
+        }),
       };
 
       // 获取 annotation 摘要

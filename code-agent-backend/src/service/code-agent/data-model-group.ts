@@ -96,11 +96,10 @@ export class DataModelGroupService {
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
 
-    const updatedGroup = await this.groupEntity.findOneAndUpdate(
-      { id, userId },
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const updatedGroup = await this.groupEntity.findOneAndUpdate({ id, userId }, updateData, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedGroup) {
       throw new Error('数据模型组不存在');
@@ -136,10 +135,7 @@ export class DataModelGroupService {
       throw new Error('用户 ID 不能为空');
     }
 
-    const groups = await this.groupEntity
-      .find({ projectId, userId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const groups = await this.groupEntity.find({ projectId, userId }).sort({ createdAt: -1 }).lean();
 
     return groups as DataModelGroup[];
   }
@@ -157,4 +153,3 @@ export class DataModelGroupService {
     return group as DataModelGroup | null;
   }
 }
-

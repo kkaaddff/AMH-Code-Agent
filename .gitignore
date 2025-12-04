@@ -1,5 +1,4 @@
 node_modules
-dist
 .DS_Store
 3d-demo
 logs/
@@ -8,7 +7,7 @@ yarn-error.log
 node_modules/
 package-lock.json
 coverage/
-dist/
+dist*
 .idea/
 run/
 .DS_Store

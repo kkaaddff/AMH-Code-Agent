@@ -5,9 +5,7 @@ import { ReturnModelType } from '@typegoose/typegoose';
 import { DataModel } from '../../entity/code-agent/data-model';
 import { Project } from '../../entity/code-agent/project';
 
-/**
- * 创建数据模型请求
- */
+/** 创建数据模型请求*/
 export interface CreateDataModelRequest {
   projectId: string;
   groupId?: string;

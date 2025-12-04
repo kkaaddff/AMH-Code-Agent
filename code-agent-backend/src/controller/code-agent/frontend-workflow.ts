@@ -38,8 +38,12 @@ export class FrontendWorkflowController {
       resolve: (value: any) => void;
       reject: (reason?: any) => void;
       timestamp: number;
+      sessionId: string;
     }
   >();
+
+  // Map to track callIds per session for efficient cleanup
+  private static sessionCallIds = new Map<string, Set<string>>();
 
   @Post('/frontend-workflow/tool-result')
   async handleToolResult(@Body() body: { callId: string; toolName: string; params: any; toolResult: ToolResult }) {
@@ -50,7 +54,17 @@ export class FrontendWorkflowController {
       return { success: false, message: 'Tool call not found or expired' };
     }
 
+    const { sessionId } = pending;
     FrontendWorkflowController.pendingToolCalls.delete(callId);
+
+    // Clean up from sessionCallIds
+    const sessionCalls = FrontendWorkflowController.sessionCallIds.get(sessionId);
+    if (sessionCalls) {
+      sessionCalls.delete(callId);
+      if (sessionCalls.size === 0) {
+        FrontendWorkflowController.sessionCallIds.delete(sessionId);
+      }
+    }
 
     // 根据 ToolResult 的 isError 字段判断是 resolve 还是 reject
     if (toolResult.isError) {
@@ -150,15 +164,33 @@ export class FrontendWorkflowController {
               resolve,
               reject,
               timestamp: Date.now(),
+              sessionId,
             });
 
+            // Track callId per session for cleanup
+            if (!FrontendWorkflowController.sessionCallIds.has(sessionId)) {
+              FrontendWorkflowController.sessionCallIds.set(sessionId, new Set());
+            }
+            FrontendWorkflowController.sessionCallIds.get(sessionId)!.add(callId);
+
             // Optional: Set timeout to reject after 60 seconds
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
               if (FrontendWorkflowController.pendingToolCalls.has(callId)) {
                 FrontendWorkflowController.pendingToolCalls.delete(callId);
+                // Clean up from sessionCallIds
+                const sessionCalls = FrontendWorkflowController.sessionCallIds.get(sessionId);
+                if (sessionCalls) {
+                  sessionCalls.delete(callId);
+                  if (sessionCalls.size === 0) {
+                    FrontendWorkflowController.sessionCallIds.delete(sessionId);
+                  }
+                }
                 reject(new Error('Tool execution timeout'));
               }
             }, 60000);
+
+            // Store timeoutId for potential cleanup (though we don't need to clear it in normal flow)
+            // The timeout will naturally clean up after 60s
           });
         },
         callbacks: {
@@ -314,6 +346,22 @@ export class FrontendWorkflowController {
       console.log(`frontend-workflow: [${sessionId}] 🧹 清理事件监听器`);
       req.off('close', onClose);
       req.off('error', onClose);
+
+      // 清理该 session 的所有待处理工具调用，防止内存泄漏
+      const sessionCalls = FrontendWorkflowController.sessionCallIds.get(sessionId);
+      if (sessionCalls) {
+        const callIdsToClean = Array.from(sessionCalls);
+        console.log(`frontend-workflow: [${sessionId}] 🧹 清理 ${callIdsToClean.length} 个待处理的工具调用`);
+        for (const callId of callIdsToClean) {
+          const pending = FrontendWorkflowController.pendingToolCalls.get(callId);
+          if (pending) {
+            // Reject with abort error to signal the tool call was cancelled
+            pending.reject(new Error('Tool call cancelled: workflow aborted or error occurred'));
+            FrontendWorkflowController.pendingToolCalls.delete(callId);
+          }
+        }
+        FrontendWorkflowController.sessionCallIds.delete(sessionId);
+      }
     }
   }
 }
