@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { minifyDSL } from './index';
+import { minifyDSL } from '../src/utils/minify/index';
 
 const dslPath = path.resolve(__dirname, '../../../../fta-layout-design/src/pages/EditorPage/components/dsl.json');
 
