@@ -1,54 +1,13 @@
 import { Config, Provide, Scope, ScopeEnum } from '@midwayjs/core';
 import axios from 'axios';
 import * as https from 'https';
-import { DSLData } from '../../types';
-import { normalizeNumericValues } from '../../utils/design/dsl';
+import { DSLData, DSLNode } from '../../types';
+import { normalizeNumericValues, unwrapGroupNodes } from '../../utils/design/dsl';
 
 export interface MasterGoDslResponse {
   dsl: DSLData;
   componentDocumentLinks: string[];
 }
-
-const addGroupLayoutToChild = (
-  childLayout: DSLData['nodes'][number]['layoutStyle'],
-  groupLayout: DSLData['nodes'][number]['layoutStyle']
-) => {
-  if (!groupLayout) return childLayout;
-  const mergedLayout: NonNullable<typeof childLayout> = { ...(childLayout || {}) };
-  const offsetKeys: Array<keyof NonNullable<typeof groupLayout>> = ['relativeX', 'relativeY', 'left', 'top', 'rotate'];
-
-  offsetKeys.forEach((key) => {
-    const groupValue = groupLayout?.[key];
-    if (typeof groupValue === 'number') {
-      const currentValue = mergedLayout[key];
-      mergedLayout[key] = (typeof currentValue === 'number' ? currentValue : 0) + groupValue;
-    }
-  });
-
-  return mergedLayout;
-};
-
-const unwrapGroupNodes = (nodes?: DSLData['nodes']): DSLData['nodes'] => {
-  if (!nodes) return [];
-  return nodes.flatMap((node) => {
-    if (node.type === 'GROUP') {
-      const mergedChildren =
-        node.children?.map((child) => ({
-          ...child,
-          layoutStyle: addGroupLayoutToChild(child.layoutStyle, node.layoutStyle),
-        })) || [];
-      return unwrapGroupNodes(mergedChildren);
-    }
-
-    const processedChildren = node.children ? unwrapGroupNodes(node.children) : undefined;
-    return [
-      {
-        ...node,
-        children: processedChildren,
-      },
-    ];
-  });
-};
 
 @Provide()
 @Scope(ScopeEnum.Singleton)

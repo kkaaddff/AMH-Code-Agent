@@ -154,9 +154,7 @@
       "token": "常规/28px 正文"
     },
     "effect1": {
-      "value": [
-        "0px 4px 20px 0px rgba(0, 0, 0, 0.06),"
-      ]
+      "value": ["0px 4px 20px 0px rgba(0, 0, 0, 0.06),"]
     },
     "paint21": {
       "value": "#E8E8E8",
@@ -209,9 +207,7 @@
       "value": "#FFAB1A"
     },
     "effect2": {
-      "value": [
-        "0px 0px 0.75px 0px rgba(223, 96, 6, 0.76),"
-      ]
+      "value": ["0px 0px 0.75px 0px rgba(223, 96, 6, 0.76),"]
     },
     "paint26": {
       "value": "#FF8D01"
@@ -235,19 +231,13 @@
       "value": "linear-gradient(114deg, #FFEC74 NaN%, #FFC85B 95%)"
     },
     "effect3": {
-      "value": [
-        "inset -0.51px -0.51px 0px 0px rgba(228, 103, 14, 0.37)",
-        "inset 0.39px 0.39px 0px 0px #FFFFFF"
-      ]
+      "value": ["inset -0.51px -0.51px 0px 0px rgba(228, 103, 14, 0.37)", "inset 0.39px 0.39px 0px 0px #FFFFFF"]
     },
     "paint33": {
       "value": "linear-gradient(341deg, #FF7F15 NaN%, #FFC949 89%)"
     },
     "effect4": {
-      "value": [
-        "0px 1.29px 1.03px 0px rgba(228, 103, 14, 0.41),",
-        "inset 0px -0.51px 0.64px 0px #FFFFFF"
-      ]
+      "value": ["0px 1.29px 1.03px 0px rgba(228, 103, 14, 0.41),", "inset 0px -0.51px 0.64px 0px #FFFFFF"]
     },
     "paint34": {
       "value": "linear-gradient(180deg, #FFFFFF NaN%, #FFE8D0 100%)"
@@ -260,10 +250,7 @@
       }
     },
     "effect5": {
-      "value": [
-        "2px -1px 13px 0px rgba(223, 221, 218, 0.7033),",
-        "inset 0px 3px 0px 0px #FFFFFF"
-      ]
+      "value": ["2px -1px 13px 0px rgba(223, 221, 218, 0.7033),", "inset 0px 3px 0px 0px #FFFFFF"]
     },
     "paint35": {
       "value": "linear-gradient(159deg, #FFECD5 NaN%, #FFDEB7 63%)"
@@ -272,18 +259,13 @@
       "value": "linear-gradient(184deg, #FFFFFF NaN%, rgba(255, 255, 255, 0) 83%)"
     },
     "effect6": {
-      "value": [
-        "0px 2px 4px 0px rgba(0, 0, 0, 0.5),",
-        "inset 5px 5px 5px 0px rgba(255, 255, 255, 0.6009)"
-      ]
+      "value": ["0px 2px 4px 0px rgba(0, 0, 0, 0.5),", "inset 5px 5px 5px 0px rgba(255, 255, 255, 0.6009)"]
     },
     "paint37": {
       "value": "linear-gradient(170deg, #FFF2E2 NaN%, #FFD8AA 76%)"
     },
     "effect7": {
-      "value": [
-        "0px 5px 5px 0px rgba(255, 255, 255, 0.5047),"
-      ]
+      "value": ["0px 5px 5px 0px rgba(255, 255, 255, 0.5047),"]
     },
     "paint38": {
       "value": "#FFCD94"
@@ -312,14 +294,10 @@
       }
     },
     "effect8": {
-      "value": [
-        "0px 3.12px 7.8px 0px rgba(141, 175, 143, 0.3),"
-      ]
+      "value": ["0px 3.12px 7.8px 0px rgba(141, 175, 143, 0.3),"]
     },
     "effect9": {
-      "value": [
-        "0px 2px 10px 0px #959195,"
-      ]
+      "value": ["0px 2px 10px 0px #959195,"]
     },
     "paint44": {
       "value": "#F3F4F6",
@@ -339,9 +317,7 @@
       }
     },
     "effect10": {
-      "value": [
-        "0px 2px 20px 0px rgba(26, 26, 26, 0.1608),"
-      ]
+      "value": ["0px 2px 20px 0px rgba(26, 26, 26, 0.1608),"]
     },
     "paint45": {
       "value": "linear-gradient(155deg, #5B5854 NaN%, #262626 82%)"
@@ -3153,9 +3129,7 @@
                           },
                           "componentInfo": {
                             "componentSetDescription": "Button 按钮",
-                            "componentSetDocumentLink": [
-                              "https://fta.amh-group.com/xrun#/components/basic/button"
-                            ],
+                            "componentSetDocumentLink": ["https://fta.amh-group.com/xrun#/components/basic/button"],
                             "properties": {
                               "颜色": "灰色",
                               "尺寸": "小"
@@ -3266,9 +3240,7 @@
                       "strokeAlign": "outside",
                       "componentInfo": {
                         "componentSetDescription": "Button 按钮",
-                        "componentSetDocumentLink": [
-                          null
-                        ],
+                        "componentSetDocumentLink": [null],
                         "properties": {
                           "尺寸": "大 88px",
                           "类型": "弱按钮",
@@ -3318,9 +3290,7 @@
                       },
                       "componentInfo": {
                         "componentSetDescription": "Button 按钮",
-                        "componentSetDocumentLink": [
-                          null
-                        ],
+                        "componentSetDocumentLink": [null],
                         "properties": {
                           "尺寸": "大 88px",
                           "类型": "强按钮",

@@ -1,4 +1,4 @@
-import { DesignData } from '@fta/shared-types';
+import { DesignData, DSLNode } from '@fta/shared-types';
 
 /**
  * 将数字保留两位小数
@@ -42,3 +42,41 @@ export function normalizeNumericValues(obj: DesignData): DesignData {
     dsl: normalize(obj.dsl),
   } as DesignData;
 }
+
+export const addGroupLayoutToChild = (childLayout: DSLNode['layoutStyle'], groupLayout: DSLNode['layoutStyle']) => {
+  if (!groupLayout) return childLayout;
+  const mergedLayout: NonNullable<typeof childLayout> = { ...(childLayout || {}) };
+  const offsetKeys: Array<keyof NonNullable<typeof groupLayout>> = ['relativeX', 'relativeY', 'left', 'top', 'rotate'];
+
+  offsetKeys.forEach((key) => {
+    const groupValue = groupLayout?.[key];
+    if (typeof groupValue === 'number') {
+      const currentValue = mergedLayout[key];
+      mergedLayout[key] = (typeof currentValue === 'number' ? currentValue : 0) + groupValue;
+    }
+  });
+
+  return mergedLayout;
+};
+
+export const unwrapGroupNodes = (nodes?: DSLNode[]): DSLNode[] => {
+  if (!nodes) return [];
+  return nodes.flatMap((node) => {
+    if (node.type === 'GROUP') {
+      const mergedChildren =
+        node.children?.map((child) => ({
+          ...child,
+          layoutStyle: addGroupLayoutToChild(child.layoutStyle, node.layoutStyle),
+        })) || [];
+      return unwrapGroupNodes(mergedChildren);
+    }
+
+    const processedChildren = node.children ? unwrapGroupNodes(node.children) : undefined;
+    return [
+      {
+        ...node,
+        children: processedChildren,
+      },
+    ];
+  });
+};

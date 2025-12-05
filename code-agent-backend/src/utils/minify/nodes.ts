@@ -1,8 +1,35 @@
+import { DSLNode } from '@fta/shared-types';
+import { unwrapGroupNodes } from '../design/dsl';
 import { StyleMap } from './types';
 
-export const minifyNodes = (nodes: any[], styleMap: StyleMap): any[] => {
+/**
+ * 对 DSLNode[] 进行稳定排序
+ * 主排序 key: layoutStyle.relativeY
+ * 辅助排序 key: layoutStyle.relativeX
+ * 可空值默认为 0
+ */
+export const sortNodes = (a: DSLNode, b: DSLNode) => {
+  // 获取 relativeY，可空值默认为 0
+  const aY = a.layoutStyle?.relativeY ?? 0;
+  const bY = b.layoutStyle?.relativeY ?? 0;
+
+  // 主排序：按 relativeY 升序
+  if (aY !== bY) {
+    return aY - bY;
+  }
+
+  // 辅助排序：当 relativeY 相等时，按 relativeX 升序
+  const aX = a.layoutStyle?.relativeX ?? 0;
+  const bX = b.layoutStyle?.relativeX ?? 0;
+  return aX - bX;
+};
+
+export const minifyNodes = (nodes: DSLNode[], styleMap: StyleMap): DSLNode[] => {
   if (!nodes) return [];
-  return nodes.map((node) => processNode(node, styleMap)).filter(Boolean);
+  return unwrapGroupNodes(nodes)
+    .sort(sortNodes)
+    .map((node) => processNode(node, styleMap))
+    .filter(Boolean);
 };
 
 // Reset counter when starting a new batch?
@@ -10,8 +37,12 @@ export const minifyNodes = (nodes: any[], styleMap: StyleMap): any[] => {
 // Better: make a class or closure. For now, I'll reset it in the main function or just use a closure here if I wrap it.
 // I'll make a helper that takes a counter context.
 
-const processNode = (node: any, styleMap: StyleMap): any => {
+const processNode = (node: DSLNode, styleMap: StyleMap): DSLNode => {
   if (!node) return null;
+
+  if (node.name?.includes('蒙版') || node.name?.includes('Mask')) {
+    return null;
+  }
 
   const newNode: any = {};
 
@@ -40,7 +71,7 @@ const processNode = (node: any, styleMap: StyleMap): any => {
   }
 
   // 2. Map Styles
-  if (node.styles) {
+  if ('styles' in node && node.styles) {
     const newStyles: any = {};
     for (const [key, value] of Object.entries(node.styles)) {
       if (typeof value === 'string' && styleMap.idMap.has(value)) {
@@ -56,34 +87,34 @@ const processNode = (node: any, styleMap: StyleMap): any => {
 
   // Also check specific style properties that might be direct references
   const processedStyleProps = new Set<string>();
-  
-  if (node.fill && typeof node.fill === 'string' && styleMap.idMap.has(node.fill)) {
+
+  if ('fill' in node && typeof node.fill === 'string' && styleMap.idMap.has(node.fill)) {
     newNode.fill = styleMap.idMap.get(node.fill);
     processedStyleProps.add('fill');
-  } else if (node.fill) {
+  } else if ('fill' in node && node.fill) {
     newNode.fill = node.fill;
     processedStyleProps.add('fill');
   }
-  
-  if (node.stroke && typeof node.stroke === 'string' && styleMap.idMap.has(node.stroke)) {
+
+  if ('stroke' in node && typeof node.stroke === 'string' && styleMap.idMap.has(node.stroke)) {
     newNode.stroke = styleMap.idMap.get(node.stroke);
     processedStyleProps.add('stroke');
-  } else if (node.stroke) {
+  } else if ('stroke' in node && node.stroke) {
     newNode.stroke = node.stroke;
     processedStyleProps.add('stroke');
   }
-  
+
   // Handle strokeColor (similar to fill/stroke)
-  if (node.strokeColor && typeof node.strokeColor === 'string' && styleMap.idMap.has(node.strokeColor)) {
+  if ('strokeColor' in node && typeof node.strokeColor === 'string' && styleMap.idMap.has(node.strokeColor)) {
     newNode.strokeColor = styleMap.idMap.get(node.strokeColor);
     processedStyleProps.add('strokeColor');
-  } else if (node.strokeColor) {
+  } else if ('strokeColor' in node && node.strokeColor) {
     newNode.strokeColor = node.strokeColor;
     processedStyleProps.add('strokeColor');
   }
 
   // Handle text segments font references
-  if (Array.isArray(node.text)) {
+  if ('text' in node && Array.isArray(node.text)) {
     newNode.text = node.text.map((segment: any) => {
       const newSegment = { ...segment };
       if (newSegment.font && typeof newSegment.font === 'string' && styleMap.idMap.has(newSegment.font)) {
@@ -95,7 +126,7 @@ const processNode = (node: any, styleMap: StyleMap): any => {
   }
 
   // Handle textColor references
-  if (Array.isArray(node.textColor)) {
+  if ('textColor' in node && Array.isArray(node.textColor)) {
     newNode.textColor = node.textColor.map((segment: any) => {
       const newSegment = { ...segment };
       if (newSegment.color && typeof newSegment.color === 'string' && styleMap.idMap.has(newSegment.color)) {
@@ -110,10 +141,25 @@ const processNode = (node: any, styleMap: StyleMap): any => {
   for (const [key, value] of Object.entries(node)) {
     if (key === 'id' || key === 'styles' || key === 'children' || processedStyleProps.has(key)) continue;
 
-    // Layout defaults
-    if (key === 'relativeX' && value === 0) continue;
-    if (key === 'relativeY' && value === 0) continue;
-    if (key === 'rotation' && value === 0) continue;
+    // Handle layoutStyle separately
+    if (key === 'layoutStyle' && value && typeof value === 'object') {
+      const cleanedLayoutStyle: any = {};
+
+      for (const [layoutKey, layoutValue] of Object.entries(value)) {
+        if (layoutKey === 'relativeX' && layoutValue === 0) continue;
+        if (layoutKey === 'relativeY' && layoutValue === 0) continue;
+        if (layoutKey === 'rotate' && (layoutValue === 0 || layoutValue === undefined)) continue;
+        cleanedLayoutStyle[layoutKey] = layoutValue;
+      }
+
+      if (Object.keys(cleanedLayoutStyle).length > 0) {
+        newNode.layoutStyle = cleanedLayoutStyle;
+      }
+      continue;
+    }
+    // 移除 name 属性
+    if (key === 'name') continue;
+    // Layout defaults (for root level properties)
     if (key === 'visible' && value === true) continue;
     if (key === 'opacity' && value === 1) continue;
 
@@ -141,7 +187,10 @@ const processNode = (node: any, styleMap: StyleMap): any => {
 
   // 5. Recursion
   if (node.children && node.children.length > 0) {
-    const newChildren = node.children.map((child: any) => processNode(child, styleMap)).filter(Boolean);
+    const newChildren = node.children
+      .map((child: any) => processNode(child, styleMap))
+      .filter(Boolean)
+      .sort(sortNodes);
     if (newChildren.length > 0) {
       newNode.children = newChildren;
     }
