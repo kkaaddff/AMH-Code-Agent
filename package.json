@@ -6,6 +6,7 @@
     "packages": [
       "shared-types",
       "code-agent-backend",
+      "dsl-demo",
       "fta-layout-design",
       "fta-agent-core"
     ],
