@@ -202,10 +202,11 @@ export class FrontendWorkflowController {
         callbacks: {
           onMessage: async (opts) => {
             const { message } = opts;
-            console.log(`frontend-workflow: [${sessionId}] 💬 收到消息: role=${message.role}, uuid=${message.uuid}`);
+            const content = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
+            console.log(`frontend-workflow: [${sessionId}] 💬 收到消息: role=${message.role} content=${content}`);
             sendSSE('message', {
               role: message.role,
-              content: typeof message.content === 'string' ? message.content : JSON.stringify(message.content),
+              content,
               uuid: message.uuid,
               parentUuid: message.parentUuid,
               timestamp: message.timestamp,
@@ -222,9 +223,7 @@ export class FrontendWorkflowController {
           onStreamResult: async (streamResult) => {
             const hasError = !!streamResult.error;
             console.log(
-              `frontend-workflow: [${sessionId}] 🔄 流式结果: requestId=${
-                streamResult.requestId
-              }, hasError=${hasError}, model=${
+              `frontend-workflow: [${sessionId}] 🔄 流式结果: hasError=${hasError}, model=${
                 streamResult.model?.model ? JSON.stringify(streamResult.model.model) : 'N/A'
               }`
             );
@@ -253,6 +252,7 @@ export class FrontendWorkflowController {
               ).toFixed(2)}秒`
             );
             console.log(`frontend-workflow: [${sessionId}] 📊 Token使用情况:\n`, turn.usage);
+            console.log('\n');
             sendSSE('turn', {
               usage: turn.usage,
               startTime: turn.startTime,
