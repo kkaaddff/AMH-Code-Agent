@@ -1,9 +1,12 @@
 import fs from 'fs';
 import path from 'pathe';
 import { z } from 'zod';
-import { createTool } from '../tool';
+import { createTool, type ToolResult } from '../tool';
 
-export function createRmTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
+export function createRmTool(opts: {
+  cwd: string;
+  toolProxy?: (toolName: string, params: any) => Promise<ToolResult>;
+}) {
   return createTool({
     name: 'rm',
     description: `Delete a file from the local filesystem.

@@ -72,7 +72,7 @@ const MAX_LINE_LENGTH = 2000;
 export function createReadTool(opts: {
   cwd: string;
   productName: string;
-  toolProxy?: (toolName: string, params: any) => Promise<any>;
+  toolProxy?: (toolName: string, params: any) => Promise<ToolResult>;
 }) {
   const productName = opts.productName.toLowerCase();
   return createTool({

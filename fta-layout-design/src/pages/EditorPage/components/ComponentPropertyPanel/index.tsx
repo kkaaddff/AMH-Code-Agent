@@ -624,13 +624,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
           />
 
           <BasicInfoFields />
-
-          <Divider />
-          <Title level={5}>组件属性</Title>
-          {selectedAnnotation?.ftaComponent && (
-            <DynamicPropertyFields componentName={selectedAnnotation.ftaComponent} showDivider={false} />
-          )}
-
           <Divider />
           <Title level={5}>
             <DatabaseOutlined style={{ marginRight: 8 }} />
@@ -641,7 +634,11 @@ const ComponentPropertyPanelV2: React.FC = () => {
             dataModelsList={dataModelsList as DataModel[]}
             showDivider={false}
           />
-
+          <Divider />
+          <Title level={5}>组件属性</Title>
+          {selectedAnnotation?.ftaComponent && (
+            <DynamicPropertyFields componentName={selectedAnnotation.ftaComponent} showDivider={false} />
+          )}
           <Divider />
         </Form>
       </div>

@@ -1,12 +1,12 @@
 import path from 'pathe';
 import { z } from 'zod';
-import { createTool } from '../tool';
+import { createTool, type ToolResult } from '../tool';
 import { createFileTree, listDirectory, MAX_FILES, printTree, TRUNCATED_MESSAGE } from '../utils/list';
 
 export function createLSTool(opts: {
   cwd: string;
   productName: string;
-  toolProxy?: (toolName: string, params: any) => Promise<any>;
+  toolProxy?: (toolName: string, params: any) => Promise<ToolResult>;
 }) {
   return createTool({
     name: 'ls',

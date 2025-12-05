@@ -46,7 +46,9 @@ export class FrontendWorkflowController {
   private static sessionCallIds = new Map<string, Set<string>>();
 
   @Post('/frontend-workflow/tool-result')
-  async handleToolResult(@Body() body: { callId: string; toolName: string; params: any; toolResult: ToolResult }) {
+  async handleToolResult(
+    @Body() body: { callId: string; toolName: string; params: any; toolResult: ToolResult | string }
+  ) {
     const { callId, toolResult } = body;
     const pending = FrontendWorkflowController.pendingToolCalls.get(callId);
 
@@ -65,16 +67,24 @@ export class FrontendWorkflowController {
         FrontendWorkflowController.sessionCallIds.delete(sessionId);
       }
     }
-
+    let toolResultObject: ToolResult;
+    if (typeof toolResult === 'string') {
+      toolResultObject = JSON.parse(toolResult);
+    } else {
+      toolResultObject = toolResult;
+    }
     // 根据 ToolResult 的 isError 字段判断是 resolve 还是 reject
-    if (toolResult.isError) {
+    if (toolResultObject.isError) {
       // 错误情况：从 llmContent 提取错误信息
       const errorMessage =
-        typeof toolResult.llmContent === 'string' ? toolResult.llmContent : JSON.stringify(toolResult.llmContent);
+        typeof toolResultObject.llmContent === 'string'
+          ? toolResultObject.llmContent
+          : JSON.stringify(toolResultObject.llmContent);
+
       pending.reject(new Error(errorMessage));
     } else {
       // 成功情况：resolve ToolResult 对象
-      pending.resolve(toolResult);
+      pending.resolve(toolResultObject);
     }
 
     return { success: true };
@@ -108,10 +118,6 @@ export class FrontendWorkflowController {
     const sendSSE = (event: string, data: any) => {
       const payload = JSON.stringify(data);
       res.write(`event: ${event}\ndata: ${payload}\n\n`);
-    };
-
-    const logSSEEvent = (event: string, data: any) => {
-      console.log(`frontend-workflow: [${sessionId}] 📡 SSE事件: ${event}`);
     };
 
     // 创建 AbortController 用于处理客户端断开连接
@@ -204,13 +210,6 @@ export class FrontendWorkflowController {
               parentUuid: message.parentUuid,
               timestamp: message.timestamp,
             });
-            logSSEEvent('message', {
-              role: message.role,
-              content: message.content,
-              uuid: message.uuid,
-              parentUuid: message.parentUuid,
-              timestamp: message.timestamp,
-            });
           },
           onText: async (text) => {
             console.log(
@@ -219,30 +218,20 @@ export class FrontendWorkflowController {
               }`
             );
             sendSSE('text', { text });
-            logSSEEvent('text', { text });
           },
           onStreamResult: async (streamResult) => {
             const hasError = !!streamResult.error;
             console.log(
               `frontend-workflow: [${sessionId}] 🔄 流式结果: requestId=${
                 streamResult.requestId
-              }, hasError=${hasError}, model=${streamResult.model?.model || 'N/A'}`
+              }, hasError=${hasError}, model=${
+                streamResult.model?.model ? JSON.stringify(streamResult.model.model) : 'N/A'
+              }`
             );
             if (hasError) {
               console.error(`frontend-workflow: [${sessionId}] ❌ 流式结果错误:`, streamResult.error);
             }
             sendSSE('stream_result', {
-              requestId: streamResult.requestId,
-              model: streamResult.model?.model || null,
-              hasError,
-              error: streamResult.error
-                ? {
-                    message: streamResult.error.message,
-                    name: streamResult.error.name,
-                  }
-                : undefined,
-            });
-            logSSEEvent('stream_result', {
               requestId: streamResult.requestId,
               model: streamResult.model?.model || null,
               hasError,
@@ -263,13 +252,8 @@ export class FrontendWorkflowController {
                 duration / 1000
               ).toFixed(2)}秒`
             );
-            console.log(`frontend-workflow: [${sessionId}] 📊 Token使用情况:`, turn.usage);
+            console.log(`frontend-workflow: [${sessionId}] 📊 Token使用情况:\n`, turn.usage);
             sendSSE('turn', {
-              usage: turn.usage,
-              startTime: turn.startTime,
-              endTime: turn.endTime,
-            });
-            logSSEEvent('turn', {
               usage: turn.usage,
               startTime: turn.startTime,
               endTime: turn.endTime,
@@ -277,9 +261,7 @@ export class FrontendWorkflowController {
           },
           onToolApprove: async (opts) => {
             const { toolUse, category } = opts;
-            console.log(
-              `frontend-workflow: [${sessionId}] 🔧 工具调用审批: toolName=${toolUse.name}, callId=${toolUse.callId}, category=${category}`
-            );
+
             // 自动批准所有工具调用
             // 注意：文件系统工具的实际执行通过 toolProxy 的 tool_call 事件处理
             return true;

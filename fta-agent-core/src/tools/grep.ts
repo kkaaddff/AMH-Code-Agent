@@ -1,13 +1,16 @@
 import fs from 'fs';
 import path from 'pathe';
 import { z } from 'zod';
-import { createTool } from '../tool';
+import { createTool, type ToolResult } from '../tool';
 import { ripGrep } from '../utils/ripgrep';
 import { safeStringify } from '../utils/safeStringify';
 
 const DEFAULT_LIMIT = 1000;
 
-export function createGrepTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
+export function createGrepTool(opts: {
+  cwd: string;
+  toolProxy?: (toolName: string, params: any) => Promise<ToolResult>;
+}) {
   return createTool({
     name: 'grep',
     description: 'Search for a pattern in a file or directory.',

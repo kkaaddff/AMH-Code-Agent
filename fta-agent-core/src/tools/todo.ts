@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'fs/promises';
 import path from 'pathe';
 import { z } from 'zod';
 import { TOOL_NAMES } from '../constants';
-import { createTool } from '../tool';
+import { createTool, type ToolResult } from '../tool';
 
 const TODO_WRITE_PROMPT = `
 Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.
@@ -218,7 +218,7 @@ async function saveTodos(todos: TodoList, filePath: string) {
 
 export function createTodoTool(opts: {
   filePath: string;
-  toolProxy?: (toolName: string, params: any) => Promise<any>;
+  toolProxy?: (toolName: string, params: any) => Promise<ToolResult>;
 }) {
   function ensureTodoDirectory() {
     const todoDir = path.dirname(opts.filePath);
@@ -234,17 +234,28 @@ export function createTodoTool(opts: {
   }
 
   async function readTodos() {
-    // If toolProxy is available, delegate to frontend
     if (opts.toolProxy) {
       try {
         const result = await opts.toolProxy(TOOL_NAMES.TODO_READ, {});
-        if (result.isError) {
-          return [];
+        if (
+          result &&
+          typeof result.returnDisplay === 'object' &&
+          result.returnDisplay !== null &&
+          (result.returnDisplay as any).type === 'todo_read'
+        ) {
+          return (result.returnDisplay as any).todos ?? [];
         }
-        return result.returnDisplay?.todos || [];
+        return [];
       } catch (error) {
         console.error('Tool proxy read failed:', error);
-        return [];
+        return {
+          isError: true,
+          llmContent: error instanceof Error ? error.message : 'Tool proxy execution failed',
+          returnDisplay: {
+            type: 'todo_read',
+            todos: [],
+          },
+        } as ToolResult;
       }
     }
 

@@ -1,14 +1,14 @@
 /**
- *Token使用情况: Usage {
- * promptTokens: 36124,
- * completionTokens: 378,
- * totalTokens: 36502
+ *{
+ *    promptTokens: 36124,
+ *    completionTokens: 378,
+ *    totalTokens: 36502
  * }
  *
- * Token使用情况: Usage {
- * promptTokens: 31166,
- * completionTokens: 431,
- * totalTokens: 31597
+ * {
+ *    promptTokens: 31166,
+ *    completionTokens: 431,
+ *    totalTokens: 31597
  * }
  *
  */

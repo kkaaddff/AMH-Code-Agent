@@ -1,9 +1,12 @@
 import fs from 'fs';
 import path from 'pathe';
 import { z } from 'zod';
-import { createTool } from '../tool';
+import { createTool, type ToolResult } from '../tool';
 
-export function createWriteTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
+export function createWriteTool(opts: {
+  cwd: string;
+  toolProxy?: (toolName: string, params: any) => Promise<ToolResult>;
+}) {
   return createTool({
     name: 'write',
     description: 'Write a file to the local filesystem',

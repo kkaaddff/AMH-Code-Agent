@@ -1,8 +1,11 @@
 import { z } from 'zod';
-import { createTool } from '../tool';
+import { createTool, type ToolResult } from '../tool';
 import { TOOL_NAMES } from '../constants';
 
-export function createVerifyTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
+export function createVerifyTool(opts: {
+  cwd: string;
+  toolProxy?: (toolName: string, params: any) => Promise<ToolResult>;
+}) {
   return createTool({
     name: TOOL_NAMES.VERIFY,
     description: `Verify generated code files for fatal errors.

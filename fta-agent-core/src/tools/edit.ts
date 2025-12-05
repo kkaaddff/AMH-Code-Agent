@@ -1,10 +1,13 @@
 import fs from 'fs';
 import path from 'pathe';
 import { z } from 'zod';
-import { createTool } from '../tool';
 import { applyEdit } from '../utils/applyEdit';
+import { createTool, type ToolResult } from '../tool';
 
-export function createEditTool(opts: { cwd: string; toolProxy?: (toolName: string, params: any) => Promise<any> }) {
+export function createEditTool(opts: {
+  cwd: string;
+  toolProxy?: (toolName: string, params: any) => Promise<ToolResult>;
+}) {
   return createTool({
     name: 'edit',
     description: `

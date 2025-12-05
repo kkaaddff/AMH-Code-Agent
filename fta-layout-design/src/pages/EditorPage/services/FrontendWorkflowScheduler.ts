@@ -325,7 +325,7 @@ export class FrontendWorkflowScheduler {
 
     try {
       // Execute the tool using callService - switch case 只专注于获取工具执行结果
-      let toolExecutionResult: any;
+      let toolExecutionResult: { llmContent: string; returnDisplay?: any } | null = null;
       let specialResult: { llmContent: string; returnDisplay?: any } | null = null;
 
       switch (toolName) {

@@ -331,7 +331,7 @@ export class DesignDSLService {
   }
 
   /**
-   * 递归遍历节点并转换PATH为LAYER
+   * 递归遍历节点并转换 PATH 为 LAYER
    */
   private async processNode(node: DesignNode, dslData: DSLData): Promise<DesignNode> {
     if (node.type === 'PATH') {
@@ -362,7 +362,7 @@ export class DesignDSLService {
                   filters: '',
                 },
               ],
-              token: `SVG图像-${pathNode.name}`,
+              token: `SVG-${pathNode.name}`,
             } as LayerStyle;
 
             // 返回新的LAYER节点
