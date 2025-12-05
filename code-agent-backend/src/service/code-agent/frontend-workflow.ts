@@ -12,7 +12,7 @@ import { RestApiService } from './rest-api';
 import { TreeNode } from '../../dto/code-agent/frontend-workflow.dto';
 import { DataModel } from '../../entity/code-agent/data-model';
 import { RestApi } from '../../entity/code-agent/rest-api';
-import { minifyDSL } from 'src/utils/minify';
+import { minifyDSL } from '../../utils/minify';
 
 const ftaSpecsDir = path.join(__dirname, 'fta-specs');
 const ftaPromptsNewPath = path.join(__dirname, 'fta-prompts', 'frontend-project-new.md');
