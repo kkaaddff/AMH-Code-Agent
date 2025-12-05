@@ -182,7 +182,7 @@ export async function runFrontendProjectWorkflow(
     ];
     const toolsManager = new Tools(toolset);
 
-    const userInitPrompt = `# Page Layout Annotation
+    const userInitPrompt = `# Page Annotation
     ${opts.pageAnnotation}
 ---
     # Design DSL

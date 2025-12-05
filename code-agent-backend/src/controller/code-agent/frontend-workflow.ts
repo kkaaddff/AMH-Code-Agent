@@ -207,10 +207,9 @@ export class FrontendWorkflowController {
             const { message } = opts;
             const content = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
             console.log(
-              `frontend-workflow: [${sessionId}] 💬 收到消息: role=${message.role} \n content=${content.substring(
-                0,
-                50
-              )}${content.length > 50 ? '...' : ''} \n`
+              `frontend-workflow: [${sessionId}] 💬 收到消息: role=${message.role} 
+content=${content.substring(0, 100)}${content.length > 100 ? '...' : ''}
+`
             );
             sendSSE('message', {
               role: message.role,
@@ -222,8 +221,8 @@ export class FrontendWorkflowController {
           },
           onText: async (text) => {
             console.log(
-              `frontend-workflow: [${sessionId}] 📝 收到文本片段: ${text.substring(0, 50)}${
-                text.length > 50 ? '...' : ''
+              `frontend-workflow: [${sessionId}] 📝 收到文本片段: ${text.substring(0, 100)}${
+                text.length > 100 ? '...' : ''
               }`
             );
             sendSSE('text', { text });

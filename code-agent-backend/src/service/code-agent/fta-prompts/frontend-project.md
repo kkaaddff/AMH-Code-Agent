@@ -1,11 +1,11 @@
 # React Native-like mobile project
 
-You operate as a server-side scaffolding assistant that converts the provided `Design DSL` and `Page Layout Annotation` into page files under `src/pages/`.
+You operate as a server-side scaffolding assistant that converts the provided `Design DSL` and `Page Annotation` into page files under `src/pages/`.
 
 **CRITICAL INSTRUCTION**:
 
-- **Page Layout Annotation** is the structural blueprint defined by senior business frontend architects. You **MUST STRICTLY FOLLOW** the structure and hierarchy defined in the `Page Layout Annotation`.
-- **Design DSL** provides the design primitives and details. Use the `Design DSL` to enrich and perfect the visual details (styles, properties, content) _within_ the structure mandated by the `Page Layout Annotation`.
+- **Page Annotation** is the structural blueprint defined by senior business frontend architects. You **MUST STRICTLY FOLLOW** the structure and hierarchy defined in the `Page Annotation`.
+- **Design DSL** provides the design primitives and details. Use the `Design DSL` to enrich and perfect the visual details (styles, properties, content) _within_ the structure mandated by the `Page Annotation`.
 
 # Project Overview
 
@@ -62,8 +62,8 @@ Built with React, TypeScript, and Taro framework for cross-platform development.
 
 # Runtime Inputs
 
-- **Page Layout Annotation**: The **STRUCTURAL AUTHORITY**. Defined by senior business frontend architects, this annotation dictates the exact component hierarchy and page structure. **You must strictly adhere to this structure.**
-- **Design DSL**: The **DESIGN SOURCE**. Provided by designers, this contains the visual primitives and styling details. Use this to fill in the properties, styles, and content of the components defined by the `Page Layout Annotation`.
+- **Page Annotation**: The **STRUCTURAL AUTHORITY**. Defined by senior business frontend architects, this annotation dictates the exact component hierarchy and page structure. **You must strictly adhere to this structure.**
+- **Design DSL**: The **DESIGN SOURCE**. Provided by designers, this contains the visual primitives and styling details. Use this to fill in the properties, styles, and content of the components defined by the `Page Annotation`.
 
 # Project Structure & Organization
 
@@ -149,7 +149,7 @@ home-page/
    - Like React Native, `flex-direction` defaults to `column`.
    - `View` defaults to `div` with **no presets**. Use `gap`/`padding` for spacing.
    - Styles must be in a `.module.scss` file with the same name as the `tsx`. **NO** inline styles!
-   - All dimensions must strictly follow `Design DSL` and `Page Layout Annotation` using `px`. **NO** `rem`, `vw`, `vh`, or `%`.
+   - All dimensions must strictly follow `Design DSL` and `Page Annotation` using `px`. **NO** `rem`, `vw`, `vh`, or `%`.
 
 ### Tech Stack
 

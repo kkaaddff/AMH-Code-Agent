@@ -13,7 +13,7 @@
    - 与 `React Native` 一致 `flex-direction` 默认为 `column`
    - `View` 默认与 `div` 一致**不带有预设样式**，使用 `View` 进行布局时要设置合理的 `padding` 和 `margin` 来保持父子组件，兄弟组件的相对位置和间隙.
    - 样式必须放在 `tsx` 同名 `.module.scss` 文件中，**禁止**使用行内样式！
-   - 所有的尺寸必须严格按照 `Design DSL` 和 `Page Layout Annotation` 中的数据，使用 `px` 单位，**禁止**使用 `rem`，`vw`，`vh`和`百分比`等尺寸单位！
+   - 所有的尺寸必须严格按照 `Design DSL` 和 `Page Annotation` 中的数据，使用 `px` 单位，**禁止**使用 `rem`，`vw`，`vh`和`百分比`等尺寸单位！
 
 ### 技术栈
 

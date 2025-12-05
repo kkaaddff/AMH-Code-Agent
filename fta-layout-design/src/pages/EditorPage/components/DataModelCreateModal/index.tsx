@@ -187,7 +187,11 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
         <Space>
           <Button onClick={handleClose}>取消</Button>
           <Tooltip title={hasValidationErrors ? 'TypeScript 代码存在语法错误' : ''} placement='top'>
-            <Button type='primary' onClick={handleCreate} loading={creating} disabled={!name.trim() || hasValidationErrors}>
+            <Button
+              type='primary'
+              onClick={handleCreate}
+              loading={creating}
+              disabled={!name.trim() || hasValidationErrors}>
               创建
             </Button>
           </Tooltip>

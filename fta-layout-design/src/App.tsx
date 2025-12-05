@@ -68,7 +68,7 @@ function App() {
         try {
           const projectPath = await callService('project', 'getProjectRootPath');
           const data = await callService('project', 'getProjectGitInfo');
-          const tree: TreeNode = await callService('common', 'getTreeData', { dir: projectPath + '/src', depth: 2 });
+          const tree: TreeNode = await callService('common', 'getTreeData', { dir: projectPath + '/src', depth: 4 });
 
           window.workspaceInfo = {
             gitUrl: data?.remoteUrl,

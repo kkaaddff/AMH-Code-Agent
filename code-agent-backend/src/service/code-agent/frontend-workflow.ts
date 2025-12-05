@@ -123,9 +123,6 @@ export class FrontendWorkflowService {
         }),
       };
 
-      // 获取 annotation 摘要
-      const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData.rootAnnotation));
-
       // 获取项目关联的数据模型和 REST API
       let dataModels: DataModel[] = [];
       let restApis: RestApi[] = [];
@@ -149,8 +146,12 @@ export class FrontendWorkflowService {
         }
       }
 
+      // 获取 annotation 摘要，传入数据模型映射表以解析 dataModelId
+      const dataModelMap = new Map(dataModels.map((m) => [m.id, m.name]));
+      const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData.rootAnnotation, dataModelMap));
       // 格式化数据模型和 REST API 为工作流可用格式
       const dataContextSummary = this.formatDataContext(dataModels, restApis);
+      debugger;
 
       // 准备工作目录
 
@@ -170,6 +171,7 @@ export class FrontendWorkflowService {
       const fullPageContext = dataContextSummary
         ? annotationSummary + '\n\n---\n\n' + dataContextSummary
         : annotationSummary;
+      // '# 任务: 创建页面 `cargo-detail`\n' + annotationSummary;
 
       // 调用 workflow
       const result = await runFrontendProjectWorkflow({

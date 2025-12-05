@@ -26,10 +26,13 @@ export const sortNodes = (a: DSLNode, b: DSLNode) => {
 
 export const minifyNodes = (nodes: DSLNode[], styleMap: StyleMap): DSLNode[] => {
   if (!nodes) return [];
-  return unwrapGroupNodes(nodes)
-    .sort(sortNodes)
-    .map((node) => processNode(node, styleMap))
-    .filter(Boolean);
+  return (
+    // unwrapGroupNodes()
+    nodes
+      // .sort(sortNodes)
+      .map((node) => processNode(node, styleMap))
+      .filter(Boolean)
+  );
 };
 
 // Reset counter when starting a new batch?
@@ -187,10 +190,8 @@ const processNode = (node: DSLNode, styleMap: StyleMap): DSLNode => {
 
   // 5. Recursion
   if (node.children && node.children.length > 0) {
-    const newChildren = node.children
-      .map((child: any) => processNode(child, styleMap))
-      .filter(Boolean)
-      .sort(sortNodes);
+    const newChildren = node.children.map((child: any) => processNode(child, styleMap)).filter(Boolean);
+    // .sort(sortNodes);
     if (newChildren.length > 0) {
       newNode.children = newChildren;
     }
