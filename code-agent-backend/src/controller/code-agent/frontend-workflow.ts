@@ -45,6 +45,9 @@ export class FrontendWorkflowController {
   // Map to track callIds per session for efficient cleanup
   private static sessionCallIds = new Map<string, Set<string>>();
 
+  // Map to track turn count per session
+  private static sessionTurnCounts = new Map<string, number>();
+
   @Post('/frontend-workflow/tool-result')
   async handleToolResult(
     @Body() body: { callId: string; toolName: string; params: any; toolResult: ToolResult | string }
@@ -203,7 +206,12 @@ export class FrontendWorkflowController {
           onMessage: async (opts) => {
             const { message } = opts;
             const content = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
-            console.log(`frontend-workflow: [${sessionId}] 💬 收到消息: role=${message.role} content=${content}`);
+            console.log(
+              `frontend-workflow: [${sessionId}] 💬 收到消息: role=${message.role} \n content=${content.substring(
+                0,
+                50
+              )}${content.length > 50 ? '...' : ''} \n`
+            );
             sendSSE('message', {
               role: message.role,
               content,
@@ -246,10 +254,15 @@ export class FrontendWorkflowController {
             const startTime = Number(turn.startTime);
             const endTime = Number(turn.endTime);
             const duration = endTime - startTime;
+
+            // 增加对话轮次计数
+            const currentCount = (FrontendWorkflowController.sessionTurnCounts.get(sessionId) || 0) + 1;
+            FrontendWorkflowController.sessionTurnCounts.set(sessionId, currentCount);
+
             console.log(
-              `frontend-workflow: [${sessionId}] 🔄 对话轮次完成: 开始时间=${new Date(startTime).toISOString()}, 持续${(
-                duration / 1000
-              ).toFixed(2)}秒`
+              `frontend-workflow: [${sessionId}] 🔄 对话轮次完成 (第${currentCount}轮): 开始时间=${new Date(
+                startTime
+              ).toISOString()}, 持续${(duration / 1000).toFixed(2)}秒`
             );
             console.log(`frontend-workflow: [${sessionId}] 📊 Token使用情况:\n`, turn.usage);
             console.log('\n');
@@ -257,6 +270,7 @@ export class FrontendWorkflowController {
               usage: turn.usage,
               startTime: turn.startTime,
               endTime: turn.endTime,
+              turnNumber: currentCount,
             });
           },
           onToolApprove: async (opts) => {
@@ -343,6 +357,13 @@ export class FrontendWorkflowController {
           }
         }
         FrontendWorkflowController.sessionCallIds.delete(sessionId);
+      }
+
+      // 清理该 session 的对话轮次计数
+      const turnCount = FrontendWorkflowController.sessionTurnCounts.get(sessionId);
+      if (turnCount !== undefined) {
+        console.log(`frontend-workflow: [${sessionId}] 🧹 清理对话轮次计数 (共${turnCount}轮)`);
+        FrontendWorkflowController.sessionTurnCounts.delete(sessionId);
       }
     }
   }
