@@ -45,6 +45,11 @@ export interface DSLBaseNode {
   opacity?: number | string;
   mask?: string;
   children?: DSLNode[];
+  // Optional absolute position properties for internal processing (e.g., DSLCleaner)
+  _absoluteX?: number;
+  _absoluteY?: number;
+  _absoluteWidth?: number;
+  _absoluteHeight?: number;
 }
 
 export interface DSLFrameNode extends DSLBaseNode {
