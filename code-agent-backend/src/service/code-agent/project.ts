@@ -56,11 +56,7 @@ export class ProjectService {
 
   private readonly projectPagesPopulateOptions = {
     path: 'pages',
-    populate: [
-      { path: 'designDocuments' },
-      { path: 'prdDocuments' },
-      { path: 'openapiDocuments' },
-    ],
+    populate: [{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }],
   };
 
   private sanitizeWorkdirs(workdirs?: string[]): string[] {
@@ -226,11 +222,7 @@ export class ProjectService {
       // Find page across all projects
       page = await this.pageEntity
         .findOne({ id: pageId })
-        .populate([
-          { path: 'designDocuments' },
-          { path: 'prdDocuments' },
-          { path: 'openapiDocuments' },
-        ])
+        .populate([{ path: 'designDocuments' }, { path: 'prdDocuments' }, { path: 'openapiDocuments' }])
         .exec();
     }
 
@@ -672,7 +664,7 @@ export class ProjectService {
 
     if (params.gitUrl) {
       matchedProject = await this.projectEntity
-        .findOne({ userId, gitId: resolvedGitId })
+        .findOne({ gitId: resolvedGitId })
         .populate(this.projectPagesPopulateOptions);
       if (matchedProject) {
         matchedBy = 'gitId';
@@ -682,7 +674,6 @@ export class ProjectService {
     if (!matchedProject && requestedWorkdir) {
       matchedProject = await this.projectEntity
         .findOne({
-          userId,
           $or: [{ gitId: requestedWorkdir }, { workdirs: requestedWorkdir }],
         })
         .populate(this.projectPagesPopulateOptions);
@@ -693,7 +684,7 @@ export class ProjectService {
 
     if (!matchedProject && resolvedGitId !== 'empty' && !resolvedGitId) {
       matchedProject = await this.projectEntity
-        .findOne({ userId, gitId: resolvedGitId })
+        .findOne({ gitId: resolvedGitId })
         .populate(this.projectPagesPopulateOptions);
       if (matchedProject) {
         matchedBy = 'gitId';

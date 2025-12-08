@@ -27,4 +27,4 @@ mock-temp
 .env*
 !.env.example
 
-build-dev.sh
+build-*.sh
