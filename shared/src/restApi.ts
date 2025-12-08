@@ -7,4 +7,3 @@
  * HTTP 请求方法类型
  */
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
-

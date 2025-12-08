@@ -186,9 +186,7 @@ export class ProjectService {
     if (!userId) {
       throw new Error('用户 ID 不能为空');
     }
-    const project = await this.projectEntity
-      .findOne({ id: projectId, userId })
-      .populate(this.projectPagesPopulateOptions);
+    const project = await this.projectEntity.findOne({ id: projectId }).populate(this.projectPagesPopulateOptions);
 
     if (!project) {
       throw new Error('项目不存在');
@@ -442,7 +440,7 @@ export class ProjectService {
 
     // Update project's updatedAt
     const updatedProject = await this.projectEntity
-      .findOneAndUpdate({ id: data.projectId, userId }, { updatedAt: timestamp }, { new: true, runValidators: true })
+      .findOneAndUpdate({ id: data.projectId }, { updatedAt: timestamp }, { new: true, runValidators: true })
       .populate(this.projectPagesPopulateOptions);
 
     if (!updatedProject) {

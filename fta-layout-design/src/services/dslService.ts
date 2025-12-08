@@ -5,7 +5,6 @@
 
 import { DesignData, DSLData } from '@/types/dsl';
 import { api } from '@/utils/apiService';
-import { DSLCleaner } from '@/utils/DSLCleaner';
 
 /**
  * DSL 服务
@@ -40,25 +39,6 @@ export const dslService = {
    */
   async processDSL(data: { dsl: DSLData; convertPaths?: boolean; keepOriginalPaths?: boolean }) {
     // const response = await api.dsl.process(data);
-    // 清洗 DSL 数据
-    const cleaner = new DSLCleaner({
-      removeEmptyNodes: true,
-      detectIcons: false,
-      iconMaxSize: 80,
-      verbose: true,
-    });
-
-    const result = cleaner.clean(data);
-
-    console.log(`节点数量: ${result.statistics.nodeCountBefore} → ${result.statistics.nodeCountAfter}`);
-    // 使用清洗后的节点更新 DSL 数据
-    const cleanedDslData: DesignData = {
-      dsl: {
-        styles: data.dsl.styles,
-        nodes: result.nodes as any,
-      },
-    };
-
-    return cleanedDslData as DesignData;
+    return data as DesignData;
   },
 };

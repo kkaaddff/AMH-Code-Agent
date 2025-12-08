@@ -1,13 +1,18 @@
 import { ModelConfigModal } from '@/components/ModelConfigModal';
 import type { DesignData } from '@/types/dsl';
+import { apiServices } from '@/services';
+import { DSLCleaner } from '@fta/shared';
 import {
   AppstoreOutlined,
+  BorderOutlined,
+  ClearOutlined,
   DeploymentUnitOutlined,
   DownOutlined,
-  EyeInvisibleOutlined,
-  EyeOutlined,
+  ExclamationCircleOutlined,
   QuestionCircleOutlined,
+  ReloadOutlined,
   SettingOutlined,
+  TableOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { App as AntApp, App, Button, Dropdown, Layout, Spin, Switch, Typography } from 'antd';
@@ -36,9 +41,10 @@ import { TDocumentKeys } from './constants';
 import { codeGenerationActions, codeGenerationStore } from './contexts/CodeGenerationContext';
 import { designDetectionActions, designDetectionStore } from './contexts/DesignDetectionContext';
 import { editorPageActions, editorPageStore } from './contexts/EditorPageContext';
-import { FrontendWorkflowScheduler } from './services/FrontendWorkflowScheduler';
 import './EditorPageComponentDetect.css';
+import { FrontendWorkflowScheduler } from './services/FrontendWorkflowScheduler';
 import type { AnnotationNode } from './types/componentDetection';
+import { DocumentReference } from '@/types/project';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
@@ -56,7 +62,8 @@ const EditorPageContent: React.FC = () => {
   const editorPageStoreSnapshot = useSnapshot(editorPageStore);
   const { setPageId, setProjectId, fetchPageDetail, deleteDocument } = editorPageActions;
 
-  const { toggleShowAllBorders, saveAnnotations, setActiveDesignDocument } = designDetectionActions;
+  const { toggleShowAllBorders, saveAnnotations, setActiveDesignDocument, fetchDesignDocumentDSL } =
+    designDetectionActions;
   const componentDetectionStoreSnapshot = useSnapshot(designDetectionStore);
 
   const codeGenerationStoreSnapshot = useSnapshot(codeGenerationStore);
@@ -88,6 +95,7 @@ const EditorPageContent: React.FC = () => {
   const [dataModelDetailModalOpen, setDataModelDetailModalOpen] = useState(false);
   const [restApiCreateModalOpen, setRestApiCreateModalOpen] = useState(false);
   const [restApiDetailModalOpen, setRestApiDetailModalOpen] = useState(false);
+  const [isCleanAndRefreshLoading, setIsCleanAndRefreshLoading] = useState(false);
 
   // Frontend Workflow Scheduler
   const schedulerRef = useRef<FrontendWorkflowScheduler | null>(null);
@@ -145,6 +153,69 @@ const EditorPageContent: React.FC = () => {
       message.error('保存失败');
       console.error('Save error:', error);
     }
+  };
+
+  const handleCleanAndRefreshDSL = async () => {
+    const { selectedDocument } = editorPageStoreSnapshot;
+    if (!selectedDocument?.id) {
+      message.error('请提供设计稿 ID 参数');
+      return;
+    }
+    if (!designDetectionStore.designData?.dsl?.nodes?.length) {
+      message.error('当前设计稿没有可清洗的 DSL 数据');
+      return;
+    }
+
+    setIsCleanAndRefreshLoading(true);
+    try {
+      const cleaner = new DSLCleaner({
+        removeEmptyNodes: true,
+        detectIcons: false,
+        iconMaxSize: 80,
+        verbose: true,
+      });
+
+      const cleanResult = cleaner.clean({
+        dsl: designDetectionStore.designData.dsl,
+      });
+
+      const cleanedDslData: DesignData = {
+        dsl: {
+          styles: designDetectionStore.designData.dsl.styles,
+          nodes: cleanResult.nodes as any,
+        },
+      };
+
+      const updatedDocument = await apiServices.project.updateDocument({
+        id: selectedDocument.id,
+        data: cleanedDslData,
+      });
+
+      await fetchDesignDocumentDSL(updatedDocument, { force: true });
+      message.success('DSL 已清洗并刷新');
+    } catch (error: any) {
+      console.error('清洗并刷新 DSL 失败', error);
+      message.error(error?.message ?? '清洗并刷新 DSL 失败');
+    } finally {
+      setIsCleanAndRefreshLoading(false);
+    }
+  };
+
+  const confirmCleanAndRefreshDSL = () => {
+    modal.warning({
+      title: '确认清洗并刷新 DSL？',
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <span>
+          <strong style={{ color: '#faad14' }}>⚡ 基于规则引擎的自动化清洗</strong>
+          <br />
+          将对当前设计稿进行清洗并保存刷新，可能会调整节点结构。
+        </span>
+      ),
+      okText: '确认',
+      cancelText: '取消',
+      onOk: () => handleCleanAndRefreshDSL(),
+    });
   };
 
   const handleGenerateCode = async () => {
@@ -454,16 +525,8 @@ const EditorPageContent: React.FC = () => {
                       <Switch
                         checked={componentDetectionStoreSnapshot.showAllBorders}
                         onChange={toggleShowAllBorders}
-                        checkedChildren={
-                          <>
-                            <EyeOutlined /> 显示框线
-                          </>
-                        }
-                        unCheckedChildren={
-                          <>
-                            <EyeInvisibleOutlined /> 隐藏框线
-                          </>
-                        }
+                        checkedChildren={<TableOutlined />}
+                        unCheckedChildren={<BorderOutlined />}
                       />
                       <Button
                         type={is3DModalOpen ? 'primary' : 'default'}
@@ -498,6 +561,15 @@ const EditorPageContent: React.FC = () => {
                         className='editor-page-button'>
                         模型配置
                       </Button>
+                      <Button
+                        type='default'
+                        danger
+                        size='small'
+                        icon={<ClearOutlined />}
+                        loading={isCleanAndRefreshLoading}
+                        onClick={confirmCleanAndRefreshDSL}
+                        className='editor-page-button'
+                      />
                       <Dropdown
                         menu={{
                           items: SCALE_OPTIONS,
