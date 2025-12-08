@@ -31,6 +31,19 @@
   margin-bottom: 12px;
 }
 
+.cg-todo-collapse {
+  background: transparent;
+}
+
+.cg-todo-collapse .ant-collapse-header {
+  padding: 0 !important;
+  padding-bottom: 12px !important;
+}
+
+.cg-todo-collapse .ant-collapse-content-box {
+  padding: 0 !important;
+}
+
 .cg-todo-list {
   max-height: 60vh;
   overflow: auto;

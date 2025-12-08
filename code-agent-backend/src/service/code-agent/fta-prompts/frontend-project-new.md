@@ -70,7 +70,7 @@ src/pages/[page-name]/
 ### 2.2 Layered Architecture
 
 1.  **Layer 1 (Business Flow)**: `hooks/` - Coordinates logic, connects Store and Service.
-2.  **Layer 2 (View)**: `components/` - Pure UI, driven by props/state.
+2.  **Layer 2 (View)**: `components/` - Pure UI, driven by state.
 3.  **Layer 3 (Logic/Infra)**: `services/`, `utils/` - Pure functions, API calls, transformations.
 
 ## III. Phase 1: Page Entry Design
@@ -102,16 +102,23 @@ export default withStore(PageComponent);
 
 ### 4.1 Type Standards
 
-- **No `any` allowed**.
-- If a component has a specific type definition, **you must implement and fully use that type definition** for its props and data.
-- If there is a local type definition file, **this is likely required by the user, so you must use the specific type file directly related to the component** (do not invent or genericize types).
-- **Every component's props must be defined independently**, with its own interface/type, even for simple components; do not reuse unrelated types across components.
+- If components declares specific data type name, **you must**:
+  1. **Use `grep` tool to check whether the type already exists in the local filesystem**.
+     - If it exists → **you must** use the local file directly.
+     - If it does not exist → use the type definition provided in the current context.
+     - If neither exists → **create a new type using the declared type name**.
+  2. **Never modify or delete any existing files** inside the `types` directory.
+- If a component has an existing type definition, **you must fully implement and use that type definition** for its state data (no inventing or generalizing types).
+- **Each component's state must be defined independently**, with its own interface/type — even for simple components.
+- **Actively identify and extract shared structures across different components**, and consolidate them into **common types** stored in the `types` directory.
+  (Ensure that you do not edit or remove existing files.)
 - Place all shared or generic types in the `types` directory.
 - Use **PascalCase** for all interface and enum names.
+- **No `any` allowed**.
 
 ### 4.2 Lightweight Store Pattern (`page-store.ts`)
 
-Do not use Redux/MobX. Use this strict pattern:
+Use this strict pattern:
 
 ```typescript
 import createStore from 'src/utils/store/create';
@@ -157,8 +164,8 @@ export async function fetchPageData(params: RequestParams): Promise<CommonRespon
 Separate UI and Logic using Custom Hooks.
 
 ```typescript
-const BusinessCard: React.FC<CardProps> = ({ data }) => {
-  const { expanded, toggle } = useCardLogic(data); // Logic Hook
+const BusinessCard: React.FC<> = () => {
+  const { expanded, toggle } = useCardLogic(); // Logic Hook
 
   return (
     <View className={styles.card} onClick={toggle}>

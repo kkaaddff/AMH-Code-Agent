@@ -1,6 +1,6 @@
 import { BorderOutlined, CheckSquareFilled, ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { Alert, Divider, Drawer, List, Modal, Space, Typography } from 'antd';
-import React, { useMemo } from 'react';
+import { Alert, Collapse, Divider, Drawer, List, Modal, Space, Typography } from 'antd';
+import React, { useMemo, useState } from 'react';
 import { Streamdown } from 'streamdown';
 import { useSnapshot } from 'valtio/react';
 import { codeGenerationActions, codeGenerationStore } from '../../contexts/CodeGenerationContext';
@@ -13,6 +13,7 @@ interface CodeGenerationDrawerProps {
 }
 const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ abortGeneration }) => {
   const { thoughtChainItems, generationStatus, isDrawerOpen } = useSnapshot(codeGenerationStore);
+  const [todoListExpanded, setTodoListExpanded] = useState(true);
 
   // 分离 TODO 和 迭代数据
   const { todoItems, iterationItems } = useMemo(() => {
@@ -51,14 +52,12 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ abortGenera
     if (iterationItems.length === 0) {
       return '';
     }
-
     return iterationItems
       .map((item) => {
         const content = (item.content || '').trim();
         if (content === '' || content === '<think></think>') {
           return '';
         }
-
         const timestamp = item.startedAt
           ? new Date(item.startedAt).toLocaleTimeString('zh-CN', {
               hour: '2-digit',
@@ -72,16 +71,14 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ abortGenera
         const titleLine = timestamp ? ` *${timestamp}*` : '';
         parts.push(titleLine);
         parts.push(''); // 空行分隔
-
         // 内容部分
         if (content) {
           parts.push(content);
         }
-
-        return parts.join('\n');
+        return parts.join(': ');
       })
       .filter((item) => item !== '')
-      .join('\n\n---\n\n');
+      .join('\n\n');
   }, [iterationItems]);
 
   return (
@@ -134,65 +131,82 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ abortGenera
 
         {/* 上视图：TODO 列表 */}
         <div className='cg-section'>
-          <Title level={5} className='cg-section-title'>
-            任务列表 ({todoItems.length})
-          </Title>
-          <div className='cg-todo-list'>
-            {todoItems.length > 0 ? (
-              <List
-                size='small'
-                dataSource={todoItems}
-                renderItem={(item) => {
-                  const isCompleted = item.status === 'success';
-                  const isInProgress = item.status === 'in_progress';
-                  const itemClassName = [
-                    'cg-todo-item',
-                    isCompleted ? 'cg-todo-item-completed' : '',
-                    isInProgress ? 'cg-todo-item-in-progress' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ');
+          <Collapse
+            activeKey={todoListExpanded ? ['todo-list'] : []}
+            onChange={(keys) => setTodoListExpanded(keys.includes('todo-list'))}
+            items={[
+              {
+                key: 'todo-list',
+                label: (
+                  <Title level={5} className='cg-section-title' style={{ margin: 0 }}>
+                    任务列表 ({todoItems.length})
+                  </Title>
+                ),
+                children: (
+                  <div className='cg-todo-list'>
+                    {todoItems.length > 0 ? (
+                      <List
+                        size='small'
+                        dataSource={todoItems}
+                        renderItem={(item) => {
+                          const isCompleted = item.status === 'success';
+                          const isInProgress = item.status === 'in_progress';
+                          const itemClassName = [
+                            'cg-todo-item',
+                            isCompleted ? 'cg-todo-item-completed' : '',
+                            isInProgress ? 'cg-todo-item-in-progress' : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ');
 
-                  return (
-                    <List.Item className={itemClassName}>
-                      <Space align='start' size={8} className='cg-todo-item-row'>
-                        {isCompleted ? (
-                          <CheckSquareFilled className='cg-todo-icon completed' />
-                        ) : isInProgress ? (
-                          <LoadingOutlined spin className='cg-todo-icon in-progress' />
-                        ) : (
-                          <BorderOutlined className='cg-todo-icon' />
-                        )}
-                        <div className='cg-todo-item-content'>
-                          <Text className={`cg-todo-item-title ${isCompleted ? 'completed' : 'default'}`}>
-                            {item.title}
-                          </Text>
-                          {item.content && item.content !== item.title && (
-                            <Text
-                              type='secondary'
-                              className={`cg-todo-item-desc ${isCompleted ? 'completed' : 'default'}`}>
-                              {item.content}
-                            </Text>
-                          )}
-                        </div>
-                        {item.finishedAt && (
-                          <Text type='secondary' className='cg-todo-item-time'>
-                            {new Date(item.finishedAt).toLocaleTimeString('zh-CN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              second: '2-digit',
-                            })}
-                          </Text>
-                        )}
-                      </Space>
-                    </List.Item>
-                  );
-                }}
-              />
-            ) : (
-              <div className='cg-todo-empty'>{generationStatus === 'generating' ? '等待任务列表...' : '暂无任务'}</div>
-            )}
-          </div>
+                          return (
+                            <List.Item className={itemClassName}>
+                              <Space align='start' size={8} className='cg-todo-item-row'>
+                                {isCompleted ? (
+                                  <CheckSquareFilled className='cg-todo-icon completed' />
+                                ) : isInProgress ? (
+                                  <LoadingOutlined spin className='cg-todo-icon in-progress' />
+                                ) : (
+                                  <BorderOutlined className='cg-todo-icon' />
+                                )}
+                                <div className='cg-todo-item-content'>
+                                  <Text className={`cg-todo-item-title ${isCompleted ? 'completed' : 'default'}`}>
+                                    {item.title}
+                                  </Text>
+                                  {item.content && item.content !== item.title && (
+                                    <Text
+                                      type='secondary'
+                                      className={`cg-todo-item-desc ${isCompleted ? 'completed' : 'default'}`}>
+                                      {item.content}
+                                    </Text>
+                                  )}
+                                </div>
+                                {item.finishedAt && (
+                                  <Text type='secondary' className='cg-todo-item-time'>
+                                    {new Date(item.finishedAt).toLocaleTimeString('zh-CN', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      second: '2-digit',
+                                    })}
+                                  </Text>
+                                )}
+                              </Space>
+                            </List.Item>
+                          );
+                        }}
+                      />
+                    ) : (
+                      <div className='cg-todo-empty'>
+                        {generationStatus === 'generating' ? '等待任务列表...' : '暂无任务'}
+                      </div>
+                    )}
+                  </div>
+                ),
+              },
+            ]}
+            ghost
+            className='cg-todo-collapse'
+          />
         </div>
 
         <Divider />
