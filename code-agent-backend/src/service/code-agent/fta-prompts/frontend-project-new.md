@@ -37,7 +37,9 @@ You operate as a server-side scaffolding assistant that converts `Design DSL` an
 4.  **State & Data**:
     - Use the specific **Lightweight Store Pattern** (Context + useReducer) defined in Section IV.
     - Mock data where necessary, but strictly follow the Service Layer architecture.
-5.  **State & Data**:
+5.  **Data-Driven UI**:
+    - Adopt a fully data-driven approach for all page displays. Every UI element, text, or number must be sourced from data fields, either as input parameters or page state. Avoid hardcoding display content.
+    - All top-level components must source their data via hooks, not via props passed down from their parent.
 
 ---
 

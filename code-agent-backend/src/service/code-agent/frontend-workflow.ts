@@ -151,7 +151,6 @@ export class FrontendWorkflowService {
       const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData.rootAnnotation, dataModelMap));
       // 格式化数据模型和 REST API 为工作流可用格式
       const dataContextSummary = this.formatDataContext(dataModels, restApis);
-      debugger;
 
       // 准备工作目录
 

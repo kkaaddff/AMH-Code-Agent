@@ -532,7 +532,6 @@ const ComponentPropertyPanelV2: React.FC = () => {
               </div>
             </Card>
           )}
-
           <Form form={form} layout='vertical' onValuesChange={handleValuesChange}>
             <FTAComponentSelectField
               recentComponents={recentComponents}
@@ -554,12 +553,9 @@ const ComponentPropertyPanelV2: React.FC = () => {
                 </Button>
               }
             />
-
             <BasicInfoFields optionalSuffix />
-
-            {selectedFTAComponent && <DynamicPropertyFields componentName={selectedFTAComponent} />}
-
             <DataModelBindingField cascaderOptions={cascaderOptions} dataModelsList={dataModelsList as DataModel[]} />
+            {selectedFTAComponent && <DynamicPropertyFields componentName={selectedFTAComponent} />}
           </Form>
         </div>
 

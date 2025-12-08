@@ -690,14 +690,14 @@ export type Rect = {
  * 碰撞检测默认误差值（像素），允许标注边缘在此范围内视为相邻而非交叉
  * 值越大，容忍的"相邻"距离越大
  */
-export const DEFAULT_COLLISION_TOLERANCE = 2;
+export const DEFAULT_COLLISION_TOLERANCE = 0;
 
 /**
  * 检测两个矩形是否交叉（不是包含关系，不是相邻关系）
  * @param rect1 矩形1
  * @param rect2 矩形2
  * @param tolerance 误差值，边缘重叠在此范围内视为相邻（默认 DEFAULT_COLLISION_TOLERANCE）
- * @returns true 表示交叉，false 表示不交叉（分离或相邻）
+ * @returns true 表示交叉，false 表示不交叉（分离、相邻或包含）
  */
 export const checkRectsIntersect = (
   rect1: Rect,
@@ -718,9 +718,36 @@ export const checkRectsIntersect = (
   const horizontalOverlap = Math.min(r1Right, r2Right) - Math.max(r1Left, r2Left);
   const verticalOverlap = Math.min(r1Bottom, r2Bottom) - Math.max(r1Top, r2Top);
 
-  // 只有当两个方向的重叠都超过误差值时，才视为交叉
+  // 只有当两个方向的重叠都超过误差值时，才有重叠区域
   // 重叠 <= tolerance 视为相邻或分离，允许通过
-  return horizontalOverlap > tolerance && verticalOverlap > tolerance;
+  const hasOverlap = horizontalOverlap > tolerance && verticalOverlap > tolerance;
+
+  if (!hasOverlap) {
+    return false;
+  }
+
+  // 检查是否是包含关系（一个矩形完全包含另一个）
+  // rect1 包含 rect2
+  const rect1ContainsRect2 =
+    r1Left <= r2Left + tolerance &&
+    r1Right >= r2Right - tolerance &&
+    r1Top <= r2Top + tolerance &&
+    r1Bottom >= r2Bottom - tolerance;
+
+  // rect2 包含 rect1
+  const rect2ContainsRect1 =
+    r2Left <= r1Left + tolerance &&
+    r2Right >= r1Right - tolerance &&
+    r2Top <= r1Top + tolerance &&
+    r2Bottom >= r1Bottom - tolerance;
+
+  // 如果是包含关系，返回 false（不是交叉）
+  if (rect1ContainsRect2 || rect2ContainsRect1) {
+    return false;
+  }
+
+  // 有重叠且不是包含关系，才是真正的交叉
+  return true;
 };
 
 /**
