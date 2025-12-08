@@ -1,6 +1,6 @@
-import type { AnnotationSnapshot, DesignData } from '@fta/shared-types';
+import type { AnnotationSnapshot, DesignData } from '@fta/shared';
 
-export type { AnnotationSnapshot } from '@fta/shared-types';
+export type { AnnotationSnapshot } from '@fta/shared';
 
 export interface Project {
   id: string;

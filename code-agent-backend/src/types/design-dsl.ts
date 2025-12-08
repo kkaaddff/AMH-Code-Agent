@@ -17,4 +17,4 @@ export type {
   DSLData,
   DesignData,
   LayerStyle,
-} from '@fta/shared-types';
+} from '@fta/shared';

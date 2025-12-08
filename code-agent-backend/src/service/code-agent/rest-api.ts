@@ -2,7 +2,7 @@ import { Inject, Provide } from '@midwayjs/decorator';
 import { InjectEntityModel } from '@midwayjs/typegoose';
 import { Context } from '@midwayjs/web';
 import { ReturnModelType } from '@typegoose/typegoose';
-import type { HttpMethod } from '@fta/shared-types';
+import type { HttpMethod } from '@fta/shared';
 import { RestApi } from '../../entity/code-agent/rest-api';
 import { Project } from '../../entity/code-agent/project';
 
@@ -117,11 +117,10 @@ export class RestApiService {
     if (data.requestModelIds !== undefined) updateData.requestModelIds = data.requestModelIds;
     if (data.responseModelIds !== undefined) updateData.responseModelIds = data.responseModelIds;
 
-    const updatedRestApi = await this.restApiEntity.findOneAndUpdate(
-      { id, userId },
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const updatedRestApi = await this.restApiEntity.findOneAndUpdate({ id, userId }, updateData, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedRestApi) {
       throw new Error('REST API 不存在');
@@ -157,10 +156,7 @@ export class RestApiService {
       throw new Error('用户 ID 不能为空');
     }
 
-    const restApis = await this.restApiEntity
-      .find({ projectId, userId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const restApis = await this.restApiEntity.find({ projectId, userId }).sort({ createdAt: -1 }).lean();
 
     return restApis as RestApi[];
   }
@@ -191,9 +187,7 @@ export class RestApiService {
       return [];
     }
 
-    const restApis = await this.restApiEntity
-      .find({ id: { $in: ids }, userId })
-      .lean();
+    const restApis = await this.restApiEntity.find({ id: { $in: ids }, userId }).lean();
 
     return restApis as RestApi[];
   }
@@ -207,10 +201,7 @@ export class RestApiService {
       throw new Error('用户 ID 不能为空');
     }
 
-    const restApis = await this.restApiEntity
-      .find({ groupId, userId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const restApis = await this.restApiEntity.find({ groupId, userId }).sort({ createdAt: -1 }).lean();
 
     return restApis as RestApi[];
   }
@@ -236,4 +227,3 @@ export class RestApiService {
     return restApis as RestApi[];
   }
 }
-

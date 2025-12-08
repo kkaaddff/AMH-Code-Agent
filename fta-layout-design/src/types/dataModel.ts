@@ -6,7 +6,7 @@ import type {
   DataModelDefinition,
   CreateDataModelRequest as SharedCreateDataModelRequest,
   UpdateDataModelRequest as SharedUpdateDataModelRequest,
-} from '@fta/shared-types';
+} from '@fta/shared';
 
 // 重新导出共享类型
 export type { DataModelDefinition };

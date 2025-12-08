@@ -1,7 +1,7 @@
 /**
  * 基础数据模型类型定义
  */
-import type { HttpMethod } from '@fta/shared-types';
+import type { HttpMethod } from '@fta/shared';
 
 // 重新导出共享类型
 export type { HttpMethod };

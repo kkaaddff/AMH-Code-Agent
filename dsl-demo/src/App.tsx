@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DSLElement from './components/DSLElement';
 import DSL3DCompareModal from './components/DSL3DCompareModal';
-import { DesignData } from '@fta/shared-types';
+import { DesignData } from '@fta/shared';
 import dslRawData from './data/dsl.json';
 import { DSLCleaner, Statistics } from './utils/DSLCleaner';
 import './App.css';

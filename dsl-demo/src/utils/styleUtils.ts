@@ -1,4 +1,4 @@
-import { DSLLayoutStyle, DSLStyles } from '@fta/shared-types';
+import { DSLLayoutStyle, DSLStyles } from '@fta/shared';
 
 /**
  * 解析 DSL 中的颜色标识，转换为实际颜色值。

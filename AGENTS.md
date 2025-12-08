@@ -20,13 +20,13 @@
 
 ## Build & Test Commands
 
-| Package               | Develop                                      | Build/Start                              | Quality & Tests                                                                       |
-| --------------------- | -------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
-| `shared-types/`       | `yarn workspace @fta/shared-types typecheck` | `yarn workspace @fta/shared-types build` | —                                                                                     |
-| `code-agent-backend/` | `npm run dev`                                | `npm run build && npm start`             | `npm run lint`, `npm run lint:fix`, `npm run prettier`, `npm run test`, `npm run cov` |
-| `fta-layout-design/`  | `npm run dev`                                | `npm run build` / `npm run preview`      | Add Vitest/RTL when touching logic; otherwise manual verification                     |
-| `fta-agent-core/`     | —                                            | `yarn build`                             | `yarn typecheck` (use `npx vitest` for specs)                                         |
-| `messages-replayer/`  | `npm run replay`                             | —                                        | `npm run parse`; live mode via `npm run replay:live`                                  |
+| Package               | Develop                                | Build/Start                         | Quality & Tests                                                                       |
+| --------------------- | -------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| `shared-types/`       | `yarn workspace @fta/shared typecheck` | `yarn workspace @fta/shared build`  | —                                                                                     |
+| `code-agent-backend/` | `npm run dev`                          | `npm run build && npm start`        | `npm run lint`, `npm run lint:fix`, `npm run prettier`, `npm run test`, `npm run cov` |
+| `fta-layout-design/`  | `npm run dev`                          | `npm run build` / `npm run preview` | Add Vitest/RTL when touching logic; otherwise manual verification                     |
+| `fta-agent-core/`     | —                                      | `yarn build`                        | `yarn typecheck` (use `npx vitest` for specs)                                         |
+| `messages-replayer/`  | `npm run replay`                       | —                                   | `npm run parse`; live mode via `npm run replay:live`                                  |
 
 ## Backend Highlights (`code-agent-backend/`)
 

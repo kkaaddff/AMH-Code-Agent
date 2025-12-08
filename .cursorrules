@@ -33,7 +33,7 @@ amh_code_agent/
 ## Development Commands
 
 - Root: yarn install
-- shared-types/: yarn workspace @fta/shared-types build (or typecheck)
+- shared-types/: yarn workspace @fta/shared build (or typecheck)
 - Backend: npm run dev; build/start via npm run build && npm start; quality npm run lint/lint:fix/prettier; tests npm run test/cov.
 - Frontend: npm run dev / npm run build / npm run preview; add Vitest/RTL for logic changes.
 - Agent core: yarn build; yarn typecheck; use npx vitest for tests.

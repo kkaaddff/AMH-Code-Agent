@@ -1,9 +1,9 @@
 import type { DSLNode } from '@/types/dsl';
 import type { LayoutTreeNode } from '@/types/layout';
-import type { AnnotationNode } from '@fta/shared-types';
+import type { AnnotationNode } from '@fta/shared';
 import { LABEL_STYLES } from '../constants/CanvasConstant';
 
-export type { AnnotationNode } from '@fta/shared-types';
+export type { AnnotationNode } from '@fta/shared';
 
 // 节点类型枚举
 export enum NodeType {

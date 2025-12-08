@@ -1,6 +1,6 @@
 // ==================== 类型定义 ====================
 
-import type { DSLNode, DSLLayoutStyle } from '@fta/shared-types';
+import type { DSLNode, DSLLayoutStyle } from '@fta/shared';
 
 type LayoutStyle = DSLLayoutStyle;
 
@@ -744,4 +744,4 @@ class IconConverter {
 
 export { DSLCleaner, IconConverter, DEFAULT_CONFIG };
 export type { CleanerConfig, CleanResult, IconNode };
-export type { DSLNode } from '@fta/shared-types';
+export type { DSLNode } from '@fta/shared';

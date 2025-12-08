@@ -79,7 +79,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@fta/shared-types": "0.0.1",
+    "@fta/shared": "0.0.1",
     "@midwayjs/cli": "^2.1.1",
     "@midwayjs/egg-ts-helper": "^1.2.1",
     "@midwayjs/mock": "^3.11.15",

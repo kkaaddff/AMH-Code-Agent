@@ -1,7 +1,7 @@
 /**
  * REST API 接口相关类型定义
  */
-import type { HttpMethod } from '@fta/shared-types';
+import type { HttpMethod } from '@fta/shared';
 
 // 重新导出共享类型
 export type { HttpMethod };
@@ -135,4 +135,3 @@ export const METHOD_COLORS: Record<HttpMethod, string> = {
   HEAD: 'default',
   OPTIONS: 'default',
 };
-

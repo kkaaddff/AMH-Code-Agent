@@ -12,7 +12,7 @@
  * }
  *
  */
-import { DSLData, DSLNode } from '@fta/shared-types';
+import { DSLData, DSLNode } from '@fta/shared';
 import { minifyNodes } from './nodes';
 import { minifyStyles } from './styles';
 

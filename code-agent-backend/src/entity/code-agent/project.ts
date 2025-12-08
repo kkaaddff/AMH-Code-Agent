@@ -1,4 +1,4 @@
-import type { AnnotationNode, AnnotationSnapshot, DesignData } from '@fta/shared-types';
+import type { AnnotationNode, AnnotationSnapshot, DesignData } from '@fta/shared';
 import { modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { EntityModel } from '@midwayjs/typegoose';
 

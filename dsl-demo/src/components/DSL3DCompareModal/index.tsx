@@ -1,4 +1,4 @@
-import { DesignData, DSLNode } from '@fta/shared-types';
+import { DesignData, DSLNode } from '@fta/shared';
 import { Button, Modal } from 'antd';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DSL3DScene, DSLNodeInfo } from './DSL3DScene';

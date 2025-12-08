@@ -1,4 +1,4 @@
-import { DSLNode } from '@fta/shared-types';
+import { DSLNode } from '@fta/shared';
 import TWEEN from '@tweenjs/tween.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';

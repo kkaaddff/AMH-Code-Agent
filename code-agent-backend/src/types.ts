@@ -1,6 +1,6 @@
 import { ApiProperty } from '@midwayjs/swagger';
 
-export type * from '@fta/shared-types';
+export type * from '@fta/shared';
 export type * from './types/model-metrics';
 
 export type DeepPartial<T> = {

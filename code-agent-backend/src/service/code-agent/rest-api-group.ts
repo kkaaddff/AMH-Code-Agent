@@ -5,7 +5,7 @@ import { ReturnModelType } from '@typegoose/typegoose';
 import { RestApiGroup } from '../../entity/code-agent/rest-api-group';
 import { RestApi } from '../../entity/code-agent/rest-api';
 import { Project } from '../../entity/code-agent/project';
-import type { HttpMethod } from '@fta/shared-types';
+import type { HttpMethod } from '@fta/shared';
 
 /**
  * 创建 REST API 组请求
@@ -128,11 +128,10 @@ export class RestApiGroupService {
     if (data.description !== undefined) updateData.description = data.description;
     if (data.syncUrl !== undefined) updateData.syncUrl = data.syncUrl;
 
-    const updatedGroup = await this.groupEntity.findOneAndUpdate(
-      { id, userId },
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const updatedGroup = await this.groupEntity.findOneAndUpdate({ id, userId }, updateData, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedGroup) {
       throw new Error('REST API 组不存在');
@@ -170,10 +169,7 @@ export class RestApiGroupService {
       throw new Error('用户 ID 不能为空');
     }
 
-    const groups = await this.groupEntity
-      .find({ projectId, userId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const groups = await this.groupEntity.find({ projectId, userId }).sort({ createdAt: -1 }).lean();
 
     return groups as RestApiGroup[];
   }
@@ -220,7 +216,7 @@ export class RestApiGroupService {
       // 获取远程文档
       const response = await fetch(urlToSync, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       });
 
@@ -327,4 +323,3 @@ export class RestApiGroupService {
     return apis;
   }
 }
-

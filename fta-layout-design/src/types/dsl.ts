@@ -18,4 +18,4 @@ export type {
   StyleValue,
   ImageValue,
   LayerStyle,
-} from '@fta/shared-types';
+} from '@fta/shared';

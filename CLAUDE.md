@@ -40,7 +40,7 @@ amh_code_agent/
 ## Development Commands
 
 - Root: `yarn install`
-- `shared-types/`: `yarn workspace @fta/shared-types build` (or `typecheck`)
+- `shared-types/`: `yarn workspace @fta/shared build` (or `typecheck`)
 - Backend: `npm run dev`; build/start via `npm run build && npm start`; quality `npm run lint`/`lint:fix`/`prettier`; tests `npm run test`/`cov`.
 - Frontend: `npm run dev` / `npm run build` / `npm run preview`; add Vitest/RTL for logic changes.
 - Agent core: `yarn build`; `yarn typecheck`; use `npx vitest` for tests.
@@ -57,7 +57,7 @@ amh_code_agent/
   - `/code-agent/interface-data-model/*`: CRUD API schema models per page; stored in Mongo and linked to pages.
   - `/code-agent/frontend-workflow`: SSE driver for `runFrontendProjectWorkflow` (uses DSL + annotation summary + interface data models + optional `srcTree` from VSCode connector).
   - `/code-agent/metrics`: returns cached vLLM metrics from Redis; polling loop pulls `/metrics` unless using bigmodel/openrouter/volces endpoints.
-- Services & types: shared models from `@fta/shared-types`; annotations versioned via `DesignComponentAnnotationService` (Redis cache + diff helper) even if routes aren’t exposed. `ModelGatewayService` wraps ai-sdk-style calls; `OssManagement` wires OSS buckets.
+- Services & types: shared models from `@fta/shared`; annotations versioned via `DesignComponentAnnotationService` (Redis cache + diff helper) even if routes aren’t exposed. `ModelGatewayService` wraps ai-sdk-style calls; `OssManagement` wires OSS buckets.
 - Storage & config: Mongo URIs, Redis hosts, MasterGo base/token, `OPENAI_*`, `DESIGN_DSL_PATH_CACHE_TTL`, OSS creds in `src/config/config.default.ts`. Logs land under `logs/` (with JSON formatting). Clean `files-cache/` artifacts before committing.
 
 ## Frontend Architecture (fta-layout-design)

@@ -1,6 +1,6 @@
 import { modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { EntityModel } from '@midwayjs/typegoose';
-import type { HttpMethod } from '@fta/shared-types';
+import type { HttpMethod } from '@fta/shared';
 
 /**
  * REST API 接口实体
@@ -65,4 +65,3 @@ export class RestApi {
   @prop({ required: true })
   userId: string;
 }
-

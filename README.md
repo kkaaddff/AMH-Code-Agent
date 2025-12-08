@@ -9,7 +9,7 @@
 - **code-agent-backend**：Midway 3 服务，串联 MasterGo 设计稿、DSL 归一化（PATH → PNG/LAYER 缓存）、需求文档/代码生成（模型网关）、项目/页面/文档中心、Redis/Mongo/OSS 等。
 - **fta-layout-design**：React 19 + Vite 工作台，内置项目绑定、组件检测编辑器（标注树、DSL 渲染、3D Inspect、PRD/OpenAPI 面板、代码生成抽屉等）及营销/演示页面。
 - **fta-agent-core (@fta/agent-core)**：TypeScript Agent 运行时，暴露 `createAgentService` / `runFrontendProjectWorkflow`，提供 todo/file-draft/component-doc 等工具、前端项目工作流及 AI SDK LLM 适配。
-- **shared-types (@fta/shared-types)**：DSL/标注/模型指标等共享类型，被前后端与 Agent Core 共用。
+- **shared-types (@fta/shared)**：DSL/标注/模型指标等共享类型，被前后端与 Agent Core 共用。
 - **messages-replayer**：Node CLI，解析/回放 `messages.log`，可本地复刻或推送至 OpenAI 兼容端点。
 
 ### 架构关系
