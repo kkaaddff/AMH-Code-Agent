@@ -8,7 +8,7 @@ import {
   DSLInstanceNode,
   DSLStyles,
   DesignData,
-} from '../types/dsl';
+} from '@fta/shared-types';
 import {
   parseColor,
   parseLayoutStyle,

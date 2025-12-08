@@ -68,7 +68,7 @@ interface RemovedNode {
   config: string;
 }
 
-interface Statistics {
+export interface Statistics {
   totalNodes: number;
   processedNodes: number;
   removedNodes: number;

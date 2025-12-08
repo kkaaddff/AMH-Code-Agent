@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import DSLElement from './components/DSLElement';
+import DSL3DCompareModal from './components/DSL3DCompareModal';
 import { DesignData } from '@fta/shared-types';
 import dslRawData from './data/dsl.json';
-import { DSLCleaner } from './utils/DSLCleaner';
+import { DSLCleaner, Statistics } from './utils/DSLCleaner';
 import './App.css';
 
 const App: React.FC = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  const [dsls, setDsls] = useState<{ raw: DesignData; cleaned: DesignData } | null>(null);
+  const [dsls, setDsls] = useState<{
+    raw: DesignData;
+    statistics: Statistics;
+    cleaned: DesignData;
+  } | null>(null);
+  const [is3DModalOpen, setIs3DModalOpen] = useState(false);
 
   useEffect(() => {
     // Load DSL data - the JSON has styles and nodes at root level, need to wrap in dsl property
@@ -37,7 +43,7 @@ const App: React.FC = () => {
       },
     };
 
-    setDsls({ raw: dslData, cleaned: cleanedDslData });
+    setDsls({ raw: dslData, statistics: result.statistics, cleaned: cleanedDslData });
   }, []);
 
   const handleNodeSelect = (nodeId: string | null) => {
@@ -53,41 +59,59 @@ const App: React.FC = () => {
     return <div className='loading'>Loading DSL data...</div>;
   }
 
-  const renderCanvas = (title: string, data: DesignData) => (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <h3 style={{ margin: '0 0 10px 0', textAlign: 'center' }}>{title}</h3>
-      <div className='canvas-container' style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
-        <div
-          style={{
-            transform: 'scale(0.5)',
-            transformOrigin: 'top left',
-            width: '200%', // Compensate for scale(0.5) to fill width
-            height: '200%', // Compensate for scale(0.5) to fill height if needed, or let content flow
-          }}>
-          <div className='canvas'>
-            <DSLElement
-              dslData={data}
-              onSelect={handleNodeSelect}
-              onHover={handleNodeHover}
-              selectedNodeId={selectedNodeId}
-              hoveredNodeId={hoveredNodeId}
-            />
+  const renderCanvas = (title: string, data: DesignData, totalNodes: number) => {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        <h3 style={{ margin: '0 0 10px 0', textAlign: 'center' }}>
+          {title} ({totalNodes} nodes)
+        </h3>
+        <div className='canvas-container' style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+          <div
+            style={{
+              transform: 'scale(0.5)',
+              transformOrigin: 'top left',
+              width: '100%', // Compensate for scale(0.5) to fill width
+              height: '100%', // Compensate for scale(0.5) to fill height if needed, or let content flow
+            }}>
+            <div className='canvas'>
+              <DSLElement
+                dslData={data}
+                onSelect={handleNodeSelect}
+                onHover={handleNodeHover}
+                selectedNodeId={selectedNodeId}
+                hoveredNodeId={hoveredNodeId}
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className='app'>
       <header className='app-header'>
         <h1>DSL Element Demo</h1>
         <p>Click on elements to select them</p>
+        <button
+          onClick={() => setIs3DModalOpen(true)}
+          style={{
+            marginTop: 10,
+            padding: '8px 16px',
+            background: '#1890ff',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontSize: 14,
+          }}>
+          查看 3D 结构对比
+        </button>
       </header>
 
       <main className='app-main' style={{ gap: '2rem' }}>
-        {renderCanvas('Before (Raw)', dsls.raw)}
-        {renderCanvas('After (Cleaned)', dsls.cleaned)}
+        {renderCanvas('Before (Raw)', dsls.raw, dsls.statistics.nodeCountBefore)}
+        {renderCanvas('After (Cleaned)', dsls.cleaned, dsls.statistics.processedNodes)}
 
         <aside className='sidebar'>
           <h3>Node Info</h3>
@@ -106,13 +130,13 @@ const App: React.FC = () => {
             <div>
               <h4>Raw</h4>
               <p>
-                <strong>Nodes:</strong> {dsls.raw.dsl.nodes.length}
+                <strong>Nodes:</strong> {dsls.statistics.nodeCountBefore}
               </p>
             </div>
             <div style={{ marginTop: '1rem' }}>
               <h4>Cleaned</h4>
               <p>
-                <strong>Nodes:</strong> {dsls.cleaned.dsl.nodes.length}
+                <strong>Nodes:</strong> {dsls.statistics.processedNodes}
               </p>
             </div>
             <div style={{ marginTop: '1rem' }}>
@@ -123,6 +147,13 @@ const App: React.FC = () => {
           </div>
         </aside>
       </main>
+
+      <DSL3DCompareModal
+        open={is3DModalOpen}
+        onClose={() => setIs3DModalOpen(false)}
+        rawDsl={dsls.raw}
+        cleanedDsl={dsls.cleaned}
+      />
     </div>
   );
 };

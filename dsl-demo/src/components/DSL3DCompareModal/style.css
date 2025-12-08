@@ -1,0 +1,78 @@
+.dsl-3d-compare-modal .ant-modal {
+  top: 10px;
+  padding-bottom: 10px;
+}
+
+.dsl-3d-compare-modal .ant-modal-content {
+  background: rgb(255, 255, 255);
+  height: calc(100vh - 20px);
+}
+
+.dsl-3d-compare-modal .ant-modal-header {
+  background: rgb(255, 255, 255);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  color: rgb(15, 23, 42);
+}
+
+.dsl-3d-compare-modal .ant-modal-body {
+  padding: 0;
+  height: calc(100vh - 80px);
+  overflow: hidden;
+}
+
+.dsl-3d-compare-modal__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+.dsl-3d-compare-modal__title-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dsl-3d-compare-modal__selected-info {
+  font-size: 12px;
+  color: #666;
+  font-weight: normal;
+}
+
+.dsl-3d-compare-modal__layout {
+  display: flex;
+  height: 100%;
+  background: rgb(248, 250, 252);
+  gap: 4px;
+}
+
+.dsl-3d-compare-modal__viewport {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 8px;
+  min-height: 400px;
+}
+
+.dsl-3d-compare-modal__header {
+  padding: 8px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.dsl-3d-compare-modal__canvas {
+  flex: 1;
+  width: 100%;
+  min-height: 500px;
+  position: relative;
+}

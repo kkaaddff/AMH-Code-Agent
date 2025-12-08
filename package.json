@@ -11,6 +11,7 @@
       "fta-agent-core"
     ],
     "nohoist": [
+      "**/dsl-demo/**",
       "**/fta-layout-design/**"
     ]
   },
@@ -23,6 +24,7 @@
     "typecheck": "yarn workspace @fta/agent-core typecheck"
   },
   "resolutions": {
+    "esbuild": "0.25.12",
     "zod": "4.1.12"
   },
   "engines": {
