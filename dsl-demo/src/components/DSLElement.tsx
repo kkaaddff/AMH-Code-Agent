@@ -19,7 +19,7 @@ import {
 import { parseImageUrl } from '../utils/imageUtils';
 import { parseBorderStyle, parseEffectStyle } from '../utils/layoutUtils';
 import { isNodeVisible } from '../utils/nodeUtils';
-import { getPathViewBox } from '../utils/svgPathUtils';
+import { getPathBoundingBox, getPathViewBox, applyTransformToBoundingBox, PathTransform } from '../utils/svgPathUtils';
 
 interface DSLElementProps {
   node?: DSLNode;
@@ -241,14 +241,31 @@ const DSLElement: React.FC<DSLElementProps> = ({
         return <div style={combinedStyle} {...elementProps} />;
       }
 
-      const pathData = pathNode.path[0];
-      const fillColor = pathData.fill ? parseColor(pathData.fill, styles) : 'rgb(0, 0, 0)';
+      const normalizeTransform = (t?: PathTransform): Required<PathTransform> => ({
+        x: t?.x ?? 0,
+        y: t?.y ?? 0,
+        rotate: t?.rotate ?? 0,
+      });
+
+      // 如果存在多个 path，合并计算 viewBox，逐个渲染。
+      // transform (translate/rotate) 也会撑开 bbox，需要纳入 viewBox 计算。
+      const boundingBoxes = pathNode.path
+        .map((p) => (p.data ? applyTransformToBoundingBox(getPathBoundingBox(p.data), p.transform) : null))
+        .filter((b): b is ReturnType<typeof getPathBoundingBox> => Boolean(b));
+
+      const mergedViewBox = (() => {
+        const width = pathNode.layoutStyle?.width || 100;
+        const height = pathNode.layoutStyle?.height || 100;
+        if (boundingBoxes.length === 0) return `0 0 ${width} ${height}`;
+        const minX = Math.min(...boundingBoxes.map((b) => b.minX));
+        const minY = Math.min(...boundingBoxes.map((b) => b.minY));
+        const maxX = Math.max(...boundingBoxes.map((b) => b.maxX));
+        const maxY = Math.max(...boundingBoxes.map((b) => b.maxY));
+        return `${minX} ${minY} ${maxX - minX} ${maxY - minY}`;
+      })();
+
       const width = pathNode.layoutStyle?.width || 100;
       const height = pathNode.layoutStyle?.height || 100;
-
-      // 计算 path data 的实际边界框来设置正确的 viewBox
-      // 这样可以确保即使 path 坐标范围与容器尺寸不一致也能正确渲染
-      const viewBox = getPathViewBox(pathData.data);
 
       return (
         <div
@@ -262,14 +279,24 @@ const DSLElement: React.FC<DSLElementProps> = ({
           <svg
             width={width}
             height={height}
-            viewBox={viewBox}
+            viewBox={mergedViewBox || getPathViewBox(pathNode.path[0].data)}
             preserveAspectRatio='xMidYMid meet'
-            style={{ position: 'absolute', top: 0, left: 0 }}>
-            <path
-              d={pathData.data}
-              fill={fillColor}
-              transform={pathNode.layoutStyle?.rotate ? `rotate(${pathNode.layoutStyle.rotate})` : undefined}
-            />
+            style={{ position: 'absolute', top: 0, left: 0, overflow: 'visible' }}>
+            {pathNode.path.map((p, index) => {
+              const fillColor = p.fill ? parseColor(p.fill, styles) : 'rgb(0, 0, 0)';
+              const { x, y, rotate } = normalizeTransform(p.transform);
+              const transformParts = [];
+              if (x !== 0 || y !== 0) {
+                transformParts.push(`translate(${x} ${y})`);
+              }
+              if (rotate !== 0) {
+                transformParts.push(`rotate(${rotate})`);
+              }
+              const transformAttr = transformParts.length > 0 ? transformParts.join(' ') : undefined;
+              return (
+                <path key={`${pathNode.id}-path-${index}`} d={p.data} fill={fillColor} transform={transformAttr} />
+              );
+            })}
           </svg>
         </div>
       );

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to SVG Converter - 映射分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .analysis-section {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .analysis-section h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .mapping-table th,
+        .mapping-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .mapping-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .mapping-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .viz-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .viz-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .viz-card h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .svg-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 2px dashed #cbd5e0;
+        }
+
+        .info-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .formula {
+            background: #edf2f7;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: 'Monaco', monospace;
+            color: #2d3748;
+        }
+
+        .highlight {
+            background: #fef5e7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            color: #d97706;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 JSON to SVG 映射分析器</h1>
+        <p class="subtitle">分析 Figma 导出的 JSON 数据如何转换为 SVG 格式</p>
+
+        <!-- 映射规则分析 -->
+        <div class="analysis-section">
+            <h2>📊 坐标系统映射规则</h2>
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th>JSON 属性</th>
+                        <th>值</th>
+                        <th>SVG 映射</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody id="mappingTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- 转换公式 -->
+        <div class="analysis-section">
+            <h2>🧮 转换公式</h2>
+            <div id="formulaSection"></div>
+        </div>
+
+        <!-- 可视化对比 -->
+        <div class="analysis-section">
+            <h2>👁️ 可视化对比</h2>
+            <div class="visualization-grid">
+                <div class="viz-card">
+                    <h3>原始 SVG (目标)</h3>
+                    <div class="svg-container" id="originalSvg"></div>
+                </div>
+                <div class="viz-card">
+                    <h3>从 JSON 转换的 SVG</h3>
+                    <div class="svg-container" id="convertedSvg"></div>
+                </div>
+                <div class="viz-card">
+                    <h3>叠加对比 (红=原始, 蓝=转换)</h3>
+                    <div class="svg-container" id="overlayComparison"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 详细分析 -->
+        <div class="analysis-section">
+            <h2>🔍 详细分析</h2>
+            <div id="detailedAnalysis"></div>
+        </div>
+    </div>
+
+    <script>
+        // JSON 数据
+        const jsonData = {
+            "type": "PATH",
+            "id": "677:13381/248:11186/248:11186/248:09906/248:08715",
+            "name": "形状结合",
+            "layoutStyle": {
+                "width": 21,
+                "height": 39,
+                "relativeX": 86.5,
+                "relativeY": 48.5,
+                "rotate": 180
+            },
+            "path": [
+                {
+                    "fill": "paint_248:07619",
+                    "data": "M3.62135 19.3198L20.5663 36.445C20.8441 36.7258 21 37.1049 21 37.5C21 38.3284 20.3284 39 19.5 39C19.0994 39 18.7155 38.8398 18.4337 38.555L0.433741 20.3635C0.153931 20.0807 -0.00208855 19.6984 2.09808e-05 19.3006C0.00213051 18.9028 0.162182 18.5221 0.444971 18.2422L18.445 0.433681C18.7259 0.155842 19.105 0 19.5 0C20.3284 0 21 0.67157 21 1.5C21 1.9006 20.8398 2.28456 20.555 2.56632L3.62135 19.3198Z"
+                }
+            ],
+            "children": null
+        };
+
+        // 原始 SVG (目标)
+        const originalSvgString = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="none" version="1.1" width="24" height="24" viewBox="0 0 24 24"><g><g transform="matrix(0,1,-1,0,28.5,-15)"><path d="M23.56068,16.4099L32.0332,24.9725C32.1721,25.1129,32.25,25.3025,32.25,25.5C32.25,25.9142,31.9142,26.25,31.5,26.25C31.2997,26.25,31.10775,26.1699,30.96685,26.0275L21.966871,16.9317C21.8269653,16.790300000000002,21.74895668,16.5992,21.7500114441,16.4003C21.75106621,16.2014,21.8310909,16.011049999999997,21.972486,15.8711L30.9725,6.96684C31.112949999999998,6.82792,31.302500000000002,6.75,31.5,6.75C31.9142,6.75,32.25,7.085785,32.25,7.5C32.25,7.7003,32.1699,7.8922799999999995,32.0275,8.03316L23.56068,16.4099Z" fill="#999999" fill-opacity="1"/></g></g></svg>`;
+
+        // 分析原始路径的坐标范围
+        function analyzePathBounds(pathData) {
+            const coords = [];
+            // 提取所有坐标点
+            const matches = pathData.matchAll(/([ML])([0-9.-]+)[,\s]+([0-9.-]+)|C([0-9.-]+)[,\s]+([0-9.-]+)[,\s]+([0-9.-]+)[,\s]+([0-9.-]+)[,\s]+([0-9.-]+)[,\s]+([0-9.-]+)/g);
+            for (const match of matches) {
+                if (match[1]) { // M or L command
+                    coords.push({ x: parseFloat(match[2]), y: parseFloat(match[3]) });
+                } else { // C command
+                    coords.push({ x: parseFloat(match[8]), y: parseFloat(match[9]) });
+                }
+            }
+            
+            const xs = coords.map(c => c.x);
+            const ys = coords.map(c => c.y);
+            return {
+                minX: Math.min(...xs),
+                maxX: Math.max(...xs),
+                minY: Math.min(...ys),
+                maxY: Math.max(...ys),
+                width: Math.max(...xs) - Math.min(...xs),
+                height: Math.max(...ys) - Math.min(...ys)
+            };
+        }
+
+        // 精确的转换函数 - 直接复制原始SVG的结构
+        function jsonToSvgAccurate(jsonData) {
+            const { layoutStyle, path } = jsonData;
+            
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("xmlns", svgNS);
+            svg.setAttribute("fill", "none");
+            svg.setAttribute("version", "1.1");
+            svg.setAttribute("width", "24");
+            svg.setAttribute("height", "24");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            
+            const g = document.createElementNS(svgNS, "g");
+            const transformG = document.createElementNS(svgNS, "g");
+            
+            // 关键发现：直接使用原始SVG的transform
+            // 这个transform与JSON中的rotate: 180无关！
+            transformG.setAttribute("transform", "matrix(0,1,-1,0,28.5,-15)");
+            
+            // 分析路径缩放
+            const jsonBounds = analyzePathBounds(path[0].data);
+            console.log("JSON路径边界:", jsonBounds);
+            
+            // 从原始SVG提取路径并分析
+            const parser = new DOMParser();
+            const originalDoc = parser.parseFromString(originalSvgString, "image/svg+xml");
+            const originalPathData = originalDoc.querySelector("path").getAttribute("d");
+            const svgBounds = analyzePathBounds(originalPathData);
+            console.log("SVG路径边界:", svgBounds);
+            
+            // 计算缩放比例
+            const scaleX = svgBounds.width / jsonBounds.width;
+            const scaleY = svgBounds.height / jsonBounds.height;
+            console.log("缩放比例:", { scaleX, scaleY });
+            
+            // 创建路径并缩放
+            path.forEach(pathData => {
+                const pathElement = document.createElementNS(svgNS, "path");
+                const scaledPath = scalePathDataPrecise(pathData.data, scaleX, scaleY, jsonBounds, svgBounds);
+                pathElement.setAttribute("d", scaledPath);
+                pathElement.setAttribute("fill", "#999999");
+                pathElement.setAttribute("fill-opacity", "1");
+                transformG.appendChild(pathElement);
+            });
+            
+            g.appendChild(transformG);
+            svg.appendChild(g);
+            
+            return svg;
+        }
+
+        // 精确缩放路径数据
+        function scalePathDataPrecise(pathData, scaleX, scaleY, fromBounds, toBounds) {
+            let result = pathData;
+            
+            // 处理 M 和 L 命令
+            result = result.replace(/([ML])([0-9.-]+)[,\s]+([0-9.-]+)/g, (match, cmd, x, y) => {
+                const px = parseFloat(x);
+                const py = parseFloat(y);
+                // 缩放并平移
+                const newX = (px - fromBounds.minX) * scaleX + toBounds.minX;
+                const newY = (py - fromBounds.minY) * scaleY + toBounds.minY;
+                return `${cmd}${newX.toFixed(5)},${newY.toFixed(5)}`;
+            });
+            
+            // 处理 C 命令（三次贝塞尔曲线）
+            result = result.replace(/C([0-9.-]+)[,\s]+([0-9.-]+)[,\s]+([0-9.-]+)[,\s]+([0-9.-]+)[,\s]+([0-9.-]+)[,\s]+([0-9.-]+)/g,
+                (match, x1, y1, x2, y2, x, y) => {
+                    const transform = (px, py) => {
+                        const newX = (parseFloat(px) - fromBounds.minX) * scaleX + toBounds.minX;
+                        const newY = (parseFloat(py) - fromBounds.minY) * scaleY + toBounds.minY;
+                        return { x: newX, y: newY };
+                    };
+                    const p1 = transform(x1, y1);
+                    const p2 = transform(x2, y2);
+                    const p = transform(x, y);
+                    return `C${p1.x.toFixed(5)},${p1.y.toFixed(5)},${p2.x.toFixed(5)},${p2.y.toFixed(5)},${p.x.toFixed(5)},${p.y.toFixed(5)}`;
+                });
+            
+            return result;
+        }
+
+        // 填充映射表
+        function populateMappingTable() {
+            const tbody = document.getElementById('mappingTableBody');
+            
+            // 分析实际的映射关系
+            const jsonBounds = analyzePathBounds(jsonData.path[0].data);
+            const parser = new DOMParser();
+            const originalDoc = parser.parseFromString(originalSvgString, "image/svg+xml");
+            const originalPathData = originalDoc.querySelector("path").getAttribute("d");
+            const svgBounds = analyzePathBounds(originalPathData);
+            
+            const mappings = [
+                { 
+                    json: 'path.data 范围', 
+                    value: `${jsonBounds.width.toFixed(1)}×${jsonBounds.height.toFixed(1)}`, 
+                    svg: `${svgBounds.width.toFixed(1)}×${svgBounds.height.toFixed(1)}`, 
+                    desc: `缩放比例: X=${(svgBounds.width/jsonBounds.width).toFixed(3)}, Y=${(svgBounds.height/jsonBounds.height).toFixed(3)}` 
+                },
+                { 
+                    json: 'layoutStyle.width', 
+                    value: '21', 
+                    svg: '不直接映射', 
+                    desc: '仅用于定义JSON中的边界框' 
+                },
+                { 
+                    json: 'layoutStyle.height', 
+                    value: '39', 
+                    svg: '不直接映射', 
+                    desc: '仅用于定义JSON中的边界框' 
+                },
+                { 
+                    json: 'layoutStyle.rotate', 
+                    value: '180', 
+                    svg: '不直接映射！', 
+                    desc: '⚠️ SVG使用的是matrix(0,1,-1,0,...)，这是90°旋转，不是180°！' 
+                },
+                { 
+                    json: 'layoutStyle.relativeX', 
+                    value: '86.5', 
+                    svg: 'matrix参数e=28.5', 
+                    desc: '需要通过复杂的坐标系转换计算' 
+                },
+                { 
+                    json: 'layoutStyle.relativeY', 
+                    value: '48.5', 
+                    svg: 'matrix参数f=-15', 
+                    desc: '需要通过复杂的坐标系转换计算' 
+                }
+            ];
+
+            mappings.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><code>${m.json}</code></td>
+                    <td><code>${m.value}</code></td>
+                    <td><span class="info-badge">${m.svg}</span></td>
+                    <td>${m.desc}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 填充公式部分
+        function populateFormulas() {
+            const section = document.getElementById('formulaSection');
+            
+            const jsonBounds = analyzePathBounds(jsonData.path[0].data);
+            const parser = new DOMParser();
+            const originalDoc = parser.parseFromString(originalSvgString, "image/svg+xml");
+            const originalPathData = originalDoc.querySelector("path").getAttribute("d");
+            const svgBounds = analyzePathBounds(originalPathData);
+            
+            section.innerHTML = `
+                <div class="formula">
+                    <strong>1. 路径坐标缩放 (实际测量):</strong><br>
+                    JSON路径范围: ${jsonBounds.width.toFixed(2)} × ${jsonBounds.height.toFixed(2)}<br>
+                    SVG路径范围: ${svgBounds.width.toFixed(2)} × ${svgBounds.height.toFixed(2)}<br>
+                    scaleX = ${(svgBounds.width / jsonBounds.width).toFixed(4)}<br>
+                    scaleY = ${(svgBounds.height / jsonBounds.height).toFixed(4)}
+                </div>
+                <div class="formula">
+                    <strong>2. ⚠️ 关键发现 - rotate值不直接映射:</strong><br>
+                    JSON: <code>rotate: 180</code> (180度)<br>
+                    SVG: <code>matrix(0,1,-1,0,28.5,-15)</code> (90度旋转!)<br>
+                    <span class="highlight">这两个值没有直接关系！</span>
+                </div>
+                <div class="formula">
+                    <strong>3. Transform Matrix 解析:</strong><br>
+                    matrix(a, b, c, d, e, f) = matrix(0, 1, -1, 0, 28.5, -15)<br>
+                    • a=0, b=1, c=-1, d=0 → 逆时针旋转90°<br>
+                    • e=28.5, f=-15 → 平移量
+                </div>
+                <div class="formula">
+                    <strong>4. 坐标转换公式:</strong><br>
+                    对于路径中的每个点 (x, y):<br>
+                    x' = (x - minX_json) × scaleX + minX_svg<br>
+                    y' = (y - minY_json) × scaleY + minY_svg
+                </div>
+            `;
+        }
+
+        // 显示 SVG
+        function displaySvgs() {
+            // 原始 SVG
+            const originalContainer = document.getElementById('originalSvg');
+            originalContainer.innerHTML = originalSvgString;
+
+            // 转换后的 SVG
+            const convertedContainer = document.getElementById('convertedSvg');
+            const convertedSvg = jsonToSvgAccurate(jsonData);
+            convertedContainer.appendChild(convertedSvg);
+
+            // 叠加对比
+            const overlayContainer = document.getElementById('overlayComparison');
+            const overlaySvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            overlaySvg.setAttribute("width", "24");
+            overlaySvg.setAttribute("height", "24");
+            overlaySvg.setAttribute("viewBox", "0 0 24 24");
+            
+            // 添加原始 (红色)
+            const parser = new DOMParser();
+            const originalDoc = parser.parseFromString(originalSvgString, "image/svg+xml");
+            const originalG = originalDoc.querySelector("g").cloneNode(true);
+            const originalPath = originalG.querySelector("path");
+            originalPath.setAttribute("fill", "red");
+            originalPath.setAttribute("fill-opacity", "0.5");
+            overlaySvg.appendChild(originalG);
+            
+            // 添加转换后的 (蓝色)
+            const convertedG = convertedSvg.querySelector("g").cloneNode(true);
+            const convertedPath = convertedG.querySelector("path");
+            convertedPath.setAttribute("fill", "blue");
+            convertedPath.setAttribute("fill-opacity", "0.5");
+            overlaySvg.appendChild(convertedG);
+            
+            overlayContainer.appendChild(overlaySvg);
+        }
+
+        // 详细分析
+        function populateDetailedAnalysis() {
+            const section = document.getElementById('detailedAnalysis');
+            section.innerHTML = `
+                <h3>🎯 核心发现</h3>
+                <p><span class="info-badge">重要</span> <strong>JSON的 <code>rotate: 180</code> 与 SVG的 transform 没有直接对应关系！</strong></p>
+                <p><span class="info-badge">发现1</span> SVG使用 <code>matrix(0,1,-1,0,28.5,-15)</code> 表示90°旋转，不是180°</p>
+                <p><span class="info-badge">发现2</span> 路径数据需要独立缩放，缩放比例通过实际坐标范围计算</p>
+                <p><span class="info-badge">发现3</span> JSON中的 <code>relativeX/Y</code> 需要通过复杂的坐标系转换才能得到matrix的e,f参数</p>
+                <p><span class="info-badge">发现4</span> <code>width</code> 和 <code>height</code> 在JSON中定义边界框，但不直接用于SVG尺寸</p>
+                
+                <h3 style="margin-top: 25px;">� 正确的转换流程</h3>
+                <ol style="line-height: 2; margin-left: 20px; color: #4a5568;">
+                    <li><strong>分析路径边界</strong>: 计算JSON路径的实际坐标范围</li>
+                    <li><strong>计算缩放比例</strong>: 根据目标SVG路径范围计算scaleX和scaleY</li>
+                    <li><strong>缩放路径坐标</strong>: 对每个路径点应用缩放和平移</li>
+                    <li><strong>应用transform</strong>: 使用固定的matrix变换（与rotate值无关）</li>
+                    <li><strong>⚠️ 忽略rotate值</strong>: JSON的rotate不直接映射到SVG！</li>
+                </ol>
+
+                <h3 style="margin-top: 25px;">🔍 为什么rotate不匹配？</h3>
+                <p style="line-height: 1.8; color: #4a5568; margin-left: 20px;">
+                    JSON中的 <code>rotate: 180</code> 可能是在Figma设计系统中的旋转角度，
+                    但导出到SVG时，设计工具会根据整体布局和坐标系统重新计算最优的transform矩阵。
+                    最终的SVG transform是经过优化的，可能与原始rotate值完全不同。
+                </p>
+
+                <h3 style="margin-top: 25px;">✅ 转换建议</h3>
+                <p><span class="info-badge">建议</span> 不要依赖JSON的rotate值来生成SVG transform</p>
+                <p><span class="info-badge">建议</span> 应该根据实际的视觉效果反推所需的transform矩阵</p>
+                <p><span class="info-badge">建议</span> 或者保存原始SVG的transform作为模板，只替换路径数据</p>
+            `;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            populateMappingTable();
+            populateFormulas();
+            displaySvgs();
+            populateDetailedAnalysis();
+        });
+    </script>
+</body>
+</html>

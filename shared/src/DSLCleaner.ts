@@ -1,47 +1,57 @@
 // ==================== 类型定义 ====================
 
-import type { DSLNode, DSLLayoutStyle } from './dsl';
+import type { DSLNode, DSLLayoutStyle, DSLPathItem, DSLTransform } from './dsl';
 
 type LayoutStyle = DSLLayoutStyle;
 
-// 带有绝对坐标的节点类型别名（内部使用）
-// 这些属性现在已定义在 DSLBaseNode 中作为可选属性
-// DSLNode 本身已包含这些可选属性，这里的类型别名仅用于语义明确
-type NodeWithAbsolutePos = DSLNode;
-
 interface CleanerConfig {
   // 节点过滤配置
-  removeEmptyNodes: boolean; // 移除空节点
-  removeLayoutHelpers: boolean; // 移除布局辅助容器
-  removeMaskLayers: boolean; // 移除蒙版层
-  removeOutOfBounds: boolean; // 移除超界节点
-  removeInvisibleNodes: boolean; // 移除不可见节点
+  /** 移除空节点 */
+  removeEmptyNodes: boolean;
+  /** 移除蒙版层 */
+  removeMaskLayers: boolean;
+  /** 移除超界节点 */
+  removeOutOfBounds: boolean;
+  /** 移除不可见节点 */
+  removeInvisibleNodes: boolean;
 
   // Icon 处理配置
-  detectIcons: boolean; // 检测 Icon
-  mergeIconLayers: boolean; // 合并 Icon 图层
-  iconMaxSize: number; // Icon 最大尺寸阈值
-  iconMinLayers: number; // Icon 最小图层数
-  iconProximityThreshold: number; // Icon 路径邻近合并阈值
+  /** 检测 Icon */
+  detectIcons: boolean;
+  /** 合并 Icon 图层 */
+  mergeIconLayers: boolean;
+  /** 邻近合并参与的 Icon 最大尺寸阈值 */
+  iconMergeMaxSize: number;
+  /** Icon 最小图层数 */
+  iconMinLayers: number;
+  /** Icon 路径邻近合并阈值 */
+  iconProximityThreshold: number;
 
   // 层级优化配置
-  buildZIndex: boolean; // 计算 z-index
-  checkOverlapping: boolean; // 检查遮挡关系
-  removeCompletelyHidden: boolean; // 移除完全被遮挡的节点
+  /** 计算 z-index */
+  buildZIndex: boolean;
+  /** 检查遮挡关系 */
+  checkOverlapping: boolean;
+  /** 移除完全被遮挡的节点 */
+  removeCompletelyHidden: boolean;
 
   // 树结构优化配置
-  flattenSingleChild: boolean; // 扁平化单子节点
-  mergeSimilarNodes: boolean; // 合并相似节点
-  optimizeDepth: boolean; // 优化树深度
-  preserveSemantics: boolean; // 保留语义化结构
+  /** 扁平化单子节点 */
+  flattenSingleChild: boolean;
+  /** 优化树深度 */
+  optimizeDepth: boolean;
+  /** 保留语义化结构 */
+  preserveSemantics: boolean;
 
   // 调试配置
-  verbose: boolean; // 详细日志
-  dryRun: boolean; // 干运行模式（不实际修改）
+  /** 详细日志 */
+  verbose: boolean;
+  /** 干运行模式（不实际修改） */
+  dryRun: boolean;
 }
 
 interface CleanResult {
-  nodes: DSLNode[];
+  root: DSLNode;
   icons: IconNode[];
   removed: RemovedNode[];
   statistics: Statistics;
@@ -85,23 +95,22 @@ export interface Statistics {
 
 const DEFAULT_CONFIG: CleanerConfig = {
   removeEmptyNodes: true,
-  removeLayoutHelpers: false, // 禁用，使用 flattenSingleChild 代替
+
   removeMaskLayers: true,
   removeOutOfBounds: true,
   removeInvisibleNodes: true,
 
   detectIcons: true,
   mergeIconLayers: true,
-  iconMaxSize: 100,
+  iconMergeMaxSize: 25,
   iconMinLayers: 2,
-  iconProximityThreshold: 4,
+  iconProximityThreshold: 10,
 
   buildZIndex: true,
   checkOverlapping: true,
   removeCompletelyHidden: true,
 
   flattenSingleChild: true,
-  mergeSimilarNodes: false, // 禁用，容易造成问题
   optimizeDepth: true,
   preserveSemantics: true,
 
@@ -110,6 +119,45 @@ const DEFAULT_CONFIG: CleanerConfig = {
 };
 
 const Z_INDEX_DEPTH_WEIGHT = 100000;
+
+function getAbsoluteX(node: DSLNode): number {
+  return node.layoutStyle?._absoluteX ?? 0;
+}
+
+function getAbsoluteY(node: DSLNode): number {
+  return node.layoutStyle?._absoluteY ?? 0;
+}
+
+function getWidth(node: DSLNode): number {
+  return node.layoutStyle?.width ?? 0;
+}
+
+function getHeight(node: DSLNode): number {
+  return node.layoutStyle?.height ?? 0;
+}
+
+const isAdjacent = (a: DSLNode, b: DSLNode, threshold: number) => {
+  const ax = getAbsoluteX(a);
+  const ay = getAbsoluteY(a);
+  const aw = getWidth(a);
+  const ah = getHeight(a);
+
+  const bx = getAbsoluteX(b);
+  const by = getAbsoluteY(b);
+  const bw = getWidth(b);
+  const bh = getHeight(b);
+
+  const overlapX = ax <= bx + bw && bx <= ax + aw;
+  const overlapY = ay <= by + bh && by <= ay + ah;
+  if (overlapX && overlapY) {
+    return true;
+  }
+
+  const gapX = Math.max(0, Math.max(ax - (bx + bw), bx - (ax + aw)));
+  const gapY = Math.max(0, Math.max(ay - (by + bh), by - (ay + ah)));
+  const distance = Math.max(gapX, gapY);
+  return distance <= threshold;
+};
 
 // ==================== 主清洗类 ====================
 
@@ -124,44 +172,22 @@ class DSLCleaner {
   }
 
   /**
-   * 主清洗入口
-   * 支持多种输入格式：
-   * - { nodes: DSLNode[] }
-   * - { dsl: { nodes: DSLNode[] } }
-   * - { dsl: { nodes: DSLNode[], styles: ... } }
+   * 主清洗入口（单 root 节点）
    */
-  public clean(dslData: { nodes: DSLNode[] } | { dsl: { nodes: DSLNode[]; styles?: any } }): CleanResult {
+  public clean(root: DSLNode): CleanResult {
     this.startTime = Date.now();
     this.removed = [];
     this.icons = [];
 
-    // 提取 nodes 数组，支持多种输入格式
-    let nodes: DSLNode[];
-    if ('dsl' in dslData && dslData.dsl) {
-      nodes = dslData.dsl.nodes;
-    } else if ('nodes' in dslData) {
-      nodes = dslData.nodes;
-    } else {
-      throw new Error('Invalid DSL data format. Expected { nodes: ... } or { dsl: { nodes: ... } }');
-    }
+    const nodes: DSLNode[] = [root];
 
     this.log('开始清洗 DSL...', nodes.length, '个根节点');
 
     // =====================================================
     // 阶段 0：预处理 - 计算所有节点的绝对坐标
     // =====================================================
-    let nodesWithAbsPos = this.calculateAbsolutePositions(nodes, 0, 0);
+    const nodesWithAbsPos = this.calculateAbsolutePositions(nodes, 0, 0);
     this.log('绝对坐标计算完成');
-
-    // =====================================================
-    // 阶段 0.5：Icon 邻近路径合并（基于绝对坐标优先处理）
-    // =====================================================
-    if (this.config.detectIcons && this.config.mergeIconLayers) {
-      const mergeResult = this.mergeProximatePaths(nodesWithAbsPos);
-      nodesWithAbsPos = mergeResult.nodes;
-      this.icons.push(...mergeResult.icons);
-      this.log('Icon 邻近路径合并完成，新增', mergeResult.icons.length, '个 Icons');
-    }
 
     // =====================================================
     // 阶段 1：节点过滤（使用绝对坐标）
@@ -170,20 +196,18 @@ class DSLCleaner {
     this.log('节点过滤完成，剩余', filteredNodes.length, '个节点');
 
     // =====================================================
-    // 阶段 2：Icon 检测与合并
-    // =====================================================
-    if (this.config.detectIcons) {
-      filteredNodes = this.processIcons(filteredNodes);
-      this.log('Icon 处理完成，检测到', this.icons.length, '个 Icons');
-    }
-
-    // =====================================================
-    // 阶段 3：层级分析与优化（使用绝对坐标）
+    // 阶段 2：层级分析与优化（使用绝对坐标）
     // =====================================================
     if (this.config.buildZIndex) {
       filteredNodes = this.optimizeLayering(filteredNodes);
       this.log('层级优化完成');
     }
+
+    // =====================================================
+    // 阶段 3：Icon 处理（邻近合并 + 检测）
+    // =====================================================
+    filteredNodes = this.processIconsWithMerge(filteredNodes);
+    this.log('Icon 处理完成，检测到', this.icons.length, '个 Icons');
 
     // =====================================================
     // 阶段 4：树结构优化
@@ -199,8 +223,10 @@ class DSLCleaner {
 
     const processingTime = Date.now() - this.startTime;
 
+    const finalRoot = finalNodes[0];
+
     return {
-      nodes: this.config.dryRun ? nodes : finalNodes,
+      root: this.config.dryRun ? root : finalRoot,
       icons: this.icons,
       removed: this.removed,
       statistics: {
@@ -221,22 +247,21 @@ class DSLCleaner {
   /**
    * 遍历所有节点，计算每个节点的绝对坐标
    */
-  private calculateAbsolutePositions(nodes: DSLNode[], parentAbsX: number, parentAbsY: number): NodeWithAbsolutePos[] {
+  private calculateAbsolutePositions(nodes: DSLNode[], parentAbsX: number, parentAbsY: number): DSLNode[] {
     return nodes.map((node) => {
       const relX = node.layoutStyle?.relativeX || 0;
       const relY = node.layoutStyle?.relativeY || 0;
-      const width = node.layoutStyle?.width || 0;
-      const height = node.layoutStyle?.height || 0;
 
       const absX = parentAbsX + relX;
       const absY = parentAbsY + relY;
 
-      const result: NodeWithAbsolutePos = {
+      const result: DSLNode = {
         ...node,
-        _absoluteX: absX,
-        _absoluteY: absY,
-        _absoluteWidth: width,
-        _absoluteHeight: height,
+        layoutStyle: {
+          ...node.layoutStyle,
+          _absoluteX: absX,
+          _absoluteY: absY,
+        },
       };
 
       if (node.children && node.children.length > 0) {
@@ -249,7 +274,7 @@ class DSLCleaner {
 
   // ==================== 阶段 1：节点过滤（使用绝对坐标） ====================
 
-  private filterNodes(nodes: NodeWithAbsolutePos[], parent?: NodeWithAbsolutePos): NodeWithAbsolutePos[] {
+  private filterNodes(nodes: DSLNode[], parent?: DSLNode): DSLNode[] {
     return nodes
       .map((node) => {
         // 检查各种过滤条件
@@ -282,7 +307,7 @@ class DSLCleaner {
 
         return node;
       })
-      .filter((node): node is NodeWithAbsolutePos => node !== null);
+      .filter((node): node is DSLNode => node !== null);
   }
 
   /**
@@ -326,7 +351,7 @@ class DSLCleaner {
   /**
    * 使用绝对坐标判断是否超出父容器边界
    */
-  private isOutOfBoundsAbsolute(node: NodeWithAbsolutePos, parent: NodeWithAbsolutePos): boolean {
+  private isOutOfBoundsAbsolute(node: DSLNode, parent: DSLNode): boolean {
     // 检查父容器是否裁剪内容
     const parentClips =
       (parent as any).mask === 'outline' ||
@@ -341,15 +366,15 @@ class DSLCleaner {
     }
 
     // 使用绝对坐标计算边界
-    const nodeLeft = node._absoluteX || 0;
-    const nodeTop = node._absoluteY || 0;
-    const nodeRight = (node._absoluteX || 0) + (node._absoluteWidth || 0);
-    const nodeBottom = (node._absoluteY || 0) + (node._absoluteHeight || 0);
+    const nodeLeft = getAbsoluteX(node);
+    const nodeTop = getAbsoluteY(node);
+    const nodeRight = nodeLeft + getWidth(node);
+    const nodeBottom = nodeTop + getHeight(node);
 
-    const parentLeft = parent._absoluteX || 0;
-    const parentTop = parent._absoluteY || 0;
-    const parentRight = (parent._absoluteX || 0) + (parent._absoluteWidth || 0);
-    const parentBottom = (parent._absoluteY || 0) + (parent._absoluteHeight || 0);
+    const parentLeft = getAbsoluteX(parent);
+    const parentTop = getAbsoluteY(parent);
+    const parentRight = parentLeft + getWidth(parent);
+    const parentBottom = parentTop + getHeight(parent);
 
     // 完全在左侧或上方
     if (nodeRight < parentLeft || nodeBottom < parentTop) {
@@ -366,7 +391,7 @@ class DSLCleaner {
 
   // ==================== 阶段 2：Icon 处理 ====================
 
-  private processIcons(nodes: NodeWithAbsolutePos[]): NodeWithAbsolutePos[] {
+  private processIcons(nodes: DSLNode[]): DSLNode[] {
     return nodes.map((node) => {
       const iconNode = this.detectIcon(node);
       if (iconNode) {
@@ -382,17 +407,28 @@ class DSLCleaner {
     });
   }
 
-  private detectIcon(node: NodeWithAbsolutePos): IconNode | null {
-    if (node.type !== 'GROUP' && node.type !== 'FRAME') {
-      return null;
+  /**
+   * Icon 处理统一入口：可选邻近合并 + 检测
+   */
+  private processIconsWithMerge(nodes: DSLNode[]): DSLNode[] {
+    let workingNodes = nodes;
+
+    if (this.config.detectIcons && this.config.mergeIconLayers) {
+      const mergeResult = this.mergeProximatePaths(workingNodes);
+      workingNodes = mergeResult.nodes;
+      this.icons.push(...mergeResult.icons);
+      this.log('Icon 邻近路径合并完成，新增', mergeResult.icons.length, '个 Icons');
     }
 
-    const width = node._absoluteWidth || 0;
-    const height = node._absoluteHeight || 0;
+    if (this.config.detectIcons) {
+      workingNodes = this.processIcons(workingNodes);
+    }
 
-    const isSmallEnough = width <= this.config.iconMaxSize && height <= this.config.iconMaxSize;
+    return workingNodes;
+  }
 
-    if (!isSmallEnough) {
+  private detectIcon(node: DSLNode): IconNode | null {
+    if (node.type !== 'GROUP' && node.type !== 'FRAME') {
       return null;
     }
 
@@ -406,7 +442,7 @@ class DSLCleaner {
     const hasIconKeyword =
       name.includes('icon') || name.includes('图标') || name.includes('路径') || name.includes('形状');
 
-    if (svgLayers.length >= this.config.iconMinLayers && (isSmallEnough || hasIconKeyword)) {
+    if (svgLayers.length >= this.config.iconMinLayers && hasIconKeyword) {
       return {
         type: 'ICON',
         id: node.id,
@@ -457,8 +493,7 @@ class DSLCleaner {
   }
 
   // ==================== 阶段 3：层级优化（使用绝对坐标） ====================
-
-  private optimizeLayering(nodes: NodeWithAbsolutePos[]): NodeWithAbsolutePos[] {
+  private optimizeLayering(nodes: DSLNode[]): DSLNode[] {
     if (!this.config.checkOverlapping) {
       return nodes;
     }
@@ -502,7 +537,7 @@ class DSLCleaner {
   /**
    * 使用绝对坐标判断下层节点是否被上层节点完全遮挡
    */
-  private isCompletelyOverlappedAbsolute(lower: NodeWithAbsolutePos, upper: NodeWithAbsolutePos): boolean {
+  private isCompletelyOverlappedAbsolute(lower: DSLNode, upper: DSLNode): boolean {
     const upperOpacity = typeof upper.opacity === 'string' ? parseFloat(upper.opacity) : upper.opacity;
     const isOpaque = !upperOpacity || upperOpacity >= 0.99;
     const upperFill = (upper as any).fill;
@@ -513,15 +548,15 @@ class DSLCleaner {
     }
 
     // 使用绝对坐标计算边界
-    const lowerLeft = lower._absoluteX || 0;
-    const lowerTop = lower._absoluteY || 0;
-    const lowerRight = (lower._absoluteX || 0) + (lower._absoluteWidth || 0);
-    const lowerBottom = (lower._absoluteY || 0) + (lower._absoluteHeight || 0);
+    const lowerLeft = getAbsoluteX(lower);
+    const lowerTop = getAbsoluteY(lower);
+    const lowerRight = lowerLeft + getWidth(lower);
+    const lowerBottom = lowerTop + getHeight(lower);
 
-    const upperLeft = upper._absoluteX || 0;
-    const upperTop = upper._absoluteY || 0;
-    const upperRight = (upper._absoluteX || 0) + (upper._absoluteWidth || 0);
-    const upperBottom = (upper._absoluteY || 0) + (upper._absoluteHeight || 0);
+    const upperLeft = getAbsoluteX(upper);
+    const upperTop = getAbsoluteY(upper);
+    const upperRight = upperLeft + getWidth(upper);
+    const upperBottom = upperTop + getHeight(upper);
 
     // 判断 lower 是否完全在 upper 内部
     return lowerLeft >= upperLeft && lowerTop >= upperTop && lowerRight <= upperRight && lowerBottom <= upperBottom;
@@ -555,11 +590,11 @@ class DSLCleaner {
   /**
    * 根据树深度 + 兄弟顺序计算 zIndex
    */
-  private applyZIndex(nodes: NodeWithAbsolutePos[], depth: number, counter: { value: number }): NodeWithAbsolutePos[] {
+  private applyZIndex(nodes: DSLNode[], depth: number, counter: { value: number }): DSLNode[] {
     return nodes.map((node) => {
       const order = counter.value++;
       const currentZIndex = depth * Z_INDEX_DEPTH_WEIGHT + order;
-      const result: NodeWithAbsolutePos = {
+      const result: DSLNode = {
         ...node,
         zIndex: currentZIndex,
       };
@@ -575,13 +610,13 @@ class DSLCleaner {
   /**
    * 展平节点列表（保留计算后的 zIndex）
    */
-  private flattenNodes(nodes: NodeWithAbsolutePos[]): NodeWithAbsolutePos[] {
-    const list: NodeWithAbsolutePos[] = [];
-    const walk = (items: NodeWithAbsolutePos[]) => {
+  private flattenNodes(nodes: DSLNode[]): DSLNode[] {
+    const list: DSLNode[] = [];
+    const walk = (items: DSLNode[]) => {
       items.forEach((n) => {
         list.push(n);
         if (n.children && n.children.length > 0) {
-          walk(n.children as NodeWithAbsolutePos[]);
+          walk(n.children);
         }
       });
     };
@@ -592,18 +627,14 @@ class DSLCleaner {
   /**
    * 根据可见性重新组装树；可选移除被遮挡节点
    */
-  private applyVisibility(
-    nodes: NodeWithAbsolutePos[],
-    visibility: Map<string, boolean>,
-    removeHidden: boolean
-  ): NodeWithAbsolutePos[] {
+  private applyVisibility(nodes: DSLNode[], visibility: Map<string, boolean>, removeHidden: boolean): DSLNode[] {
     return nodes
       .map((node) => {
         const isVisible = visibility.get(node.id) !== false;
-        const next: NodeWithAbsolutePos = { ...node, isVisible };
+        const next: DSLNode = { ...node, isVisible };
 
         if (node.children && node.children.length > 0) {
-          next.children = this.applyVisibility(node.children as NodeWithAbsolutePos[], visibility, removeHidden);
+          next.children = this.applyVisibility(node.children, visibility, removeHidden);
         }
 
         if (removeHidden && !isVisible) {
@@ -612,12 +643,12 @@ class DSLCleaner {
 
         return next;
       })
-      .filter((n): n is NodeWithAbsolutePos => n !== null);
+      .filter((n): n is DSLNode => n !== null);
   }
 
   // ==================== 阶段 4：树结构优化 ====================
 
-  private optimizeTreeStructure(nodes: NodeWithAbsolutePos[]): NodeWithAbsolutePos[] {
+  private optimizeTreeStructure(nodes: DSLNode[]): DSLNode[] {
     return nodes.map((node) => {
       let optimizedNode = { ...node };
 
@@ -636,7 +667,7 @@ class DSLCleaner {
   /**
    * 扁平化单子节点容器（保留绝对坐标）
    */
-  private flattenSingleChild(node: NodeWithAbsolutePos): NodeWithAbsolutePos {
+  private flattenSingleChild(node: DSLNode): DSLNode {
     if (!node.children || node.children.length !== 1) {
       return node;
     }
@@ -668,15 +699,13 @@ class DSLCleaner {
    * 根据清洗后的树结构，重新计算每个节点的相对坐标
    * 并清除临时的绝对坐标属性
    */
-  private recalculateRelativePositions(
-    nodes: NodeWithAbsolutePos[],
-    parentAbsX: number,
-    parentAbsY: number
-  ): DSLNode[] {
+  private recalculateRelativePositions(nodes: DSLNode[], parentAbsX: number, parentAbsY: number): DSLNode[] {
     return nodes.map((node) => {
       // 根据绝对坐标和新的父节点位置计算新的相对坐标
-      const newRelativeX = (node._absoluteX || 0) - parentAbsX;
-      const newRelativeY = (node._absoluteY || 0) - parentAbsY;
+      const nodeAbsX = getAbsoluteX(node);
+      const nodeAbsY = getAbsoluteY(node);
+      const newRelativeX = nodeAbsX - parentAbsX;
+      const newRelativeY = nodeAbsY - parentAbsY;
 
       // 创建新节点，更新相对坐标
       const result: any = {
@@ -689,14 +718,14 @@ class DSLCleaner {
       };
 
       // 清除临时属性
-      delete result._absoluteX;
-      delete result._absoluteY;
-      delete result._absoluteWidth;
-      delete result._absoluteHeight;
+      if (result.layoutStyle) {
+        const { _absoluteX: _absX, _absoluteY: _absY, ...cleanLayout } = result.layoutStyle;
+        result.layoutStyle = cleanLayout;
+      }
 
       // 递归处理子节点，使用当前节点的绝对坐标作为父坐标
       if (node.children && node.children.length > 0) {
-        result.children = this.recalculateRelativePositions(node.children, node._absoluteX || 0, node._absoluteY || 0);
+        result.children = this.recalculateRelativePositions(node.children, nodeAbsX, nodeAbsY);
       }
 
       return result as DSLNode;
@@ -768,16 +797,21 @@ class DSLCleaner {
 
   // ==================== Icon 邻近路径合并 ====================
 
-  private mergeProximatePaths(nodes: NodeWithAbsolutePos[]): { nodes: NodeWithAbsolutePos[]; icons: IconNode[] } {
-    const pathEntries: { node: NodeWithAbsolutePos }[] = [];
+  private mergeProximatePaths(nodes: DSLNode[]): { nodes: DSLNode[]; icons: IconNode[] } {
+    const pathEntries: { node: DSLNode }[] = [];
 
-    const collectPaths = (list: NodeWithAbsolutePos[]) => {
+    // 全量拍平收集 PATH，确保跨祖先节点也能参与合并
+    const collectPaths = (list: DSLNode[]) => {
       for (const n of list) {
         if (n.type === 'PATH') {
-          pathEntries.push({ node: n });
+          const width = getWidth(n);
+          const height = getHeight(n);
+          if (width <= this.config.iconMergeMaxSize && height <= this.config.iconMergeMaxSize) {
+            pathEntries.push({ node: n });
+          }
         }
         if (n.children && n.children.length > 0) {
-          collectPaths(n.children as NodeWithAbsolutePos[]);
+          collectPaths(n.children as DSLNode[]);
         }
       }
     };
@@ -792,29 +826,6 @@ class DSLCleaner {
     const visited = new Set<number>();
     const threshold = this.config.iconProximityThreshold;
 
-    const isAdjacent = (a: NodeWithAbsolutePos, b: NodeWithAbsolutePos) => {
-      const ax = a._absoluteX || 0;
-      const ay = a._absoluteY || 0;
-      const aw = a._absoluteWidth || 0;
-      const ah = a._absoluteHeight || 0;
-
-      const bx = b._absoluteX || 0;
-      const by = b._absoluteY || 0;
-      const bw = b._absoluteWidth || 0;
-      const bh = b._absoluteHeight || 0;
-
-      const overlapX = ax <= bx + bw && bx <= ax + aw;
-      const overlapY = ay <= by + bh && by <= ay + ah;
-      if (overlapX && overlapY) {
-        return true;
-      }
-
-      const gapX = Math.max(0, Math.max(ax - (bx + bw), bx - (ax + aw)));
-      const gapY = Math.max(0, Math.max(ay - (by + bh), by - (ay + ah)));
-      const distance = Math.max(gapX, gapY);
-      return distance <= threshold;
-    };
-
     const buildGroup = (startIndex: number) => {
       const queue = [startIndex];
       visited.add(startIndex);
@@ -827,7 +838,7 @@ class DSLCleaner {
         for (let j = 0; j < pathEntries.length; j++) {
           if (visited.has(j)) continue;
           const nodeB = pathEntries[j].node;
-          if (isAdjacent(nodeA, nodeB)) {
+          if (isAdjacent(nodeA, nodeB, threshold)) {
             visited.add(j);
             queue.push(j);
           }
@@ -842,8 +853,14 @@ class DSLCleaner {
     }
 
     const iconNodes: IconNode[] = [];
-    const iconDSLNodes: NodeWithAbsolutePos[] = [];
+    const iconDSLNodes: DSLNode[] = [];
     const removedIds = new Set<string>();
+
+    const stripRotate = (layout?: LayoutStyle): LayoutStyle => {
+      if (!layout) return {};
+      const { rotate: _ignoredRotate, ...rest } = layout;
+      return rest as LayoutStyle;
+    };
 
     groups.forEach((g, idx) => {
       if (g.length < this.config.iconMinLayers) {
@@ -852,35 +869,44 @@ class DSLCleaner {
 
       const grouped = g.map((gi) => pathEntries[gi].node);
 
-      const minX = Math.min(...grouped.map((n) => n._absoluteX || 0));
-      const minY = Math.min(...grouped.map((n) => n._absoluteY || 0));
-      const maxX = Math.max(...grouped.map((n) => (n._absoluteX || 0) + (n._absoluteWidth || 0)));
-      const maxY = Math.max(...grouped.map((n) => (n._absoluteY || 0) + (n._absoluteHeight || 0)));
+      const minX = Math.min(...grouped.map((n) => getAbsoluteX(n)));
+      const minY = Math.min(...grouped.map((n) => getAbsoluteY(n)));
+      const maxX = Math.max(...grouped.map((n) => getAbsoluteX(n) + getWidth(n)));
+      const maxY = Math.max(...grouped.map((n) => getAbsoluteY(n) + getHeight(n)));
 
       const width = maxX - minX;
       const height = maxY - minY;
 
-      const paths: IconPath[] = grouped.map((p, pi) => ({
-        fill: (p as any).path || (p as any).fill,
-        layoutStyle: {
-          ...p.layoutStyle,
-          relativeX: (p._absoluteX || 0) - minX,
-          relativeY: (p._absoluteY || 0) - minY,
-        } as LayoutStyle,
-        name: p.name || `path-${pi + 1}`,
-      }));
+      const paths: IconPath[] = grouped.map((p, pi) => {
+        const layoutWithoutRotate = stripRotate(p.layoutStyle);
+        const offsetX = getAbsoluteX(p) - minX;
+        const offsetY = getAbsoluteY(p) - minY;
+        return {
+          fill: (p as any).path || (p as any).fill,
+          layoutStyle: {
+            ...layoutWithoutRotate,
+            relativeX: offsetX,
+            relativeY: offsetY,
+          } as LayoutStyle,
+          name: p.name || `path-${pi + 1}`,
+        };
+      });
+
+      const mergedLayout: LayoutStyle = {
+        ...stripRotate(grouped[0].layoutStyle),
+        width,
+        height,
+        relativeX: minX,
+        relativeY: minY,
+        _absoluteX: minX,
+        _absoluteY: minY,
+      };
 
       const icon: IconNode = {
         type: 'ICON',
         id: `icon-${idx + 1}`,
         name: `icon-${idx + 1}`,
-        layoutStyle: {
-          ...grouped[0].layoutStyle,
-          width,
-          height,
-          relativeX: minX,
-          relativeY: minY,
-        } as LayoutStyle,
+        layoutStyle: mergedLayout,
         paths,
         needsConversion: true,
         originalChildren: grouped,
@@ -888,23 +914,35 @@ class DSLCleaner {
 
       iconNodes.push(icon);
 
-      const iconDSL: NodeWithAbsolutePos = {
+      const mergedPathItems = grouped.flatMap((p) => {
+        const pathItems = (p as any).path;
+        if (!Array.isArray(pathItems)) return [];
+
+        const offsetX = getAbsoluteX(p) - minX;
+        const offsetY = getAbsoluteY(p) - minY;
+        const rotate = p.layoutStyle?.rotate ?? 0;
+
+        return (pathItems as DSLPathItem[]).map((item) => {
+          const baseTransform = item.transform;
+          const mergedTransform: DSLTransform = {
+            x: offsetX + (baseTransform?.x ?? 0),
+            y: offsetY + (baseTransform?.y ?? 0),
+            rotate: rotate + (baseTransform?.rotate ?? 0),
+          };
+          const { transform: _ignoredTransform, ...rest } = item as DSLPathItem;
+          return {
+            ...rest,
+            transform: mergedTransform,
+          } as DSLPathItem;
+        });
+      });
+
+      const iconDSL: DSLNode = {
         id: icon.id,
-        type: 'ICON' as any, // 标记为 ICON，避免后续重复检测
+        type: 'PATH',
         name: icon.name,
-        layoutStyle: icon.layoutStyle,
-        _absoluteX: minX,
-        _absoluteY: minY,
-        _absoluteWidth: width,
-        _absoluteHeight: height,
-        children: grouped.map((p) => ({
-          ...p,
-          layoutStyle: {
-            ...p.layoutStyle,
-            relativeX: (p._absoluteX || 0) - minX,
-            relativeY: (p._absoluteY || 0) - minY,
-          },
-        })),
+        layoutStyle: mergedLayout,
+        path: mergedPathItems,
       };
 
       iconDSLNodes.push(iconDSL);
@@ -916,12 +954,17 @@ class DSLCleaner {
     }
 
     const cleanedNodes = this.removeNodesById(nodes, removedIds);
-    const mergedNodes = [...cleanedNodes, ...iconDSLNodes];
+    const rootNode = cleanedNodes[0];
 
-    return { nodes: mergedNodes, icons: iconNodes };
+    if (rootNode) {
+      const existingChildren = Array.isArray(rootNode.children) ? (rootNode.children as DSLNode[]) : [];
+      rootNode.children = [...existingChildren, ...iconDSLNodes];
+    }
+
+    return { nodes: rootNode ? [rootNode] : cleanedNodes, icons: iconNodes };
   }
 
-  private removeNodesById(nodes: NodeWithAbsolutePos[], removedIds: Set<string>): NodeWithAbsolutePos[] {
+  private removeNodesById(nodes: DSLNode[], removedIds: Set<string>): DSLNode[] {
     return nodes
       .map((node) => {
         if (removedIds.has(node.id)) {
@@ -929,13 +972,13 @@ class DSLCleaner {
         }
 
         if (node.children && node.children.length > 0) {
-          const keptChildren = this.removeNodesById(node.children as NodeWithAbsolutePos[], removedIds);
+          const keptChildren = this.removeNodesById(node.children as DSLNode[], removedIds);
           return { ...node, children: keptChildren };
         }
 
         return node;
       })
-      .filter((n): n is NodeWithAbsolutePos => n !== null);
+      .filter((n): n is DSLNode => n !== null);
   }
 }
 
@@ -971,20 +1014,6 @@ class IconConverter {
 
   static async convertToPNGNode(_icon: IconNode): Promise<Buffer> {
     throw new Error('Puppeteer not implemented in this example');
-  }
-
-  private static generateSVG(icon: IconNode): string {
-    const { width = 48, height = 48 } = icon.layoutStyle;
-
-    let pathsStr = '';
-    for (const path of icon.paths) {
-      const fill = this.parseFill(Array.isArray(path.fill) ? path.fill[0] : path.fill);
-      const { relativeX = 0, relativeY = 0, width: w = 0, height: h = 0 } = path.layoutStyle;
-
-      pathsStr += `<rect x="${relativeX}" y="${relativeY}" width="${w}" height="${h}" fill="${fill}" />`;
-    }
-
-    return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">${pathsStr}</svg>`;
   }
 
   private static parseFill(fill: any): string {

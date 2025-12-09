@@ -31,9 +31,19 @@ export interface DSLLayoutStyle {
   height?: number;
   relativeX?: number;
   relativeY?: number;
+  // Optional absolute position properties for internal processing (e.g., DSLCleaner)
+  _absoluteX?: number;
+  _absoluteY?: number;
   left?: number;
   top?: number;
   rotate?: number;
+}
+
+// Path 层级的位移与旋转信息，默认为 (0, 0, 0)。
+export interface DSLTransform {
+  x: number;
+  y: number;
+  rotate: number;
 }
 
 export interface DSLBaseNode {
@@ -48,11 +58,6 @@ export interface DSLBaseNode {
   zIndex?: number;
   isVisible?: boolean;
   children?: DSLNode[];
-  // Optional absolute position properties for internal processing (e.g., DSLCleaner)
-  _absoluteX?: number;
-  _absoluteY?: number;
-  _absoluteWidth?: number;
-  _absoluteHeight?: number;
 }
 
 export interface DSLFrameNode extends DSLBaseNode {
@@ -108,6 +113,8 @@ export interface DSLTextNode extends DSLBaseNode {
 export interface DSLPathItem {
   fill?: string;
   data: string;
+  // 相对于所在 path 节点布局的补偿位移与旋转
+  transform?: DSLTransform;
 }
 
 export interface DSLPathNode extends DSLBaseNode {

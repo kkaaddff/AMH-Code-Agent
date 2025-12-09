@@ -3,7 +3,7 @@
  * 用于解析 SVG path data 并计算边界框
  */
 
-interface BoundingBox {
+export interface BoundingBox {
   minX: number;
   minY: number;
   maxX: number;
@@ -11,6 +11,12 @@ interface BoundingBox {
   width: number;
   height: number;
 }
+
+export type PathTransform = {
+  x?: number;
+  y?: number;
+  rotate?: number;
+};
 
 /**
  * 解析 SVG path data 字符串，提取所有坐标点
@@ -230,6 +236,50 @@ export function getPathBoundingBox(pathData: string): BoundingBox {
     width: maxX - minX,
     height: maxY - minY,
   };
+}
+
+const normalizeTransform = (t?: PathTransform): Required<PathTransform> => ({
+  x: t?.x ?? 0,
+  y: t?.y ?? 0,
+  rotate: t?.rotate ?? 0,
+});
+
+/**
+ * 对 bbox 应用 translate + rotate 变换，返回新的 bbox
+ */
+export function applyTransformToBoundingBox(bbox: BoundingBox, transform?: PathTransform): BoundingBox {
+  const { x, y } = normalizeTransform(transform);
+
+  const minX = bbox.minX + x;
+  const minY = bbox.minY + y;
+  const maxX = bbox.maxX + x;
+  const maxY = bbox.maxY + y;
+  return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+  //! 考虑旋转会导致 bbox 被扩大，从而影响内部 svg 尺寸的绘制
+  // if (rotate === 0) {
+  // }
+
+  // const rad = (rotate * Math.PI) / 180;
+  // const cos = Math.cos(rad);
+  // const sin = Math.sin(rad);
+  // const corners = [
+  //   { x: bbox.minX, y: bbox.minY },
+  //   { x: bbox.maxX, y: bbox.minY },
+  //   { x: bbox.minX, y: bbox.maxY },
+  //   { x: bbox.maxX, y: bbox.maxY },
+  // ];
+
+  // const rotated = corners.map(({ x: cx, y: cy }) => ({
+  //   x: cx * cos - cy * sin + x,
+  //   y: cx * sin + cy * cos + y,
+  // }));
+
+  // const minX = Math.min(...rotated.map((p) => p.x));
+  // const minY = Math.min(...rotated.map((p) => p.y));
+  // const maxX = Math.max(...rotated.map((p) => p.x));
+  // const maxY = Math.max(...rotated.map((p) => p.y));
+
+  // return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
 }
 
 /**

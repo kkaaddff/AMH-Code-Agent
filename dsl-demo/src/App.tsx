@@ -3,7 +3,8 @@ import DSLElement from './components/DSLElement';
 import DSL3DCompareModal from './components/DSL3DCompareModal';
 import { DesignData } from '@fta/shared';
 import dslRawData from './data/dsl.json';
-import { DSLCleaner, Statistics } from './utils/DSLCleaner';
+import { DSLCleaner } from '@fta/shared';
+import type { Statistics } from '@fta/shared';
 import './App.css';
 
 const App: React.FC = () => {
@@ -28,8 +29,8 @@ const App: React.FC = () => {
     // 清洗 DSL 数据
     const cleaner = new DSLCleaner({
       removeEmptyNodes: true,
-      detectIcons: false,
-      iconMaxSize: 80,
+      detectIcons: true,
+      iconMergeMaxSize: 40,
       verbose: true,
     });
     const result = cleaner.clean(dslData.dsl.nodes[0]);

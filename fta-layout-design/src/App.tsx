@@ -32,6 +32,7 @@ function App() {
             ? JSON.parse(devWorkspaceInfo)
             : {
                 gitUrl: 'https://github.com/amh-group/fta-demo.git',
+                // gitUrl: 'https://code.amh-group.com/MBFrontend/ec/ec-cargo-driver',
                 workdir: '/test/demo',
                 srcTree: null,
               };
