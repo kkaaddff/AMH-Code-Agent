@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "build:dev": "tsc && vite build --sourcemap inline",
+    "build": "tsc && vite build --mode production",
+    "build:dev": "tsc && vite build --mode development --sourcemap inline",
     "preview": "vite preview"
   },
   "dependencies": {

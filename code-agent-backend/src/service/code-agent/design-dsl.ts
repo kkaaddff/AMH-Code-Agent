@@ -4,8 +4,6 @@ import { InjectEntityModel } from '@midwayjs/typegoose';
 import { ReturnModelType } from '@typegoose/typegoose';
 import axios from 'axios';
 import * as crypto from 'crypto';
-import fs from 'fs/promises';
-import * as path from 'path';
 import { DesignPathAssetEntity } from '../../entity/code-agent/design-dsl/path-asset';
 import { applyTransformToBoundingBox, getPathBoundingBox, normalizeTransform } from '@fta/shared';
 import type { DesignData, DesignNode, DSLData, LayerNode, LayerStyle, PathItem, PathNode } from '@fta/shared';
@@ -23,23 +21,9 @@ export class DesignDSLService {
   @Inject()
   private ossManagement: OssManagement;
 
-  private tempDir = path.join(process.cwd(), 'temp');
   private readonly pathCachePrefix = 'design-dsl:path:';
   private readonly defaultCacheTTLSeconds = 12 * 60 * 60; // 12小时
   private readonly redisRedirectClients = new Map<string, Redis>();
-
-  constructor() {
-    // 确保 temp 文件夹存在
-    this.ensureTempDir();
-  }
-
-  private async ensureTempDir() {
-    try {
-      await fs.access(this.tempDir);
-    } catch {
-      await fs.mkdir(this.tempDir, { recursive: true });
-    }
-  }
 
   /**
    * 生成随机ID
@@ -226,7 +210,7 @@ export class DesignDSLService {
   /**
    * Redis get 接口
    */
-  public async redisGet(key: string): Promise<string | null> {
+  private async redisGet(key: string): Promise<string | null> {
     try {
       return await this.redisClient.get(key);
     } catch (error) {
@@ -242,7 +226,7 @@ export class DesignDSLService {
   /**
    * Redis set 接口
    */
-  public async redisSet(key: string, value: string, ttlSeconds?: number): Promise<void> {
+  private async redisSet(key: string, value: string, ttlSeconds?: number): Promise<void> {
     const ttl = typeof ttlSeconds === 'number' ? ttlSeconds : this.getPathCacheTTL();
     try {
       if (Number.isFinite(ttl) && ttl > 0) {
@@ -487,19 +471,6 @@ export class DesignDSLService {
     );
 
     return normalizedDSL;
-  }
-
-  /**
-   * 读取DesignDSL文件
-   */
-  public async readDesignDSLFile(filePath: string): Promise<DSLData> {
-    try {
-      const fileContent = await fs.readFile(filePath, 'utf-8');
-      return JSON.parse(fileContent) as DSLData;
-    } catch (error) {
-      console.error('Error reading DesignData file:', error);
-      throw error;
-    }
   }
 
   /**

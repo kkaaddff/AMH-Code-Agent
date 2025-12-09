@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSL 节点骨架树分析器</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --border: #1f2937;
+      --accent: #60a5fa;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --danger: #f87171;
+      --success: #34d399;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(96,165,250,0.08), transparent 20%),
+                  radial-gradient(circle at 80% 10%, rgba(129,140,248,0.12), transparent 18%),
+                  radial-gradient(circle at 70% 70%, rgba(52,211,153,0.12), transparent 22%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .page {
+      max-width: 1500px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    header {
+      background: rgba(17, 24, 39, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 18px;
+      backdrop-filter: blur(6px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.3px;
+    }
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .pill {
+      border: 1px solid var(--border);
+      background: rgba(96,165,250,0.1);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.2s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.ghost {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    input[type="text"] {
+      background: #0b1220;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 10px;
+      min-width: 220px;
+    }
+    input[type="file"] { color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+    }
+    .card {
+      background: rgba(17, 24, 39, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 200px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .card h3 {
+      margin: 4px 0 10px;
+      font-size: 15px;
+      color: var(--text);
+    }
+    .tree {
+      max-height: 78vh;
+      overflow: auto;
+      padding-right: 6px;
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+    .tree-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      margin: 1px 0;
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+    .tree-row:hover { background: rgba(96,165,250,0.08); }
+    .tree-row.selected { background: rgba(96,165,250,0.18); border: 1px solid rgba(96,165,250,0.4); }
+    .tree-row.match { outline: 1px dashed var(--success); }
+    .tree-toggle {
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .tree-label {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tags {
+      display: inline-flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-left: auto;
+      color: var(--muted);
+    }
+    .tag {
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      font-size: 11px;
+    }
+    .children { margin-left: 14px; border-left: 1px dashed var(--border); }
+    .detail {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 78vh;
+      overflow: auto;
+    }
+    .section {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,0.02);
+    }
+    .section h4 { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+    .mono {
+      font-family: "JetBrains Mono", "SFMono-Regular", monospace;
+      background: #0b1220;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 8px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .selected-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      background: rgba(96,165,250,0.1);
+      border: 1px solid rgba(96,165,250,0.3);
+      margin: 4px 4px 0 0;
+      font-size: 12px;
+    }
+    .hint { color: var(--muted); font-size: 12px; }
+    .error { color: var(--danger); font-size: 12px; }
+    .status { color: var(--success); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>DSL 节点骨架树分析器</h1>
+        <p class="subtitle">解析 dsl.origin.json，展示节点 ID 多叉树、定位信息与多选对比</p>
+      </div>
+      <div class="controls">
+        <button class="btn" id="loadDefault">加载仓库 dsl.origin.json</button>
+        <label class="pill">
+          <input type="file" id="fileInput" accept=".json" />
+          选择自定义 JSON
+        </label>
+        <input type="text" id="searchInput" placeholder="按 ID 搜索，如 677:13215" />
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <h3>节点骨架树（点击可多选，最多 4 个）</h3>
+        <div class="tree" id="treeContainer"></div>
+        <div class="hint" id="loadStatus"></div>
+      </div>
+
+      <div class="card">
+        <h3>节点详情与绝对定位</h3>
+        <div class="detail">
+          <div class="section">
+            <h4>已选节点 (0/4)</h4>
+            <div id="selectedChips"></div>
+          </div>
+          <div class="section">
+            <h4>节点信息</h4>
+            <div id="detailPanel" class="hint">选择左侧节点以查看详情</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_DSL_PATH = "../../dsl-demo/src/data/dsl.origin.json";
+    const MAX_SELECTION = 4;
+
+    const state = {
+      tree: [],
+      idMap: new Map(),
+      selection: [],
+    };
+
+    const refs = {
+      treeContainer: document.getElementById("treeContainer"),
+      detailPanel: document.getElementById("detailPanel"),
+      selectedChips: document.getElementById("selectedChips"),
+      searchInput: document.getElementById("searchInput"),
+      loadStatus: document.getElementById("loadStatus"),
+    };
+
+    const expandState = new Map();
+    const rowRefs = new Map();
+    const childrenRefs = new Map();
+
+    function setStatus(text, type = "hint") {
+      refs.loadStatus.textContent = text;
+      refs.loadStatus.className = type;
+    }
+
+    function enrichNode(node, parent, parentAbs) {
+      const layout = node.layoutStyle || {};
+      const absX = (layout.relativeX || 0) + (parentAbs?.x || 0);
+      const absY = (layout.relativeY || 0) + (parentAbs?.y || 0);
+      const clone = {
+        ...node,
+        layoutStyle: { ...layout },
+        _abs: {
+          x: Number.isFinite(absX) ? absX : 0,
+          y: Number.isFinite(absY) ? absY : 0,
+          width: Number.isFinite(layout.width) ? layout.width : 0,
+          height: Number.isFinite(layout.height) ? layout.height : 0,
+        },
+        _parentId: parent?.id || null,
+      };
+      state.idMap.set(clone.id, clone);
+      const children = Array.isArray(node.children) ? node.children : [];
+      clone.children = children.map((c) => enrichNode(c, clone, clone._abs));
+      return clone;
+    }
+
+    function loadDsl(json) {
+      if (!json || !Array.isArray(json.nodes)) {
+        setStatus("未找到 nodes 数组，请检查文件结构", "error");
+        return;
+      }
+      state.idMap.clear();
+      state.tree = json.nodes.map((n) => enrichNode(n, null, { x: 0, y: 0 }));
+      state.selection = [];
+      renderTree();
+      renderSelection();
+      setStatus(`已加载，共 ${state.idMap.size} 个节点`);
+    }
+
+    function renderTree() {
+      refs.treeContainer.innerHTML = "";
+      rowRefs.clear();
+      childrenRefs.clear();
+      const frag = document.createDocumentFragment();
+      state.tree.forEach((node) => frag.appendChild(renderNode(node, 0)));
+      refs.treeContainer.appendChild(frag);
+      applySearch();
+    }
+
+    function renderNode(node, depth) {
+      const wrapper = document.createElement("div");
+      const row = document.createElement("div");
+      row.className = "tree-row";
+      row.style.paddingLeft = `${depth * 12}px`;
+      row.dataset.id = node.id;
+      row.title = `${node.id} | ${node.name || node.type || "未命名"}`;
+
+      const hasChildren = node.children && node.children.length > 0;
+      const toggle = document.createElement("span");
+      toggle.className = "tree-toggle";
+      toggle.textContent = hasChildren ? (expandState.get(node.id) ? "-" : "+") : "";
+      toggle.onclick = (e) => {
+        e.stopPropagation();
+        if (!hasChildren) return;
+        const next = !expandState.get(node.id);
+        expandState.set(node.id, next);
+        toggle.textContent = next ? "-" : "+";
+        const box = childrenRefs.get(node.id);
+        if (box) box.style.display = next ? "block" : "none";
+      };
+
+      const label = document.createElement("span");
+      label.className = "tree-label";
+      label.textContent = node.id;
+
+      const tags = document.createElement("span");
+      tags.className = "tags";
+      const typeTag = document.createElement("span");
+      typeTag.className = "tag";
+      typeTag.textContent = node.type || "NODE";
+      tags.appendChild(typeTag);
+      if (node.name) {
+        const nameTag = document.createElement("span");
+        nameTag.className = "tag";
+        nameTag.textContent = node.name;
+        tags.appendChild(nameTag);
+      }
+
+      row.append(toggle, label, tags);
+      row.onclick = () => toggleSelect(node.id);
+
+      const childrenBox = document.createElement("div");
+      childrenBox.className = "children";
+      const expandedByDefault = depth < 2;
+      const expanded = expandState.has(node.id) ? expandState.get(node.id) : expandedByDefault;
+      expandState.set(node.id, expanded);
+      childrenBox.style.display = expanded ? "block" : "none";
+      if (hasChildren) {
+        node.children.forEach((child) => childrenBox.appendChild(renderNode(child, depth + 1)));
+      }
+
+      rowRefs.set(node.id, row);
+      childrenRefs.set(node.id, childrenBox);
+
+      wrapper.append(row, childrenBox);
+      return wrapper;
+    }
+
+    function toggleSelect(id) {
+      const idx = state.selection.indexOf(id);
+      if (idx >= 0) {
+        state.selection.splice(idx, 1);
+      } else {
+        if (state.selection.length >= MAX_SELECTION) {
+          setStatus(`最多选择 ${MAX_SELECTION} 个节点`, "error");
+          return;
+        }
+        state.selection.push(id);
+      }
+      renderSelection();
+    }
+
+    function renderSelection() {
+      refs.selectedChips.innerHTML = "";
+      refs.detailPanel.innerHTML = "";
+      const counter = document.querySelector("h4");
+      if (counter) {
+        counter.textContent = `已选节点 (${state.selection.length}/${MAX_SELECTION})`;
+      }
+
+      state.selection.forEach((id) => {
+        const node = state.idMap.get(id);
+        const chip = document.createElement("span");
+        chip.className = "selected-chip";
+        chip.textContent = `${id} · ${node?.name || node?.type || "未命名"}`;
+        refs.selectedChips.appendChild(chip);
+      });
+
+      rowRefs.forEach((row, id) => {
+        row.classList.toggle("selected", state.selection.includes(id));
+      });
+
+      if (state.selection.length === 0) {
+        refs.detailPanel.textContent = "选择左侧节点以查看详情";
+        refs.detailPanel.className = "hint";
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+      state.selection.forEach((id) => {
+        const node = state.idMap.get(id);
+        if (!node) return;
+        frag.appendChild(renderDetailBlock(node));
+      });
+      refs.detailPanel.className = "";
+      refs.detailPanel.appendChild(frag);
+    }
+
+    function renderDetailBlock(node) {
+      const block = document.createElement("div");
+      block.style.borderBottom = "1px solid var(--border)";
+      block.style.paddingBottom = "10px";
+      block.style.marginBottom = "10px";
+
+      const title = document.createElement("div");
+      title.innerHTML = `<strong>${node.id}</strong> · ${node.name || node.type || "未命名"}`;
+      block.appendChild(title);
+
+      const path = document.createElement("div");
+      path.className = "hint";
+      path.textContent = `祖先链: ${getAncestorPath(node).join(" > ")}`;
+      block.appendChild(path);
+
+      const layout = {
+        ...node.layoutStyle,
+        absoluteX: Number(node._abs.x.toFixed(2)),
+        absoluteY: Number(node._abs.y.toFixed(2)),
+        absoluteRight: Number((node._abs.x + node._abs.width).toFixed(2)),
+        absoluteBottom: Number((node._abs.y + node._abs.height).toFixed(2)),
+      };
+
+      const mono = document.createElement("div");
+      mono.className = "mono";
+      mono.textContent = JSON.stringify(
+        {
+          id: node.id,
+          type: node.type,
+          name: node.name,
+          layoutStyle: layout,
+        },
+        null,
+        2
+      );
+      block.appendChild(mono);
+      return block;
+    }
+
+    function getAncestorPath(node) {
+      const chain = [];
+      let cur = node;
+      while (cur) {
+        chain.unshift(cur.id);
+        cur = cur._parentId ? state.idMap.get(cur._parentId) : null;
+      }
+      return chain;
+    }
+
+    function applySearch() {
+      const term = refs.searchInput.value.trim();
+      rowRefs.forEach((row) => row.classList.remove("match"));
+      if (!term) return;
+
+      const matches = [];
+      state.idMap.forEach((node, id) => {
+        if (id.includes(term)) matches.push(id);
+      });
+
+      matches.forEach((id) => {
+        const row = rowRefs.get(id);
+        if (row) row.classList.add("match");
+        expandPath(id);
+      });
+    }
+
+    function expandPath(id) {
+      let cur = state.idMap.get(id);
+      while (cur && cur._parentId) {
+        expandState.set(cur._parentId, true);
+        const childBox = childrenRefs.get(cur._parentId);
+        if (childBox) childBox.style.display = "block";
+        const toggleRow = rowRefs.get(cur._parentId);
+        const toggleIcon = toggleRow?.querySelector(".tree-toggle");
+        if (toggleIcon) toggleIcon.textContent = "-";
+        cur = state.idMap.get(cur._parentId);
+      }
+    }
+
+    async function fetchDefault() {
+      try {
+        setStatus("加载默认文件中...");
+        const res = await fetch(DEFAULT_DSL_PATH);
+        if (!res.ok) throw new Error(res.statusText);
+        const json = await res.json();
+        loadDsl(json);
+      } catch (err) {
+        setStatus("默认路径读取失败，请使用文件选择器", "error");
+      }
+    }
+
+    document.getElementById("loadDefault").onclick = fetchDefault;
+    refs.searchInput.oninput = applySearch;
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const json = JSON.parse(evt.target.result);
+          loadDsl(json);
+          setStatus(`已加载文件：${file.name}`);
+        } catch (err) {
+          setStatus("JSON 解析失败", "error");
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    setStatus("可直接点击“加载仓库 dsl.origin.json”，或选择文件");
+  </script>
+</body>
+</html>
