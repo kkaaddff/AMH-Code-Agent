@@ -6,33 +6,48 @@ type LayoutStyle = DSLLayoutStyle;
 
 interface CleanerConfig {
   // 节点过滤配置
-  removeEmptyNodes: boolean; // 移除空节点
-  removeLayoutHelpers: boolean; // 移除布局辅助容器
-  removeMaskLayers: boolean; // 移除蒙版层
-  removeOutOfBounds: boolean; // 移除超界节点
-  removeInvisibleNodes: boolean; // 移除不可见节点
+  /** 移除空节点 */
+  removeEmptyNodes: boolean;
+  /** 移除蒙版层 */
+  removeMaskLayers: boolean;
+  /** 移除超界节点 */
+  removeOutOfBounds: boolean;
+  /** 移除不可见节点 */
+  removeInvisibleNodes: boolean;
 
   // Icon 处理配置
-  detectIcons: boolean; // 检测 Icon
-  mergeIconLayers: boolean; // 合并 Icon 图层
-  iconMaxSize: number; // Icon 最大尺寸阈值
-  iconMinLayers: number; // Icon 最小图层数
-  iconProximityThreshold: number; // Icon 路径邻近合并阈值
+  /** 检测 Icon */
+  detectIcons: boolean;
+  /** 合并 Icon 图层 */
+  mergeIconLayers: boolean;
+  /** Icon 最大尺寸阈值 */
+  iconMaxSize: number;
+  /** Icon 最小图层数 */
+  iconMinLayers: number;
+  /** Icon 路径邻近合并阈值 */
+  iconProximityThreshold: number;
 
   // 层级优化配置
-  buildZIndex: boolean; // 计算 z-index
-  checkOverlapping: boolean; // 检查遮挡关系
-  removeCompletelyHidden: boolean; // 移除完全被遮挡的节点
+  /** 计算 z-index */
+  buildZIndex: boolean;
+  /** 检查遮挡关系 */
+  checkOverlapping: boolean;
+  /** 移除完全被遮挡的节点 */
+  removeCompletelyHidden: boolean;
 
   // 树结构优化配置
-  flattenSingleChild: boolean; // 扁平化单子节点
-  mergeSimilarNodes: boolean; // 合并相似节点
-  optimizeDepth: boolean; // 优化树深度
-  preserveSemantics: boolean; // 保留语义化结构
+  /** 扁平化单子节点 */
+  flattenSingleChild: boolean;
+  /** 优化树深度 */
+  optimizeDepth: boolean;
+  /** 保留语义化结构 */
+  preserveSemantics: boolean;
 
   // 调试配置
-  verbose: boolean; // 详细日志
-  dryRun: boolean; // 干运行模式（不实际修改）
+  /** 详细日志 */
+  verbose: boolean;
+  /** 干运行模式（不实际修改） */
+  dryRun: boolean;
 }
 
 interface CleanResult {
@@ -80,7 +95,7 @@ export interface Statistics {
 
 const DEFAULT_CONFIG: CleanerConfig = {
   removeEmptyNodes: true,
-  removeLayoutHelpers: false, // 禁用，使用 flattenSingleChild 代替
+
   removeMaskLayers: true,
   removeOutOfBounds: true,
   removeInvisibleNodes: true,
@@ -96,7 +111,6 @@ const DEFAULT_CONFIG: CleanerConfig = {
   removeCompletelyHidden: true,
 
   flattenSingleChild: true,
-  mergeSimilarNodes: false, // 禁用，容易造成问题
   optimizeDepth: true,
   preserveSemantics: true,
 
