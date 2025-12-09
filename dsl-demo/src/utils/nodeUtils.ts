@@ -1,4 +1,4 @@
-import type { DSLNode } from '../types/dsl';
+import type { DSLNode } from '@fta/shared';
 
 /**
  * 判断节点是否为隐藏节点

@@ -22,6 +22,7 @@ interface CleanerConfig {
   mergeIconLayers: boolean; // 合并 Icon 图层
   iconMaxSize: number; // Icon 最大尺寸阈值
   iconMinLayers: number; // Icon 最小图层数
+  iconProximityThreshold: number; // Icon 路径邻近合并阈值
 
   // 层级优化配置
   buildZIndex: boolean; // 计算 z-index
@@ -93,6 +94,7 @@ const DEFAULT_CONFIG: CleanerConfig = {
   mergeIconLayers: true,
   iconMaxSize: 100,
   iconMinLayers: 2,
+  iconProximityThreshold: 4,
 
   buildZIndex: true,
   checkOverlapping: true,
@@ -106,6 +108,8 @@ const DEFAULT_CONFIG: CleanerConfig = {
   verbose: false,
   dryRun: false,
 };
+
+const Z_INDEX_DEPTH_WEIGHT = 100000;
 
 // ==================== 主清洗类 ====================
 
@@ -146,8 +150,18 @@ class DSLCleaner {
     // =====================================================
     // 阶段 0：预处理 - 计算所有节点的绝对坐标
     // =====================================================
-    const nodesWithAbsPos = this.calculateAbsolutePositions(nodes, 0, 0);
+    let nodesWithAbsPos = this.calculateAbsolutePositions(nodes, 0, 0);
     this.log('绝对坐标计算完成');
+
+    // =====================================================
+    // 阶段 0.5：Icon 邻近路径合并（基于绝对坐标优先处理）
+    // =====================================================
+    if (this.config.detectIcons && this.config.mergeIconLayers) {
+      const mergeResult = this.mergeProximatePaths(nodesWithAbsPos);
+      nodesWithAbsPos = mergeResult.nodes;
+      this.icons.push(...mergeResult.icons);
+      this.log('Icon 邻近路径合并完成，新增', mergeResult.icons.length, '个 Icons');
+    }
 
     // =====================================================
     // 阶段 1：节点过滤（使用绝对坐标）
@@ -449,22 +463,27 @@ class DSLCleaner {
       return nodes;
     }
 
-    const withZIndex = nodes.map((node, index) => ({
-      ...node,
-      zIndex: index,
-      isVisible: true,
-    }));
+    const counter = { value: 0 };
+    const withZIndex = this.applyZIndex(nodes, 0, counter);
+    const flattened = this.flattenNodes(withZIndex).sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+    const visibility = new Map<string, boolean>();
 
-    for (let i = withZIndex.length - 1; i >= 0; i--) {
-      const current = withZIndex[i];
+    flattened.forEach((n) => visibility.set(n.id, true));
 
-      if (!current.isVisible) continue;
+    for (let i = 0; i < flattened.length; i++) {
+      const current = flattened[i];
+      if (!visibility.get(current.id)) {
+        continue;
+      }
 
-      for (let j = i + 1; j < withZIndex.length; j++) {
-        const upper = withZIndex[j];
+      for (let j = i + 1; j < flattened.length; j++) {
+        const upper = flattened[j];
+        if (!visibility.get(upper.id)) {
+          continue;
+        }
 
-        if (upper.isVisible && this.isCompletelyOverlappedAbsolute(current, upper)) {
-          current.isVisible = false;
+        if (this.isCompletelyOverlappedAbsolute(current, upper)) {
+          visibility.set(current.id, false);
           if (this.config.removeCompletelyHidden) {
             this.markRemoved(current, 'completely hidden by upper layer', 'removeCompletelyHidden');
           }
@@ -473,7 +492,11 @@ class DSLCleaner {
       }
     }
 
-    return this.config.removeInvisibleNodes ? withZIndex.filter((n) => n.isVisible) : withZIndex;
+    return this.applyVisibility(
+      withZIndex,
+      visibility,
+      this.config.removeInvisibleNodes && this.config.removeCompletelyHidden
+    );
   }
 
   /**
@@ -527,6 +550,69 @@ class DSLCleaner {
     }
 
     return false;
+  }
+
+  /**
+   * 根据树深度 + 兄弟顺序计算 zIndex
+   */
+  private applyZIndex(nodes: NodeWithAbsolutePos[], depth: number, counter: { value: number }): NodeWithAbsolutePos[] {
+    return nodes.map((node) => {
+      const order = counter.value++;
+      const currentZIndex = depth * Z_INDEX_DEPTH_WEIGHT + order;
+      const result: NodeWithAbsolutePos = {
+        ...node,
+        zIndex: currentZIndex,
+      };
+
+      if (node.children && node.children.length > 0) {
+        result.children = this.applyZIndex(node.children, depth + 1, counter);
+      }
+
+      return result;
+    });
+  }
+
+  /**
+   * 展平节点列表（保留计算后的 zIndex）
+   */
+  private flattenNodes(nodes: NodeWithAbsolutePos[]): NodeWithAbsolutePos[] {
+    const list: NodeWithAbsolutePos[] = [];
+    const walk = (items: NodeWithAbsolutePos[]) => {
+      items.forEach((n) => {
+        list.push(n);
+        if (n.children && n.children.length > 0) {
+          walk(n.children as NodeWithAbsolutePos[]);
+        }
+      });
+    };
+    walk(nodes);
+    return list;
+  }
+
+  /**
+   * 根据可见性重新组装树；可选移除被遮挡节点
+   */
+  private applyVisibility(
+    nodes: NodeWithAbsolutePos[],
+    visibility: Map<string, boolean>,
+    removeHidden: boolean
+  ): NodeWithAbsolutePos[] {
+    return nodes
+      .map((node) => {
+        const isVisible = visibility.get(node.id) !== false;
+        const next: NodeWithAbsolutePos = { ...node, isVisible };
+
+        if (node.children && node.children.length > 0) {
+          next.children = this.applyVisibility(node.children as NodeWithAbsolutePos[], visibility, removeHidden);
+        }
+
+        if (removeHidden && !isVisible) {
+          return null;
+        }
+
+        return next;
+      })
+      .filter((n): n is NodeWithAbsolutePos => n !== null);
   }
 
   // ==================== 阶段 4：树结构优化 ====================
@@ -679,6 +765,178 @@ class DSLCleaner {
       console.log('[DSLCleaner]', ...args);
     }
   }
+
+  // ==================== Icon 邻近路径合并 ====================
+
+  private mergeProximatePaths(nodes: NodeWithAbsolutePos[]): { nodes: NodeWithAbsolutePos[]; icons: IconNode[] } {
+    const pathEntries: { node: NodeWithAbsolutePos }[] = [];
+
+    const collectPaths = (list: NodeWithAbsolutePos[]) => {
+      for (const n of list) {
+        if (n.type === 'PATH') {
+          pathEntries.push({ node: n });
+        }
+        if (n.children && n.children.length > 0) {
+          collectPaths(n.children as NodeWithAbsolutePos[]);
+        }
+      }
+    };
+
+    collectPaths(nodes);
+
+    if (pathEntries.length < this.config.iconMinLayers) {
+      return { nodes, icons: [] };
+    }
+
+    const groups: number[][] = [];
+    const visited = new Set<number>();
+    const threshold = this.config.iconProximityThreshold;
+
+    const isAdjacent = (a: NodeWithAbsolutePos, b: NodeWithAbsolutePos) => {
+      const ax = a._absoluteX || 0;
+      const ay = a._absoluteY || 0;
+      const aw = a._absoluteWidth || 0;
+      const ah = a._absoluteHeight || 0;
+
+      const bx = b._absoluteX || 0;
+      const by = b._absoluteY || 0;
+      const bw = b._absoluteWidth || 0;
+      const bh = b._absoluteHeight || 0;
+
+      const overlapX = ax <= bx + bw && bx <= ax + aw;
+      const overlapY = ay <= by + bh && by <= ay + ah;
+      if (overlapX && overlapY) {
+        return true;
+      }
+
+      const gapX = Math.max(0, Math.max(ax - (bx + bw), bx - (ax + aw)));
+      const gapY = Math.max(0, Math.max(ay - (by + bh), by - (ay + ah)));
+      const distance = Math.max(gapX, gapY);
+      return distance <= threshold;
+    };
+
+    const buildGroup = (startIndex: number) => {
+      const queue = [startIndex];
+      visited.add(startIndex);
+      const indices: number[] = [];
+
+      while (queue.length) {
+        const idx = queue.shift()!;
+        indices.push(idx);
+        const nodeA = pathEntries[idx].node;
+        for (let j = 0; j < pathEntries.length; j++) {
+          if (visited.has(j)) continue;
+          const nodeB = pathEntries[j].node;
+          if (isAdjacent(nodeA, nodeB)) {
+            visited.add(j);
+            queue.push(j);
+          }
+        }
+      }
+      return indices;
+    };
+
+    for (let i = 0; i < pathEntries.length; i++) {
+      if (visited.has(i)) continue;
+      groups.push(buildGroup(i));
+    }
+
+    const iconNodes: IconNode[] = [];
+    const iconDSLNodes: NodeWithAbsolutePos[] = [];
+    const removedIds = new Set<string>();
+
+    groups.forEach((g, idx) => {
+      if (g.length < this.config.iconMinLayers) {
+        return;
+      }
+
+      const grouped = g.map((gi) => pathEntries[gi].node);
+
+      const minX = Math.min(...grouped.map((n) => n._absoluteX || 0));
+      const minY = Math.min(...grouped.map((n) => n._absoluteY || 0));
+      const maxX = Math.max(...grouped.map((n) => (n._absoluteX || 0) + (n._absoluteWidth || 0)));
+      const maxY = Math.max(...grouped.map((n) => (n._absoluteY || 0) + (n._absoluteHeight || 0)));
+
+      const width = maxX - minX;
+      const height = maxY - minY;
+
+      const paths: IconPath[] = grouped.map((p, pi) => ({
+        fill: (p as any).path || (p as any).fill,
+        layoutStyle: {
+          ...p.layoutStyle,
+          relativeX: (p._absoluteX || 0) - minX,
+          relativeY: (p._absoluteY || 0) - minY,
+        } as LayoutStyle,
+        name: p.name || `path-${pi + 1}`,
+      }));
+
+      const icon: IconNode = {
+        type: 'ICON',
+        id: `icon-${idx + 1}`,
+        name: `icon-${idx + 1}`,
+        layoutStyle: {
+          ...grouped[0].layoutStyle,
+          width,
+          height,
+          relativeX: minX,
+          relativeY: minY,
+        } as LayoutStyle,
+        paths,
+        needsConversion: true,
+        originalChildren: grouped,
+      };
+
+      iconNodes.push(icon);
+
+      const iconDSL: NodeWithAbsolutePos = {
+        id: icon.id,
+        type: 'ICON' as any, // 标记为 ICON，避免后续重复检测
+        name: icon.name,
+        layoutStyle: icon.layoutStyle,
+        _absoluteX: minX,
+        _absoluteY: minY,
+        _absoluteWidth: width,
+        _absoluteHeight: height,
+        children: grouped.map((p) => ({
+          ...p,
+          layoutStyle: {
+            ...p.layoutStyle,
+            relativeX: (p._absoluteX || 0) - minX,
+            relativeY: (p._absoluteY || 0) - minY,
+          },
+        })),
+      };
+
+      iconDSLNodes.push(iconDSL);
+      grouped.forEach((p) => removedIds.add(p.id));
+    });
+
+    if (iconNodes.length === 0) {
+      return { nodes, icons: [] };
+    }
+
+    const cleanedNodes = this.removeNodesById(nodes, removedIds);
+    const mergedNodes = [...cleanedNodes, ...iconDSLNodes];
+
+    return { nodes: mergedNodes, icons: iconNodes };
+  }
+
+  private removeNodesById(nodes: NodeWithAbsolutePos[], removedIds: Set<string>): NodeWithAbsolutePos[] {
+    return nodes
+      .map((node) => {
+        if (removedIds.has(node.id)) {
+          return null;
+        }
+
+        if (node.children && node.children.length > 0) {
+          const keptChildren = this.removeNodesById(node.children as NodeWithAbsolutePos[], removedIds);
+          return { ...node, children: keptChildren };
+        }
+
+        return node;
+      })
+      .filter((n): n is NodeWithAbsolutePos => n !== null);
+  }
 }
 
 // ==================== SVG 转 PNG 工具类 ====================
@@ -709,6 +967,10 @@ class IconConverter {
     return new Promise((resolve) => {
       canvas.toBlob((blob) => resolve(blob!), 'image/png');
     });
+  }
+
+  static async convertToPNGNode(_icon: IconNode): Promise<Buffer> {
+    throw new Error('Puppeteer not implemented in this example');
   }
 
   private static generateSVG(icon: IconNode): string {

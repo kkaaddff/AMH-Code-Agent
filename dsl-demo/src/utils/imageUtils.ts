@@ -1,4 +1,4 @@
-import { DSLStyles } from '../types/dsl';
+import { DSLStyles } from '@fta/shared';
 
 /**
  * 根据样式表解析图片资源的真实 URL。

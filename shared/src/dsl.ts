@@ -44,6 +44,9 @@ export interface DSLBaseNode {
   layoutStyle?: DSLLayoutStyle;
   opacity?: number | string;
   mask?: string;
+  // 计算后的层级信息（由清洗流程填充）
+  zIndex?: number;
+  isVisible?: boolean;
   children?: DSLNode[];
   // Optional absolute position properties for internal processing (e.g., DSLCleaner)
   _absoluteX?: number;

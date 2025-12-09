@@ -1,4 +1,4 @@
-import { DSLStyles } from '../types/dsl';
+import { DSLStyles } from '@fta/shared';
 import { parseColor } from './styleUtils';
 
 /**

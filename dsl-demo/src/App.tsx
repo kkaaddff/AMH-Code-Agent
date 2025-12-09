@@ -32,14 +32,14 @@ const App: React.FC = () => {
       iconMaxSize: 80,
       verbose: true,
     });
-    const result = cleaner.clean(dslData);
+    const result = cleaner.clean(dslData.dsl.nodes[0]);
 
     console.log(`节点数量: ${result.statistics.nodeCountBefore} → ${result.statistics.nodeCountAfter}`);
     // 使用清洗后的节点更新 DSL 数据
     const cleanedDslData: DesignData = {
       dsl: {
         styles: dslData.dsl.styles,
-        nodes: result.nodes as any,
+        nodes: [result.root],
       },
     };
 
