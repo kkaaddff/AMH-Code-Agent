@@ -1,13 +1,13 @@
-export * from './types/dsl';
-export * from './types/annotation';
-export * from './types/modelMetrics';
-export * from './types/dataModel';
-export * from './types/restApi';
+export * from './types/dsl.js';
+export * from './types/annotation.js';
+export * from './types/modelMetrics.js';
+export * from './types/dataModel.js';
+export * from './types/restApi.js';
 
-export * from './DSLCleaner';
+export * from './DSLCleaner/index.js';
 
-export * from './DSLUtils/layoutUtils';
-export * from './DSLUtils/imageUtils';
-export * from './DSLUtils/nodeUtils';
-export * from './DSLUtils/styleUtils';
-export * from './DSLUtils/svgPathUtils';
+export * from './DSLUtils/layoutUtils.js';
+export * from './DSLUtils/imageUtils.js';
+export * from './DSLUtils/nodeUtils.js';
+export * from './DSLUtils/styleUtils.js';
+export * from './DSLUtils/svgPathUtils.js';

@@ -11,6 +11,7 @@ import {
   getPathBoundingBox,
   getPathViewBox,
   isNodeVisible,
+  normalizeTransform,
   parseBorderRadius,
   parseBorderStyle,
   parseColor,
@@ -19,7 +20,6 @@ import {
   parseImageUrl,
   parseLayoutStyle,
   parseTextStyle,
-  PathTransform,
 } from '@fta/shared';
 import React from 'react';
 interface DSLElementProps {
@@ -241,12 +241,6 @@ const DSLElement: React.FC<DSLElementProps> = ({
       if (!pathNode.path || pathNode.path.length === 0) {
         return <div style={combinedStyle} {...elementProps} />;
       }
-
-      const normalizeTransform = (t?: PathTransform): Required<PathTransform> => ({
-        x: t?.x ?? 0,
-        y: t?.y ?? 0,
-        rotate: t?.rotate ?? 0,
-      });
 
       // 如果存在多个 path，合并计算 viewBox，逐个渲染。
       // transform (translate/rotate) 也会撑开 bbox，需要纳入 viewBox 计算。

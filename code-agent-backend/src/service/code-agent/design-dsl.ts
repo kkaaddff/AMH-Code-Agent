@@ -7,7 +7,8 @@ import * as crypto from 'crypto';
 import fs from 'fs/promises';
 import * as path from 'path';
 import { DesignPathAssetEntity } from '../../entity/code-agent/design-dsl/path-asset';
-import { DesignData, DesignNode, DSLData, LayerNode, LayerStyle, PathItem, PathNode } from '../../types/design-dsl';
+import { applyTransformToBoundingBox, getPathBoundingBox, normalizeTransform } from '@fta/shared';
+import type { DesignData, DesignNode, DSLData, LayerNode, LayerStyle, PathItem, PathNode } from '@fta/shared';
 import { normalizeNumericValues } from '../../utils/design/dsl';
 import { OssManagement } from '../oss';
 
@@ -49,12 +50,69 @@ export class DesignDSLService {
   }
 
   /**
-   * 计算路径数据摘要（支持多个 path 项）
+   * 统一 pathItems 的 transform，并计算 viewBox（包含 translate/rotate 带来的 bbox 扩展）
    */
-  private getPathDigest(pathItems: PathItem[]): string {
-    const combined = pathItems.map((item) => `${item.data || ''}:${item.fill || ''}`).join('|');
+  private normalizePathItems(
+    pathItems: PathItem[],
+    width?: number,
+    height?: number
+  ): {
+    normalizedPathItems: PathItem[];
+    viewBox: string;
+    width: number;
+    height: number;
+  } {
+    const effectiveWidth = typeof width === 'number' && width > 0 ? width : 100;
+    const effectiveHeight = typeof height === 'number' && height > 0 ? height : 100;
+
+    const normalizedPathItems = pathItems.map((item) => ({
+      ...item,
+      transform: normalizeTransform(item.transform),
+    }));
+
+    const boundingBoxes = normalizedPathItems
+      .filter((item) => item.data)
+      .map((item) => applyTransformToBoundingBox(getPathBoundingBox(item.data), item.transform));
+
+    if (boundingBoxes.length === 0) {
+      return {
+        normalizedPathItems,
+        viewBox: `0 0 ${effectiveWidth} ${effectiveHeight}`,
+        width: effectiveWidth,
+        height: effectiveHeight,
+      };
+    }
+
+    const minX = Math.min(...boundingBoxes.map((b) => b.minX));
+    const minY = Math.min(...boundingBoxes.map((b) => b.minY));
+    const maxX = Math.max(...boundingBoxes.map((b) => b.maxX));
+    const maxY = Math.max(...boundingBoxes.map((b) => b.maxY));
+
+    return {
+      normalizedPathItems,
+      viewBox: `${minX} ${minY} ${maxX - minX} ${maxY - minY}`,
+      width: effectiveWidth,
+      height: effectiveHeight,
+    };
+  }
+
+  private getPathDigest(
+    pathItems: PathItem[],
+    extra?: {
+      width?: number;
+      height?: number;
+      viewBox?: string;
+    }
+  ): string {
+    const combined = pathItems
+      .map((item) => {
+        const transform = normalizeTransform(item.transform);
+        return `${item.data || ''}:${item.fill || ''}:${transform.x}:${transform.y}:${transform.rotate}`;
+      })
+      .join('|');
+    const sizePart = `${extra?.width ?? ''}:${extra?.height ?? ''}:${extra?.viewBox ?? ''}`;
     // 取 sha256 前 16 字符, 保持唯一性和长度要求
-    return crypto.createHash('sha256').update(combined).digest('hex').slice(0, 16);
+    return crypto.createHash('sha256').update(`${combined}|${sizePart}`).digest('hex').slice(0, 16);
   }
 
   /**
@@ -269,8 +327,19 @@ export class DesignDSLService {
       throw new Error('Path items cannot be empty');
     }
 
-    // 计算摘要（包含所有 path 项）
-    const digest = this.getPathDigest(pathItems);
+    const {
+      normalizedPathItems,
+      viewBox,
+      width: effectiveWidth,
+      height: effectiveHeight,
+    } = this.normalizePathItems(pathItems, width, height);
+
+    // 计算摘要（包含所有 path 项 + 尺寸信息）
+    const digest = this.getPathDigest(normalizedPathItems, {
+      width: effectiveWidth,
+      height: effectiveHeight,
+      viewBox,
+    });
     const cachedUrl = await this.getCachedImageUrl(digest);
     if (cachedUrl) {
       console.log(`✅ cached image url: ${cachedUrl}`);
@@ -283,10 +352,11 @@ export class DesignDSLService {
         method: 'POST',
         url: 'https://qa-fta-server.amh-group.com/design/convert-svg-path-to-png',
         data: {
-          pathItems,
-          width,
-          height,
+          pathItems: normalizedPathItems,
+          width: effectiveWidth,
+          height: effectiveHeight,
           styles: dslData.styles,
+          viewBox,
         },
         responseType: 'arraybuffer',
         timeout: 600_000,
@@ -310,8 +380,8 @@ export class DesignDSLService {
       const imageUrl = uploadResult.url;
 
       // 持久化转换结果（使用第一个 path 项的 data 作为 pathData）
-      const pathData = pathItems.map((item) => item.data || '').join('|');
-      const fillStyle = pathItems.map((item) => item.fill || '').join('|');
+      const pathData = normalizedPathItems.map((item) => item.data || '').join('|');
+      const fillStyle = normalizedPathItems.map((item) => item.fill || '').join('|');
       await this.persistConversionResult({
         digest,
         imageUrl,
@@ -344,9 +414,9 @@ export class DesignDSLService {
 
         if (validPathItems.length > 0) {
           try {
-            // 获取节点的宽高，如果没有则使用默认值
-            const width = pathNode.layoutStyle?.width || 48;
-            const height = pathNode.layoutStyle?.height || 48;
+            // 获取节点的宽高，如果没有则使用默认值（与前端渲染保持一致）
+            const width = pathNode.layoutStyle?.width || 100;
+            const height = pathNode.layoutStyle?.height || 100;
 
             // 转换SVG路径为PNG（处理所有 path 项）
             const imageUrl = await this.convertSvgPathToPng(validPathItems, width, height, dslData);

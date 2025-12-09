@@ -1,4 +1,4 @@
-import { DesignData, DSLNode } from '@fta/shared';
+import type { DesignData, DSLNode } from '@fta/shared';
 
 /**
  * 将数字保留两位小数

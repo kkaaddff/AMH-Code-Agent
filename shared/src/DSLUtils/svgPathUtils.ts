@@ -238,7 +238,7 @@ export function getPathBoundingBox(pathData: string): BoundingBox {
   };
 }
 
-const normalizeTransform = (t?: PathTransform): Required<PathTransform> => ({
+export const normalizeTransform = (t?: PathTransform): Required<PathTransform> => ({
   x: t?.x ?? 0,
   y: t?.y ?? 0,
   rotate: t?.rotate ?? 0,

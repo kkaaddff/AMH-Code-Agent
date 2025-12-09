@@ -1,4 +1,4 @@
-import { DSLNode } from '@fta/shared';
+import type { DSLNode } from '@fta/shared';
 import { unwrapGroupNodes } from '../design/dsl';
 import { StyleMap } from './types';
 

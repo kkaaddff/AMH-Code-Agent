@@ -170,19 +170,17 @@ const EditorPageContent: React.FC = () => {
     try {
       const cleaner = new DSLCleaner({
         removeEmptyNodes: true,
-        detectIcons: false,
-        iconMaxSize: 80,
+        detectIcons: true,
+        iconMergeMaxSize: 40,
         verbose: true,
       });
 
-      const cleanResult = cleaner.clean({
-        dsl: designDetectionStore.designData.dsl,
-      });
+      const cleanResult = cleaner.clean(designDetectionStore.designData.dsl.nodes[0]);
 
       const cleanedDslData: DesignData = {
         dsl: {
           styles: designDetectionStore.designData.dsl.styles,
-          nodes: cleanResult.nodes as any,
+          nodes: [cleanResult.root],
         },
       };
 

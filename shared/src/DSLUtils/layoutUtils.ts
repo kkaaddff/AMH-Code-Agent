@@ -1,6 +1,6 @@
 import type { DSLStyles } from '../types/dsl';
 import type React from 'react';
-import { parseColor } from './styleUtils';
+import { parseColor } from './styleUtils.js';
 
 /**
  * 将 DSL 描述的边框属性转为 React 可用的 CSS 样式。

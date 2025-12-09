@@ -94,11 +94,11 @@ export interface Statistics {
 // ==================== 默认配置 ====================
 
 const DEFAULT_CONFIG: CleanerConfig = {
-  removeEmptyNodes: true,
+  removeEmptyNodes: false,
 
-  removeMaskLayers: true,
-  removeOutOfBounds: true,
-  removeInvisibleNodes: true,
+  removeMaskLayers: false,
+  removeOutOfBounds: false,
+  removeInvisibleNodes: false,
 
   detectIcons: true,
   mergeIconLayers: true,
@@ -106,13 +106,13 @@ const DEFAULT_CONFIG: CleanerConfig = {
   iconMinLayers: 2,
   iconProximityThreshold: 10,
 
-  buildZIndex: true,
-  checkOverlapping: true,
-  removeCompletelyHidden: true,
+  buildZIndex: false,
+  checkOverlapping: false,
+  removeCompletelyHidden: false,
 
-  flattenSingleChild: true,
-  optimizeDepth: true,
-  preserveSemantics: true,
+  flattenSingleChild: false,
+  optimizeDepth: false,
+  preserveSemantics: false,
 
   verbose: false,
   dryRun: false,

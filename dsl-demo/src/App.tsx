@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import DSLElement from './components/DSLElement';
-import DSL3DCompareModal from './components/DSL3DCompareModal';
-import { DesignData } from '@fta/shared';
-import dslRawData from './data/dsl.json';
-import { DSLCleaner } from '@fta/shared';
-import type { Statistics } from '@fta/shared';
+import type { CleanerConfig, Statistics } from '@fta/shared';
+import { DesignData, DSLCleaner } from '@fta/shared';
+import React, { useEffect, useState } from 'react';
 import './App.css';
+import DSL3DCompareModal from './components/DSL3DCompareModal';
+import DSLElement from './components/DSLElement';
+import dslRawData from './data/dsl.json';
 
 const App: React.FC = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -26,13 +25,33 @@ const App: React.FC = () => {
       },
     };
 
-    // 清洗 DSL 数据
-    const cleaner = new DSLCleaner({
+    const cleanerConfig: CleanerConfig = {
       removeEmptyNodes: true,
+
+      removeMaskLayers: true,
+      removeOutOfBounds: true,
+      removeInvisibleNodes: true,
+
       detectIcons: true,
+      mergeIconLayers: true,
       iconMergeMaxSize: 40,
+      iconMinLayers: 2,
+      iconProximityThreshold: 10,
+
+      buildZIndex: true,
+      checkOverlapping: true,
+      removeCompletelyHidden: true,
+
+      flattenSingleChild: true,
+      optimizeDepth: true,
+      preserveSemantics: true,
+
       verbose: true,
-    });
+      dryRun: false,
+    };
+
+    // 清洗 DSL 数据
+    const cleaner = new DSLCleaner(cleanerConfig);
     const result = cleaner.clean(dslData.dsl.nodes[0]);
 
     console.log(`节点数量: ${result.statistics.nodeCountBefore} → ${result.statistics.nodeCountAfter}`);
