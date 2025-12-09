@@ -1,6 +1,6 @@
 // ==================== 类型定义 ====================
 
-import type { DSLNode, DSLLayoutStyle, DSLPathItem, DSLTransform } from './dsl';
+import type { DSLNode, DSLLayoutStyle, DSLPathItem, DSLTransform } from '../types/dsl';
 
 type LayoutStyle = DSLLayoutStyle;
 

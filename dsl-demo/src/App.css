@@ -40,11 +40,13 @@
 
 .canvas-container {
   flex: 1;
-  background: #fff;
+  background: #ddd;
   border: 1px solid #ddd;
   border-radius: 4px;
   overflow: auto;
   position: relative;
+
+  padding: 20px 0 0 30px;
 }
 
 .canvas {

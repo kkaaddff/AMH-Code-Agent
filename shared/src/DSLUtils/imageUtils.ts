@@ -1,4 +1,4 @@
-import { DSLStyles } from '../types/dsl';
+import type { DSLStyles } from '../types/dsl';
 
 /**
  * 根据样式表解析图片资源的真实 URL。

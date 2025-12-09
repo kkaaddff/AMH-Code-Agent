@@ -36,4 +36,3 @@ export const renderRoutes = (routes: RouteConfig[]) => {
     return <Route key={path || index} path={path} element={wrappedElement} />;
   });
 };
-

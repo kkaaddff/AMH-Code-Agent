@@ -1,7 +1,7 @@
 /**
  * 数据模型相关共享类型定义
  * 用于 backend、frontend 和 agent-core 之间的类型共享
- * 
+ *
  * 数据模型使用 TypeScript Interfaces 作为单一事实来源
  */
 

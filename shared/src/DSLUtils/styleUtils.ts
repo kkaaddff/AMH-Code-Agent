@@ -1,4 +1,5 @@
-import { DSLLayoutStyle, DSLStyles } from '../types/dsl';
+import type { DSLLayoutStyle, DSLStyles } from '../types/dsl';
+import type React from 'react';
 
 /**
  * 解析 DSL 中的颜色标识，转换为实际颜色值。

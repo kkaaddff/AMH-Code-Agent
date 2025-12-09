@@ -1,25 +1,27 @@
-import React from 'react';
 import {
-  DSLNode,
-  DSLTextNode,
-  DSLLayerNode,
-  DSLPathNode,
+  applyTransformToBoundingBox,
+  DesignData,
   DSLFrameNode,
   DSLInstanceNode,
+  DSLLayerNode,
+  DSLNode,
+  DSLPathNode,
   DSLStyles,
-  DesignData,
-} from '@fta/shared';
-import {
-  parseColor,
-  parseLayoutStyle,
-  parseFlexContainerStyle,
+  DSLTextNode,
+  getPathBoundingBox,
+  getPathViewBox,
+  isNodeVisible,
   parseBorderRadius,
+  parseBorderStyle,
+  parseColor,
+  parseEffectStyle,
+  parseFlexContainerStyle,
+  parseImageUrl,
+  parseLayoutStyle,
   parseTextStyle,
-} from '../utils/styleUtils';
-import { parseImageUrl } from '../utils/imageUtils';
-import { parseBorderStyle, parseEffectStyle } from '../utils/layoutUtils';
-import { isNodeVisible } from '../utils/nodeUtils';
-import { getPathBoundingBox, getPathViewBox, applyTransformToBoundingBox, PathTransform } from '../utils/svgPathUtils';
+  PathTransform,
+} from '@fta/shared';
+import React from 'react';
 
 interface DSLElementProps {
   node?: DSLNode;

@@ -1,4 +1,5 @@
-import { DSLStyles } from '../types/dsl';
+import type { DSLStyles } from '../types/dsl';
+import type React from 'react';
 import { parseColor } from './styleUtils';
 
 /**
