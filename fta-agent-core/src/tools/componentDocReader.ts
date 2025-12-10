@@ -44,7 +44,7 @@ export function createComponentDocReaderTool(opts: ComponentDocReaderOptions) {
       const uniqueNames = Array.from(new Set(component_names));
       const missingComponents: string[] = [];
       const missingFiles: Array<{ component: string; path: string }> = [];
-      const docs: Array<{ component: string; path: string; content: string }> = [];
+      const docs: Array<{ component: string; content: string }> = [];
 
       for (const name of uniqueNames) {
         // Always use kebab-case version of the name to lookup
@@ -65,7 +65,6 @@ export function createComponentDocReaderTool(opts: ComponentDocReaderOptions) {
           console.log(`🚩 组件 "${name}" 的文档存在：${filePath}`);
           docs.push({
             component: name,
-            path: filePath,
             content,
           });
         } catch (error: any) {

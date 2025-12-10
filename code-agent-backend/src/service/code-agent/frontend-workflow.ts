@@ -167,9 +167,11 @@ export class FrontendWorkflowService {
       const workflowEngineStart = Date.now();
 
       // 组合页面标注和数据上下文信息
-      const fullPageContext = dataContextSummary
-        ? annotationSummary + '\n\n---\n\n' + dataContextSummary
-        : annotationSummary;
+      const fullPageContext =
+        //  dataContextSummary
+        // ? annotationSummary + '\n\n---\n\n' + dataContextSummary
+        // :
+        annotationSummary;
       // '# 任务: 创建页面 `cargo-detail`\n' + annotationSummary;
 
       // 调用 workflow

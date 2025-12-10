@@ -1,6 +1,7 @@
 import { Body, Controller, Inject, Post } from '@midwayjs/decorator';
 import { Validate } from '@midwayjs/validate';
 import { Context } from '@midwayjs/web';
+import chalk from 'chalk';
 import { v4 as uuid } from 'uuid';
 import { FrontendWorkflowRequestDTO } from '../../dto/code-agent/frontend-workflow.dto';
 import { FrontendWorkflowService } from '../../service/code-agent/frontend-workflow';
@@ -159,7 +160,12 @@ export class FrontendWorkflowController {
         signal: abortController.signal,
         toolProxy: async (toolName: string, params: any) => {
           const callId = uuid();
-
+          console.log(
+            `
+frontend-workflow: [${sessionId}] 🟦 收到工具调用: 
+toolName=${chalk.bgBlue(toolName)} 
+params=${JSON.stringify(params).substring(0, 100)}${JSON.stringify(params).length > 100 ? '...' : ''}`
+          );
           // Send SSE event requesting tool execution
           sendSSE('tool_call', {
             callId,
@@ -169,8 +175,13 @@ export class FrontendWorkflowController {
 
           // Create and store promise
           return new Promise((resolve, reject) => {
+            const resolveWithConsole = (result: any) => {
+              console.log(`frontend-workflow: [${sessionId}] 🟦 工具调用结果: ${chalk.blue(JSON.stringify(result))}`);
+              resolve(result);
+            };
+
             FrontendWorkflowController.pendingToolCalls.set(callId, {
-              resolve,
+              resolve: resolveWithConsole,
               reject,
               timestamp: Date.now(),
               sessionId,
@@ -206,11 +217,6 @@ export class FrontendWorkflowController {
           onMessage: async (opts) => {
             const { message } = opts;
             const content = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
-            console.log(
-              `frontend-workflow: [${sessionId}] 💬 收到消息: role=${message.role} 
-content=${content.substring(0, 100)}${content.length > 100 ? '...' : ''}
-`
-            );
             sendSSE('message', {
               role: message.role,
               content,
@@ -221,7 +227,7 @@ content=${content.substring(0, 100)}${content.length > 100 ? '...' : ''}
           },
           onText: async (text) => {
             console.log(
-              `frontend-workflow: [${sessionId}] 📝 收到文本片段: ${text.substring(0, 100)}${
+              `frontend-workflow: [${sessionId}] 📝 收到文本片段: ${chalk.green(text.substring(0, 100))}${
                 text.length > 100 ? '...' : ''
               }`
             );
@@ -229,13 +235,9 @@ content=${content.substring(0, 100)}${content.length > 100 ? '...' : ''}
           },
           onStreamResult: async (streamResult) => {
             const hasError = !!streamResult.error;
-            console.log(
-              `frontend-workflow: [${sessionId}] 🔄 流式结果: hasError=${hasError}, model=${
-                streamResult.model?.model ? JSON.stringify(streamResult.model.model) : 'N/A'
-              }`
-            );
+            console.log(`frontend-workflow: [${sessionId}] 🔄 流式结果: hasError=${hasError}, `);
             if (hasError) {
-              console.error(`frontend-workflow: [${sessionId}] ❌ 流式结果错误:`, streamResult.error);
+              console.error(`frontend-workflow: [${sessionId}] ❌ 流式结果错误:`, chalk.red(streamResult.error));
             }
             sendSSE('stream_result', {
               requestId: streamResult.requestId,
@@ -264,7 +266,6 @@ content=${content.substring(0, 100)}${content.length > 100 ? '...' : ''}
               ).toISOString()}, 持续${(duration / 1000).toFixed(2)}秒`
             );
             console.log(`frontend-workflow: [${sessionId}] 📊 Token使用情况:\n`, turn.usage);
-            console.log('\n');
             sendSSE('turn', {
               usage: turn.usage,
               startTime: turn.startTime,
