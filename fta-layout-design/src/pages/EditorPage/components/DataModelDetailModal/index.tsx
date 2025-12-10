@@ -157,6 +157,8 @@ const DataModelDetailModal: React.FC<DataModelDetailModalProps> = ({ open, model
           </div>
           <TypeScriptEditor
             value={tsContent}
+            language='jsonc'
+            enableValidation={false}
             onChange={(value) => {
               setTsContent(value);
               markChanged();

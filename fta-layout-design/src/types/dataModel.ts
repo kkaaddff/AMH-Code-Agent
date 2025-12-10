@@ -13,6 +13,8 @@ export type { DataModelDefinition };
 export type CreateDataModelRequest = SharedCreateDataModelRequest;
 export type UpdateDataModelRequest = SharedUpdateDataModelRequest;
 
+export type TypeScriptEditorLanguage = 'typescript' | 'json' | 'jsonl' | 'jsonc';
+
 /**
  * 数据模型组
  */
@@ -75,9 +77,10 @@ export interface UpdateDataModelGroupRequest {
 }
 
 /**
- * 默认的 TypeScript 接口模板
+ * 默认编辑器模板，不同语言对应不同初始内容
  */
-export const DEFAULT_TS_TEMPLATE = `/**
+export const DEFAULT_TS_TEMPLATES: Record<TypeScriptEditorLanguage, string> = {
+  typescript: `/**
  * 数据模型定义
  * 请在此处定义您的 TypeScript 接口
  */
@@ -85,4 +88,19 @@ export interface DataModel {
   id: string;
   // 在此处添加其他字段...
 }
-`;
+`,
+  json: `{
+  "id": "string"
+}`,
+  jsonc: `{
+  // 数据模型定义
+  "id": "string",
+  // 在此处添加其他字段...
+  "name": "示例名称"
+}`,
+  jsonl: `{"id": "string"}
+{"name": "示例名称"}`,
+};
+
+// 兼容旧用法，保留 TypeScript 默认模板
+export const DEFAULT_TS_TEMPLATE = DEFAULT_TS_TEMPLATES.typescript;

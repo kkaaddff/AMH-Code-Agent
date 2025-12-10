@@ -1,6 +1,6 @@
 import { dataModelService } from '@/services/dataModelService';
-import type { CreateDataModelRequest, DataModelGroup } from '@/types/dataModel';
-import { DEFAULT_TS_TEMPLATE } from '@/types/dataModel';
+import type { CreateDataModelRequest, DataModelGroup, TypeScriptEditorLanguage } from '@/types/dataModel';
+import { DEFAULT_TS_TEMPLATES } from '@/types/dataModel';
 import { RobotOutlined, WarningOutlined } from '@ant-design/icons';
 import { App, Button, Form, Input, Modal, Select, Space, Tabs, Tooltip, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
@@ -30,7 +30,8 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [groupId, setGroupId] = useState<string | undefined>();
-  const [tsContent, setTsContent] = useState(DEFAULT_TS_TEMPLATE);
+  const editorLanguage: TypeScriptEditorLanguage = 'jsonc';
+  const [tsContent, setTsContent] = useState(DEFAULT_TS_TEMPLATES[editorLanguage]);
   const [hasValidationErrors, setHasValidationErrors] = useState(false);
 
   // 当弹窗打开时，设置默认分组为当前选中的分组
@@ -49,7 +50,7 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
     setName('');
     setDescription('');
     setGroupId(undefined);
-    setTsContent(DEFAULT_TS_TEMPLATE);
+    setTsContent(DEFAULT_TS_TEMPLATES[editorLanguage]);
     setHasValidationErrors(false);
     setActiveTab('basic');
     setAiParseModalOpen(false);
@@ -161,6 +162,8 @@ const DataModelCreateModal: React.FC<DataModelCreateModalProps> = ({ open, onClo
           </div>
           <TypeScriptEditor
             value={tsContent}
+            language={editorLanguage}
+            enableValidation={false}
             onChange={setTsContent}
             onValidate={(hasErrors) => setHasValidationErrors(hasErrors)}
             height={350}

@@ -1,7 +1,7 @@
 import Editor, { BeforeMount, Monaco, OnChange, OnMount, OnValidate } from '@monaco-editor/react';
 import { Spin } from 'antd';
 import type { editor } from 'monaco-editor';
-import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 
 export interface TypeScriptEditorProps {
   /** 编辑器内容 */
@@ -10,6 +10,8 @@ export interface TypeScriptEditorProps {
   onChange?: (value: string) => void;
   /** 校验状态变更回调 */
   onValidate?: (hasErrors: boolean, markers: editor.IMarker[]) => void;
+  /** 是否开启校验 */
+  enableValidation?: boolean;
   /** 编辑器高度 */
   height?: string | number;
   /** 是否只读 */
@@ -20,6 +22,8 @@ export interface TypeScriptEditorProps {
   className?: string;
   /** 忽略的 TypeScript 诊断代码列表 */
   ignoreDiagnosticCodes?: number[];
+  /** 编辑语言：ts、json、jsonl、jsonc */
+  language?: 'typescript' | 'json' | 'jsonl' | 'jsonc';
 }
 
 export interface TypeScriptEditorRef {
@@ -39,47 +43,75 @@ const TypeScriptEditor = forwardRef<TypeScriptEditorRef, TypeScriptEditorProps>(
       value,
       onChange,
       onValidate,
+      enableValidation = true,
       height = 300,
       readOnly = false,
       placeholder,
       className,
       ignoreDiagnosticCodes = [2792],
+      language = 'typescript',
     },
     ref
   ) => {
-
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
     const monacoRef = useRef<Monaco | null>(null);
     const markersRef = useRef<editor.IMarker[]>([]);
-    // 使用稳定的路径确保模型正确注册到 TypeScript 语言服务
-    const modelPath = useMemo(() => `file:///typescript-editor-${Date.now()}.ts`, []);
+    // 统一管理语言映射，避免分散的三元判断
+    const languageMeta = useMemo(() => {
+      switch (language) {
+        case 'json':
+          return { modelExt: 'json', monacoLanguage: 'json', isTs: false };
+        case 'jsonl':
+          return { modelExt: 'jsonl', monacoLanguage: 'json', isTs: false };
+        case 'jsonc':
+          return { modelExt: 'jsonc', monacoLanguage: 'jsonc', isTs: false };
+        case 'typescript':
+        default:
+          return { modelExt: 'ts', monacoLanguage: 'typescript', isTs: true };
+      }
+    }, [language]);
+
+    // 使用稳定的路径确保模型正确注册到对应语言服务
+    const modelPath = useMemo(
+      () => `file:///typescript-editor-${Date.now()}.${languageMeta.modelExt}`,
+      [languageMeta.modelExt]
+    );
 
     // 编辑器挂载前配置 TypeScript
-    const handleBeforeMount: BeforeMount = useCallback(
-      (monaco) => {
-        // 保存 monaco 实例供后续使用
-        monacoRef.current = monaco;
+    const handleBeforeMount: BeforeMount = (monaco) => {
+      // 保存 monaco 实例供后续使用
+      monacoRef.current = monaco;
 
-        // 配置 TypeScript 编译选项（使用枚举值而不是字符串）
-        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-          target: monaco.languages.typescript.ScriptTarget.ES2020,
-          module: monaco.languages.typescript.ModuleKind.ESNext,
-          moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeNext,
-          strict: true,
-          skipLibCheck: true,
-          jsx: monaco.languages.typescript.JsxEmit.React,
-        });
+      // 配置 TypeScript 编译选项（使用枚举值而不是字符串）
+      monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+        target: monaco.languages.typescript.ScriptTarget.ES2020,
+        module: monaco.languages.typescript.ModuleKind.ESNext,
+        moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeNext,
+        strict: true,
+        skipLibCheck: true,
+        jsx: monaco.languages.typescript.JsxEmit.React,
+      });
 
+      if (languageMeta.isTs) {
         // 配置诊断选项（校验规则）
         monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
           noUnusedLocals: true,
           noUnusedParameters: true,
           noFallthroughCasesInSwitch: true,
           diagnosticCodesToIgnore: ignoreDiagnosticCodes,
+          noSemanticValidation: !enableValidation,
+          noSyntaxValidation: !enableValidation,
         });
-      },
-      [ignoreDiagnosticCodes]
-    );
+      } else {
+        // JSON/JSONL/JSONC 校验配置
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+          validate: enableValidation,
+          allowComments: true,
+          comments: 'ignore',
+          trailingCommas: 'ignore',
+        });
+      }
+    };
 
     // 暴露给父组件的方法
     useImperativeHandle(ref, () => ({
@@ -136,28 +168,51 @@ const TypeScriptEditor = forwardRef<TypeScriptEditorRef, TypeScriptEditorProps>(
       });
     }, []);
 
-    const handleChange: OnChange = useCallback(
-      (newValue) => {
-        onChange?.(newValue || '');
-      },
-      [onChange]
-    );
-
+    const handleChange: OnChange = (newValue) => {
+      onChange?.(newValue || '');
+    };
     // 处理校验结果
-    const handleValidate: OnValidate = useCallback(
-      (markers) => {
-        markersRef.current = markers;
-        const hasErrors = markers.some((m) => m.severity === 8); // 8 = MarkerSeverity.Error
-        onValidate?.(hasErrors, markers);
-      },
-      [onValidate]
-    );
+    const handleValidate: OnValidate = (markers) => {
+      if (!enableValidation) {
+        markersRef.current = [];
+        onValidate?.(false, []);
+        return;
+      }
+      markersRef.current = markers;
+      const hasErrors = markers.some((m) => m.severity === 8); // 8 = MarkerSeverity.Error
+      onValidate?.(hasErrors, markers);
+    };
+
+    // 语言或校验配置变化时，更新对应诊断规则
+    useEffect(() => {
+      const monaco = monacoRef.current;
+      if (!monaco) return;
+
+      if (languageMeta.isTs) {
+        monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+          noUnusedLocals: true,
+          noUnusedParameters: true,
+          noFallthroughCasesInSwitch: true,
+          diagnosticCodesToIgnore: ignoreDiagnosticCodes,
+          noSemanticValidation: !enableValidation,
+          noSyntaxValidation: !enableValidation,
+        });
+      } else {
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+          validate: enableValidation,
+          allowComments: true,
+          comments: 'ignore',
+          trailingCommas: 'ignore',
+        });
+      }
+    }, [enableValidation, languageMeta.isTs]);
 
     return (
       <div className={className} style={{ border: '1px solid #d9d9d9', borderRadius: 6, overflow: 'hidden' }}>
         <Editor
           height={height}
-          defaultLanguage='typescript'
+          defaultLanguage={languageMeta.monacoLanguage}
+          language={languageMeta.monacoLanguage}
           path={modelPath}
           value={value}
           onChange={handleChange}
