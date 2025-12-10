@@ -110,6 +110,18 @@ const TypeScriptEditor = forwardRef<TypeScriptEditorRef, TypeScriptEditorProps>(
           comments: 'ignore',
           trailingCommas: 'ignore',
         });
+        monaco.languages.json.jsonDefaults.setModeConfiguration({
+          documentFormattingEdits: true,
+          documentRangeFormattingEdits: true,
+          completionItems: true,
+          hovers: true,
+          documentSymbols: true,
+          tokens: true,
+          colors: true,
+          foldingRanges: true,
+          selectionRanges: true,
+          diagnostics: true,
+        });
       }
     };
 
@@ -219,7 +231,7 @@ const TypeScriptEditor = forwardRef<TypeScriptEditorRef, TypeScriptEditorProps>(
           beforeMount={handleBeforeMount}
           onMount={handleEditorMount}
           onValidate={handleValidate}
-          loading={<Spin size='small' tip='加载编辑器...' />}
+          loading={<Spin size='small' />}
           options={{
             readOnly,
             minimap: { enabled: false },
@@ -235,6 +247,8 @@ const TypeScriptEditor = forwardRef<TypeScriptEditorRef, TypeScriptEditorProps>(
             padding: { top: 20 },
             contextmenu: true,
             dropIntoEditor: { enabled: true },
+            formatOnPaste: true,
+            formatOnType: true,
           }}
           theme='light'
         />
