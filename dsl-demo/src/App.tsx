@@ -1,10 +1,14 @@
 import type { CleanerConfig, Statistics } from '@fta/shared';
 import { DesignData, DSLCleaner } from '@fta/shared';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import DSL3DCompareModal from './components/DSL3DCompareModal';
 import DSLElement from './components/DSLElement';
 import dslRawData from './data/dsl.json';
+import rootAnnotation from './data/rootAnnotation.json';
+import { mergeDslWithAnnotation } from './utils/mergeDslAnnotation';
+import type { MergedPageNode } from './types/merged';
+import { estimateTokenDiff } from './utils/tokenEstimator';
 
 const App: React.FC = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -15,6 +19,13 @@ const App: React.FC = () => {
     cleaned: DesignData;
   } | null>(null);
   const [is3DModalOpen, setIs3DModalOpen] = useState(false);
+  const [merged, setMerged] = useState<MergedPageNode | null>(null);
+  const [tokenStats, setTokenStats] = useState<{
+    before: number;
+    after: number;
+    delta: number;
+    saving: number;
+  } | null>(null);
 
   useEffect(() => {
     // Load DSL data - the JSON has styles and nodes at root level, need to wrap in dsl property
@@ -66,6 +77,20 @@ const App: React.FC = () => {
     setDsls({ raw: dslData, statistics: result.statistics, cleaned: cleanedDslData });
   }, []);
 
+  useEffect(() => {
+    const runMerge = async () => {
+      if (!dsls) return;
+      const { merged: mergedTree } = mergeDslWithAnnotation(dsls.cleaned, rootAnnotation as any);
+      setMerged(mergedTree);
+
+      const beforePrompt = JSON.stringify({ annotation: rootAnnotation, dsl: dsls.raw.dsl });
+      const afterPrompt = JSON.stringify(mergedTree);
+      const diff = await estimateTokenDiff(beforePrompt, afterPrompt);
+      setTokenStats(diff);
+    };
+    void runMerge();
+  }, [dsls]);
+
   const handleNodeSelect = (nodeId: string | null) => {
     setSelectedNodeId(nodeId);
     console.log('Selected node:', nodeId);
@@ -74,6 +99,23 @@ const App: React.FC = () => {
   const handleNodeHover = (nodeId: string | null) => {
     setHoveredNodeId(nodeId);
   };
+
+  const mergedPreview = useMemo(() => {
+    if (!merged) return null;
+    const renderNode = (node: MergedPageNode, depth = 0) => {
+      const indent = depth * 12;
+      return (
+        <div key={node.nodeId} style={{ marginLeft: indent, marginBottom: 8 }}>
+          <div>
+            <strong>{node.componentName || node.type}</strong> ({node.type}) · extraVisuals: {node.extraVisuals.length}{' '}
+            · layout: {node.layout.width}×{node.layout.height} @ {node.layout.absoluteX},{node.layout.absoluteY}
+          </div>
+          {node.children.map((child) => renderNode(child, depth + 1))}
+        </div>
+      );
+    };
+    return renderNode(merged);
+  }, [merged]);
 
   if (!dsls) {
     return <div className='loading'>Loading DSL data...</div>;
@@ -164,6 +206,26 @@ const App: React.FC = () => {
                 <strong>Styles:</strong> {Object.keys(dsls.raw.dsl.styles).length}
               </p>
             </div>
+            <div style={{ marginTop: '1rem' }}>
+              <h4>Token (Qwen)</h4>
+              {tokenStats ? (
+                <>
+                  <p>
+                    <strong>Before:</strong> {tokenStats.before} · <strong>After:</strong> {tokenStats.after}
+                  </p>
+                  <p>
+                    <strong>Delta:</strong> {tokenStats.delta} · <strong>Saving:</strong> {tokenStats.saving}
+                  </p>
+                </>
+              ) : (
+                <p>Estimating...</p>
+              )}
+            </div>
+          </div>
+
+          <h3>Merged Preview</h3>
+          <div className='dsl-info' style={{ maxHeight: 320, overflow: 'auto' }}>
+            {mergedPreview ?? <p>合并中...</p>}
           </div>
         </aside>
       </main>
