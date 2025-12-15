@@ -284,4 +284,3 @@ export function mergeDslWithAnnotation(
   const { node } = distributeVisuals(normalizedAnnotation, visualNodes, design.dsl.styles);
   return { merged: node, visuals: visualNodes.length };
 }
-

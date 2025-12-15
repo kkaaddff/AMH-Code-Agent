@@ -1,4 +1,5 @@
 import { Tokenizer } from '@mlc-ai/web-tokenizers';
+// @ts-ignore
 import tokenizerJsonRaw from '../data/qwen-tokenizer.json?raw';
 
 let cachedTokenizer: Tokenizer | null = null;
@@ -6,7 +7,7 @@ let cachedTokenizer: Tokenizer | null = null;
 async function getTokenizer() {
   if (cachedTokenizer) return cachedTokenizer;
   const encoder = new TextEncoder();
-  const buffer = encoder.encode(tokenizerJsonRaw).buffer;
+  const buffer = encoder.encode(tokenizerJsonRaw as string).buffer;
   cachedTokenizer = await Tokenizer.fromJSON(buffer);
   return cachedTokenizer;
 }
@@ -27,4 +28,3 @@ export async function estimateTokenDiff(before: string, after: string) {
     saving: beforeCount - afterCount,
   };
 }
-

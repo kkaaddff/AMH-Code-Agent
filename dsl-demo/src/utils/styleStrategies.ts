@@ -142,4 +142,3 @@ export function resolveStyle(styleId: string, styles: DSLStyles): ResolvedStyle 
 export function resetStyleCache() {
   styleCache.clear();
 }
-
