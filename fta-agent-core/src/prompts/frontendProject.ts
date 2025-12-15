@@ -38,7 +38,7 @@ export function generateFrontendProjectPrompt(opts: FrontendProjectPromptOptions
 
   const rawPrompt = fs.readFileSync(promptPath, 'utf-8');
   const appendSystemPrompt = rawPrompt
-    .replace('{{SPEC_LIST}}', specList)
+    // .replace('{{SPEC_LIST}}', specList)
     .replace('{{FTA_COMPONENT_LIST}}', componentList)
     .trim();
 

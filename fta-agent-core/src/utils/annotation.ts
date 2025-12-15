@@ -42,7 +42,7 @@ export function formatAnnotationSummary(nodes: AnnotationNodeSummary[]): string 
       node.width && node.height ? `Size: ${Math.round(node.width)}×${Math.round(node.height)}` : undefined;
     const childInfo = node.childCount ? `Children: ${node.childCount}` : undefined;
     const commentInfo = node.comment ? `comment: ${node.comment}` : undefined;
-    const dataModelInfo = node.dataModelName ? `DataType: ${node.dataModelName}` : undefined;
+    const dataModelInfo = node.dataModelName ? `MockData: ${node.dataModelName}` : undefined;
 
     const info = [metrics, childInfo, commentInfo, dataModelInfo].filter(Boolean).join('，');
     lines.push(`${indent}- ${labelParts.join(' ')}${info ? `（${info}）` : ''}`);

@@ -237,7 +237,10 @@ params=${JSON.stringify(params).substring(0, 100)}${JSON.stringify(params).lengt
             const hasError = !!streamResult.error;
             console.log(`frontend-workflow: [${sessionId}] 🔄 流式结果: hasError=${hasError}, `);
             if (hasError) {
-              console.error(`frontend-workflow: [${sessionId}] ❌ 流式结果错误:`, chalk.red(streamResult.error));
+              console.error(
+                `frontend-workflow: [${sessionId}] ❌ 流式结果错误:`,
+                chalk.red(JSON.stringify(streamResult.error))
+              );
             }
             sendSSE('stream_result', {
               requestId: streamResult.requestId,

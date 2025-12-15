@@ -70,12 +70,11 @@ const CodeGenerationDrawer: React.FC<CodeGenerationDrawerProps> = ({ abortGenera
         const parts: string[] = [];
         const titleLine = timestamp ? ` *${timestamp}*` : '';
         parts.push(titleLine);
-        parts.push(''); // 空行分隔
         // 内容部分
         if (content) {
           parts.push(content);
         }
-        return parts.join(': ');
+        return parts.join(' ');
       })
       .filter((item) => item !== '')
       .join('\n\n');

@@ -28,7 +28,7 @@
     "Gradient",
     "Grid",
     "Icon",
-    "Image",
+
     "ImageBackground",
     "ImageUpload",
     "IndexBar",
@@ -56,7 +56,6 @@
     "Radio",
     "Rate",
     "Result",
-    "RichText",
     "SafeArea",
     "ScrollHelper",
     "Search",

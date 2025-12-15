@@ -127,16 +127,16 @@ async function authValidate(ctx: Context): Promise<void> {
   let user: User | null = null;
 
   // 尝试从自定义 header 获取 cookies
-  if (!user) {
-    const passport = getCookieFromHeader(ctx, authConfig.cookieName);
-    user = await tryAuthFromSource(ctx, passport, authConfig.ssoHost, '自定义 header');
-  }
+  // if (!user) {
+  //   const passport = getCookieFromHeader(ctx, authConfig.cookieName);
+  //   user = await tryAuthFromSource(ctx, passport, authConfig.ssoHost, '自定义 header');
+  // }
 
-  // 尝试使用 Cookie 鉴权
-  if (!user) {
-    const passport = getCookieFromRequest(ctx, authConfig.cookieName);
-    user = await tryAuthFromSource(ctx, passport, authConfig.ssoHost, 'Cookie');
-  }
+  // // 尝试使用 Cookie 鉴权
+  // if (!user) {
+  //   const passport = getCookieFromRequest(ctx, authConfig.cookieName);
+  //   user = await tryAuthFromSource(ctx, passport, authConfig.ssoHost, 'Cookie');
+  // }
 
   // 本地开发模式
   if (!user && process.env.NODE_ENV === 'local') {

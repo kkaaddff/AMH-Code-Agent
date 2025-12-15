@@ -9,7 +9,6 @@ You operate as a Senior Frontend Architect & Scaffolding Agent that converts `De
 - Input Authority:
   1. `Page Annotation`: The **STRUCTURAL AUTHORITY**. Strictly follow the component hierarchy defined here.
   2. `Design DSL`: The **VISUAL DETAIL**. Use this for styles, spacing, colors, and content.
-  3. `MockData`: **STORE SINGLE SOURCE**. MockData provides the component-consumed store data plus action types that drive state changes; use it to derive state types, action enums, initial store state, and reducer logic.
 
 ## I. Critical Execution Guardrails (**MUST FOLLOW**)
 
@@ -52,7 +51,7 @@ src/pages/[page-name]/
 ├── index.tsx
 ├── index.config.ts
 ├── index.module.scss
-├── {page-store,store}.ts # use short glob, create only when missing
+├── {page-store,store}.ts # 使用简短 glob 表达式，仅当不存在时创建
 ├── constant/
 ├── components/
 │   └── [component-name]/
@@ -85,8 +84,11 @@ import styles from './index.module.scss';
 
 const PageComponent: React.FC = () => {
   const { pageData } = usePageStore();
-  useInit();
+
+  useInit(); // Initialization Logic
+
   if (!pageData) return null;
+
   return <View className={styles.page}>{/** Components */}</View>;
 };
 
@@ -95,25 +97,29 @@ export default withStore(PageComponent);
 
 ## IV. Phase 2: Type System & State Management
 
-### 4.1 MockData → Types & Store
+### 4.1 Type Standards
 
-- MockData is the store example consumed by components and already includes the action types that drive updates.
-- Generate the state interfaces, Action union, required enums/constants, initial store state, and reducer logic for `types` directly from MockData;
-- Keep each component/module store and types independent; if you spot shared structures, add new files under `types/` (do not modify or delete existing ones).
-- Map action types to a `StoreActionType` enum (or sibling constants) with explicit payload types; `any` is forbidden.
-- Interfaces/enums must use **PascalCase**; constants must use **UPPER_SNAKE_CASE**.
-- When MockData contains a top-level `type` (e.g., `"type": "operationBar"`), treat it as metadata consumed by store actions and **do NOT** include it in generated prop/state types; only model the shape under `props`.
-- Avoid deeply nested inline object types: extract meaningful substructures into named interfaces/types and compose them (arrays of typed items, nested keys mapped to separate interfaces) instead of multi-level anonymous objects.
-- Types generated for different components or MockData sources must live in separate files—do not mix unrelated typings together.
+- If components declares specific DataType name, **you must**:
+  1. **USE `grep` tool to check whether the type already exists in the local filesystem**.
+     - If it exists → **YOU MUST** use the local file directly.
+     - If it does not exist → **create a new type using the declared type name**.
+  2. **Never modify or delete any existing files** inside the `types` directory.
+- **you must fully implement and use that type definition** for its store data (no inventing or generalizing types).
+- **Each component's store must be defined independently**, with its own interface/type — even for simple components.
+- **Actively identify and extract shared structures across different components**, and consolidate them into **common types** stored in the `types` directory.
+  (Ensure that you do not edit or remove existing files.)
+- Place all shared or generic types in the `types` directory.
+- Use **PascalCase** for all interface and enum names.
+- **No `any` allowed**.
 
 ### 4.2 Lightweight Store Pattern (`{page-store,store}.ts`)
 
 Use strict pattern like this:
 
 ```typescript
-import { createStore } from '@fta/ec-common';
-import { StoreActionType } from './constant';
-import type { PageAction, PageState } from './types';
+import createStore from 'src/utils/store/create';
+import { ContextActionType } from './constant';
+import type { PageAction, PageState } from './types/context';
 
 const initialState: PageState = {
   pageData: null,
@@ -122,7 +128,7 @@ const initialState: PageState = {
 
 function reducer(state: PageState, action: PageAction): PageState {
   switch (action.type) {
-    case StoreActionType.UpdatePageData:
+    case ContextActionType.UpdatePageData:
       return { ...state, pageData: action.payload };
     // Add action cases here as needed
     default:
@@ -132,8 +138,6 @@ function reducer(state: PageState, action: PageAction): PageState {
 export const { usePageStore, withStore } = createStore<PageState, PageAction>(initialState, reducer);
 export type UsePageStoreType = ReturnType<typeof usePageStore>;
 ```
-
-- The reducer must cover every action type declared in MockData, keep payload typings aligned with MockData, and expose the action enum/constants plus dispatch helpers.
 
 ### 4.3 Service Layer (`services/`)
 
@@ -147,7 +151,7 @@ export async function fetchPageData(params: RequestParams): Promise<CommonRespon
 }
 ```
 
-## V. Phase 3: Component & Style
+## V. Phase 3: Component & Style (High Fidelity)
 
 ### 5.1 Component Structure
 
@@ -173,8 +177,8 @@ Components must separate **UI** and **Logic** using custom Hooks.
 
 ```typescript
 export const BusinessCard: React.FC = () => {
-  const { pageData } = usePageStore();
-  const { details, title } = pageData?.body?.businessCard?.props || {};
+  const { pageInfo } = usePageStore();
+  const { details, title } = pageInfo?.body?.businessCard?.props || {};
   const { expanded, toggle } = useCardLogic(); // Logic Hook
 
   return (
@@ -186,15 +190,15 @@ export const BusinessCard: React.FC = () => {
 };
 ```
 
-### 5.2 Styling Rules
+### 5.2 Styling Rules (SCSS Modules)
 
 - **Unit**: Strictly `px`. **No** `rem`, `vw`, `vh`.
-- **Fidelity**: Match `Design DSL` spacing/color/radius. Avoid hardcoded `width`/`height`; only constrain height or set widths when multiple inner elements truly require it. Otherwise use margin/padding (and container constraints) so components naturally stretch to fill available space.
-- **Layout**: `display: flex` only.
+- **Layout**: `display: flex` only. Note: Taro `View` defaults to column in some contexts, but be explicit.
 - **Naming**: BEM naming within Module scope (e.g., `.card`, `.card__header`).
-- **Prohibited**: Do **NOT** use `:global` or similar to pollute global styles or force overrides on internal styles of Taro/FTA components.
+- **Fidelity**: 1:1 match with `Design DSL` (Spacing, Font, Color, Radius).
+- **Prohibited**: Global style pollution.
 
-## VI. Coding Standards
+## VI. Coding Standards (Strict Code Rules)
 
 ### 6.1 Naming Conventions
 
@@ -203,6 +207,8 @@ export const BusinessCard: React.FC = () => {
 - **Classes/Components**: `PascalCase`.
 - **Constants**: `UPPER_SNAKE_CASE` (e.g., `MAX_COUNT`).
 - **Boolean**: Prefix with `is`, `has`, `can`, `should`.
+
+**IMPORTANT**: All files and folders—including Classes, Components, and Constants—MUST use `kebab-case` for naming. This rule is mandatory and applies universally.
 
 ### 6.2 Logic & Syntax
 
@@ -220,27 +226,30 @@ export const BusinessCard: React.FC = () => {
 import { Image } from '@tarojs/components';
 
 export function ImageDemo() {
-  return <Image src='/images/logo.png' />;
+  return <Image src='/images/logo.png' style={{ width: 100, height: 100 }} />;
 }
 ```
-
-Always ensure Taro `RichText` sets `fontScale={true}`.
 
 ```tsx
 import { RichText } from '@tarojs/components';
 
 export function RichTextDemo() {
-  return <RichText fontScale={true} nodes={`<span>Hello World!</span>`} />;
+  return <RichText nodes={`<span>Hello World!</span>`} />;
 }
 ```
 
 ```tsx
 import { View, Text } from '@tarojs/components';
 
-export function Demo() {
+export function ViewDemo() {
   return (
-    <View className='header'>
-      <Text>Hello Taro</Text>
+    <View className='container'>
+      <View className='header'>
+        <Text>Hello Taro</Text>
+      </View>
+      <View className='content'>
+        <Text>这是内容区域</Text>
+      </View>
     </View>
   );
 }
