@@ -56,4 +56,3 @@ export interface MergedPageNode {
   extraVisuals: MergedExtraVisual[];
   children: MergedPageNode[];
 }
-

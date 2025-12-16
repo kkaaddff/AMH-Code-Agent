@@ -1,4 +1,5 @@
 import type { CleanerConfig, Statistics } from '@fta/shared';
+import { flattenAnnotation, formatAnnotationSummary } from '@fta/agent-core/dist/utils/annotation';
 import { DesignData, DSLCleaner } from '@fta/shared';
 import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
@@ -83,12 +84,13 @@ const App: React.FC = () => {
       const { merged: mergedTree } = mergeDslWithAnnotation(dsls.cleaned, rootAnnotation as any);
       setMerged(mergedTree);
 
-      const beforePrompt = JSON.stringify({ annotation: rootAnnotation, dsl: dsls.raw.dsl });
+      const rootAnnotationSummary = formatAnnotationSummary(flattenAnnotation(rootAnnotation));
+      const beforePrompt = JSON.stringify({ annotation: rootAnnotationSummary, dsl: dsls.raw.dsl });
       const afterPrompt = JSON.stringify(mergedTree);
       const diff = await estimateTokenDiff(beforePrompt, afterPrompt);
       setTokenStats(diff);
     };
-    void runMerge();
+    runMerge();
   }, [dsls]);
 
   const handleNodeSelect = (nodeId: string | null) => {
@@ -189,36 +191,26 @@ const App: React.FC = () => {
 
           <h3>DSL Structure</h3>
           <div className='dsl-info'>
-            <div>
-              <h4>Raw</h4>
-              <p>
-                <strong>Nodes:</strong> {dsls.statistics.nodeCountBefore}
-              </p>
-            </div>
-            <div style={{ marginTop: '1rem' }}>
-              <h4>Cleaned</h4>
-              <p>
-                <strong>Nodes:</strong> {dsls.statistics.processedNodes}
-              </p>
-            </div>
-            <div style={{ marginTop: '1rem' }}>
-              <p>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+              <span>
+                <strong>Raw:</strong> {dsls.statistics.nodeCountBefore} nodes
+              </span>
+              <span>
+                <strong>Cleaned:</strong> {dsls.statistics.processedNodes} nodes
+              </span>
+              <span>
                 <strong>Styles:</strong> {Object.keys(dsls.raw.dsl.styles).length}
-              </p>
+              </span>
             </div>
-            <div style={{ marginTop: '1rem' }}>
-              <h4>Token (Qwen)</h4>
+            <div style={{ fontSize: '0.9rem', color: '#666' }}>
+              <strong>Token (Qwen):</strong>{' '}
               {tokenStats ? (
                 <>
-                  <p>
-                    <strong>Before:</strong> {tokenStats.before} · <strong>After:</strong> {tokenStats.after}
-                  </p>
-                  <p>
-                    <strong>Delta:</strong> {tokenStats.delta} · <strong>Saving:</strong> {tokenStats.saving}
-                  </p>
+                  {tokenStats.before} → {tokenStats.after} (Δ{tokenStats.delta}, 节省{' '}
+                  {((tokenStats.saving / tokenStats.before) * 100).toFixed(1)}%)
                 </>
               ) : (
-                <p>Estimating...</p>
+                'Estimating...'
               )}
             </div>
           </div>

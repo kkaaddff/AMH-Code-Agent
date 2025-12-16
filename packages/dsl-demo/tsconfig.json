@@ -14,7 +14,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"],
-    "types": ["node", "vite/client"],
+    "types": ["node"],
 
     /* Linting */
     "strict": true,
