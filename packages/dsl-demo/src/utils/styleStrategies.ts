@@ -67,9 +67,30 @@ function normalizeFontValue(
 ): Pick<ResolvedFontStyle, 'fontSize' | 'lineHeight' | 'fontWeight' | 'decoration' | 'fontStyle'> {
   if (!value || typeof value !== 'object') return {};
   const obj = value as Record<string, unknown>;
-  const fontSize = typeof obj.fontSize === 'number' ? obj.fontSize : undefined;
-  const lineHeight = typeof obj.lineHeight === 'number' ? obj.lineHeight : undefined;
-  const fontWeight = typeof obj.style === 'string' ? obj.style : undefined;
+  // DSL 中字段名是 size 而不是 fontSize
+  const fontSize = typeof obj.size === 'number' ? obj.size : undefined;
+  // lineHeight 可能是字符串如 "28" 或数字
+  const lineHeight =
+    typeof obj.lineHeight === 'number'
+      ? obj.lineHeight
+      : typeof obj.lineHeight === 'string'
+      ? parseInt(obj.lineHeight, 10) || undefined
+      : undefined;
+  // style 字段表示字重，如 "常规体"、"中黑体"
+  // 有时 style 是 JSON 字符串如 '{"fontStyle":"中黑体","opsz":"auto"}'，需要解析
+  let fontWeight: string | undefined;
+  if (typeof obj.style === 'string') {
+    if (obj.style.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(obj.style);
+        fontWeight = parsed.fontStyle || parsed.style || obj.style;
+      } catch {
+        fontWeight = obj.style;
+      }
+    } else {
+      fontWeight = obj.style;
+    }
+  }
   const decoration = typeof obj.decoration === 'string' ? obj.decoration : undefined;
   const fontStyle = typeof obj.fontStyle === 'string' ? obj.fontStyle : undefined;
   return { fontSize, lineHeight, fontWeight, decoration, fontStyle };
