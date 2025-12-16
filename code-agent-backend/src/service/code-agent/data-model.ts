@@ -63,7 +63,7 @@ export class DataModelService {
     }
 
     // 验证项目是否存在
-    const project = await this.projectEntity.findOne({ id: data.projectId, userId });
+    const project = await this.projectEntity.findOne({ id: data.projectId });
     if (!project) {
       throw new Error('项目不存在');
     }
@@ -105,7 +105,7 @@ export class DataModelService {
     // groupId 支持设为 null（移出分组）
     if (data.groupId !== undefined) updateData.groupId = data.groupId || undefined;
 
-    const updatedDataModel = await this.dataModelEntity.findOneAndUpdate({ id, userId }, updateData, {
+    const updatedDataModel = await this.dataModelEntity.findOneAndUpdate({ id }, updateData, {
       new: true,
       runValidators: true,
     });
@@ -126,12 +126,12 @@ export class DataModelService {
       throw new Error('用户 ID 不能为空');
     }
 
-    const dataModel = await this.dataModelEntity.findOne({ id, userId });
+    const dataModel = await this.dataModelEntity.findOne({ id });
     if (!dataModel) {
       throw new Error('数据模型不存在');
     }
 
-    await this.dataModelEntity.deleteOne({ id, userId });
+    await this.dataModelEntity.deleteOne({ id });
     return true;
   }
 
@@ -144,7 +144,7 @@ export class DataModelService {
       throw new Error('用户 ID 不能为空');
     }
 
-    const dataModels = await this.dataModelEntity.find({ projectId, userId }, null, {
+    const dataModels = await this.dataModelEntity.find({ projectId }, null, {
       sort: { createdAt: -1 },
       lean: true,
     });
@@ -160,7 +160,7 @@ export class DataModelService {
       throw new Error('用户 ID 不能为空');
     }
 
-    const dataModels = await this.dataModelEntity.find({ groupId, userId }, null, {
+    const dataModels = await this.dataModelEntity.find({ groupId }, null, {
       sort: { createdAt: -1 },
       lean: true,
     });
@@ -177,7 +177,7 @@ export class DataModelService {
       throw new Error('用户 ID 不能为空');
     }
 
-    const dataModels = await this.dataModelEntity.find({ projectId, userId, groupId: { $exists: false } }, null, {
+    const dataModels = await this.dataModelEntity.find({ projectId, groupId: { $exists: false } }, null, {
       sort: { createdAt: -1 },
       lean: true,
     });
@@ -194,7 +194,7 @@ export class DataModelService {
       throw new Error('用户 ID 不能为空');
     }
 
-    const dataModel = await this.dataModelEntity.findOne({ id, userId }, null, { lean: true });
+    const dataModel = await this.dataModelEntity.findOne({ id }, null, { lean: true });
     return dataModel as DataModel | null;
   }
 
@@ -211,7 +211,7 @@ export class DataModelService {
       return [];
     }
 
-    const dataModels = await this.dataModelEntity.find({ id: { $in: ids }, userId }, null, { lean: true });
+    const dataModels = await this.dataModelEntity.find({ id: { $in: ids } }, null, { lean: true });
 
     return dataModels as DataModel[];
   }

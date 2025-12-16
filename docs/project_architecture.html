@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMH Code Agent 系统架构图</title>
+    <style>
+        :root {
+            /* ===== Layout scale (1x / 2x) ===== */
+            --u: 8px; /* 1x 基础单位 */
+            --gap: calc(var(--u) * 3); /* 3x */
+            --radius: calc(var(--u) * 1.5);
+            --card-padding: calc(var(--u) * 2.5);
+            --module-min-h: calc(var(--u) * 12); /* 96px */
+
+            /* ===== Base tokens ===== */
+            --bg-color: #f3f6fb;
+            --card-bg: #ffffff;
+            --border-color: rgba(15, 23, 42, 0.10);
+            --text-main: #0f172a;
+            --text-sub: rgba(15, 23, 42, 0.65);
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 16px rgba(15, 23, 42, 0.06);
+
+            /* ===== Theme palette (参考 20251215094022.jpg：蓝/青/紫) ===== */
+            --c-blue: 22 119 255;   /* #1677ff */
+            --c-cyan: 0 183 255;    /* #00b7ff */
+            --c-purple: 139 108 255;/* #8b6cff */
+            --c-violet: 176 134 255;/* #b086ff */
+            --c-slate: 100 116 139; /* #64748b */
+
+            /* Semantic level colors */
+            --level-frontend: var(--c-blue);
+            --level-design: var(--c-cyan);
+            --level-backend: var(--c-purple);
+            --level-agent: var(--c-violet);
+            --level-infra: var(--c-slate);
+        }
+
+        /* ===== Scale switch (1x / 2x) ===== */
+        body[data-scale="2"] {
+            --u: 10px; /* 2x 更疏朗的网格 */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: calc(var(--u) * 4);
+            display: flex;
+            justify-content: center;
+            /* Prevent scrollbars if content fits */
+            overflow: auto; 
+        }
+
+        .container {
+            width: min(1240px, 100%);
+            position: relative;
+            background: var(--bg-color);
+        }
+
+        /* Grid Layout */
+        .grid-layout {
+            display: grid;
+            /* 左侧 2 列：层级说明；右侧 12 列：内容区（原布局） */
+            grid-template-columns: repeat(14, minmax(0, 1fr));
+            grid-template-rows: auto auto auto;
+            gap: var(--gap);
+            position: relative;
+            z-index: 2; /* Above SVG lines */
+            align-items: stretch;
+        }
+
+        /* Common Components */
+        .card {
+            --accent: 15 23 42; /* default: slate-ish */
+            position: relative;
+            overflow: hidden;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: var(--card-padding);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Subtle accent wash (per card) */
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(1200px 320px at 0% 0%, rgba(var(--accent) / 0.10), rgba(255,255,255,0) 55%),
+                radial-gradient(800px 260px at 100% 10%, rgba(var(--accent) / 0.06), rgba(255,255,255,0) 60%);
+            pointer-events: none;
+        }
+        .card > * { position: relative; z-index: 1; }
+
+        .card-header {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: calc(var(--u) * 2);
+            padding-bottom: calc(var(--u) * 1.25);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: calc(var(--u) * 1.5);
+        }
+
+        .tag {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: calc(var(--u) * 1);
+            background: rgba(15, 23, 42, 0.06);
+            color: var(--text-sub);
+            font-weight: normal;
+            white-space: nowrap;
+        }
+
+        .module-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: calc(var(--u) * 1.5);
+            flex-grow: 1;
+            align-content: stretch;
+            grid-auto-rows: 1fr;
+        }
+
+        .module {
+            background: rgba(255, 255, 255, 0.70);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: calc(var(--u) * 1.25);
+            padding: calc(var(--u) * 1.5);
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: var(--module-min-h);
+            transition: all 0.3s;
+        }
+        
+        .module:hover {
+            border-color: rgba(var(--accent) / 0.55);
+            background: rgba(var(--accent) / 0.08);
+            transform: translateY(-1px);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 18px rgba(var(--accent) / 0.10);
+        }
+
+        .module-icon { font-size: 18px; margin-bottom: 4px; }
+
+        /* Specific Areas */
+        
+        /* Left level rail */
+        .area-level {
+            grid-column: 1 / span 2;
+            padding: calc(var(--u) * 2.25);
+            grid-row: 1 / span 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: calc(var(--u) * 2);
+        }
+        .area-level .level-kicker {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: calc(var(--u) * 1);
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+        .level-rail {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--u) * 1.5);
+        }
+        .level-section {
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            background: rgba(255,255,255,0.60);
+            border-radius: calc(var(--u) * 1.25);
+            padding: calc(var(--u) * 1.25);
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--u) * 1);
+        }
+        .level-section[data-accent] {
+            border-left: 3px solid rgba(var(--accent) / 0.90);
+        }
+        .area-level .level-title {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: calc(var(--u) * 1);
+        }
+        .area-level .level-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: calc(var(--u) * 1);
+        }
+        .pill {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            background: rgba(15, 23, 42, 0.03);
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        /* Row 1: Users & Frontend */
+        .area-frontend {
+            --accent: var(--level-frontend);
+            grid-column: 3 / span 12;
+            grid-row: 1;
+            border-top: 4px solid rgba(var(--accent) / 1);
+        }
+
+        /* Row 2: Middle Layer (Design Input -> Backend -> Agent) */
+        
+        .area-design {
+            --accent: var(--level-design);
+            grid-column: 3 / span 4;
+            grid-row: 2;
+            border-top: 4px solid rgba(var(--accent) / 1);
+        }
+
+        .area-backend {
+            --accent: var(--level-backend);
+            grid-column: 7 / span 5;
+            grid-row: 2;
+            border-top: 4px solid rgba(var(--accent) / 1);
+        }
+
+        .area-agent {
+            --accent: var(--level-agent);
+            grid-column: 12 / span 3;
+            grid-row: 2;
+            border-top: 4px solid rgba(var(--accent) / 1);
+        }
+
+        /* Row 3: Infrastructure */
+        .area-infra {
+            grid-column: 3 / span 12;
+            grid-row: 3;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: var(--gap);
+            padding: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .infra-badge {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--u) * 1.25);
+            padding: calc(var(--u) * 2);
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-sub);
+            box-shadow: var(--shadow-sm);
+            min-height: calc(var(--u) * 10);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Sub-sections within Backend */
+        .sub-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-sub);
+            grid-column: span 2;
+        }
+
+        /* SVG Arrows Layer */
+        .arrows-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            top: calc(var(--u) * -3.25);
+            right: calc(var(--u) * 0.5);
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-sub);
+            background: rgba(255,255,255,0.86);
+            border: 1px solid rgba(15, 23, 42, 0.10);
+            border-radius: 999px;
+            padding: 8px 10px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03), 0 10px 26px rgba(15, 23, 42, 0.06);
+            backdrop-filter: blur(8px);
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        .legend-split { width: 1px; height: 14px; background: rgba(15,23,42,0.12); align-self: center; }
+        .seg {
+            display: inline-flex;
+            border: 1px solid rgba(15,23,42,0.12);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .seg button {
+            border: 0;
+            background: transparent;
+            padding: 4px 10px;
+            font-size: 12px;
+            color: var(--text-sub);
+            cursor: pointer;
+        }
+        .seg button[aria-pressed="true"] {
+            background: rgba(15,23,42,0.06);
+            color: var(--text-main);
+            font-weight: 700;
+        }
+        .toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+            cursor: pointer;
+        }
+        .toggle input { display: none; }
+        .toggle .track {
+            width: 34px;
+            height: 18px;
+            border-radius: 999px;
+            background: rgba(15,23,42,0.18);
+            position: relative;
+            transition: background 180ms ease;
+        }
+        .toggle .thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 180ms ease;
+            box-shadow: 0 1px 2px rgba(15,23,42,0.18);
+        }
+        .toggle input:checked + .track { background: rgba(var(--level-frontend) / 0.85); }
+        .toggle input:checked + .track .thumb { transform: translateX(16px); }
+
+        /* Arrow layer: default hidden (更干净)，可通过右上角开关显示 */
+        body:not([data-show-arrows="true"]) .arrows-layer { opacity: 0; }
+        body[data-show-arrows="true"] .arrows-layer { opacity: 1; }
+        .arrows-layer { transition: opacity 180ms ease; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <div class="legend">
+            <div class="legend-item"><div class="dot" style="background:rgb(var(--level-frontend))"></div>前端</div>
+            <div class="legend-item"><div class="dot" style="background:rgb(var(--level-backend))"></div>后端</div>
+            <div class="legend-item"><div class="dot" style="background:rgb(var(--level-agent))"></div>智能体</div>
+            <div class="legend-item"><div class="dot" style="background:rgb(var(--level-design))"></div>设计输入</div>
+            <div class="legend-split" aria-hidden="true"></div>
+            <div class="legend-item">
+                <span style="white-space:nowrap;">尺寸</span>
+                <div class="seg" role="group" aria-label="尺寸缩放">
+                    <button id="scale-1" type="button" aria-pressed="true">1x</button>
+                    <button id="scale-2" type="button" aria-pressed="false">2x</button>
+                </div>
+            </div>
+            <div class="legend-split" aria-hidden="true"></div>
+            <label class="toggle" for="toggle-arrows" title="显示/隐藏连线">
+                <span style="white-space:nowrap;">连线</span>
+                <input id="toggle-arrows" type="checkbox" />
+                <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+            </label>
+        </div>
+
+        <div class="grid-layout">
+
+            <!-- Left rail: Level descriptions (single, centered) -->
+            <div class="card area-level" id="node-level" style="--accent: var(--level-backend); border-top:4px solid rgba(var(--level-backend)/1);">
+                <div class="level-kicker">层级说明</div>
+                <div class="level-rail">
+                    <div class="level-section" data-accent style="--accent: var(--level-frontend);">
+                        <div class="level-title">用户交互层</div>
+                        <div class="level-pills">
+                            <span class="pill" style="border-color:rgba(var(--level-frontend)/0.35); background:rgba(var(--level-frontend)/0.06); color:rgba(var(--level-frontend)/1);">前端工作台</span>
+                        </div>
+                    </div>
+                    <div class="level-section" data-accent style="--accent: var(--level-backend);">
+                        <div class="level-title">核心流程层</div>
+                        <div class="level-pills">
+                            <span class="pill" style="border-color:rgba(var(--level-design)/0.35); background:rgba(var(--level-design)/0.06); color:rgba(var(--level-design)/1);">设计输入</span>
+                            <span class="pill" style="border-color:rgba(var(--level-backend)/0.35); background:rgba(var(--level-backend)/0.06); color:rgba(var(--level-backend)/1);">后端服务</span>
+                            <span class="pill" style="border-color:rgba(var(--level-agent)/0.35); background:rgba(var(--level-agent)/0.06); color:rgba(var(--level-agent)/1);">智能体</span>
+                        </div>
+                    </div>
+                    <div class="level-section" data-accent style="--accent: var(--level-infra);">
+                        <div class="level-title">基础设施层</div>
+                        <div class="level-pills">
+                            <span class="pill" style="border-color:rgba(var(--level-infra)/0.25); background:rgba(var(--level-infra)/0.06); color:rgba(var(--level-infra)/1);">存储/缓存</span>
+                            <span class="pill" style="border-color:rgba(var(--level-infra)/0.25); background:rgba(var(--level-infra)/0.06); color:rgba(var(--level-infra)/1);">文件存储</span>
+                            <span class="pill" style="border-color:rgba(var(--level-infra)/0.25); background:rgba(var(--level-infra)/0.06); color:rgba(var(--level-infra)/1);">大模型服务</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1. Frontend Layer -->
+            <div class="card area-frontend" id="node-frontend">
+                <div class="card-header">
+                    前端工作台 (Frontend Workbench)
+                    <span class="tag">fta-layout-design / React 19</span>
+                </div>
+                <div class="module-list" style="grid-template-columns: repeat(5, 1fr);">
+                    <div class="module">
+                        <span class="module-icon">🖥️</span>
+                        项目绑定 & 路由<br>(Project Binding)
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">🎨</span>
+                        编辑器 & 标注<br>(Editor / Annotations)
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">📦</span>
+                        3D Inspect<br>可视化组件视图
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">💬</span>
+                        代码生成抽屉<br>(Stream Drawer)
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">⚡</span>
+                        状态管理<br>(Valtio Context)
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Middle Layer -->
+            
+            <!-- Design Input -->
+            <div class="card area-design" id="node-mastergo">
+                <div class="card-header">
+                    设计稿源 (Design Source)
+                    <span class="tag">MasterGo</span>
+                </div>
+                <div class="module-list">
+                    <div class="module">
+                        <span class="module-icon">📄</span>
+                        设计文件 / DSL
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">🔄</span>
+                        Path 矢量数据
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backend Core -->
+            <div class="card area-backend" id="node-backend">
+                <div class="card-header">
+                    后端服务 (Backend Services)
+                    <span class="tag">code-agent-backend / Midway</span>
+                </div>
+                <div class="module-list" style="grid-template-columns: 1fr 1fr;">
+                    <div class="module" style="grid-column: span 2; border-color: rgba(var(--accent)/0.35); background: rgba(var(--accent)/0.08);">
+                        <span class="module-icon">🌐</span>
+                        API 网关 & SSE 推送
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">🧩</span>
+                        DSL 归一化服务<br>(Path→Layer)
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">📂</span>
+                        项目/文档管理<br>(Project Service)
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">🚤</span>
+                        任务队列<br>(Bull / CodeGen)
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">💾</span>
+                        缓存策略<br>(Redis/Mongo)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Core -->
+            <div class="card area-agent" id="node-agent">
+                <div class="card-header">
+                    智能体核心 (Agent Core)
+                    <span class="tag">fta-agent-core</span>
+                </div>
+                <div class="module-list">
+                    <div class="module">
+                        <span class="module-icon">🧠</span>
+                        运行时 Runtime<br>(Workflow)
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">🛠️</span>
+                        工具集 Tools<br>(File/Doc/Bash)
+                    </div>
+                    <div class="module">
+                        <span class="module-icon">🤖</span>
+                        模型客户端<br>(AI SDK)
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Infrastructure Layer -->
+            <div class="area-infra">
+                <div class="infra-badge" id="node-db">
+                    🗄️ MongoDB / Redis
+                    <div style="font-size:12px; font-weight:normal; margin-top:4px;">持久化存储 & 缓存</div>
+                </div>
+                <div class="infra-badge" id="node-oss">
+                    ☁️ OSS 文件存储
+                    <div style="font-size:12px; font-weight:normal; margin-top:4px;">图片 / 代码包</div>
+                </div>
+                <div class="infra-badge" id="node-llm">
+                    ✨ 大模型服务 (LLM)
+                    <div style="font-size:12px; font-weight:normal; margin-top:4px;">OpenAI / Custom Endpoint</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SVG Flow Lines (optional) -->
+        <svg class="arrows-layer" aria-hidden="true">
+            <defs>
+                <marker id="arrowhead-soft-neutral" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="rgba(15,23,42,0.28)" />
+                </marker>
+                <marker id="arrowhead-soft-frontend" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="rgb(var(--level-frontend))" />
+                </marker>
+                <marker id="arrowhead-soft-design" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="rgb(var(--level-design))" />
+                </marker>
+                <marker id="arrowhead-soft-agent" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0,0 L8,4 L0,8 Z" fill="rgb(var(--level-agent))" />
+                </marker>
+            </defs>
+        </svg>
+
+    </div>
+
+    <!-- Script to adjust specific arrow coordinates dynamically if needed, 
+         but for a static generated file, we often rely on standard sizes. 
+         To make it robust without JS, simple SVG layout assumptions above are used.
+         For better precision, we can add a small JS to draw arrows between IDs.
+    -->
+    <script>
+        const $ = (sel) => document.querySelector(sel);
+        const container = $('.container');
+        const svg = $('.arrows-layer');
+        const toggle = $('#toggle-arrows');
+        const scale1 = $('#scale-1');
+        const scale2 = $('#scale-2');
+
+        function clearConnections() {
+            const nodes = svg.querySelectorAll('path, text, circle');
+            nodes.forEach(n => n.remove());
+        }
+
+        function relRect(el) {
+            const r = el.getBoundingClientRect();
+            const c = container.getBoundingClientRect();
+            return { left: r.left - c.left, top: r.top - c.top, right: r.right - c.left, bottom: r.bottom - c.top, width: r.width, height: r.height };
+        }
+
+        function orthPath(from, to, opts = {}) {
+            const { kind = 'h', radius = 10 } = opts;
+            // kind: 'h' side-to-side, 'v' top-to-bottom
+            let x1, y1, x2, y2;
+            if (kind === 'h') {
+                x1 = from.right; y1 = from.top + from.height / 2;
+                x2 = to.left;    y2 = to.top + to.height / 2;
+            } else {
+                x1 = from.left + from.width / 2; y1 = from.bottom;
+                x2 = to.left + to.width / 2;     y2 = to.top;
+            }
+
+            // Simple orthogonal: go out a bit, turn, then go to target
+            const midX = (x1 + x2) / 2;
+            const midY = (y1 + y2) / 2;
+
+            const r = Math.min(radius, Math.abs(x2 - x1) / 3, Math.abs(y2 - y1) / 3);
+            if (kind === 'h') {
+                return [
+                    `M ${x1} ${y1}`,
+                    `L ${midX - r} ${y1}`,
+                    `Q ${midX} ${y1} ${midX} ${y1 + (y2 > y1 ? r : -r)}`,
+                    `L ${midX} ${y2 + (y2 > y1 ? -r : r)}`,
+                    `Q ${midX} ${y2} ${midX + r} ${y2}`,
+                    `L ${x2} ${y2}`
+                ].join(' ');
+            }
+            return [
+                `M ${x1} ${y1}`,
+                `L ${x1} ${midY - r}`,
+                `Q ${x1} ${midY} ${x1 + (x2 > x1 ? r : -r)} ${midY}`,
+                `L ${x2 + (x2 > x1 ? -r : r)} ${midY}`,
+                `Q ${x2} ${midY} ${x2} ${midY + r}`,
+                `L ${x2} ${y2}`
+            ].join(' ');
+        }
+
+        function drawConnection({ fromId, toId, stroke, dash, marker, end = 'dot' }) {
+            const fromEl = document.getElementById(fromId);
+            const toEl = document.getElementById(toId);
+            if (!fromEl || !toEl) return;
+
+            const from = relRect(fromEl);
+            const to = relRect(toEl);
+            const sameRow = Math.abs((from.top + from.height / 2) - (to.top + to.height / 2)) < 80;
+            const kind = sameRow ? 'h' : 'v';
+            const d = orthPath(from, to, { kind, radius: 12 });
+
+            // Endpoint for dot/marker
+            let x2, y2;
+            if (kind === 'h') {
+                x2 = to.left;    y2 = to.top + to.height / 2;
+            } else {
+                x2 = to.left + to.width / 2;     y2 = to.top;
+            }
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', stroke || 'rgba(15,23,42,0.30)');
+            path.setAttribute('stroke-width', '1.6');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            if (dash) path.setAttribute('stroke-dasharray', dash);
+            svg.appendChild(path);
+
+            if (end === 'arrow') {
+                path.setAttribute('marker-end', marker || 'url(#arrowhead-soft-neutral)');
+            } else if (end === 'dot') {
+                const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                c.setAttribute('cx', String(x2));
+                c.setAttribute('cy', String(y2));
+                c.setAttribute('r', '3.2');
+                c.setAttribute('fill', stroke || 'rgba(15,23,42,0.30)');
+                c.setAttribute('opacity', '0.9');
+                svg.appendChild(c);
+            }
+        }
+
+        let raf = null;
+        function redraw() {
+            if (raf) cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(() => {
+                clearConnections();
+                drawConnection({ fromId: 'node-frontend', toId: 'node-backend', stroke: 'rgb(var(--level-frontend))', marker: 'url(#arrowhead-soft-frontend)', end: 'arrow' });
+                drawConnection({ fromId: 'node-mastergo', toId: 'node-backend', stroke: 'rgb(var(--level-design))', dash: '5,7', marker: 'url(#arrowhead-soft-design)', end: 'dot' });
+                drawConnection({ fromId: 'node-backend', toId: 'node-agent', stroke: 'rgb(var(--level-agent))', marker: 'url(#arrowhead-soft-agent)', end: 'arrow' });
+                drawConnection({ fromId: 'node-backend', toId: 'node-db', stroke: 'rgba(15,23,42,0.28)', end: 'dot' });
+                drawConnection({ fromId: 'node-backend', toId: 'node-oss', stroke: 'rgba(15,23,42,0.28)', end: 'dot' });
+                drawConnection({ fromId: 'node-agent', toId: 'node-llm', stroke: 'rgba(15,23,42,0.28)', end: 'dot' });
+            });
+        }
+
+        // Scale toggle
+        function setScale(v) {
+            document.body.dataset.scale = String(v);
+            scale1.setAttribute('aria-pressed', v === 1 ? 'true' : 'false');
+            scale2.setAttribute('aria-pressed', v === 2 ? 'true' : 'false');
+            if (document.body.dataset.showArrows === 'true') redraw();
+        }
+        scale1.addEventListener('click', () => setScale(1));
+        scale2.addEventListener('click', () => setScale(2));
+
+        // Toggle arrows
+        toggle.checked = false;
+        toggle.addEventListener('change', () => {
+            document.body.dataset.showArrows = toggle.checked ? 'true' : 'false';
+            if (toggle.checked) redraw();
+        });
+
+        window.addEventListener('resize', () => {
+            if (document.body.dataset.showArrows === 'true') redraw();
+        });
+
+        // Initial state
+        document.body.dataset.showArrows = 'false';
+        document.body.dataset.scale = '1';
+        window.addEventListener('load', () => {
+            // keep hidden by default; only draw when toggled on
+        });
+    </script>
+</body>
+</html>

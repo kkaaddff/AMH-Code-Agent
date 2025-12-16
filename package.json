@@ -11,6 +11,7 @@
       "fta-agent-core"
     ],
     "nohoist": [
+      "**/shared/**",
       "**/dsl-demo/**",
       "**/fta-layout-design/**"
     ]

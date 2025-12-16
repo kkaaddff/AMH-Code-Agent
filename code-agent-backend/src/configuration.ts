@@ -5,7 +5,6 @@ import { join } from 'path';
 import * as dotenv from 'dotenv';
 
 import * as crossDomain from '@midwayjs/cross-domain';
-// import * as staticFile from '@midwayjs/static-file'
 import * as swagger from '@midwayjs/swagger';
 import * as task from '@midwayjs/task';
 import * as redis from '@midwayjs/redis';

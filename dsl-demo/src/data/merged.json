@@ -1,0 +1,3189 @@
+{
+  "nodeId": "design-root-doc_2ze1pm8gd_1764583808616",
+  "type": "View",
+  "componentName": "Component",
+  "comment": "",
+  "layout": {
+    "width": 720,
+    "height": 2105,
+    "absoluteX": 0,
+    "absoluteY": 0
+  },
+  "styles": {},
+  "extraVisuals": [
+    {
+      "id": "677:13276/1:8777",
+      "type": "Vector",
+      "layout": {
+        "width": 10.5,
+        "height": 19.5,
+        "absoluteX": 665.25,
+        "absoluteY": 286.75
+      },
+      "styles": {}
+    }
+  ],
+  "children": [
+    {
+      "nodeId": "virtual-annotation-1764584334084-k7iyye",
+      "type": "View",
+      "componentName": "Header",
+      "comment": "虚拟容器",
+      "layout": {
+        "width": 608,
+        "height": 142,
+        "absoluteX": 32,
+        "absoluteY": 151
+      },
+      "styles": {},
+      "extraVisuals": [],
+      "children": [
+        {
+          "nodeId": "677:12841",
+          "type": "RichText",
+          "componentName": "",
+          "comment": "",
+          "layout": {
+            "width": 608,
+            "height": 68,
+            "absoluteX": 32,
+            "absoluteY": 151
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:12841",
+              "type": "Text",
+              "layout": {
+                "width": 608,
+                "height": 68,
+                "absoluteX": 32,
+                "absoluteY": 151
+              },
+              "styles": {},
+              "content": "立即用车 可装 7.7米 平板/高栏"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:12972",
+          "type": "Image",
+          "componentName": "",
+          "layout": {
+            "width": 124,
+            "height": 34,
+            "absoluteX": 48,
+            "absoluteY": 259
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "icon-2",
+              "type": "Vector",
+              "layout": {
+                "width": 122.77000000000001,
+                "height": 27.08000000000004,
+                "absoluteX": 48,
+                "absoluteY": 262.78
+              },
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:12961",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 96,
+            "height": 34,
+            "absoluteX": 226,
+            "absoluteY": 258
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:12961",
+              "type": "Text",
+              "layout": {
+                "width": 96,
+                "height": 34,
+                "absoluteX": 226,
+                "absoluteY": 258
+              },
+              "styles": {},
+              "content": "运费保障"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:12957",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 96,
+            "height": 34,
+            "absoluteX": 371,
+            "absoluteY": 258
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:12957",
+              "type": "Text",
+              "layout": {
+                "width": 96,
+                "height": 34,
+                "absoluteX": 371,
+                "absoluteY": 258
+              },
+              "styles": {},
+              "content": "放空快赔"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:12965",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 96,
+            "height": 34,
+            "absoluteX": 515,
+            "absoluteY": 258
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:12965",
+              "type": "Text",
+              "layout": {
+                "width": 96,
+                "height": 34,
+                "absoluteX": 515,
+                "absoluteY": 258
+              },
+              "styles": {},
+              "content": "订金必保"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "icon-10",
+          "type": "Icon",
+          "componentName": "",
+          "layout": {
+            "width": 22.639999999999986,
+            "height": 22.639999999999986,
+            "absoluteX": 195.24,
+            "absoluteY": 261
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "icon-3",
+              "type": "Vector",
+              "layout": {
+                "width": 22.639999999999986,
+                "height": 22.639999999999986,
+                "absoluteX": 195.24,
+                "absoluteY": 261
+              },
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "icon-11",
+          "type": "Icon",
+          "componentName": "",
+          "layout": {
+            "width": 22.639999999999986,
+            "height": 22.639999999999986,
+            "absoluteX": 339.24,
+            "absoluteY": 261
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "icon-4",
+              "type": "Vector",
+              "layout": {
+                "width": 22.639999999999986,
+                "height": 22.639999999999986,
+                "absoluteX": 339.24,
+                "absoluteY": 261
+              },
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "icon-12",
+          "type": "Icon",
+          "componentName": "",
+          "layout": {
+            "width": 22.639999999999986,
+            "height": 22.639999999999986,
+            "absoluteX": 483.24,
+            "absoluteY": 261
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "icon-5",
+              "type": "Vector",
+              "layout": {
+                "width": 22.639999999999986,
+                "height": 22.639999999999986,
+                "absoluteX": 483.24,
+                "absoluteY": 261
+              },
+              "styles": {}
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "nodeId": "677:13276",
+      "type": "Icon",
+      "componentName": "",
+      "layout": {
+        "width": 24,
+        "height": 24,
+        "absoluteX": 648,
+        "absoluteY": 265
+      },
+      "styles": {},
+      "extraVisuals": [],
+      "children": []
+    },
+    {
+      "nodeId": "677:12913",
+      "type": "Card",
+      "componentName": "ShipmentInfoCard",
+      "comment": "",
+      "layout": {
+        "width": 672,
+        "height": 388,
+        "absoluteX": 24,
+        "absoluteY": 311
+      },
+      "styles": {},
+      "extraVisuals": [
+        {
+          "id": "728:12263",
+          "type": "Rect",
+          "layout": {
+            "width": 24,
+            "height": 8,
+            "absoluteX": 40,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12247",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 134,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12264",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 184,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12248",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 274,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12254",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 324,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12256",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 427,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12260",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 552,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12253",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 377,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12249",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 587,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12266",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 662,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12262",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 76,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12252",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 96,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12246",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 116,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12245",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 216,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12259",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 236,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12255",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 256,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12258",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 675,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12244",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 565,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12251",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 493,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12257",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 463,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12265",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 441,
+            "absoluteY": 691
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12243",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 620,
+            "absoluteY": 691
+          },
+          "styles": {}
+        }
+      ],
+      "children": [
+        {
+          "nodeId": "677:12914",
+          "type": "View",
+          "componentName": "",
+          "layout": {
+            "width": 672,
+            "height": 196,
+            "absoluteX": 24,
+            "absoluteY": 311
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:13271/1:2663",
+              "type": "Text",
+              "componentName": "",
+              "layout": {
+                "width": 40,
+                "height": 40,
+                "absoluteX": 48,
+                "absoluteY": 331
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:13271/1:2666",
+                  "type": "Text",
+                  "layout": {
+                    "width": 24,
+                    "height": 34,
+                    "absoluteX": 56,
+                    "absoluteY": 334
+                  },
+                  "styles": {},
+                  "content": "装"
+                }
+              ],
+              "children": []
+            },
+            {
+              "nodeId": "677:12924",
+              "type": "Text",
+              "componentName": "",
+              "layout": {
+                "width": 568,
+                "height": 104,
+                "absoluteX": 104,
+                "absoluteY": 331
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:12928",
+                  "type": "Text",
+                  "layout": {
+                    "width": 568,
+                    "height": 88,
+                    "absoluteX": 104,
+                    "absoluteY": 331
+                  },
+                  "styles": {},
+                  "content": "扬州市-邗江区-圣戈班科技材料(扬州)有限公司古渡路109号"
+                }
+              ],
+              "children": []
+            },
+            {
+              "nodeId": "677:12916",
+              "type": "Text",
+              "componentName": "",
+              "layout": {
+                "width": 568,
+                "height": 44,
+                "absoluteX": 104,
+                "absoluteY": 443
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:12917",
+                  "type": "Text",
+                  "layout": {
+                    "width": 568,
+                    "height": 44,
+                    "absoluteX": 104,
+                    "absoluteY": 443
+                  },
+                  "styles": {},
+                  "content": "南京市-溧水区-熹樾状元坊公园对面"
+                }
+              ],
+              "children": []
+            },
+            {
+              "nodeId": "677:13289/1:2821",
+              "type": "Text",
+              "componentName": "",
+              "layout": {
+                "width": 40,
+                "height": 40,
+                "absoluteX": 48,
+                "absoluteY": 445
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:13289/1:2822",
+                  "type": "Text",
+                  "layout": {
+                    "width": 24,
+                    "height": 34,
+                    "absoluteX": 56,
+                    "absoluteY": 448
+                  },
+                  "styles": {},
+                  "content": "卸"
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "nodeId": "677:12933",
+          "type": "View",
+          "componentName": "",
+          "layout": {
+            "width": 672,
+            "height": 168,
+            "absoluteX": 24,
+            "absoluteY": 507
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:12938",
+              "type": "Text",
+              "componentName": "",
+              "layout": {
+                "width": 432,
+                "height": 34,
+                "absoluteX": 80,
+                "absoluteY": 507
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:12938",
+                  "type": "Text",
+                  "layout": {
+                    "width": 432,
+                    "height": 34,
+                    "absoluteX": 80,
+                    "absoluteY": 507
+                  },
+                  "styles": {},
+                  "content": "补充车辆信息方可查看装卸货地限行情况"
+                }
+              ],
+              "children": []
+            },
+            {
+              "nodeId": "677:13251",
+              "type": "Icon",
+              "componentName": "",
+              "layout": {
+                "width": 28,
+                "height": 28,
+                "absoluteX": 48,
+                "absoluteY": 510
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:13251/1:2787",
+                  "type": "Vector",
+                  "layout": {
+                    "width": 24.5,
+                    "height": 24.5,
+                    "absoluteX": 49.75,
+                    "absoluteY": 511.75
+                  },
+                  "styles": {}
+                }
+              ],
+              "children": []
+            },
+            {
+              "nodeId": "677:12934",
+              "type": "View",
+              "componentName": "",
+              "layout": {
+                "width": 672,
+                "height": 118,
+                "absoluteX": 24,
+                "absoluteY": 557
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:12936",
+                  "type": "Rect",
+                  "layout": {
+                    "width": 624,
+                    "height": 118,
+                    "absoluteX": 48,
+                    "absoluteY": 557
+                  },
+                  "styles": {}
+                },
+                {
+                  "id": "677:13281/1:3469",
+                  "type": "Rect",
+                  "layout": {
+                    "width": 1,
+                    "height": 48,
+                    "absoluteX": 360,
+                    "absoluteY": 590
+                  },
+                  "styles": {}
+                }
+              ],
+              "children": [
+                {
+                  "nodeId": "virtual-annotation-1765184127645-onvins",
+                  "type": "View",
+                  "componentName": "",
+                  "comment": "虚拟容器",
+                  "layout": {
+                    "width": 264,
+                    "height": 74,
+                    "absoluteX": 72,
+                    "absoluteY": 577
+                  },
+                  "styles": {},
+                  "extraVisuals": [],
+                  "children": [
+                    {
+                      "nodeId": "677:13261",
+                      "type": "View",
+                      "componentName": "",
+                      "layout": {
+                        "width": 132,
+                        "height": 74,
+                        "absoluteX": 72,
+                        "absoluteY": 577
+                      },
+                      "styles": {},
+                      "extraVisuals": [
+                        {
+                          "id": "677:13261/1:2894",
+                          "type": "Text",
+                          "layout": {
+                            "width": 99,
+                            "height": 40,
+                            "absoluteX": 72,
+                            "absoluteY": 577
+                          },
+                          "styles": {},
+                          "content": "29.4km"
+                        },
+                        {
+                          "id": "677:13261/1:2891",
+                          "type": "Text",
+                          "layout": {
+                            "width": 132,
+                            "height": 30,
+                            "absoluteX": 72,
+                            "absoluteY": 621
+                          },
+                          "styles": {},
+                          "content": "直线装货距离"
+                        }
+                      ],
+                      "children": []
+                    },
+                    {
+                      "nodeId": "677:13328",
+                      "type": "Button",
+                      "componentName": "GoToLoadingPointButton",
+                      "layout": {
+                        "width": 88,
+                        "height": 62,
+                        "absoluteX": 248,
+                        "absoluteY": 586
+                      },
+                      "styles": {},
+                      "extraVisuals": [
+                        {
+                          "id": "677:13328/1:4088/1:3585",
+                          "type": "Vector",
+                          "layout": {
+                            "width": 23.33,
+                            "height": 23.33,
+                            "absoluteX": 280.33,
+                            "absoluteY": 588.33
+                          },
+                          "styles": {}
+                        },
+                        {
+                          "id": "677:13328/1:4089",
+                          "type": "Text",
+                          "layout": {
+                            "width": 88,
+                            "height": 30,
+                            "absoluteX": 248,
+                            "absoluteY": 618
+                          },
+                          "styles": {},
+                          "content": "去装货地"
+                        }
+                      ],
+                      "children": []
+                    },
+                    {
+                      "nodeId": "677:13270",
+                      "type": "Icon",
+                      "componentName": "",
+                      "layout": {
+                        "width": 24,
+                        "height": 24,
+                        "absoluteX": 206,
+                        "absoluteY": 624
+                      },
+                      "styles": {},
+                      "extraVisuals": [
+                        {
+                          "id": "677:13270/1:2955",
+                          "type": "Vector",
+                          "layout": {
+                            "width": 21,
+                            "height": 21,
+                            "absoluteX": 207.5,
+                            "absoluteY": 625.5
+                          },
+                          "styles": {}
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "virtual-annotation-1765184183931-1isbn2",
+                  "type": "View",
+                  "componentName": "",
+                  "comment": "虚拟容器",
+                  "layout": {
+                    "width": 263,
+                    "height": 74,
+                    "absoluteX": 385,
+                    "absoluteY": 577
+                  },
+                  "styles": {},
+                  "extraVisuals": [],
+                  "children": [
+                    {
+                      "nodeId": "677:13252",
+                      "type": "View",
+                      "componentName": "",
+                      "layout": {
+                        "width": 160,
+                        "height": 74,
+                        "absoluteX": 385,
+                        "absoluteY": 577
+                      },
+                      "styles": {},
+                      "extraVisuals": [
+                        {
+                          "id": "677:13252/1:2894",
+                          "type": "Text",
+                          "layout": {
+                            "width": 110,
+                            "height": 40,
+                            "absoluteX": 385,
+                            "absoluteY": 577
+                          },
+                          "styles": {},
+                          "content": "182.3km"
+                        },
+                        {
+                          "id": "677:13252/1:2891",
+                          "type": "Text",
+                          "layout": {
+                            "width": 160,
+                            "height": 30,
+                            "absoluteX": 385,
+                            "absoluteY": 621
+                          },
+                          "styles": {},
+                          "content": "9.6.米/预估里程"
+                        }
+                      ],
+                      "children": []
+                    },
+                    {
+                      "nodeId": "677:13333",
+                      "type": "Button",
+                      "componentName": "ViewRouteButton",
+                      "layout": {
+                        "width": 88,
+                        "height": 62,
+                        "absoluteX": 560,
+                        "absoluteY": 586
+                      },
+                      "styles": {},
+                      "extraVisuals": [
+                        {
+                          "id": "677:13333/1:4088/1:3772",
+                          "type": "Vector",
+                          "layout": {
+                            "width": 23.92,
+                            "height": 23.33,
+                            "absoluteX": 592.04,
+                            "absoluteY": 588.33
+                          },
+                          "styles": {}
+                        },
+                        {
+                          "id": "677:13333/1:4089",
+                          "type": "Text",
+                          "layout": {
+                            "width": 88,
+                            "height": 30,
+                            "absoluteX": 560,
+                            "absoluteY": 618
+                          },
+                          "styles": {},
+                          "content": "查看线路"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "677:13281",
+                  "type": "Divider",
+                  "componentName": "",
+                  "layout": {
+                    "width": 0,
+                    "height": 48,
+                    "absoluteX": 360,
+                    "absoluteY": 590
+                  },
+                  "styles": {},
+                  "extraVisuals": [],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "677:13082",
+      "type": "Card",
+      "componentName": "ShipmentDetailsCard",
+      "comment": "",
+      "layout": {
+        "width": 672,
+        "height": 400,
+        "absoluteX": 24,
+        "absoluteY": 715
+      },
+      "styles": {},
+      "extraVisuals": [
+        {
+          "id": "728:12294",
+          "type": "Rect",
+          "layout": {
+            "width": 24,
+            "height": 8,
+            "absoluteX": 40,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12278",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 134,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12295",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 184,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12279",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 274,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12285",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 324,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12287",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 427,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12291",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 552,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12284",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 377,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12280",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 587,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12297",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 662,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12293",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 76,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12283",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 96,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12277",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 116,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12276",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 216,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12290",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 236,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12286",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 256,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12289",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 675,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12275",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 565,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12282",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 493,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12288",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 463,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12296",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 441,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12274",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 620,
+            "absoluteY": 1107
+          },
+          "styles": {}
+        }
+      ],
+      "children": [
+        {
+          "nodeId": "677:13323",
+          "type": "NoticeBar",
+          "componentName": "OwnerRequirementNotice",
+          "layout": {
+            "width": 624,
+            "height": 112,
+            "absoluteX": 48,
+            "absoluteY": 739
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:13323/1:4600",
+              "type": "RichText",
+              "componentName": "",
+              "layout": {
+                "width": 576,
+                "height": 88,
+                "absoluteX": 72,
+                "absoluteY": 751
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:13323/1:4600",
+                  "type": "Text",
+                  "layout": {
+                    "width": 576,
+                    "height": 88,
+                    "absoluteX": 72,
+                    "absoluteY": 751
+                  },
+                  "styles": {},
+                  "content": "货主要求: 非限行时间卸货, 三不超, 需回单，回单付"
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "nodeId": "677:13304",
+          "type": "View",
+          "componentName": "",
+          "layout": {
+            "width": 624,
+            "height": 40,
+            "absoluteX": 48,
+            "absoluteY": 871
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:13304/1:2968",
+              "type": "RichText",
+              "componentName": "",
+              "layout": {
+                "width": 112,
+                "height": 40,
+                "absoluteX": 48,
+                "absoluteY": 871
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:13304/1:2968",
+                  "type": "Text",
+                  "layout": {
+                    "width": 112,
+                    "height": 40,
+                    "absoluteX": 48,
+                    "absoluteY": 871
+                  },
+                  "styles": {},
+                  "content": "货物信息"
+                }
+              ],
+              "children": []
+            },
+            {
+              "nodeId": "677:13304/1:2971",
+              "type": "RichText",
+              "componentName": "",
+              "layout": {
+                "width": 488,
+                "height": 40,
+                "absoluteX": 184,
+                "absoluteY": 871
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:13304/1:2971",
+                  "type": "Text",
+                  "layout": {
+                    "width": 488,
+                    "height": 40,
+                    "absoluteX": 184,
+                    "absoluteY": 871
+                  },
+                  "styles": {},
+                  "content": "化肥 ，10吨，袋装"
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "nodeId": "677:16812",
+          "type": "View",
+          "componentName": "",
+          "layout": {
+            "width": 624,
+            "height": 40,
+            "absoluteX": 48,
+            "absoluteY": 931
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:16812/1:2968",
+              "type": "RichText",
+              "componentName": "",
+              "layout": {
+                "width": 112,
+                "height": 40,
+                "absoluteX": 48,
+                "absoluteY": 931
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:16812/1:2968",
+                  "type": "Text",
+                  "layout": {
+                    "width": 112,
+                    "height": 40,
+                    "absoluteX": 48,
+                    "absoluteY": 931
+                  },
+                  "styles": {},
+                  "content": "货物尺寸"
+                }
+              ],
+              "children": []
+            },
+            {
+              "nodeId": "677:16812/1:2971",
+              "type": "RichText",
+              "componentName": "",
+              "layout": {
+                "width": 488,
+                "height": 40,
+                "absoluteX": 184,
+                "absoluteY": 931
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:16812/1:2971",
+                  "type": "Text",
+                  "layout": {
+                    "width": 488,
+                    "height": 40,
+                    "absoluteX": 184,
+                    "absoluteY": 931
+                  },
+                  "styles": {},
+                  "content": " 长X米 宽Y米 高Z米"
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "nodeId": "677:13295",
+          "type": "View",
+          "componentName": "",
+          "layout": {
+            "width": 624,
+            "height": 40,
+            "absoluteX": 48,
+            "absoluteY": 991
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:13295/1:2968",
+              "type": "RichText",
+              "componentName": "",
+              "layout": {
+                "width": 112,
+                "height": 40,
+                "absoluteX": 48,
+                "absoluteY": 991
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:13295/1:2968",
+                  "type": "Text",
+                  "layout": {
+                    "width": 112,
+                    "height": 40,
+                    "absoluteX": 48,
+                    "absoluteY": 991
+                  },
+                  "styles": {},
+                  "content": "车辆信息"
+                }
+              ],
+              "children": []
+            },
+            {
+              "nodeId": "677:13295/1:2971",
+              "type": "RichText",
+              "componentName": "",
+              "layout": {
+                "width": 488,
+                "height": 40,
+                "absoluteX": 184,
+                "absoluteY": 991
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:13295/1:2971",
+                  "type": "Text",
+                  "layout": {
+                    "width": 488,
+                    "height": 40,
+                    "absoluteX": 184,
+                    "absoluteY": 991
+                  },
+                  "styles": {},
+                  "content": " 拼车 9.6/11.7米 平板/高栏/厢车"
+                }
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "nodeId": "677:16939",
+          "type": "View",
+          "componentName": "",
+          "layout": {
+            "width": 624,
+            "height": 40,
+            "absoluteX": 48,
+            "absoluteY": 1051
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:16939/1:2968",
+              "type": "RichText",
+              "componentName": "",
+              "layout": {
+                "width": 112,
+                "height": 40,
+                "absoluteX": 48,
+                "absoluteY": 1051
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:16939/1:2968",
+                  "type": "Text",
+                  "layout": {
+                    "width": 112,
+                    "height": 40,
+                    "absoluteX": 48,
+                    "absoluteY": 1051
+                  },
+                  "styles": {},
+                  "content": "跟车信息"
+                }
+              ],
+              "children": []
+            },
+            {
+              "nodeId": "677:16939/1:2971",
+              "type": "RichText",
+              "componentName": "",
+              "layout": {
+                "width": 488,
+                "height": 40,
+                "absoluteX": 184,
+                "absoluteY": 1051
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:16939/1:2971",
+                  "type": "Text",
+                  "layout": {
+                    "width": 488,
+                    "height": 40,
+                    "absoluteX": 184,
+                    "absoluteY": 1051
+                  },
+                  "styles": {},
+                  "content": " 1人跟车"
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "677:13208",
+      "type": "View",
+      "componentName": "FeeInfo",
+      "comment": "",
+      "layout": {
+        "width": 672,
+        "height": 466,
+        "absoluteX": 24,
+        "absoluteY": 1146
+      },
+      "styles": {},
+      "extraVisuals": [
+        {
+          "id": "677:13208",
+          "type": "Vector",
+          "layout": {
+            "width": 672,
+            "height": 466,
+            "absoluteX": 24,
+            "absoluteY": 1146
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12323",
+          "type": "Rect",
+          "layout": {
+            "width": 24,
+            "height": 8,
+            "absoluteX": 40,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12307",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 134,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12324",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 184,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12308",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 274,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12314",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 324,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12316",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 427,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12320",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 8,
+            "absoluteX": 552,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12313",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 377,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12309",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 587,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12326",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 662,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12322",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 76,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12312",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 96,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12306",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 116,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12305",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 216,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12319",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 236,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12315",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 256,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12318",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 675,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12304",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 565,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12311",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 493,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12317",
+          "type": "Rect",
+          "layout": {
+            "width": 20,
+            "height": 8,
+            "absoluteX": 463,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12325",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 441,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        },
+        {
+          "id": "728:12303",
+          "type": "Rect",
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "absoluteX": 620,
+            "absoluteY": 1604
+          },
+          "styles": {}
+        }
+      ],
+      "children": [
+        {
+          "nodeId": "virtual-annotation-1765184026512-f75xtn",
+          "type": "RichText",
+          "componentName": "",
+          "comment": "虚拟容器",
+          "layout": {
+            "width": 376,
+            "height": 46,
+            "absoluteX": 48,
+            "absoluteY": 1170
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13134",
+              "type": "Text",
+              "layout": {
+                "width": 112,
+                "height": 28,
+                "absoluteX": 48,
+                "absoluteY": 1180
+              },
+              "styles": {},
+              "content": "预估净得"
+            },
+            {
+              "id": "677:13181",
+              "type": "Text",
+              "layout": {
+                "width": 115,
+                "height": 40,
+                "absoluteX": 168,
+                "absoluteY": 1170
+              },
+              "styles": {},
+              "content": "1500"
+            },
+            {
+              "id": "677:13131",
+              "type": "Text",
+              "layout": {
+                "width": 103,
+                "height": 40,
+                "absoluteX": 321,
+                "absoluteY": 1176
+              },
+              "styles": {},
+              "content": "(已加价)"
+            },
+            {
+              "id": "677:13205",
+              "type": "Text",
+              "layout": {
+                "width": 28,
+                "height": 40,
+                "absoluteX": 283,
+                "absoluteY": 1176
+              },
+              "styles": {},
+              "content": "元"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13111",
+          "type": "View",
+          "componentName": "",
+          "layout": {
+            "width": 199,
+            "height": 34,
+            "absoluteX": 48,
+            "absoluteY": 1228
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:13120",
+              "type": "Tag",
+              "componentName": "PlatformRebateTag",
+              "layout": {
+                "width": 108,
+                "height": 34,
+                "absoluteX": 48,
+                "absoluteY": 1228
+              },
+              "styles": {},
+              "extraVisuals": [],
+              "children": [
+                {
+                  "nodeId": "677:13121",
+                  "type": "Text",
+                  "componentName": "",
+                  "layout": {
+                    "width": 96,
+                    "height": 34,
+                    "absoluteX": 54,
+                    "absoluteY": 1228
+                  },
+                  "styles": {},
+                  "extraVisuals": [
+                    {
+                      "id": "677:13121",
+                      "type": "Text",
+                      "layout": {
+                        "width": 96,
+                        "height": 34,
+                        "absoluteX": 54,
+                        "absoluteY": 1228
+                      },
+                      "styles": {},
+                      "content": "平台返现"
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "nodeId": "677:13112",
+              "type": "Tag",
+              "componentName": "RebateAmountTag",
+              "layout": {
+                "width": 91,
+                "height": 34,
+                "absoluteX": 156,
+                "absoluteY": 1228
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:13113",
+                  "type": "Text",
+                  "layout": {
+                    "width": 53,
+                    "height": 34,
+                    "absoluteX": 162,
+                    "absoluteY": 1228
+                  },
+                  "styles": {},
+                  "content": "60元"
+                }
+              ],
+              "children": [
+                {
+                  "nodeId": "677:13317",
+                  "type": "Icon",
+                  "componentName": "",
+                  "layout": {
+                    "width": 20,
+                    "height": 20,
+                    "absoluteX": 221,
+                    "absoluteY": 1235
+                  },
+                  "styles": {},
+                  "extraVisuals": [
+                    {
+                      "id": "677:13317/1:152",
+                      "type": "Vector",
+                      "layout": {
+                        "width": 17.5,
+                        "height": 17.5,
+                        "absoluteX": 222.25,
+                        "absoluteY": 1236.25
+                      },
+                      "styles": {}
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "677:13098",
+          "type": "View",
+          "componentName": "",
+          "layout": {
+            "width": 199,
+            "height": 34,
+            "absoluteX": 263,
+            "absoluteY": 1228
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:13107",
+              "type": "Tag",
+              "componentName": "TieredSubsidyTag",
+              "layout": {
+                "width": 108,
+                "height": 34,
+                "absoluteX": 263,
+                "absoluteY": 1228
+              },
+              "styles": {},
+              "extraVisuals": [],
+              "children": [
+                {
+                  "nodeId": "677:13108",
+                  "type": "Text",
+                  "componentName": "",
+                  "layout": {
+                    "width": 96,
+                    "height": 34,
+                    "absoluteX": 269,
+                    "absoluteY": 1228
+                  },
+                  "styles": {},
+                  "extraVisuals": [
+                    {
+                      "id": "677:13108",
+                      "type": "Text",
+                      "layout": {
+                        "width": 96,
+                        "height": 34,
+                        "absoluteX": 269,
+                        "absoluteY": 1228
+                      },
+                      "styles": {},
+                      "content": "阶梯补贴"
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "nodeId": "677:13099",
+              "type": "Tag",
+              "componentName": "SubsidyAmountTag",
+              "layout": {
+                "width": 91,
+                "height": 34,
+                "absoluteX": 371,
+                "absoluteY": 1228
+              },
+              "styles": {},
+              "extraVisuals": [],
+              "children": [
+                {
+                  "nodeId": "677:13104",
+                  "type": "Text",
+                  "componentName": "",
+                  "layout": {
+                    "width": 53,
+                    "height": 34,
+                    "absoluteX": 377,
+                    "absoluteY": 1228
+                  },
+                  "styles": {},
+                  "extraVisuals": [
+                    {
+                      "id": "677:13104",
+                      "type": "Text",
+                      "layout": {
+                        "width": 53,
+                        "height": 34,
+                        "absoluteX": 377,
+                        "absoluteY": 1228
+                      },
+                      "styles": {},
+                      "content": "60元"
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "nodeId": "677:13316",
+                  "type": "Icon",
+                  "componentName": "",
+                  "layout": {
+                    "width": 20,
+                    "height": 20,
+                    "absoluteX": 436,
+                    "absoluteY": 1235
+                  },
+                  "styles": {},
+                  "extraVisuals": [
+                    {
+                      "id": "677:13316/1:152",
+                      "type": "Vector",
+                      "layout": {
+                        "width": 17.5,
+                        "height": 17.5,
+                        "absoluteX": 437.25,
+                        "absoluteY": 1236.25
+                      },
+                      "styles": {}
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "677:13159",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 84,
+            "height": 28,
+            "absoluteX": 48,
+            "absoluteY": 1286
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13159",
+              "type": "Text",
+              "layout": {
+                "width": 84,
+                "height": 28,
+                "absoluteX": 48,
+                "absoluteY": 1286
+              },
+              "styles": {},
+              "content": "总运费"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13163",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 90,
+            "height": 28,
+            "absoluteX": 582,
+            "absoluteY": 1286
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13163",
+              "type": "Text",
+              "layout": {
+                "width": 90,
+                "height": 28,
+                "absoluteX": 582,
+                "absoluteY": 1286
+              },
+              "styles": {},
+              "content": "1500元"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13172",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 56,
+            "height": 28,
+            "absoluteX": 48,
+            "absoluteY": 1338
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13172",
+              "type": "Text",
+              "layout": {
+                "width": 56,
+                "height": 28,
+                "absoluteX": 48,
+                "absoluteY": 1338
+              },
+              "styles": {},
+              "content": "订金"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13167",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 88,
+            "height": 28,
+            "absoluteX": 108,
+            "absoluteY": 1338
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13248/1:3491",
+              "type": "Vector",
+              "layout": {
+                "width": 21,
+                "height": 21,
+                "absoluteX": 166.5,
+                "absoluteY": 1341.5
+              },
+              "styles": {}
+            },
+            {
+              "id": "677:13167",
+              "type": "Text",
+              "layout": {
+                "width": 88,
+                "height": 28,
+                "absoluteX": 108,
+                "absoluteY": 1338
+              },
+              "styles": {},
+              "content": "(退还   )"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13155",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 62,
+            "height": 28,
+            "absoluteX": 610,
+            "absoluteY": 1338
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13155",
+              "type": "Text",
+              "layout": {
+                "width": 62,
+                "height": 28,
+                "absoluteX": 610,
+                "absoluteY": 1338
+              },
+              "styles": {},
+              "content": "20元"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13143",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 140,
+            "height": 28,
+            "absoluteX": 48,
+            "absoluteY": 1390
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13143",
+              "type": "Text",
+              "layout": {
+                "width": 140,
+                "height": 28,
+                "absoluteX": 48,
+                "absoluteY": 1390
+              },
+              "styles": {},
+              "content": "技术服务费"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13147",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 52,
+            "height": 28,
+            "absoluteX": 554,
+            "absoluteY": 1390
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13147",
+              "type": "Text",
+              "layout": {
+                "width": 52,
+                "height": 28,
+                "absoluteX": 554,
+                "absoluteY": 1390
+              },
+              "styles": {},
+              "content": "73元"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13139",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 62,
+            "height": 28,
+            "absoluteX": 610,
+            "absoluteY": 1390
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13139",
+              "type": "Text",
+              "layout": {
+                "width": 62,
+                "height": 28,
+                "absoluteX": 610,
+                "absoluteY": 1390
+              },
+              "styles": {},
+              "content": "53元"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13249",
+          "type": "Icon",
+          "componentName": "",
+          "layout": {
+            "width": 24,
+            "height": 24,
+            "absoluteX": 192,
+            "absoluteY": 1392
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13249/1:3491",
+              "type": "Vector",
+              "layout": {
+                "width": 21,
+                "height": 21,
+                "absoluteX": 193.5,
+                "absoluteY": 1393.5
+              },
+              "styles": {}
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13185",
+          "type": "Card",
+          "componentName": "FeeBreakdownCard",
+          "layout": {
+            "width": 624,
+            "height": 158,
+            "absoluteX": 48,
+            "absoluteY": 1430
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:13186",
+              "type": "View",
+              "componentName": "",
+              "layout": {
+                "width": 584,
+                "height": 34,
+                "absoluteX": 68,
+                "absoluteY": 1450
+              },
+              "styles": {},
+              "extraVisuals": [],
+              "children": [
+                {
+                  "nodeId": "677:13190",
+                  "type": "Text",
+                  "componentName": "",
+                  "layout": {
+                    "width": 96,
+                    "height": 34,
+                    "absoluteX": 68,
+                    "absoluteY": 1450
+                  },
+                  "styles": {},
+                  "extraVisuals": [
+                    {
+                      "id": "677:13190",
+                      "type": "Text",
+                      "layout": {
+                        "width": 96,
+                        "height": 34,
+                        "absoluteX": 68,
+                        "absoluteY": 1450
+                      },
+                      "styles": {},
+                      "content": "减佣月包"
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "nodeId": "677:13187",
+                  "type": "Text",
+                  "componentName": "",
+                  "layout": {
+                    "width": 472,
+                    "height": 34,
+                    "absoluteX": 180,
+                    "absoluteY": 1450
+                  },
+                  "styles": {},
+                  "extraVisuals": [
+                    {
+                      "id": "677:13187",
+                      "type": "Text",
+                      "layout": {
+                        "width": 472,
+                        "height": 34,
+                        "absoluteX": 180,
+                        "absoluteY": 1450
+                      },
+                      "styles": {},
+                      "content": "-20元"
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "nodeId": "677:13194",
+              "type": "Text",
+              "componentName": "",
+              "layout": {
+                "width": 584,
+                "height": 60,
+                "absoluteX": 68,
+                "absoluteY": 1508
+              },
+              "styles": {},
+              "extraVisuals": [
+                {
+                  "id": "677:13194",
+                  "type": "Text",
+                  "layout": {
+                    "width": 584,
+                    "height": 60,
+                    "absoluteX": 68,
+                    "absoluteY": 1508
+                  },
+                  "styles": {},
+                  "content": "平台优惠后技术服务费40元/净得运费1100元=2.7%, 仅指本单，因线路行情等差异，不代表其他订单费率水平。"
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "677:13075",
+      "type": "View",
+      "componentName": "Banner",
+      "comment": "",
+      "layout": {
+        "width": 672,
+        "height": 116,
+        "absoluteX": 24,
+        "absoluteY": 1628
+      },
+      "styles": {},
+      "extraVisuals": [
+        {
+          "id": "677:13036",
+          "type": "Rect",
+          "layout": {
+            "width": 0,
+            "height": 64,
+            "absoluteX": 92,
+            "absoluteY": 1654
+          },
+          "styles": {}
+        },
+        {
+          "id": "icon-15",
+          "type": "Vector",
+          "layout": {
+            "width": 47.06999999999999,
+            "height": 44.11999999999989,
+            "absoluteX": 44.64,
+            "absoluteY": 1668.64
+          },
+          "styles": {}
+        }
+      ],
+      "children": [
+        {
+          "nodeId": "677:13051",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 168,
+            "height": 28,
+            "absoluteX": 105,
+            "absoluteY": 1652
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13051",
+              "type": "Text",
+              "layout": {
+                "width": 168,
+                "height": 28,
+                "absoluteX": 105,
+                "absoluteY": 1652
+              },
+              "styles": {},
+              "content": "本单最高可加"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13037",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 39,
+            "height": 28,
+            "absoluteX": 277,
+            "absoluteY": 1653
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13037",
+              "type": "Text",
+              "layout": {
+                "width": 39,
+                "height": 28,
+                "absoluteX": 277,
+                "absoluteY": 1653
+              },
+              "styles": {},
+              "content": "120"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13041",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 346,
+            "height": 28,
+            "absoluteX": 322,
+            "absoluteY": 1653
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13041",
+              "type": "Text",
+              "layout": {
+                "width": 346,
+                "height": 28,
+                "absoluteX": 322,
+                "absoluteY": 1653
+              },
+              "styles": {},
+              "content": "240分, 接单立得100分, 精"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13061",
+          "type": "Icon",
+          "componentName": "",
+          "layout": {
+            "width": 36,
+            "height": 36,
+            "absoluteX": 44,
+            "absoluteY": 1668
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": []
+        },
+        {
+          "nodeId": "677:13055",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 258,
+            "height": 28,
+            "absoluteX": 105,
+            "absoluteY": 1692
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13055",
+              "type": "Text",
+              "layout": {
+                "width": 258,
+                "height": 28,
+                "absoluteX": 105,
+                "absoluteY": 1692
+              },
+              "styles": {},
+              "content": "20分准装卸货打卡得"
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "nodeId": "677:13003",
+      "type": "View",
+      "componentName": "ShipperInfo",
+      "comment": "",
+      "layout": {
+        "width": 672,
+        "height": 116,
+        "absoluteX": 24,
+        "absoluteY": 1760
+      },
+      "styles": {},
+      "extraVisuals": [
+        {
+          "id": "677:13003",
+          "type": "Vector",
+          "layout": {
+            "width": 672,
+            "height": 116,
+            "absoluteX": 24,
+            "absoluteY": 1760
+          },
+          "styles": {}
+        },
+        {
+          "id": "677:12998",
+          "type": "Vector",
+          "layout": {
+            "width": 118,
+            "height": 28,
+            "absoluteX": 240,
+            "absoluteY": 1784
+          },
+          "styles": {}
+        },
+        {
+          "id": "677:12991",
+          "type": "Vector",
+          "layout": {
+            "width": 0,
+            "height": 16,
+            "absoluteX": 289,
+            "absoluteY": 1833
+          },
+          "styles": {}
+        }
+      ],
+      "children": [
+        {
+          "nodeId": "677:12990",
+          "type": "Avatar",
+          "componentName": "OwnerAvatar",
+          "layout": {
+            "width": 76,
+            "height": 76,
+            "absoluteX": 48,
+            "absoluteY": 1780
+          },
+          "styles": {
+            "backgroundImage": "url(https://mg.amh-group.com/mastergo-default/88642146392973/88654546891508/c14225c47d74a5a0012c53928b6560b1.jpg)"
+          },
+          "extraVisuals": [],
+          "children": []
+        },
+        {
+          "nodeId": "677:12992",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 84,
+            "height": 28,
+            "absoluteX": 144,
+            "absoluteY": 1784
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:12992",
+              "type": "Text",
+              "layout": {
+                "width": 84,
+                "height": 28,
+                "absoluteX": 144,
+                "absoluteY": 1784
+              },
+              "styles": {},
+              "content": "朱老板"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:12999",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 106,
+            "height": 22,
+            "absoluteX": 246,
+            "absoluteY": 1787
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:12999",
+              "type": "Text",
+              "layout": {
+                "width": 106,
+                "height": 22,
+                "absoluteX": 246,
+                "absoluteY": 1787
+              },
+              "styles": {},
+              "content": "信用 4.0星"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13008",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 72,
+            "height": 24,
+            "absoluteX": 144,
+            "absoluteY": 1828
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13008",
+              "type": "Text",
+              "layout": {
+                "width": 72,
+                "height": 24,
+                "absoluteX": 144,
+                "absoluteY": 1828
+              },
+              "styles": {},
+              "content": "好评率"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13004",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 53,
+            "height": 24,
+            "absoluteX": 224,
+            "absoluteY": 1828
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13004",
+              "type": "Text",
+              "layout": {
+                "width": 53,
+                "height": 24,
+                "absoluteX": 224,
+                "absoluteY": 1828
+              },
+              "styles": {},
+              "content": "99%"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13016",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 48,
+            "height": 24,
+            "absoluteX": 301,
+            "absoluteY": 1828
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13016",
+              "type": "Text",
+              "layout": {
+                "width": 48,
+                "height": 24,
+                "absoluteX": 301,
+                "absoluteY": 1828
+              },
+              "styles": {},
+              "content": "交易"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:13012",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 47,
+            "height": 24,
+            "absoluteX": 357,
+            "absoluteY": 1828
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:13012",
+              "type": "Text",
+              "layout": {
+                "width": 47,
+                "height": 24,
+                "absoluteX": 357,
+                "absoluteY": 1828
+              },
+              "styles": {},
+              "content": "1271"
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "nodeId": "virtual-annotation-1764584302360-6uo0t6",
+      "type": "View",
+      "componentName": "Footer",
+      "comment": "虚拟容器",
+      "layout": {
+        "width": 720,
+        "height": 192,
+        "absoluteX": 0,
+        "absoluteY": 1913
+      },
+      "styles": {},
+      "extraVisuals": [
+        {
+          "id": "677:12893",
+          "type": "Rect",
+          "layout": {
+            "width": 40,
+            "height": 40,
+            "absoluteX": 28,
+            "absoluteY": 1913
+          },
+          "styles": {}
+        },
+        {
+          "id": "icon-16",
+          "type": "Vector",
+          "layout": {
+            "width": 45,
+            "height": 36,
+            "absoluteX": 30,
+            "absoluteY": 1915
+          },
+          "styles": {}
+        }
+      ],
+      "children": [
+        {
+          "nodeId": "677:12894",
+          "type": "Text",
+          "componentName": "",
+          "layout": {
+            "width": 538,
+            "height": 32,
+            "absoluteX": 80,
+            "absoluteY": 1917
+          },
+          "styles": {},
+          "extraVisuals": [
+            {
+              "id": "677:12894",
+              "type": "Text",
+              "layout": {
+                "width": 538,
+                "height": 32,
+                "absoluteX": 80,
+                "absoluteY": 1917
+              },
+              "styles": {},
+              "content": "货主已全额支付1500元到平台，结算有保障"
+            }
+          ],
+          "children": []
+        },
+        {
+          "nodeId": "677:12888",
+          "type": "Icon",
+          "componentName": "",
+          "layout": {
+            "width": 24.2,
+            "height": 24.32,
+            "absoluteX": 34,
+            "absoluteY": 1921.68
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": []
+        },
+        {
+          "nodeId": "677:13020",
+          "type": "View",
+          "componentName": "PriceFooter",
+          "comment": "",
+          "layout": {
+            "width": 720,
+            "height": 136,
+            "absoluteX": 0,
+            "absoluteY": 1969
+          },
+          "styles": {},
+          "extraVisuals": [],
+          "children": [
+            {
+              "nodeId": "677:13022",
+              "type": "View",
+              "componentName": "",
+              "layout": {
+                "width": 192,
+                "height": 88,
+                "absoluteX": 24,
+                "absoluteY": 1993
+              },
+              "styles": {},
+              "extraVisuals": [],
+              "children": [
+                {
+                  "nodeId": "677:13027",
+                  "type": "View",
+                  "componentName": "",
+                  "layout": {
+                    "width": 113,
+                    "height": 40,
+                    "absoluteX": 24,
+                    "absoluteY": 1993
+                  },
+                  "styles": {},
+                  "extraVisuals": [],
+                  "children": [
+                    {
+                      "nodeId": "677:13031",
+                      "type": "Text",
+                      "componentName": "",
+                      "layout": {
+                        "width": 89,
+                        "height": 40,
+                        "absoluteX": 24,
+                        "absoluteY": 1993
+                      },
+                      "styles": {},
+                      "extraVisuals": [
+                        {
+                          "id": "677:13031",
+                          "type": "Text",
+                          "layout": {
+                            "width": 89,
+                            "height": 40,
+                            "absoluteX": 24,
+                            "absoluteY": 1993
+                          },
+                          "styles": {},
+                          "content": "1500"
+                        }
+                      ],
+                      "children": []
+                    },
+                    {
+                      "nodeId": "677:13028",
+                      "type": "Text",
+                      "componentName": "",
+                      "layout": {
+                        "width": 24,
+                        "height": 34,
+                        "absoluteX": 113,
+                        "absoluteY": 1999
+                      },
+                      "styles": {},
+                      "extraVisuals": [
+                        {
+                          "id": "677:13028",
+                          "type": "Text",
+                          "layout": {
+                            "width": 24,
+                            "height": 34,
+                            "absoluteX": 113,
+                            "absoluteY": 1999
+                          },
+                          "styles": {},
+                          "content": "元"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "nodeId": "677:13023",
+                  "type": "View",
+                  "componentName": "",
+                  "layout": {
+                    "width": 192,
+                    "height": 36,
+                    "absoluteX": 24,
+                    "absoluteY": 2045
+                  },
+                  "styles": {},
+                  "extraVisuals": [
+                    {
+                      "id": "677:13381/248:11187",
+                      "type": "Text",
+                      "layout": {
+                        "width": 48,
+                        "height": 34,
+                        "absoluteX": 140,
+                        "absoluteY": 2046
+                      },
+                      "styles": {},
+                      "content": "详情"
+                    }
+                  ],
+                  "children": [
+                    {
+                      "nodeId": "677:13024",
+                      "type": "Text",
+                      "componentName": "",
+                      "layout": {
+                        "width": 104,
+                        "height": 36,
+                        "absoluteX": 24,
+                        "absoluteY": 2045
+                      },
+                      "styles": {},
+                      "extraVisuals": [
+                        {
+                          "id": "677:13024",
+                          "type": "Text",
+                          "layout": {
+                            "width": 104,
+                            "height": 36,
+                            "absoluteX": 24,
+                            "absoluteY": 2045
+                          },
+                          "styles": {},
+                          "content": "净得运费"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "677:13021",
+              "type": "View",
+              "componentName": "",
+              "layout": {
+                "width": 464,
+                "height": 88,
+                "absoluteX": 232,
+                "absoluteY": 1993
+              },
+              "styles": {},
+              "extraVisuals": [],
+              "children": [
+                {
+                  "nodeId": "677:13338",
+                  "type": "Button",
+                  "componentName": "IncreasePriceButton",
+                  "layout": {
+                    "width": 224,
+                    "height": 88,
+                    "absoluteX": 232,
+                    "absoluteY": 1993
+                  },
+                  "styles": {},
+                  "extraVisuals": [
+                    {
+                      "id": "677:13338/391:00576",
+                      "type": "Text",
+                      "layout": {
+                        "width": 64,
+                        "height": 44,
+                        "absoluteX": 312,
+                        "absoluteY": 2015
+                      },
+                      "styles": {},
+                      "content": "加价"
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "nodeId": "677:13343",
+                  "type": "Button",
+                  "componentName": "GrabOrderButton",
+                  "layout": {
+                    "width": 224,
+                    "height": 88,
+                    "absoluteX": 472,
+                    "absoluteY": 1993
+                  },
+                  "styles": {},
+                  "extraVisuals": [
+                    {
+                      "id": "677:13343/391:00551",
+                      "type": "Text",
+                      "layout": {
+                        "width": 96,
+                        "height": 44,
+                        "absoluteX": 536,
+                        "absoluteY": 2015
+                      },
+                      "styles": {},
+                      "content": "去抢单"
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -150,7 +150,7 @@ export class FrontendWorkflowService {
       const dataModelMap = new Map(dataModels.map((m) => [m.id, m.name]));
       const annotationSummary = formatAnnotationSummary(flattenAnnotation(annotationData.rootAnnotation, dataModelMap));
       // 格式化数据模型和 REST API 为工作流可用格式
-      const dataContextSummary = this.formatDataContext(dataModels, restApis);
+      const dataContextSummary = this.formatMockDataContext(dataModels, restApis);
 
       // 准备工作目录
 
@@ -167,13 +167,9 @@ export class FrontendWorkflowService {
       const workflowEngineStart = Date.now();
 
       // 组合页面标注和数据上下文信息
-      const fullPageContext =
-        //  dataContextSummary
-        // ? annotationSummary + '\n\n---\n\n' + dataContextSummary
-        // :
-        annotationSummary;
-      // '# 任务: 创建页面 `cargo-detail`\n' + annotationSummary;
-
+      const fullPageContext = dataContextSummary
+        ? annotationSummary + '\n\n---\n\n' + dataContextSummary
+        : annotationSummary;
       // 调用 workflow
       const result = await runFrontendProjectWorkflow({
         cwd,
@@ -296,15 +292,17 @@ export class FrontendWorkflowService {
   }
 
   /**
-   * 格式化数据上下文（数据模型 + REST API）为工作流可用的文本格式
+   * 格式化数据上下文（MockData + REST API）为工作流可用的文本格式
    */
-  private formatDataContext(dataModels: DataModel[], restApis: RestApi[]): string {
+  private formatMockDataContext(dataModels: DataModel[], restApis: RestApi[]): string {
     const sections: string[] = [];
 
-    // 格式化数据模型
+    // 格式化 MockData（含 store + action type）
     if (dataModels && dataModels.length > 0) {
-      const dataModelSection = this.formatDataModels(dataModels);
-      sections.push(dataModelSection);
+      const mockSection = this.formatMockStores(dataModels);
+      if (mockSection) {
+        sections.push(mockSection);
+      }
     }
 
     // 格式化 REST API
@@ -313,23 +311,20 @@ export class FrontendWorkflowService {
       sections.push(restApiSection);
     }
 
-    return sections.join('\n\n---\n\n');
+    return '# MockData\n\n' + sections.join('\n\n---\n\n');
   }
 
   /**
-   * 格式化数据模型（使用 TypeScript Interfaces）
+   * 格式化 Mock Store 数据
    */
-  private formatDataModels(dataModels: DataModel[]): string {
+  private formatMockStores(dataModels: DataModel[]): string {
     const modelSections = dataModels
       .filter((model) => model.tsContent && model.tsContent.trim())
       .map((model) => {
         const lines: string[] = [];
-        lines.push(`## ${model.name}`);
-        if (model.description) lines.push(`描述: ${model.description}`);
-        lines.push(`ID: ${model.id}`);
-        lines.push('');
-        lines.push('### TypeScript 接口定义');
-        lines.push('```typescript');
+        lines.push(`## Store: ${model.name}`);
+        if (model.description) lines.push(`Description: ${model.description}`);
+        lines.push('```jsonc');
         lines.push(model.tsContent.trim());
         lines.push('```');
         return lines.join('\n');
@@ -339,7 +334,7 @@ export class FrontendWorkflowService {
       return '';
     }
 
-    return '# 数据模型\n\n' + modelSections.join('\n\n---\n\n');
+    return modelSections.join('\n\n---\n\n');
   }
 
   /**
@@ -352,24 +347,24 @@ export class FrontendWorkflowService {
     const apiSections = restApis.map((api) => {
       const lines: string[] = [];
       lines.push('## ' + api.name);
-      if (api.description) lines.push('描述: ' + api.description);
-      if (api.url) lines.push('API 地址: ' + (api.method || 'GET') + ' ' + api.url);
+      if (api.description) lines.push('Description: ' + api.description);
+      if (api.url) lines.push('API: ' + (api.method || 'GET') + ' ' + api.url);
       lines.push('ID: ' + api.id);
 
-      // 关联的请求数据模型
+      // Request models
       if (api.requestModelIds && api.requestModelIds.length > 0) {
         const modelNames = api.requestModelIds.map((id) => modelMap.get(id) || id).join(', ');
-        lines.push('请求数据模型: ' + modelNames);
+        lines.push('Request Models: ' + modelNames);
       }
-      // 关联的响应数据模型
+      // Response models
       if (api.responseModelIds && api.responseModelIds.length > 0) {
         const modelNames = api.responseModelIds.map((id) => modelMap.get(id) || id).join(', ');
-        lines.push('响应数据模型: ' + modelNames);
+        lines.push('Response Models: ' + modelNames);
       }
 
       return lines.join('\n');
     });
 
-    return '# REST API 接口\n\n' + apiSections.join('\n\n---\n\n');
+    return '# REST APIs\n\n' + apiSections.join('\n\n---\n\n');
   }
 }
