@@ -3,8 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { CleanerConfig, DesignData } from '@fta/shared';
 import { DSLCleaner } from '@fta/shared';
-import annotation from '../src/data/rootAnnotation.json' with { type: 'json' };
-import dslRawData from '../src/data/dsl.json' with { type: 'json' };
+import annotation from '../src/data/rootAnnotation.json';
+import dslRawData from '../src/data/dsl.json';
 import { mergeDslWithAnnotation } from '../src/utils/mergeDslAnnotation.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -57,4 +57,3 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-

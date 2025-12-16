@@ -2712,7 +2712,8 @@
             "absoluteY": 1780
           },
           "styles": {
-            "backgroundImage": "url(https://mg.amh-group.com/mastergo-default/88642146392973/88654546891508/c14225c47d74a5a0012c53928b6560b1.jpg)"
+            "backgroundImage": "url(https://mg.amh-group.com/mastergo-default/88642146392973/88654546891508/c14225c47d74a5a0012c53928b6560b1.jpg)",
+            "boxShadow": "0px 3.12px 7.8px 0px rgba(141, 175, 143, 0.3),"
           },
           "extraVisuals": [],
           "children": []
