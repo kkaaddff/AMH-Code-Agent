@@ -21,9 +21,7 @@
   },
   "devDependencies": {
     "@fta/shared": "0.0.1",
-    "@types/bson": "^4.2.4",
     "@types/lodash-es": "^4.17.7",
-    "@types/minimatch": "^6.0.0",
     "@types/node": "^24.10.2",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",

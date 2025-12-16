@@ -45,8 +45,6 @@
   "devDependencies": {
     "@types/debug": "^4.1.12",
     "@types/node": "^20",
-    "@types/bson": "^4.2.4",
-    "@types/minimatch": "^6.0.0",
     "dotenv": "^17.2.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.7"

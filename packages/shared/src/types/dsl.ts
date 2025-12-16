@@ -39,6 +39,16 @@ export interface DSLLayoutStyle {
   rotate?: number;
 }
 
+export interface DSLFlexContainerInfo {
+  flexDirection?: 'row' | 'column';
+  alignItems?: string;
+  justifyContent?: string;
+  mainSizing?: string;
+  crossSizing?: string;
+  gap?: number | string;
+  padding?: number | string;
+}
+
 // Path 层级的位移与旋转信息，默认为 (0, 0, 0)。
 export interface DSLTransform {
   x: number;
@@ -67,15 +77,7 @@ export interface DSLFrameNode extends DSLBaseNode {
   strokeWidth?: string;
   strokeType?: string;
   strokeAlign?: string;
-  flexContainerInfo?: {
-    flexDirection?: 'row' | 'column';
-    alignItems?: string;
-    justifyContent?: string;
-    mainSizing?: string;
-    crossSizing?: string;
-    gap?: number | string;
-    padding?: number | string;
-  };
+  flexContainerInfo?: DSLFlexContainerInfo;
   flexGrow?: number;
   overflow?: string;
   borderRadius?: string;

@@ -165,11 +165,12 @@ function pickBackground(visuals: VisualNode[], node: AnnotationNode, styles: Des
     return widthMatch && heightMatch && xMatch && yMatch && v.fillId;
   });
 
-  if (!bgCandidate) return {};
+  const style: Record<string, unknown> = {};
+  if (!bgCandidate) return { style, consumedId: null };
+
   const paint = resolvePaintStyle(bgCandidate.fillId, styles);
   const effect = bgCandidate.effectId ? resolveStyle(bgCandidate.effectId, styles) : null;
 
-  const style: Record<string, unknown> = {};
   if (paint?.color) style.backgroundColor = paint.color;
   if (paint?.gradient) style.backgroundImage = paint.gradient;
   if (paint?.imageUrl) style.backgroundImage = `url(${paint.imageUrl})`;
