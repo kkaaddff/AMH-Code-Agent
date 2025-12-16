@@ -1,6 +1,6 @@
 import { apiServices } from '@/services';
 import type { DataModel, DataModelGroup } from '@/types/dataModel';
-import { DesignData, DSLNode } from '@/types/dsl';
+import { DesignData, DSLNode } from '@fta/shared';
 import {
   CopyOutlined,
   DatabaseOutlined,

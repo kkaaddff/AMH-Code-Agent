@@ -8,6 +8,7 @@ import DSLElement from './components/DSLElement';
 import dslRawData from './data/dsl.json';
 import rootAnnotation from './data/rootAnnotation.json';
 import { mergeDslWithAnnotation } from './utils/mergeDslAnnotation';
+import { mergeDslWithAnnotation as mergeToTreeDsl, type TreeDslResult } from './utils/tree-dsl';
 import type { MergedPageNode } from './types/merged';
 import { estimateTokenDiff } from './utils/tokenEstimator';
 
@@ -21,7 +22,14 @@ const App: React.FC = () => {
   } | null>(null);
   const [is3DModalOpen, setIs3DModalOpen] = useState(false);
   const [merged, setMerged] = useState<MergedPageNode | null>(null);
+  const [treeDslResult, setTreeDslResult] = useState<TreeDslResult | null>(null);
   const [tokenStats, setTokenStats] = useState<{
+    before: number;
+    after: number;
+    delta: number;
+    saving: number;
+  } | null>(null);
+  const [treeDslTokenStats, setTreeDslTokenStats] = useState<{
     before: number;
     after: number;
     delta: number;
@@ -84,11 +92,19 @@ const App: React.FC = () => {
       const { merged: mergedTree } = mergeDslWithAnnotation(dsls.cleaned, rootAnnotation as any);
       setMerged(mergedTree);
 
+      // Tree-based DSL 格式
+      const treeDsl = mergeToTreeDsl(dsls.cleaned, rootAnnotation as any);
+      setTreeDslResult(treeDsl);
+      debugger;
       const rootAnnotationSummary = formatAnnotationSummary(flattenAnnotation(rootAnnotation));
       const beforePrompt = JSON.stringify({ annotation: rootAnnotationSummary, dsl: dsls.raw.dsl });
       const afterPrompt = JSON.stringify(mergedTree);
       const diff = await estimateTokenDiff(beforePrompt, afterPrompt);
       setTokenStats(diff);
+
+      // Tree DSL token 统计
+      const treeDiff = await estimateTokenDiff(beforePrompt, treeDsl.treeText);
+      setTreeDslTokenStats(treeDiff);
     };
     runMerge();
   }, [dsls]);
@@ -215,10 +231,38 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <h3>Merged Preview</h3>
+          <h3>Merged Preview (JSON)</h3>
           <div className='dsl-info' style={{ maxHeight: 320, overflow: 'auto' }}>
             {mergedPreview ?? <p>合并中...</p>}
           </div>
+
+          <h3>Tree-based DSL</h3>
+          <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: 8 }}>
+            <strong>Token (Qwen):</strong>{' '}
+            {treeDslTokenStats ? (
+              <>
+                {treeDslTokenStats.before} → {treeDslTokenStats.after} (Δ{treeDslTokenStats.delta}, 节省{' '}
+                {((treeDslTokenStats.saving / treeDslTokenStats.before) * 100).toFixed(1)}%)
+              </>
+            ) : (
+              'Estimating...'
+            )}
+          </div>
+          <pre
+            className='dsl-info'
+            style={{
+              maxHeight: 400,
+              overflow: 'auto',
+              whiteSpace: 'pre',
+              fontFamily: 'monospace',
+              fontSize: 12,
+              backgroundColor: '#1e1e1e',
+              color: '#d4d4d4',
+              padding: 12,
+              borderRadius: 8,
+            }}>
+            {treeDslResult?.treeText ?? '生成中...'}
+          </pre>
         </aside>
       </main>
 

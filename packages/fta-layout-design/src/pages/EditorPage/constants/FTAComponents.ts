@@ -10,39 +10,19 @@
  * 排序规则：按 weight 字段升序排列（权重越小越靠前）
  */
 
+import { ComponentCategory, CATEGORY_TO_LABEL, getComponentsByCategory } from '@fta/shared';
 import { FTA_COMPONENT_SCHEMAS, ComponentSchema } from './FTAComponentSchemas';
 
-// 从 schemas 中按 type 字段分组，并按 weight 排序
-const groupByType = () => {
-  const groups: Record<string, Array<{ name: string; weight: number }>> = {
-    基础容器: [],
-    基础原子组件: [],
-    带有插槽的复杂组件: [],
-    复杂整体业务组件: [],
-  };
+// 使用 shared 包的工具函数按类别分组组件，并转换为中文标签格式
+const groupedByCategory = getComponentsByCategory(FTA_COMPONENT_SCHEMAS);
 
-  for (const [name, schema] of Object.entries(FTA_COMPONENT_SCHEMAS)) {
-    if (name === '_default') continue;
-    const type = schema.type || '基础原子组件'; // 默认归为基础原子组件
-    if (type in groups) {
-      groups[type].push({
-        name,
-        weight: schema.weight ?? 999, // 无权重时排在最后
-      });
-    }
-  }
-
-  // 按 weight 升序排序各分组
-  const result: Record<string, string[]> = {};
-  for (const key of Object.keys(groups)) {
-    groups[key].sort((a, b) => a.weight - b.weight);
-    result[key] = groups[key].map((item) => item.name);
-  }
-
-  return result;
+// 转换为中文标签格式以保持向后兼容
+export const FTA_COMPONENTS: Record<string, string[]> = {
+  [CATEGORY_TO_LABEL[ComponentCategory.CONTAINER]]: groupedByCategory[ComponentCategory.CONTAINER],
+  [CATEGORY_TO_LABEL[ComponentCategory.ATOMIC]]: groupedByCategory[ComponentCategory.ATOMIC],
+  [CATEGORY_TO_LABEL[ComponentCategory.SLOT]]: groupedByCategory[ComponentCategory.SLOT],
+  [CATEGORY_TO_LABEL[ComponentCategory.BUSINESS]]: groupedByCategory[ComponentCategory.BUSINESS],
 };
-
-export const FTA_COMPONENTS = groupByType();
 
 /**
  * 获取指定组件的 schema 信息

@@ -9,9 +9,8 @@ import type {
   DataModelGroup,
   CreateDataModelGroupRequest,
   UpdateDataModelGroupRequest,
-  CreateDataModelRequest,
-  UpdateDataModelRequest,
 } from '@/types/dataModel';
+import { CreateDataModelRequest, UpdateDataModelRequest } from '@fta/shared';
 
 /**
  * 数据模型组服务

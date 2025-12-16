@@ -7,6 +7,10 @@
     ".": {
       "import": "./dist/index.js",
       "require": "./dist/index.js"
+    },
+    "./data/*": {
+      "import": "./dist/data/*",
+      "require": "./dist/data/*"
     }
   },
   "types": "./src/index.ts",
@@ -16,7 +20,7 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
+import { DSLNode } from '@fta/shared';
 import { proxy } from 'valtio';
-import { DSLNode } from '../../../types/dsl';
 import { designDetectionStore } from './DesignDetectionContext';
 
 interface DSLDataState {

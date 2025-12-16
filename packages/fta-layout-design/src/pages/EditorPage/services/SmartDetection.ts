@@ -1,4 +1,4 @@
-import { DSLData, DSLNode } from '@/types/dsl';
+import { DSLData, DSLNode } from '@fta/shared';
 import api from '@/utils/apiService';
 import { isNodeVisible } from '../utils/nodeUtils';
 import { Message, RequestBody } from './types';

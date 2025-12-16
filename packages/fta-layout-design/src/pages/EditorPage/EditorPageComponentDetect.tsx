@@ -1,7 +1,5 @@
 import { ModelConfigModal } from '@/components/ModelConfigModal';
-import type { DesignData } from '@/types/dsl';
 import { apiServices } from '@/services';
-import { DSLCleaner } from '@fta/shared';
 import {
   AppstoreOutlined,
   BorderOutlined,
@@ -10,11 +8,11 @@ import {
   DownOutlined,
   ExclamationCircleOutlined,
   QuestionCircleOutlined,
-  ReloadOutlined,
   SettingOutlined,
   TableOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
+import { AnnotationNode, DesignData, DSLCleaner } from '@fta/shared';
 import { App as AntApp, App, Button, Dropdown, Layout, Spin, Switch, Typography } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { useSnapshot } from 'valtio/react';
@@ -43,8 +41,6 @@ import { designDetectionActions, designDetectionStore } from './contexts/DesignD
 import { editorPageActions, editorPageStore } from './contexts/EditorPageContext';
 import './EditorPageComponentDetect.css';
 import { FrontendWorkflowScheduler } from './services/FrontendWorkflowScheduler';
-import type { AnnotationNode } from './types/componentDetection';
-import { DocumentReference } from '@/types/project';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;

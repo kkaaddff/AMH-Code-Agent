@@ -1,4 +1,4 @@
-import type { DSLNode } from '@/types/dsl';
+import { AnnotationNode, DSLNode } from '@fta/shared';
 import { COLORS, DASH_PATTERNS, DRAW_STYLES, LABEL_STYLES, SCALE_CONFIG } from '../../constants/CanvasConstant';
 import {
   calculateDSLNodeAbsolutePosition,
@@ -7,7 +7,7 @@ import {
   findAnnotationByDSLNodeId,
   findDSLNodeById,
 } from '../../contexts/DesignDetectionContext';
-import type { AnnotationNode, LabelInstruction, SelectedNodeItem } from '../../types/componentDetection';
+import type { LabelInstruction, SelectedNodeItem } from '../../types/componentDetection';
 import { NodeType } from '../../types/componentDetection';
 import { isNodeHidden } from '../../utils/nodeUtils';
 import {

@@ -1,9 +1,10 @@
+import { DocumentReference } from '@/types/project';
 import { CompressOutlined, ExpandOutlined, FileOutlined, FolderOutlined, SettingOutlined } from '@ant-design/icons';
+import { AnnotationNode } from '@fta/shared';
 import { Button, Space, Tooltip } from 'antd';
 import { DataNode } from 'antd/es/tree';
-import { AnnotationNode } from '../../types/componentDetection';
 import { designDetectionActions } from '../../contexts/DesignDetectionContext';
-import { DocumentReference } from '@/types/project';
+
 type PartialExcept<T, K extends keyof T> = Partial<T> & Pick<T, K>;
 
 export const createRootAnnotationFromDesignDoc = (

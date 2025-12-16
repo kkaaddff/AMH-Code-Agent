@@ -3,7 +3,7 @@
  * 处理 DSL 文件的上传、解析和导出
  */
 
-import { DesignData, DSLData } from '@/types/dsl';
+import { DesignData, DSLData } from '@fta/shared';
 import { api } from '@/utils/apiService';
 
 /**

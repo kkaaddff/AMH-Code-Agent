@@ -1,94 +1,14 @@
-export const BUSINESS_COMPONENTS = [
-  'AddressPicker',
-  'Calendar',
-  'CarKeyboard',
-  'Cascader',
-  'ImageUpload',
-  'InfiniteScroll',
-  'IntersectionObserver',
-  'Layer',
-  'LazyList',
-  'Lottie',
-  'Native',
-  'ScrollHelper',
-];
+import { ComponentCategory, getComponentsByCategory, getAllFTAComponents } from '@fta/shared';
+import { FTA_COMPONENT_SCHEMAS } from '../constants/FTAComponentSchemas';
 
-export const SLOT_COMPONENTS = [
-  'ActionSheet',
-  'AnimatedResult',
-  'AnimatedSlideinout',
-  'BottomTips',
-  'Card',
-  'Captcha',
-  'Collapse',
-  'Coupon',
-  'Curtain',
-  'Drawer',
-  'Dropdown',
-  'FloatingBubble',
-  'FloatingPanel',
-  'Form',
-  'IndexBar',
-  'Input',
-  'InputNumber',
-  'Intro',
-  'Keyboard',
-  'List',
-  'Modal',
-  'NavBar',
-  'NoticeBar',
-  'Overlay',
-  'Password',
-  'Picker',
-  'Popover',
-  'Protocol',
-  'PullToRefresh',
-  'Result',
-  'RichText',
-  'SafeArea',
-  'Search',
-  'Selector',
-  'Steps',
-  'Style',
-  'SwipeAction',
-  'Swiper',
-  'TabBar',
-  'Tabs',
-  'Textarea',
-  'Timeline',
-  'Toast',
-  'Tooltip',
-  'OptionSelect',
-];
+// 使用 shared 包的工具函数生成组件列表
+const componentsByCategory = getComponentsByCategory(FTA_COMPONENT_SCHEMAS);
 
-export const ATOMIC_COMPONENTS = [
-  'Avatar',
-  'Badge',
-  'Button',
-  'CheckBox',
-  'CircularProgress',
-  'CountDown',
-  'DashedLine',
-  'Divider',
-  'Empty',
-  'Gap',
-  'Icon',
-  'ImageBackground',
-  'Line',
-  'Loading',
-  'LoadingImage',
-  'PageIndicator',
-  'ProgressBar',
-  'Radio',
-  'Rate',
-  'Skeleton',
-  'Slider',
-  'Tag',
-  'Toggle',
-  'Typography',
-];
+export const BUSINESS_COMPONENTS = componentsByCategory[ComponentCategory.BUSINESS];
+export const SLOT_COMPONENTS = componentsByCategory[ComponentCategory.SLOT];
+export const ATOMIC_COMPONENTS = componentsByCategory[ComponentCategory.ATOMIC];
 
-export const FTA_COMPONENTS = [...BUSINESS_COMPONENTS, ...SLOT_COMPONENTS, ...ATOMIC_COMPONENTS];
+export const FTA_COMPONENTS = getAllFTAComponents(FTA_COMPONENT_SCHEMAS);
 
 export const TaroComponents = ['View', 'Text', 'Image'];
 

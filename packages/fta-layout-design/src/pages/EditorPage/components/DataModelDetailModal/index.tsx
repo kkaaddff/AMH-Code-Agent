@@ -1,5 +1,5 @@
 import { dataModelService } from '@/services/dataModelService';
-import type { DataModel, DataModelGroup, UpdateDataModelRequest } from '@/types/dataModel';
+import type { DataModel, DataModelGroup } from '@/types/dataModel';
 import { RobotOutlined, SaveOutlined, WarningOutlined } from '@ant-design/icons';
 import { App, Button, Form, Input, Modal, Select, Space, Tabs, Tooltip, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
@@ -8,6 +8,7 @@ import { editorPageActions, editorPageStore } from '../../contexts/EditorPageCon
 import TypeScriptEditor from '@/components/TypeScriptEditor';
 import AiParseModal from '../AiParseModal';
 import './index.css';
+import { UpdateDataModelRequest } from '@fta/shared';
 
 const { Title, Text } = Typography;
 

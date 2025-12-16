@@ -1,10 +1,10 @@
+import { AnnotationNode } from '@fta/shared';
 import { Modal, Spin } from 'antd';
 import html2canvas from 'html2canvas';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useSnapshot } from 'valtio';
-
 import {
   CAMERA_CONFIG,
   COLOR_CONFIG,
@@ -21,7 +21,6 @@ import {
   SCENE_LAYOUT,
 } from '../../constants/Three3DInspectConstants';
 import { designDetectionStore } from '../../contexts/DesignDetectionContext';
-import type { AnnotationNode } from '../../types/componentDetection';
 import './index.css';
 
 interface Component3DInspectModalProps {

@@ -1,4 +1,4 @@
-import type { DSLNode } from '@/types/dsl';
+import { DSLNode } from '@fta/shared';
 import { COLORS, DASH_PATTERNS, DRAW_STYLES } from '../../constants/CanvasConstant';
 import { designDetectionStore, findAnnotationByDSLNodeId } from '../../contexts/DesignDetectionContext';
 import type { LabelInstruction } from '../../types/componentDetection';

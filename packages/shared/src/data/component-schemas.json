@@ -14,7 +14,7 @@
         "label": "元素的标题",
         "type": "string",
         "defaultValue": "unknown",
-        "description": "类型: ReactNode \\"
+        "description": "类型: ReactNode"
       },
       {
         "name": "cancelText",
@@ -97,7 +97,7 @@
         "label": "是否显示底部安全区",
         "type": "boolean",
         "defaultValue": "Omit_SafeAreaProps",
-        "description": "类型: boolean \\；版本: true"
+        "description": "类型: boolean ；版本: true"
       },
       {
         "name": "modalProps",
@@ -160,8 +160,8 @@
         "name": "title",
         "label": "标题，设置 null 可隐藏",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: string \\；版本: Custom..."
+        "defaultValue": "ReactElement",
+        "description": "类型: string ；版本: Custom..."
       },
       {
         "name": "useCustom",
@@ -182,14 +182,14 @@
         "label": "第一次打开是否需要 loading",
         "type": "string",
         "defaultValue": "ReactElement",
-        "description": "类型: false \\"
+        "description": "类型: false"
       },
       {
         "name": "env",
         "label": "接口环境，远程搜索必传",
         "type": "string",
-        "defaultValue": "\"dev\" \\",
-        "description": "类型: \"local\" \\；版本: \"qa\" \\"
+        "defaultValue": "dev",
+        "description": "类型: local ；版本: qa"
       },
       {
         "name": "useRemoteSearch",
@@ -228,7 +228,7 @@
         "label": "内部方法 Ref",
         "type": "string",
         "defaultValue": "RefObject...",
-        "description": "类型: null \\"
+        "description": "类型: null"
       },
       {
         "name": "code",
@@ -261,7 +261,7 @@
         "label": "弹窗内容固定高度",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "triggerConfirmWhenChange",
@@ -369,7 +369,7 @@
         "label": "是否显示底部安全区",
         "type": "boolean",
         "defaultValue": "Omit_SafeAreaProps",
-        "description": "类型: boolean \\；版本: true"
+        "description": "类型: boolean ；版本: true"
       },
       {
         "name": "modalProps",
@@ -400,14 +400,14 @@
         "label": "[H5]是否挂载到根节点",
         "type": "boolean",
         "defaultValue": "HTMLElement",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "direction",
         "label": "书写方向",
         "type": "string",
-        "defaultValue": "\"ltr\"",
-        "description": "类型: \"rtl\" \\"
+        "defaultValue": "ltr",
+        "description": "类型: rtl"
       },
       {
         "name": "topOption",
@@ -419,8 +419,8 @@
         "name": "defaultValue",
         "label": "默认选中项",
         "type": "json",
-        "defaultValue": "string \\",
-        "description": "类型: Array \\；版本: number..."
+        "defaultValue": "string",
+        "description": "类型: Array ；版本: number..."
       },
       {
         "name": "depth",
@@ -462,7 +462,7 @@
         "label": "是否严格匹配搜索",
         "type": "boolean",
         "defaultValue": "HitFn",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "showResult",
@@ -475,22 +475,22 @@
         "name": "placeholder",
         "label": "输入框提示文本",
         "type": "string",
-        "defaultValue": "\"支持按城市、区县名称搜索\"",
+        "defaultValue": "支持按城市、区县名称搜索",
         "description": "类型: string"
       },
       {
         "name": "emptyHint",
         "label": "搜索无结果提示",
         "type": "string",
-        "defaultValue": "\"暂无搜索结果\"",
+        "defaultValue": "暂无搜索结果",
         "description": "类型: string"
       },
       {
         "name": "limitHint",
         "label": "多选上限提示",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: string \\；版本: null"
+        "defaultValue": "ReactElement",
+        "description": "类型: string ；版本: null"
       },
       {
         "name": "changeOnSelect",
@@ -529,7 +529,7 @@
         "label": "是否默认聚焦最后一列",
         "type": "boolean",
         "defaultValue": "lazy",
-        "description": "类型: boolean \\；版本: true"
+        "description": "类型: boolean ；版本: true"
       },
       {
         "name": "useCompleteTextChange",
@@ -543,7 +543,7 @@
         "label": "自定义输入框",
         "type": "textarea",
         "defaultValue": "ComponentClass...",
-        "description": "类型: FunctionComponent \\"
+        "description": "类型: FunctionComponent"
       },
       {
         "name": "customSearchListRenderer",
@@ -611,7 +611,7 @@
         "label": "[单选]切换选项时子项是否默认全选",
         "type": "boolean",
         "defaultValue": "loose",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "shouldSearchParent",
@@ -676,7 +676,7 @@
         "label": "item 样式",
         "type": "string",
         "defaultValue": "(data: { depth... })",
-        "description": "类型: CSSProperties \\"
+        "description": "类型: CSSProperties"
       },
       {
         "name": "renderItem",
@@ -688,7 +688,7 @@
         "name": "fieldNames",
         "label": "自定义 label/value/children 字段",
         "type": "string",
-        "defaultValue": "\"{label: 'label', value: 'value', children: 'children'}\"",
+        "defaultValue": "{label: 'label', value: 'value', children: 'children'}",
         "description": "类型: { label: string; value: string; children: string }"
       },
       {
@@ -703,14 +703,14 @@
         "label": "自定义选择后缀图标",
         "type": "string",
         "defaultValue": "false",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "activeSuffixIcon",
         "label": "自定义选中后缀图标",
         "type": "string",
         "defaultValue": "false",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "activeItemClassName",
@@ -779,15 +779,15 @@
         "name": "isDisabled",
         "label": "是否禁用",
         "type": "string",
-        "defaultValue": "number, value: string \\",
-        "description": "类型: (label: string \\；版本: number) => boolean"
+        "defaultValue": "number, value: string",
+        "description": "类型: (label: string ；版本: number) => boolean"
       },
       {
         "name": "labelFormatter",
         "label": "格式化 item 显示",
         "type": "string",
         "defaultValue": "number, option: Option) => string",
-        "description": "类型: (label: string \\"
+        "description": "类型: (label: string"
       },
       {
         "name": "scrollViewProps",
@@ -825,7 +825,7 @@
         "label": "搜索结果是否滚动到视图中",
         "type": "boolean",
         "defaultValue": "{ padding?: number }",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "confirmText",
@@ -846,29 +846,29 @@
         "name": "type",
         "label": "结果页面类型",
         "type": "string",
-        "defaultValue": "\"error\" \\",
-        "description": "类型: \"success\" \\；版本: \"waiting\""
+        "defaultValue": "error",
+        "description": "类型: success ；版本: waiting"
       },
       {
         "name": "title",
         "label": "标题",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: string \\；版本: null"
+        "defaultValue": "ReactElement",
+        "description": "类型: string ；版本: null"
       },
       {
         "name": "desc",
         "label": "描述文本",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: string \\；版本: null"
+        "defaultValue": "ReactElement",
+        "description": "类型: string ；版本: null"
       },
       {
         "name": "buttonList",
         "label": "按钮相关属性",
         "type": "json",
-        "defaultValue": "Array<ReactElement> \\",
-        "description": "类型: Array \\；版本: ..."
+        "defaultValue": "Array<ReactElement>",
+        "description": "类型: Array ；版本: ..."
       },
       {
         "name": "buttonContainerStyle",
@@ -911,8 +911,8 @@
         "name": "size",
         "label": "头像尺寸：mini - 48px, small - 56px, medium - 72px, large - 96px",
         "type": "string",
-        "defaultValue": "\"small\" \\",
-        "description": "类型: \"mini\" \\；版本: \"medium\" \\"
+        "defaultValue": "small",
+        "description": "类型: mini ；版本: medium"
       },
       {
         "name": "circle",
@@ -955,15 +955,15 @@
         "name": "bgColor",
         "label": "背景颜色",
         "type": "string",
-        "defaultValue": "\"#f3f4f6\"",
+        "defaultValue": "#f3f4f6",
         "description": "类型: string"
       },
       {
         "name": "shape",
         "label": "图片形状：circle-圆形，square-方形",
         "type": "string",
-        "defaultValue": "\"square\"",
-        "description": "类型: \"circle\" \\；版本: \"square\""
+        "defaultValue": "square",
+        "description": "类型: circle ；版本: square"
       },
       {
         "name": "errorIcon",
@@ -996,14 +996,14 @@
         "label": "异步加载占位节点（设为 false 可禁用）",
         "type": "string",
         "defaultValue": "false",
-        "description": "类型: ReactElement \\"
+        "description": "类型: ReactElement"
       },
       {
         "name": "mode",
         "label": "图片缩放模式，不支持 widthFix 和 heightFix",
         "type": "string",
-        "defaultValue": "number \\",
-        "description": "类型: string \\；版本: unknown"
+        "defaultValue": "number",
+        "description": "类型: string ；版本: unknown"
       },
       {
         "name": "list",
@@ -1045,7 +1045,7 @@
         "label": "展示的数字，大于 overflowCount 时显示为 ${overflowCount}+，为0且show-zero为false时隐藏",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "show",
@@ -1065,8 +1065,8 @@
         "name": "type",
         "label": "主题类型",
         "type": "string",
-        "defaultValue": "\"primary\" \\",
-        "description": "类型: \"warning\" \\；版本: \"info\" \\"
+        "defaultValue": "primary",
+        "description": "类型: warning ；版本: info"
       },
       {
         "name": "showZero",
@@ -1093,15 +1093,15 @@
         "name": "numberType",
         "label": "显示方式",
         "type": "string",
-        "defaultValue": "\"ellipsis\" \\",
-        "description": "类型: \"overflow\" \\；版本: \"lim...\""
+        "defaultValue": "ellipsis",
+        "description": "类型: overflow ；版本: lim..."
       },
       {
         "name": "shape",
         "label": "徽标形状，circle-四角均为圆角，horn-左下角为直角",
         "type": "string",
-        "defaultValue": "\"horn\" \\",
-        "description": "类型: \"circle\" \\；版本: \"square\" \\"
+        "defaultValue": "horn",
+        "description": "类型: circle ；版本: square"
       },
       {
         "name": "offset",
@@ -1142,8 +1142,8 @@
         "name": "app",
         "label": "类型",
         "type": "string",
-        "defaultValue": "\"HCB\"",
-        "description": "类型: \"YMM\" \\；版本: \"YMM\""
+        "defaultValue": "HCB",
+        "description": "类型: YMM ；版本: YMM"
       },
       {
         "name": "customTip",
@@ -1182,15 +1182,15 @@
         "name": "size",
         "label": "按钮的大小",
         "type": "string",
-        "defaultValue": "\"medium\" \\",
-        "description": "类型: \"small\" \\；版本: \"large\""
+        "defaultValue": "medium",
+        "description": "类型: small ；版本: large"
       },
       {
         "name": "type",
         "label": "按钮的类型",
         "type": "string",
-        "defaultValue": "\"secondary\" \\",
-        "description": "类型: \"primary\" \\；版本: \"default\" \\"
+        "defaultValue": "secondary",
+        "description": "类型: primary ；版本: default"
       },
       {
         "name": "circle",
@@ -1223,7 +1223,7 @@
         "label": "设置按钮的载入状态",
         "type": "boolean",
         "defaultValue": "Element",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "disabled",
@@ -1249,8 +1249,8 @@
         "name": "textLevel",
         "label": "按钮文字大小，对应Text组件的level",
         "type": "string",
-        "defaultValue": "2 \\",
-        "description": "类型: 1 \\；版本: 5 \\"
+        "defaultValue": "2",
+        "description": "类型: 1 ；版本: 5"
       },
       {
         "name": "plain",
@@ -1264,7 +1264,7 @@
         "label": "文本属性配置",
         "type": "json",
         "defaultValue": "... }",
-        "description": "类型: { style?: object; level?: 1 \\"
+        "description": "类型: { style?: object; level?: 1"
       },
       {
         "name": "desc",
@@ -1302,7 +1302,7 @@
         "label": "主题色",
         "type": "string",
         "defaultValue": "unknown[]",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "token",
@@ -1330,14 +1330,14 @@
         "label": "视图引用",
         "type": "string",
         "defaultValue": "null }",
-        "description": "类型: { current: T \\"
+        "description": "类型: { current: T"
       },
       {
         "name": "confirmText",
         "label": "底部确定按钮文本",
         "type": "string",
         "defaultValue": "string",
-        "description": "类型: false \\"
+        "description": "类型: false"
       },
       {
         "name": "clickOverlayOnClose",
@@ -1375,8 +1375,8 @@
         "name": "type",
         "label": "选择类型",
         "type": "string",
-        "defaultValue": "\"multiple\" \\",
-        "description": "类型: \"range\" \\；版本: \"point\""
+        "defaultValue": "multiple",
+        "description": "类型: range ；版本: point"
       },
       {
         "name": "enableSelectSameDate",
@@ -1406,14 +1406,14 @@
         "name": "firstDayOfWeek",
         "label": "指定星期的第一天，默认周日",
         "type": "string",
-        "defaultValue": "1 \\",
-        "description": "类型: 0 \\；版本: 2 \\"
+        "defaultValue": "1",
+        "description": "类型: 0 ；版本: 2"
       },
       {
         "name": "weekdays",
         "label": "自定义头部展示",
         "type": "string",
-        "defaultValue": "[\"日\",\"一\",\"二\",\"三\",\"四\",\"五\",\"六\"]",
+        "defaultValue": "[日,一,二,三,四,五,六]",
         "description": "类型: string[]；版本: 1.9.1"
       },
       {
@@ -1470,14 +1470,14 @@
         "label": "引用",
         "type": "string",
         "defaultValue": "RefObject<...>",
-        "description": "类型: null \\"
+        "description": "类型: null"
       },
       {
         "name": "key",
         "label": "键值",
         "type": "string",
         "defaultValue": "null",
-        "description": "类型: Key \\"
+        "description": "类型: Key"
       }
     ],
     "summary": "日历组件，支持范围选择。",
@@ -1492,7 +1492,7 @@
         "name": "value",
         "label": "非受控组件时为默认值",
         "type": "string",
-        "defaultValue": "\"\"",
+        "defaultValue": "",
         "description": "类型: string"
       },
       {
@@ -1513,7 +1513,7 @@
         "name": "title",
         "label": "标题",
         "type": "string",
-        "defaultValue": "\"输入验证码\"",
+        "defaultValue": "输入验证码",
         "description": "类型: ReactNode"
       },
       {
@@ -1548,7 +1548,7 @@
         "label": "是否显示插入光标，可自定义",
         "type": "boolean",
         "defaultValue": "ReactElement",
-        "description": "类型: boolean \\；版本: true"
+        "description": "类型: boolean ；版本: true"
       },
       {
         "name": "caretColor",
@@ -1619,14 +1619,14 @@
         "label": "引用对象",
         "type": "string",
         "defaultValue": "RefObject<CaptchaRef>",
-        "description": "类型: null \\"
+        "description": "类型: null"
       },
       {
         "name": "key",
         "label": "React key",
         "type": "string",
         "defaultValue": "null",
-        "description": "类型: Key \\"
+        "description": "类型: Key"
       }
     ],
     "summary": "验证码组件",
@@ -1865,7 +1865,7 @@
         "label": "是否显示底部安全区",
         "type": "boolean",
         "defaultValue": "Omit_SafeAreaProps",
-        "description": "类型: boolean \\；版本: true"
+        "description": "类型: boolean ；版本: true"
       },
       {
         "name": "modalProps",
@@ -1902,21 +1902,21 @@
         "label": "浮动面板头部其他配置",
         "type": "boolean",
         "defaultValue": "ReactElement; ... }",
-        "description": "类型: { icon?: boolean \\"
+        "description": "类型: { icon?: boolean"
       },
       {
         "name": "portal",
         "label": "[H5]是否挂载到根节点",
         "type": "boolean",
         "defaultValue": "HTMLElement",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "direction",
         "label": "书写方向",
         "type": "string",
-        "defaultValue": "\"ltr\"",
-        "description": "类型: \"rtl\" \\"
+        "defaultValue": "ltr",
+        "description": "类型: rtl"
       },
       {
         "name": "controls",
@@ -1999,14 +1999,14 @@
         "label": "-",
         "type": "string",
         "defaultValue": "RefObject",
-        "description": "类型: null \\"
+        "description": "类型: null"
       },
       {
         "name": "key",
         "label": "-",
         "type": "string",
         "defaultValue": "null",
-        "description": "类型: Key \\"
+        "description": "类型: Key"
       },
       {
         "name": "defaultVisible",
@@ -2031,7 +2031,7 @@
         "name": "placeholder",
         "label": "标签选择提示文本",
         "type": "string",
-        "defaultValue": "\"请选择\"",
+        "defaultValue": "请选择",
         "description": "类型: string"
       },
       {
@@ -2103,8 +2103,8 @@
         "name": "type",
         "label": "展现类型",
         "type": "string",
-        "defaultValue": "\"inline\" \\",
-        "description": "类型: \"left\" \\；版本: \"between\""
+        "defaultValue": "inline",
+        "description": "类型: left ；版本: between"
       },
       {
         "name": "itemStyle",
@@ -2175,7 +2175,7 @@
         "name": "color",
         "label": "进度条背景色",
         "type": "string",
-        "defaultValue": "\"#cccccc\"",
+        "defaultValue": "#cccccc",
         "description": "类型: string"
       },
       {
@@ -2188,7 +2188,7 @@
         "name": "activeColor",
         "label": "进度条前景色",
         "type": "string",
-        "defaultValue": "\"#ff7000\"",
+        "defaultValue": "#ff7000",
         "description": "类型: string"
       },
       {
@@ -2264,7 +2264,7 @@
         "label": "展开的值集合，默认不展开；手风琴模式时传入字符串",
         "type": "string",
         "defaultValue": "Array",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "collapsible",
@@ -2353,14 +2353,14 @@
         "label": "引用对象",
         "type": "string",
         "defaultValue": "RefObject",
-        "description": "类型: null \\"
+        "description": "类型: null"
       },
       {
         "name": "key",
         "label": "React key，用于强制重新渲染",
         "type": "string",
         "defaultValue": "null",
-        "description": "类型: Key \\"
+        "description": "类型: Key"
       }
     ],
     "summary": "倒计时组件，时分秒格式，仅支持 24 小时内的时间戳。",
@@ -2375,8 +2375,8 @@
         "name": "type",
         "label": "样式类型",
         "type": "string",
-        "defaultValue": "\"rich\"",
-        "description": "类型: \"simple\" \\"
+        "defaultValue": "rich",
+        "description": "类型: simple"
       },
       {
         "name": "price",
@@ -2390,7 +2390,7 @@
         "label": "使用条件，满xx元可用，支持自定义字符串",
         "type": "number",
         "defaultValue": "string",
-        "description": "类型: number \\；版本: 150"
+        "description": "类型: number ；版本: 150"
       },
       {
         "name": "title",
@@ -2402,7 +2402,7 @@
         "name": "remark",
         "label": "优惠券类型",
         "type": "string",
-        "defaultValue": "\"通用券\"",
+        "defaultValue": "通用券",
         "description": "类型: string"
       },
       {
@@ -2427,8 +2427,8 @@
         "name": "status",
         "label": "优惠券状态",
         "type": "string",
-        "defaultValue": "\"unused\" \\",
-        "description": "类型: \"disabled\" \\；版本: \"used\" \\"
+        "defaultValue": "unused",
+        "description": "类型: disabled ；版本: used"
       },
       {
         "name": "desc",
@@ -2446,7 +2446,7 @@
         "name": "btnText",
         "label": "按钮文本（仅 type='rich' 且 status='unused' 时生效）",
         "type": "string",
-        "defaultValue": "\"去使用\"",
+        "defaultValue": "去使用",
         "description": "类型: string"
       },
       {
@@ -2475,8 +2475,8 @@
         "name": "closeBtnPosition",
         "label": "关闭图标位置：'top', 'top-left', 'top-right', 'bottom', 'bottom-left', 'bottom-right'",
         "type": "string",
-        "defaultValue": "\"bottom\" \\",
-        "description": "类型: \"top\" \\；版本: \"top-left\" \\"
+        "defaultValue": "bottom",
+        "description": "类型: top ；版本: top-left"
       }
     ],
     "summary": "幕帘组件，可以用来放置广告提示内容。",
@@ -2491,14 +2491,14 @@
         "name": "axis",
         "label": "横向或纵向",
         "type": "string",
-        "defaultValue": "\"horizontal\"",
-        "description": "类型: \"vertical\" \\；版本: \"horizontal\""
+        "defaultValue": "horizontal",
+        "description": "类型: vertical ；版本: horizontal"
       },
       {
         "name": "dashColor",
         "label": "虚线颜色",
         "type": "string",
-        "defaultValue": "\"#000\"",
+        "defaultValue": "#000",
         "description": "类型: string"
       },
       {
@@ -2577,8 +2577,8 @@
         "name": "text",
         "label": "文本内容，如果为数组则为垂直分割",
         "type": "string",
-        "defaultValue": "number \\",
-        "description": "类型: string \\；版本: ReactElement..."
+        "defaultValue": "number",
+        "description": "类型: string ；版本: ReactElement..."
       },
       {
         "name": "pure",
@@ -2603,14 +2603,14 @@
         "name": "textPosition",
         "label": "内容文本的位置",
         "type": "string",
-        "defaultValue": "\"center\" \\",
-        "description": "类型: \"left\" \\；版本: \"right\""
+        "defaultValue": "center",
+        "description": "类型: left ；版本: right"
       },
       {
         "name": "lineColor",
         "label": "线条颜色",
         "type": "string",
-        "defaultValue": "\"#dcdfe6\"",
+        "defaultValue": "#dcdfe6",
         "description": "类型: string"
       }
     ],
@@ -2641,7 +2641,7 @@
         "label": "抽屉宽度",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\；版本: \"230px\""
+        "description": "类型: string ；版本: 230px"
       },
       {
         "name": "right",
@@ -2746,7 +2746,7 @@
         "label": "底部安全区相关属性",
         "type": "string",
         "defaultValue": "false",
-        "description": "类型: SafeAreaProps \\"
+        "description": "类型: SafeAreaProps"
       },
       {
         "name": "disabled",
@@ -2772,7 +2772,7 @@
         "label": "-",
         "type": "string",
         "defaultValue": "(isOpened: boolean) => CSSProperties",
-        "description": "类型: CSSProperties \\"
+        "description": "类型: CSSProperties"
       },
       {
         "name": "textStyle",
@@ -2797,8 +2797,8 @@
         "name": "align",
         "label": "对齐方式，默认居中撑满",
         "type": "string",
-        "defaultValue": "\"center\"",
-        "description": "类型: \"left\" \\"
+        "defaultValue": "center",
+        "description": "类型: left"
       },
       {
         "name": "contentContainerStyle",
@@ -2853,8 +2853,8 @@
         "name": "options",
         "label": "列表",
         "type": "json",
-        "defaultValue": "(depth: number, option: Option) => Array<Option> \\",
-        "description": "类型: Array<Option> \\；版本: false"
+        "defaultValue": "(depth: number, option: Option) => Array<Option>",
+        "description": "类型: Array<Option> ；版本: false"
       },
       {
         "name": "optionHighlightColor",
@@ -2885,7 +2885,7 @@
         "label": "默认激活的索引，设置为-1则默认不聚焦；级联选择请传入数组",
         "type": "number",
         "defaultValue": "Array",
-        "description": "类型: number \\"
+        "description": "类型: number"
       },
       {
         "name": "preventDefault",
@@ -2898,8 +2898,8 @@
         "name": "width",
         "label": "显示宽度",
         "type": "number",
-        "defaultValue": "\"fit-content\"",
-        "description": "类型: number \\"
+        "defaultValue": "fit-content",
+        "description": "类型: number"
       },
       {
         "name": "full",
@@ -2939,8 +2939,8 @@
         "name": "type",
         "label": "空状态或者是错误页面",
         "type": "string",
-        "defaultValue": "\"empty\"",
-        "description": "类型: \"error\" \\；版本: \"empty\""
+        "defaultValue": "empty",
+        "description": "类型: error ；版本: empty"
       },
       {
         "name": "src",
@@ -2978,15 +2978,15 @@
         "name": "btnText",
         "label": "按钮文本",
         "type": "string",
-        "defaultValue": "\"刷新试试\"",
+        "defaultValue": "刷新试试",
         "description": "类型: string"
       },
       {
         "name": "size",
         "label": "图片尺寸",
         "type": "string",
-        "defaultValue": "\"medium\" \\",
-        "description": "类型: \"small\" \\；版本: \"large\""
+        "defaultValue": "medium",
+        "description": "类型: small ；版本: large"
       }
     ],
     "summary": "该组件用于需要加载内容，但是加载的数据为空，提示一个“没有内容”或“访问出错”的场景。",
@@ -3001,7 +3001,7 @@
         "name": "component",
         "label": "实际渲染的节点，默认使用 View from '@tarojs/components'",
         "type": "string",
-        "defaultValue": "\"View\"",
+        "defaultValue": "View",
         "description": "类型: unknown"
       },
       {
@@ -3009,28 +3009,28 @@
         "label": "定义元素可伸缩值，flex={1} 可以撑满父元素",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "direction",
         "label": "排列方向",
         "type": "string",
-        "defaultValue": "\"inherit\" \\",
-        "description": "类型: \"-moz-initial\" \\；版本: ..."
+        "defaultValue": "inherit",
+        "description": "类型: -moz-initial ；版本: ..."
       },
       {
         "name": "alignItems",
         "label": "交叉轴对齐方式",
         "type": "string",
-        "defaultValue": "-moz-initial \\",
-        "description": "类型: string \\；版本: inherit \\"
+        "defaultValue": "-moz-initial",
+        "description": "类型: string ；版本: inherit"
       },
       {
         "name": "justifyContent",
         "label": "主轴对齐方式",
         "type": "string",
-        "defaultValue": "-moz-initial \\",
-        "description": "类型: string \\；版本: inherit \\"
+        "defaultValue": "-moz-initial",
+        "description": "类型: string ；版本: inherit"
       },
       {
         "name": "children",
@@ -3116,15 +3116,15 @@
         "name": "axis",
         "label": "可以进行拖动的方向，'xy' 表示自由移动，'lock' 表示只允许在拖拽开始时的方向上移动",
         "type": "string",
-        "defaultValue": "\"y\" \\",
-        "description": "类型: \"x\" \\；版本: \"xy\" \\"
+        "defaultValue": "y",
+        "description": "类型: x ；版本: xy"
       },
       {
         "name": "defaultOffset",
         "label": "自动磁吸到边界；默认偏移位置",
         "type": "number",
-        "defaultValue": "false; y: number \\",
-        "description": "类型: { x: number \\；版本: false }"
+        "defaultValue": "false; y: number",
+        "description": "类型: { x: number ；版本: false }"
       },
       {
         "name": "imageUrl",
@@ -3191,14 +3191,14 @@
         "label": "底部区域 [1.9.13] 传 render 方法可完全自定义渲染，支持 H5",
         "type": "string",
         "defaultValue": "() => ReactElement",
-        "description": "类型: ReactElement \\"
+        "description": "类型: ReactElement"
       },
       {
         "name": "borderRadius",
         "label": "浮动面板的圆角",
         "type": "number",
-        "defaultValue": "string; topRight?: number \\",
-        "description": "类型: { topLeft?: number \\；版本: string }"
+        "defaultValue": "string; topRight?: number",
+        "description": "类型: { topLeft?: number ；版本: string }"
       },
       {
         "name": "windowHeight",
@@ -3262,8 +3262,8 @@
         "name": "titleAlign",
         "label": "标题对齐方式",
         "type": "string",
-        "defaultValue": "\"center\" \\",
-        "description": "类型: \"left\" \\；版本: \"right\" \\"
+        "defaultValue": "center",
+        "description": "类型: left ；版本: right"
       },
       {
         "name": "model",
@@ -3296,8 +3296,8 @@
         "name": "align",
         "label": "右侧内容区域对齐方式",
         "type": "string",
-        "defaultValue": "\"center\" \\",
-        "description": "类型: \"left\" \\；版本: \"right\" \\"
+        "defaultValue": "center",
+        "description": "类型: left ；版本: right"
       },
       {
         "name": "rules",
@@ -3370,7 +3370,7 @@
         "name": "placeholderTextColor",
         "label": "占位符文字颜色",
         "type": "string",
-        "defaultValue": "\"#cccccc\"",
+        "defaultValue": "#cccccc",
         "description": "类型: string"
       },
       {
@@ -3378,7 +3378,7 @@
         "label": "默认的 FormItem UI 组件",
         "type": "string",
         "defaultValue": "Function",
-        "description": "类型: ComponentClass<__type> \\"
+        "description": "类型: ComponentClass<__type>"
       },
       {
         "name": "useScrollView",
@@ -3416,14 +3416,14 @@
         "label": "-",
         "type": "string",
         "defaultValue": "RefObject",
-        "description": "类型: null \\"
+        "description": "类型: null"
       },
       {
         "name": "key",
         "label": "-",
         "type": "string",
         "defaultValue": "null",
-        "description": "类型: Key \\"
+        "description": "类型: Key"
       }
     ],
     "summary": "表单组件，表单状态当前需自行维护。",
@@ -3496,8 +3496,8 @@
         "name": "direction",
         "label": "渐变方向",
         "type": "string",
-        "defaultValue": "\"toRight\" \\",
-        "description": "类型: \"toLeft\" \\；版本: \"toTop\" \\"
+        "defaultValue": "toRight",
+        "description": "类型: toLeft ；版本: toTop"
       },
       {
         "name": "startColor",
@@ -3570,15 +3570,15 @@
         "name": "value",
         "label": "icon名称",
         "type": "string",
-        "defaultValue": "\"RightOutlined\"...",
-        "description": "类型: \"LeftOutlined\" \\；版本: (必选)"
+        "defaultValue": "RightOutlined...",
+        "description": "类型: LeftOutlined ；版本: (必选)"
       },
       {
         "name": "size",
         "label": "图标大小",
         "type": "number",
-        "defaultValue": "small \\",
-        "description": "类型: number \\；版本: medium \\"
+        "defaultValue": "small",
+        "description": "类型: number ；版本: medium"
       },
       {
         "name": "scale",
@@ -3597,7 +3597,7 @@
         "name": "prefixClass",
         "label": "自定义样式前缀",
         "type": "string",
-        "defaultValue": "\"fta-icon\"",
+        "defaultValue": "fta-icon",
         "description": "类型: string"
       },
       {
@@ -3855,8 +3855,8 @@
         "name": "resizeMode",
         "label": "图片缩放模式，h5 和小程序不支持 repeat",
         "type": "string",
-        "defaultValue": "\"repeat\" \\",
-        "description": "类型: \"center\" \\；版本: \"stretch\" \\"
+        "defaultValue": "repeat",
+        "description": "类型: center ；版本: stretch"
       },
       {
         "name": "children",
@@ -3897,8 +3897,8 @@
         "name": "column",
         "label": "列数，支持 2、3、4",
         "type": "string",
-        "defaultValue": "3 \\",
-        "description": "类型: 2 \\；版本: 4"
+        "defaultValue": "3",
+        "description": "类型: 2 ；版本: 4"
       },
       {
         "name": "maxCount",
@@ -3911,8 +3911,8 @@
         "name": "env",
         "label": "环境：dev、qa、prod（必选）",
         "type": "string",
-        "defaultValue": "\"qa\" \\",
-        "description": "类型: \"dev\" \\；版本: \"prod\""
+        "defaultValue": "qa",
+        "description": "类型: dev ；版本: prod"
       },
       {
         "name": "options",
@@ -3944,28 +3944,28 @@
         "name": "title",
         "label": "上传照片的标题",
         "type": "string",
-        "defaultValue": "\"上传照片\"",
+        "defaultValue": "上传照片",
         "description": "类型: ReactNode；版本: 1.2.2"
       },
       {
         "name": "mediaType",
         "label": "上传文件格式：1-照片，2-视频，3-视频和照片，4-音频，5-全部",
         "type": "string",
-        "defaultValue": "2 \\",
-        "description": "类型: 1 \\；版本: 3 \\"
+        "defaultValue": "2",
+        "description": "类型: 1 ；版本: 3"
       },
       {
         "name": "mode",
         "label": "图片展示裁剪方式",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "confirmColor",
         "label": "弹窗确认按钮颜色",
         "type": "string",
-        "defaultValue": "\"#ff7000\"",
+        "defaultValue": "#ff7000",
         "description": "类型: string；版本: 1.2.3"
       },
       {
@@ -3992,7 +3992,7 @@
         "name": "loadingText",
         "label": "loading 标题",
         "type": "string",
-        "defaultValue": "\"加载中...\"",
+        "defaultValue": "加载中...",
         "description": "类型: string；版本: 1.4.0"
       },
       {
@@ -4204,22 +4204,22 @@
         "name": "ListHeaderComponent",
         "label": "列表头部组件",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: unknown \\；版本: null"
+        "defaultValue": "ReactElement",
+        "description": "类型: unknown ；版本: null"
       },
       {
         "name": "ListFooterComponent",
         "label": "列表底部组件",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: unknown \\；版本: null"
+        "defaultValue": "ReactElement",
+        "description": "类型: unknown ；版本: null"
       },
       {
         "name": "ListEmptyComponent",
         "label": "列表为空时显示的组件",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: unknown \\；版本: null"
+        "defaultValue": "ReactElement",
+        "description": "类型: unknown ；版本: null"
       },
       {
         "name": "hasMore",
@@ -4245,15 +4245,15 @@
         "name": "loader",
         "label": "加载中的提示内容",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: string \\；版本: false"
+        "defaultValue": "ReactElement",
+        "description": "类型: string ；版本: false"
       },
       {
         "name": "loaded",
         "label": "没有更多数据时的提示内容",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: string \\；版本: false"
+        "defaultValue": "ReactElement",
+        "description": "类型: string ；版本: false"
       },
       {
         "name": "useFlatList",
@@ -4267,7 +4267,7 @@
         "label": "用于强制刷新列表（解决缓存问题）",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "scrollViewRenderer",
@@ -4305,10 +4305,10 @@
       },
       {
         "name": "type",
-        "label": "输入框类型，Thresh支持 digitpad \\",
+        "label": "输入框类型，Thresh支持 digitpad",
         "type": "number",
-        "defaultValue": "\"number\" \\",
-        "description": "类型: numberpad；版本: \"phone\" \\"
+        "defaultValue": "number",
+        "description": "类型: numberpad；版本: phone"
       },
       {
         "name": "error",
@@ -4438,8 +4438,8 @@
         "name": "confirmType",
         "label": "设置键盘右下角按钮的文字",
         "type": "string",
-        "defaultValue": "\"done\" \\",
-        "description": "类型: \"search\" \\；版本: \"send\" \\"
+        "defaultValue": "done",
+        "description": "类型: search ；版本: send"
       }
     ],
     "summary": "输入框组件用于用户输入文本内容，支持多种类型和状态，适用于各类表单场景。",
@@ -4455,14 +4455,14 @@
         "label": "必填，type='digit' 时，h5 无法显示数字输入框，若需要数字输入框建议使用 number (v1.5.1 支持)",
         "type": "number",
         "defaultValue": "'digit'",
-        "description": "类型: 'number' \\"
+        "description": "类型: 'number'"
       },
       {
         "name": "value",
         "label": "必填，输入框当前值，开发者需要通过 onChange 事件来更新 value 值",
         "type": "number",
         "defaultValue": "string",
-        "description": "类型: number \\；版本: (必选)"
+        "description": "类型: number ；版本: (必选)"
       },
       {
         "name": "min",
@@ -4489,8 +4489,8 @@
         "name": "size",
         "label": "组件的大小",
         "type": "string",
-        "defaultValue": "\"normal\"",
-        "description": "类型: \"large\" \\；版本: \"normal\""
+        "defaultValue": "normal",
+        "description": "类型: large ；版本: normal"
       },
       {
         "name": "width",
@@ -4717,14 +4717,14 @@
         "name": "placement",
         "label": "提示文字/按钮框放置的位置",
         "type": "string",
-        "defaultValue": "\"bottom\"",
-        "description": "类型: \"top\" \\；版本: \"bottom\""
+        "defaultValue": "bottom",
+        "description": "类型: top ；版本: bottom"
       },
       {
         "name": "offset",
         "label": "icon三角形偏移百分比",
         "type": "string",
-        "defaultValue": "\"30%\"",
+        "defaultValue": "30%",
         "description": "类型: string"
       },
       {
@@ -4747,7 +4747,7 @@
         "label": "默认值，组件接受后被转成字符串类型",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\；版本: \"\""
+        "description": "类型: string ；版本:"
       },
       {
         "name": "controlled",
@@ -4760,8 +4760,8 @@
         "name": "type",
         "label": "键盘类型",
         "type": "number",
-        "defaultValue": "\"id\" \\",
-        "description": "类型: \"number\" \\；版本: \"decimal\" \\"
+        "defaultValue": "id",
+        "description": "类型: number ；版本: decimal"
       },
       {
         "name": "placeholder",
@@ -4788,7 +4788,7 @@
         "label": "校验规则正则或函数",
         "type": "string",
         "defaultValue": "(result: string, type: string) => boolean",
-        "description": "类型: unknown \\"
+        "description": "类型: unknown"
       },
       {
         "name": "disorder",
@@ -4802,7 +4802,7 @@
         "label": "自定义键盘列表，仅在 type='custom' 时生效",
         "type": "string",
         "defaultValue": "number[]",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "children",
@@ -4826,8 +4826,8 @@
         "name": "mode",
         "label": "展示方式，默认以 ActionSheet 方式",
         "type": "string",
-        "defaultValue": "\"view\"",
-        "description": "类型: \"sheet\" \\；版本: \"sheet\""
+        "defaultValue": "view",
+        "description": "类型: sheet ；版本: sheet"
       },
       {
         "name": "isOpened",
@@ -4841,7 +4841,7 @@
         "label": "元素的标题",
         "type": "string",
         "defaultValue": "unknown",
-        "description": "类型: ReactNode \\"
+        "description": "类型: ReactNode"
       },
       {
         "name": "cancelText",
@@ -4924,7 +4924,7 @@
         "label": "是否显示底部安全区",
         "type": "boolean",
         "defaultValue": "Omit<SafeAreaProps>",
-        "description": "类型: boolean \\；版本: true"
+        "description": "类型: boolean ；版本: true"
       },
       {
         "name": "modalProps",
@@ -4955,20 +4955,20 @@
         "label": "[H5] 是否挂载到根节点",
         "type": "boolean",
         "defaultValue": "HTMLElement",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "direction",
         "label": "书写方向",
         "type": "string",
-        "defaultValue": "\"ltr\"",
-        "description": "类型: \"rtl\" \\"
+        "defaultValue": "ltr",
+        "description": "类型: rtl"
       },
       {
         "name": "handler",
         "label": "响应事件的 gesture handler",
         "type": "string",
-        "defaultValue": "\"onClick\"",
+        "defaultValue": "onClick",
         "description": "类型: string"
       }
     ],
@@ -4988,7 +4988,7 @@
   "LazyList": {
     "component": "LazyList",
     "properties": [],
-    "summary": "懒加载列表组件，在列表场景中，当需一次性渲染大量数据节点的场景下，由 Dart 侧驱动，通知 JS 分片加载，达到懒加载的目的，从而避免下拉刷新和上拉加载\"慢\"的问题。",
+    "summary": "懒加载列表组件，在列表场景中，当需一次性渲染大量数据节点的场景下，由 Dart 侧驱动，通知 JS 分片加载，达到懒加载的目的，从而避免下拉刷新和上拉加载慢的问题。",
     "sourcePath": "other/lazylist.md",
     "type": "基础原子组件",
     "weight": 216
@@ -5000,7 +5000,7 @@
         "name": "color",
         "label": "线条颜色",
         "type": "string",
-        "defaultValue": "\"#f8f8f8\"",
+        "defaultValue": "#f8f8f8",
         "description": "类型: string"
       },
       {
@@ -5008,7 +5008,7 @@
         "label": "长度",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\；版本: \"100%\""
+        "description": "类型: string ；版本: 100%"
       },
       {
         "name": "col",
@@ -5042,8 +5042,8 @@
         "name": "margin",
         "label": "线条与上下左右元素的边距",
         "type": "string",
-        "defaultValue": "number \\",
-        "description": "类型: string \\；版本: { left?: string \\"
+        "defaultValue": "number",
+        "description": "类型: string ；版本: { left?: string"
       }
     ],
     "summary": "此组件一般用于显示一根线条，用于分隔内容块，有横向和竖向两种模式，且能设置 1PX 绝对像素，使用也很简单。",
@@ -5058,7 +5058,7 @@
         "name": "component",
         "label": "渲染根节点",
         "type": "string",
-        "defaultValue": "\"View\"",
+        "defaultValue": "View",
         "description": "类型: unknown；版本: 1.0.10"
       },
       {
@@ -5099,7 +5099,7 @@
         "label": "箭头的方向，v1.0.14+ 可传入自定义节点",
         "type": "string",
         "defaultValue": "ReactElement",
-        "description": "类型: ListItemArrowValue \\"
+        "description": "类型: ListItemArrowValue"
       },
       {
         "name": "hoverless",
@@ -5173,28 +5173,28 @@
         "label": "元素的描述信息",
         "type": "string",
         "defaultValue": "ReactElement",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "title",
         "label": "元素的标题",
         "type": "string",
         "defaultValue": "ReactElement",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "thumb",
         "label": "元素的主要缩略图，可自定义节点",
         "type": "string",
         "defaultValue": "ReactElement",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "extraText",
         "label": "额外信息的文本",
         "type": "string",
         "defaultValue": "ReactElement",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "extraThumb",
@@ -5207,7 +5207,7 @@
         "label": "icon 信息",
         "type": "string",
         "defaultValue": "IconWithInfoProps",
-        "description": "类型: IconWithValueProps \\"
+        "description": "类型: IconWithValueProps"
       },
       {
         "name": "value",
@@ -5220,7 +5220,7 @@
         "label": "表单态是否必填项",
         "type": "boolean",
         "defaultValue": "ReactElement",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "suffix",
@@ -5256,7 +5256,7 @@
         "label": "动画曲线",
         "type": "string",
         "defaultValue": "CubicEasing",
-        "description": "类型: BaseEasing \\；版本: \"linear\""
+        "description": "类型: BaseEasing ；版本: linear"
       },
       {
         "name": "useImage",
@@ -5269,8 +5269,8 @@
         "name": "size",
         "label": "loading大小",
         "type": "number",
-        "defaultValue": "'small' \\",
-        "description": "类型: number \\；版本: 'medium' \\"
+        "defaultValue": "'small'",
+        "description": "类型: number ；版本: 'medium'"
       },
       {
         "name": "src",
@@ -5288,7 +5288,7 @@
         "name": "tintColor",
         "label": "在安卓系统中实现该loading组件，需传入当前loading所在的背景色",
         "type": "string",
-        "defaultValue": "\"#fff\"",
+        "defaultValue": "#fff",
         "description": "类型: string"
       },
       {
@@ -5311,8 +5311,8 @@
         "name": "shape",
         "label": "图片形状，circle-圆形，square-方形",
         "type": "string",
-        "defaultValue": "\"square\"",
-        "description": "类型: \"circle\" \\；版本: \"square\""
+        "defaultValue": "square",
+        "description": "类型: circle ；版本: square"
       },
       {
         "name": "errorIcon",
@@ -5344,7 +5344,7 @@
         "name": "bgColor",
         "label": "背景颜色",
         "type": "string",
-        "defaultValue": "\"#f3f4f6\"",
+        "defaultValue": "#f3f4f6",
         "description": "类型: string"
       },
       {
@@ -5352,14 +5352,14 @@
         "label": "异步加载图片时的占位节点（初始 src 为 falsy 时），设为 false 可禁用",
         "type": "string",
         "defaultValue": "false",
-        "description": "类型: ReactElement \\"
+        "description": "类型: ReactElement"
       },
       {
         "name": "mode",
         "label": "图片缩放模式，不支持 widthFix 和 heightFix",
         "type": "string",
-        "defaultValue": "number \\",
-        "description": "类型: string \\；版本: unknown"
+        "defaultValue": "number",
+        "description": "类型: string ；版本: unknown"
       },
       {
         "name": "src",
@@ -5390,7 +5390,7 @@
         "label": "元素的标题",
         "type": "string",
         "defaultValue": "ReactElement",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "isOpened",
@@ -5404,7 +5404,7 @@
         "label": "是否显示关闭按钮，传入 string 替换图片 URL",
         "type": "boolean",
         "defaultValue": "string",
-        "description": "类型: boolean \\"
+        "description": "类型: boolean"
       },
       {
         "name": "content",
@@ -5416,8 +5416,8 @@
         "name": "contentAlign",
         "label": "内容对齐方式",
         "type": "string",
-        "defaultValue": "\"center\" \\",
-        "description": "类型: \"left\" \\；版本: \"right\" \\"
+        "defaultValue": "center",
+        "description": "类型: left ；版本: right"
       },
       {
         "name": "contentClassName",
@@ -5448,43 +5448,43 @@
         "name": "cancelText",
         "label": "取消按钮的文本",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: string \\；版本: false"
+        "defaultValue": "ReactElement",
+        "description": "类型: string ；版本: false"
       },
       {
         "name": "confirmText",
         "label": "确认按钮的文本",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: string \\；版本: false"
+        "defaultValue": "ReactElement",
+        "description": "类型: string ；版本: false"
       },
       {
         "name": "actionText",
         "label": "(vertical=true 时生效) 位于确定和取消按钮中间的按钮文本",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: string \\；版本: false"
+        "defaultValue": "ReactElement",
+        "description": "类型: string ；版本: false"
       },
       {
         "name": "cancelType",
         "label": "取消按钮类型",
         "type": "string",
-        "defaultValue": "\"secondary\" \\",
-        "description": "类型: \"primary\" \\；版本: \"default\" \\"
+        "defaultValue": "secondary",
+        "description": "类型: primary ；版本: default"
       },
       {
         "name": "confirmType",
         "label": "确认按钮类型",
         "type": "string",
-        "defaultValue": "\"secondary\" \\",
-        "description": "类型: \"primary\" \\；版本: \"default\" \\"
+        "defaultValue": "secondary",
+        "description": "类型: primary ；版本: default"
       },
       {
         "name": "actionType",
         "label": "中间态按钮类型",
         "type": "string",
-        "defaultValue": "\"secondary\" \\",
-        "description": "类型: \"primary\" \\；版本: \"default\" \\"
+        "defaultValue": "secondary",
+        "description": "类型: primary ；版本: default"
       },
       {
         "name": "containerClassName",
@@ -5527,8 +5527,8 @@
         "name": "direction",
         "label": "国际化适配",
         "type": "string",
-        "defaultValue": "\"ltr\"",
-        "description": "类型: \"rtl\" \\"
+        "defaultValue": "ltr",
+        "description": "类型: rtl"
       },
       {
         "name": "useScrollView",
@@ -5604,7 +5604,7 @@
         "name": "wrapper",
         "label": "组件内部根元素",
         "type": "string",
-        "defaultValue": "\"React.Fragment\"",
+        "defaultValue": "React.Fragment",
         "description": "类型: unknown；版本: 1.2.4"
       },
       {
@@ -5618,21 +5618,21 @@
         "label": "[H5] 是否挂载到根节点",
         "type": "boolean",
         "defaultValue": "HTMLElement",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "theme",
         "label": "主题色",
         "type": "string",
         "defaultValue": "unknown[]",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "icon",
         "label": "标题上方的 icon，默认不展示",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: false \\；版本: unknown"
+        "defaultValue": "ReactElement",
+        "description": "类型: false ；版本: unknown"
       },
       {
         "name": "children",
@@ -5691,8 +5691,8 @@
         "name": "title",
         "label": "标题信息",
         "type": "string",
-        "defaultValue": "TitleProps \\",
-        "description": "类型: ReactElement \\"
+        "defaultValue": "TitleProps",
+        "description": "类型: ReactElement"
       },
       {
         "name": "tabs",
@@ -5705,14 +5705,14 @@
         "label": "左侧按钮",
         "type": "string",
         "defaultValue": "ButtonProps",
-        "description": "类型: ReactElement \\"
+        "description": "类型: ReactElement"
       },
       {
         "name": "rightButton",
         "label": "右侧按钮",
         "type": "string",
         "defaultValue": "ButtonProps",
-        "description": "类型: ReactElement \\"
+        "description": "类型: ReactElement"
       },
       {
         "name": "statusBar",
@@ -5731,7 +5731,7 @@
         "label": "返回按钮配置",
         "type": "string",
         "defaultValue": "false",
-        "description": "类型: BackButtonProps \\"
+        "description": "类型: BackButtonProps"
       }
     ],
     "summary": "为页面提供全局性的导航功能，主要用于头部导航，需要隐藏各端内置的导航栏。",
@@ -5747,7 +5747,7 @@
         "label": "是否需要关闭按钮, 可传入自定义节点覆盖",
         "type": "boolean",
         "defaultValue": "ReactNode",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "single",
@@ -5768,7 +5768,7 @@
         "label": "内容是否滚动（内容只能单行）<br>【H5】1.7.14 新增 fill 值，设置后只有内容超出才会横向滚动",
         "type": "boolean",
         "defaultValue": "'fill'",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "marqueeDelay",
@@ -5794,15 +5794,15 @@
         "name": "icon",
         "label": "内容前的 Icon 图标",
         "type": "string",
-        "defaultValue": "boolean \\",
-        "description": "类型: ReactElement \\；版本: unknown"
+        "defaultValue": "boolean",
+        "description": "类型: ReactElement ；版本: unknown"
       },
       {
         "name": "align",
         "label": "图标对齐方式",
         "type": "string",
-        "defaultValue": "\"flex-end\" \\",
-        "description": "类型: \"center\" \\；版本: \"flex-start\""
+        "defaultValue": "flex-end",
+        "description": "类型: center ；版本: flex-start"
       },
       {
         "name": "vertical",
@@ -5816,7 +5816,7 @@
         "label": "纵向滚动时传入 text 数组",
         "type": "string",
         "defaultValue": "ReactElement[]",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "duration",
@@ -5836,8 +5836,8 @@
         "name": "type",
         "label": "通知栏的类型",
         "type": "string",
-        "defaultValue": "\"info\" \\",
-        "description": "类型: \"warning\" \\；版本: \"error\""
+        "defaultValue": "info",
+        "description": "类型: warning ；版本: error"
       },
       {
         "name": "height",
@@ -5904,8 +5904,8 @@
         "name": "column",
         "label": "选项列数，设置为0可自适应宽度",
         "type": "string",
-        "defaultValue": "2 \\",
-        "description": "类型: 0 \\；版本: 3 \\"
+        "defaultValue": "2",
+        "description": "类型: 0 ；版本: 3"
       },
       {
         "name": "rootProps",
@@ -6095,15 +6095,15 @@
         "name": "size",
         "label": "尺寸",
         "type": "string",
-        "defaultValue": "\"medium\"",
-        "description": "类型: \"small\" \\"
+        "defaultValue": "medium",
+        "description": "类型: small"
       },
       {
         "name": "direction",
         "label": "排列方向",
         "type": "string",
-        "defaultValue": "\"horizontal\"",
-        "description": "类型: \"vertical\" \\；版本: \"horizontal\""
+        "defaultValue": "horizontal",
+        "description": "类型: vertical ；版本: horizontal"
       },
       {
         "name": "total",
@@ -6135,7 +6135,7 @@
         "label": "主题色",
         "type": "string",
         "defaultValue": "unknown[]",
-        "description": "类型: string \\"
+        "description": "类型: string"
       }
     ],
     "summary": "遵循满帮设计规范，指示当前显示的是多页面视图/轮播图的哪一页。",
@@ -6164,8 +6164,8 @@
         "name": "type",
         "label": "键盘类型",
         "type": "number",
-        "defaultValue": "\"text\" \\",
-        "description": "类型: \"number\" \\；版本: \"idcard\" \\"
+        "defaultValue": "text",
+        "description": "类型: number ；版本: idcard"
       },
       {
         "name": "length",
@@ -6217,14 +6217,14 @@
         "label": "-",
         "type": "string",
         "defaultValue": "RefObject",
-        "description": "类型: null \\"
+        "description": "类型: null"
       },
       {
         "name": "key",
         "label": "-",
         "type": "string",
         "defaultValue": "null",
-        "description": "类型: Key \\"
+        "description": "类型: Key"
       }
     ],
     "summary": "通用密码输入框",
@@ -6377,7 +6377,7 @@
         "label": "是否显示底部安全区",
         "type": "boolean",
         "defaultValue": "Omit_SafeAreaProps",
-        "description": "类型: boolean \\；版本: true"
+        "description": "类型: boolean ；版本: true"
       },
       {
         "name": "modalProps",
@@ -6402,21 +6402,21 @@
         "label": "[H5] 是否挂载到根节点",
         "type": "boolean",
         "defaultValue": "HTMLElement",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "direction",
         "label": "书写方向",
         "type": "string",
-        "defaultValue": "\"ltr\"",
-        "description": "类型: \"rtl\" \\"
+        "defaultValue": "ltr",
+        "description": "类型: rtl"
       },
       {
         "name": "ref",
         "label": "引用对象",
         "type": "string",
-        "defaultValue": "bivarianceHack \\",
-        "description": "类型: null \\；版本: RefObj..."
+        "defaultValue": "bivarianceHack",
+        "description": "类型: null ；版本: RefObj..."
       },
       {
         "name": "delay",
@@ -6452,8 +6452,8 @@
         "name": "placement",
         "label": "气泡相对元素的位置",
         "type": "string",
-        "defaultValue": "\"right\" \\",
-        "description": "类型: \"left\" \\；版本: \"top\" \\"
+        "defaultValue": "right",
+        "description": "类型: left ；版本: top"
       },
       {
         "name": "containerProps",
@@ -6503,14 +6503,14 @@
         "name": "bgColor",
         "label": "背景色",
         "type": "string",
-        "defaultValue": "\"rgba(0,0,0,0.8)\"",
+        "defaultValue": "rgba(0,0,0,0.8)",
         "description": "类型: string"
       },
       {
         "name": "closeColor",
         "label": "关闭图标颜色",
         "type": "string",
-        "defaultValue": "\"'#ffffff'\"",
+        "defaultValue": "'#ffffff'",
         "description": "类型: string"
       },
       {
@@ -6523,8 +6523,8 @@
         "name": "arrowPlacement",
         "label": "箭头位置",
         "type": "string",
-        "defaultValue": "\"right\" \\",
-        "description": "类型: \"left\" \\；版本: \"top\" \\"
+        "defaultValue": "right",
+        "description": "类型: left ；版本: top"
       },
       {
         "name": "arrowStyle",
@@ -6555,14 +6555,14 @@
         "label": "缩放动画（以左上角为原点，指定缩放中心点）",
         "type": "string",
         "defaultValue": "false",
-        "description": "类型: TransformOrigin \\"
+        "description": "类型: TransformOrigin"
       },
       {
         "name": "render",
         "label": "自定义渲染 tooltip",
         "type": "string",
         "defaultValue": "(rect: Rect) => ReactElement",
-        "description": "类型: ReactElement \\"
+        "description": "类型: ReactElement"
       },
       {
         "name": "overlay",
@@ -6615,7 +6615,7 @@
         "label": "React key",
         "type": "string",
         "defaultValue": "null",
-        "description": "类型: Key \\"
+        "description": "类型: Key"
       }
     ],
     "summary": "气泡提示组件",
@@ -6638,14 +6638,14 @@
         "label": "是否显示圆角，可设为数值控制圆角大小",
         "type": "boolean",
         "defaultValue": "number",
-        "description": "类型: boolean \\；版本: true"
+        "description": "类型: boolean ；版本: true"
       },
       {
         "name": "text",
         "label": "右侧文字区域，默认显示百分比，可设为 false 隐藏，或传入函数自定义内容",
         "type": "boolean",
-        "defaultValue": "ReactNode \\",
-        "description": "类型: boolean \\；版本: (percent: number) => ReactNode"
+        "defaultValue": "ReactNode",
+        "description": "类型: boolean ；版本: (percent: number) => ReactNode"
       },
       {
         "name": "color",
@@ -6698,7 +6698,7 @@
         "label": "是否显示小圆点",
         "type": "boolean",
         "defaultValue": "ReactElement",
-        "description": "类型: boolean \\"
+        "description": "类型: boolean"
       },
       {
         "name": "controls",
@@ -6716,7 +6716,7 @@
         "name": "prefix",
         "label": "协议前缀",
         "type": "string",
-        "defaultValue": "\"我已阅读并同意\"",
+        "defaultValue": "我已阅读并同意",
         "description": "类型: ReactNode"
       },
       {
@@ -6857,8 +6857,8 @@
         "name": "panResponder",
         "label": "手势处理挂载在父容器还是子容器。支付宝小程序建议选择 'children'",
         "type": "string",
-        "defaultValue": "\"parent\"",
-        "description": "类型: \"children\" \\；版本: \"parent\""
+        "defaultValue": "parent",
+        "description": "类型: children ；版本: parent"
       },
       {
         "name": "stay",
@@ -6942,7 +6942,7 @@
         "name": "renderText",
         "label": "自定义下拉刷新文案/内容展示，ratio 表示当前偏移值和 threshold 的比例",
         "type": "number",
-        "defaultValue": "{\"pulling\":\"下拉更新\",\"ready\":\"松开更新\",\"refreshing\":\"更新中...\",\"done\":\"更新成功\"}",
+        "defaultValue": "{pulling:下拉更新,ready:松开更新,refreshing:更新中...,done:更新成功}",
         "description": "类型: (ratio: number) => { pulling?: string; ready?: string; refreshing?: string; done?: string }"
       },
       {
@@ -6967,8 +6967,8 @@
         "name": "headBackgroundImageResizeMode",
         "label": "[Thresh] 下拉刷新背景图拉伸方式",
         "type": "string",
-        "defaultValue": "\"contain\" \\",
-        "description": "类型: \"stretch\" \\；版本: \"cover\""
+        "defaultValue": "contain",
+        "description": "类型: stretch ；版本: cover"
       },
       {
         "name": "loadingProps",
@@ -7021,8 +7021,8 @@
         "name": "type",
         "label": "展现类型",
         "type": "string",
-        "defaultValue": "\"inline\" \\",
-        "description": "类型: \"left\" \\；版本: \"between\""
+        "defaultValue": "inline",
+        "description": "类型: left ；版本: between"
       },
       {
         "name": "titleClassName",
@@ -7129,8 +7129,8 @@
         "name": "align",
         "label": "扩大区域后 radio 主体的对齐方式",
         "type": "string",
-        "defaultValue": "\"flex-end\" \\",
-        "description": "类型: \"center\" \\；版本: \"flex-start\""
+        "defaultValue": "flex-end",
+        "description": "类型: center ；版本: flex-start"
       },
       {
         "name": "stopPropagation",
@@ -7218,8 +7218,8 @@
         "name": "useEmoji",
         "label": "是否使用图片表情，默认五档",
         "type": "boolean",
-        "defaultValue": "3 \\",
-        "description": "类型: boolean \\；版本: 5 \\"
+        "defaultValue": "3",
+        "description": "类型: boolean ；版本: 5"
       },
       {
         "name": "textColor",
@@ -7240,8 +7240,8 @@
         "name": "type",
         "label": "结果类型",
         "type": "string",
-        "defaultValue": "\"info\" \\",
-        "description": "类型: \"warning\" \\；版本: \"success\" \\"
+        "defaultValue": "info",
+        "description": "类型: warning ；版本: success"
       },
       {
         "name": "title",
@@ -7266,21 +7266,21 @@
         "label": "顶部显示的icon，优先级比src要低",
         "type": "string",
         "defaultValue": "ReactElement",
-        "description": "类型: unknown \\"
+        "description": "类型: unknown"
       },
       {
         "name": "btnText",
         "label": "按钮文字",
         "type": "string",
-        "defaultValue": "\"返回\"",
+        "defaultValue": "返回",
         "description": "类型: string"
       },
       {
         "name": "renderBtn",
         "label": "自定义按钮节点",
         "type": "string",
-        "defaultValue": "null \\",
-        "description": "类型: ReactElement \\；版本: false"
+        "defaultValue": "null",
+        "description": "类型: ReactElement ；版本: false"
       }
     ],
     "summary": "操作结果页",
@@ -7296,14 +7296,14 @@
         "label": "节点列表 / HTML 字符串",
         "type": "string",
         "defaultValue": "Array",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "space",
         "label": "显示连续空格",
         "type": "string",
-        "defaultValue": "\"emsp\" \\",
-        "description": "类型: \"ensp\" \\；版本: \"nbsp\""
+        "defaultValue": "emsp",
+        "description": "类型: ensp ；版本: nbsp"
       },
       {
         "name": "baseStyle",
@@ -7327,7 +7327,7 @@
         "name": "fontScale",
         "label": "是否启用字体缩放，仅 Thresh 端支持",
         "type": "number",
-        "description": "类型: (value: number, prop: \"fontSize\") => number"
+        "description": "类型: (value: number, prop: fontSize) => number"
       },
       {
         "name": "id",
@@ -7346,7 +7346,7 @@
         "label": "列表中项目的唯一标识符",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "hidden",
@@ -7364,8 +7364,8 @@
         "name": "ref",
         "label": "引用",
         "type": "string",
-        "defaultValue": "string \\",
-        "description": "类型: null \\；版本: Function"
+        "defaultValue": "string",
+        "description": "类型: null ；版本: Function"
       },
       {
         "name": "dangerouslySetInnerHTML",
@@ -7460,8 +7460,8 @@
         "name": "align",
         "label": "滚动到视口的位置",
         "type": "string",
-        "defaultValue": "\"top\" \\",
-        "description": "类型: \"center\" \\；版本: \"bottom\""
+        "defaultValue": "top",
+        "description": "类型: center ；版本: bottom"
       },
       {
         "name": "children",
@@ -7483,7 +7483,7 @@
         "label": "左侧图标（1.9.0 开始支持根据聚焦状态渲染）",
         "type": "string",
         "defaultValue": "(focused: boolean) => ReactNode",
-        "description": "类型: ReactNode \\"
+        "description": "类型: ReactNode"
       },
       {
         "name": "placeholderTextColor",
@@ -7502,7 +7502,7 @@
         "label": "搜索结果，无结果请传入空数组",
         "type": "json",
         "defaultValue": "null",
-        "description": "类型: Array<SearchResult> \\"
+        "description": "类型: Array<SearchResult>"
       },
       {
         "name": "children",
@@ -7532,7 +7532,7 @@
         "name": "cancelText",
         "label": "右侧取消按钮文本",
         "type": "string",
-        "defaultValue": "\"取消\"",
+        "defaultValue": "取消",
         "description": "类型: any"
       },
       {
@@ -7584,14 +7584,14 @@
         "label": "内容样式（1.9.0 支持传入方法）",
         "type": "string",
         "defaultValue": "(focused: boolean) => CSSProperties",
-        "description": "类型: CSSProperties \\"
+        "description": "类型: CSSProperties"
       },
       {
         "name": "inputRef",
         "label": "Input 节点 Ref",
         "type": "string",
-        "defaultValue": "RefObject \\",
-        "description": "类型: null \\；版本: bivarianceHack"
+        "defaultValue": "RefObject",
+        "description": "类型: null ；版本: bivarianceHack"
       },
       {
         "name": "prefix",
@@ -7687,8 +7687,8 @@
         "name": "defaultValue",
         "label": "默认选中项，多选传数组，单选传基础类型",
         "type": "json",
-        "defaultValue": "string \\",
-        "description": "类型: Array \\；版本: number"
+        "defaultValue": "string",
+        "description": "类型: Array ；版本: number"
       },
       {
         "name": "depth",
@@ -7730,7 +7730,7 @@
         "label": "是否严格匹配搜索字符串，传入回调可自定义搜索命中",
         "type": "boolean",
         "defaultValue": "HitFn",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "showResult",
@@ -7743,22 +7743,22 @@
         "name": "placeholder",
         "label": "输入框文本",
         "type": "string",
-        "defaultValue": "\"支持按城市、区县名称搜索\"",
+        "defaultValue": "支持按城市、区县名称搜索",
         "description": "类型: string"
       },
       {
         "name": "emptyHint",
         "label": "搜索无结果的文本",
         "type": "string",
-        "defaultValue": "\"暂无搜索结果\"",
+        "defaultValue": "暂无搜索结果",
         "description": "类型: string"
       },
       {
         "name": "limitHint",
         "label": "最多可选择几项的提示（1.6.2 支持传入节点）",
         "type": "string",
-        "defaultValue": "ReactElement \\",
-        "description": "类型: string \\；版本: null"
+        "defaultValue": "ReactElement",
+        "description": "类型: string ；版本: null"
       },
       {
         "name": "changeOnSelect",
@@ -7809,7 +7809,7 @@
         "label": "是否默认聚焦最后一列",
         "type": "boolean",
         "defaultValue": "'lazy'",
-        "description": "类型: boolean \\；版本: true"
+        "description": "类型: boolean ；版本: true"
       },
       {
         "name": "useCompleteTextChange",
@@ -7890,7 +7890,7 @@
         "label": "[单选] 切换选项时，子项是否默认全选。传入 'loose' 时，不对父节点和第一个子节点进行校验",
         "type": "boolean",
         "defaultValue": "'loose'",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       },
       {
         "name": "shouldSearchParent",
@@ -7947,7 +7947,7 @@
         "name": "theme",
         "label": "主题色，默认为满帮橙",
         "type": "string",
-        "defaultValue": "\"#FA871E\"",
+        "defaultValue": "#FA871E",
         "description": "类型: string"
       },
       {
@@ -7962,7 +7962,7 @@
         "label": "item 样式",
         "type": "string",
         "defaultValue": "(data: { depth: number }) => CSSProperties",
-        "description": "类型: CSSProperties \\"
+        "description": "类型: CSSProperties"
       },
       {
         "name": "renderItem",
@@ -7974,7 +7974,7 @@
         "name": "fieldNames",
         "label": "自定义 options 中的 label、value、children 字段",
         "type": "string",
-        "defaultValue": "\"{label: 'label', value: 'value', children: 'children'}\"",
+        "defaultValue": "{label: 'label', value: 'value', children: 'children'}",
         "description": "类型: { label: string; value: string; children: string }"
       },
       {
@@ -7989,14 +7989,14 @@
         "label": "自定义选择的后缀图标，传入字符串默认为图片 URL",
         "type": "string",
         "defaultValue": "false",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "activeSuffixIcon",
         "label": "自定义选中的后缀图标，传入字符串默认为图片 URL",
         "type": "string",
         "defaultValue": "false",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "activeItemClassName",
@@ -8065,15 +8065,15 @@
         "name": "isDisabled",
         "label": "是否禁用",
         "type": "string",
-        "defaultValue": "number, value: string \\",
-        "description": "类型: (label: string \\；版本: number) => boolean"
+        "defaultValue": "number, value: string",
+        "description": "类型: (label: string ；版本: number) => boolean"
       },
       {
         "name": "labelFormatter",
         "label": "格式化 item 显示",
         "type": "string",
         "defaultValue": "number, option: Option) => string",
-        "description": "类型: (label: string \\"
+        "description": "类型: (label: string"
       },
       {
         "name": "scrollViewProps",
@@ -8111,7 +8111,7 @@
         "label": "（单选时生效）搜索结果是否滚动到视图中",
         "type": "boolean",
         "defaultValue": "{ padding?: number }",
-        "description": "类型: boolean \\；版本: false"
+        "description": "类型: boolean ；版本: false"
       }
     ],
     "summary": "通用级联选择器",
@@ -8163,7 +8163,7 @@
         "label": "'single'",
         "type": "string",
         "defaultValue": "'range'",
-        "description": "类型: 'single' \\"
+        "description": "类型: 'single'"
       },
       {
         "name": "showValue",
@@ -8184,7 +8184,7 @@
         "label": "-",
         "type": "number",
         "defaultValue": "[number, number]) => void",
-        "description": "类型: (value: number \\"
+        "description": "类型: (value: number"
       }
     ],
     "summary": "滑动条组件，支持自定义滑块样式、自定义轨道样式、步点等样式。支持单滑块和双滑块模式。",
@@ -8218,8 +8218,8 @@
         "name": "type",
         "label": "控件类型：小圆点、有序列表、自定义",
         "type": "string",
-        "defaultValue": "\"custom\" \\",
-        "description": "类型: \"dot\" \\；版本: \"ordered\""
+        "defaultValue": "custom",
+        "description": "类型: dot ；版本: ordered"
       },
       {
         "name": "containerClassName",
@@ -8238,7 +8238,7 @@
         "label": "格式化文本，默认为索引+1，在 type 不为 dot 时生效",
         "type": "json",
         "defaultValue": "(index: number) => string",
-        "description": "类型: Array \\；版本: {}"
+        "description": "类型: Array ；版本: {}"
       },
       {
         "name": "renderBond",
@@ -8257,14 +8257,14 @@
         "label": "自定义样式",
         "type": "boolean",
         "defaultValue": "undefined, index: number) => object",
-        "description": "类型: (active: boolean \\"
+        "description": "类型: (active: boolean"
       },
       {
         "name": "theme",
         "label": "主题色",
         "type": "string",
         "defaultValue": "unknown[]",
-        "description": "类型: string \\"
+        "description": "类型: string"
       }
     ],
     "summary": "步骤条组件，建议步骤在 2 ～ 4 之内。",
@@ -8380,14 +8380,14 @@
         "name": "indicatorColor",
         "label": "指示点颜色",
         "type": "string",
-        "defaultValue": "\"rgba(0, 0, 0, .3)\"",
+        "defaultValue": "rgba(0, 0, 0, .3)",
         "description": "类型: string"
       },
       {
         "name": "indicatorActiveColor",
         "label": "当前选中的指示点颜色",
         "type": "string",
-        "defaultValue": "\"#000000\"",
+        "defaultValue": "#000000",
         "description": "类型: string"
       },
       {
@@ -8408,7 +8408,7 @@
         "name": "currentItemId",
         "label": "当前所在滑块的 item-id，不能与 current 同时指定",
         "type": "string",
-        "defaultValue": "\"\"",
+        "defaultValue": "",
         "description": "类型: string"
       },
       {
@@ -8443,14 +8443,14 @@
         "name": "previousMargin",
         "label": "前边距，可用于露出前一项的一小部分，接受 px 和 rpx 值",
         "type": "string",
-        "defaultValue": "\"0px\"",
+        "defaultValue": "0px",
         "description": "类型: string"
       },
       {
         "name": "nextMargin",
         "label": "后边距，可用于露出后一项的一小部分，接受 px 和 rpx 值",
         "type": "string",
-        "defaultValue": "\"0px\"",
+        "defaultValue": "0px",
         "description": "类型: string"
       },
       {
@@ -8478,8 +8478,8 @@
         "name": "easingFunction",
         "label": "指定 swiper 切换缓动动画类型",
         "type": "string",
-        "defaultValue": "\"linear\" \\",
-        "description": "类型: \"default\" \\；版本: \"easeIn...\""
+        "defaultValue": "linear",
+        "description": "类型: default ；版本: easeIn..."
       },
       {
         "name": "disableTouch",
@@ -8534,10 +8534,10 @@
       },
       {
         "name": "adjustHeight",
-        "label": "自动以指定滑块的高度为容器高度。当 vertical 为 true 时默认不调整。可选值：\"current\" \\",
+        "label": "自动以指定滑块的高度为容器高度。当 vertical 为 true 时默认不调整。可选值：current",
         "type": "string",
-        "defaultValue": "\"first\" \\",
-        "description": "类型: \"none\" \\；版本: ..."
+        "defaultValue": "first",
+        "description": "类型: none ；版本: ..."
       },
       {
         "name": "adjustVerticalHeight",
@@ -8569,7 +8569,7 @@
         "label": "列表项唯一标识符",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "hidden",
@@ -8587,8 +8587,8 @@
         "name": "ref",
         "label": "引用",
         "type": "string",
-        "defaultValue": "string \\",
-        "description": "类型: null \\；版本: ..."
+        "defaultValue": "string",
+        "description": "类型: null ；版本: ..."
       },
       {
         "name": "dangerouslySetInnerHTML",
@@ -8616,14 +8616,14 @@
         "name": "color",
         "label": "tab 上的文字/icon默认颜色",
         "type": "string",
-        "defaultValue": "\"#666666\"",
+        "defaultValue": "#666666",
         "description": "类型: string"
       },
       {
         "name": "activeColor",
         "label": "tab 上的文字/icon选中时的颜色",
         "type": "string",
-        "defaultValue": "\"#ff7000\"",
+        "defaultValue": "#ff7000",
         "description": "类型: string"
       },
       {
@@ -8656,7 +8656,7 @@
         "label": "是否应用底部安全区",
         "type": "boolean",
         "defaultValue": "SafeAreaProps",
-        "description": "类型: boolean \\"
+        "description": "类型: boolean"
       },
       {
         "name": "activeTitleStyle",
@@ -8691,8 +8691,8 @@
         "name": "type",
         "label": "标签类型",
         "type": "string",
-        "defaultValue": "\"primary\" \\",
-        "description": "类型: \"warning\" \\；版本: \"info\""
+        "defaultValue": "primary",
+        "description": "类型: warning ；版本: info"
       },
       {
         "name": "color",
@@ -8723,8 +8723,8 @@
         "name": "size",
         "label": "标签大小",
         "type": "string",
-        "defaultValue": "\"large\" \\",
-        "description": "类型: \"small\" \\；版本: \"middle\""
+        "defaultValue": "large",
+        "description": "类型: small ；版本: middle"
       },
       {
         "name": "prefix",
@@ -8877,7 +8877,7 @@
       },
       {
         "name": "required",
-        "label": "标题显示\\*号",
+        "label": "标题显示*号",
         "type": "boolean",
         "description": "类型: boolean"
       },
@@ -8886,7 +8886,7 @@
         "label": "最大长度",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\；版本: 200"
+        "description": "类型: string ；版本: 200"
       },
       {
         "name": "placeholder",
@@ -8974,7 +8974,7 @@
         "label": "输入框高度",
         "type": "string",
         "defaultValue": "number",
-        "description": "类型: string \\；版本: 120"
+        "description": "类型: string ；版本: 120"
       },
       {
         "name": "cursorSpacing",
@@ -9100,7 +9100,7 @@
         "name": "lineColor",
         "label": "线条颜色",
         "type": "string",
-        "defaultValue": "\"#cccccc\"",
+        "defaultValue": "#cccccc",
         "description": "类型: string；版本: 1.0.14"
       },
       {
@@ -9113,8 +9113,8 @@
         "name": "lineStyle",
         "label": "线条样式",
         "type": "string",
-        "defaultValue": "\"dotted\" \\",
-        "description": "类型: \"dashed\" \\；版本: \"solid\""
+        "defaultValue": "dotted",
+        "description": "类型: dashed ；版本: solid"
       }
     ],
     "summary": "垂直展示的时间流信息。当有一系列信息需按时间排列时，可正序和倒序。需要有一条时间轴进行视觉上的串联时。",
@@ -9169,8 +9169,8 @@
         "name": "position",
         "label": "轻提示位置",
         "type": "string",
-        "defaultValue": "\"top\" \\",
-        "description": "类型: \"center\" \\；版本: \"bottom\""
+        "defaultValue": "top",
+        "description": "类型: center ；版本: bottom"
       },
       {
         "name": "textLevel",
@@ -9227,15 +9227,15 @@
         "name": "ref",
         "label": "-",
         "type": "string",
-        "defaultValue": "bivarianceHack \\",
-        "description": "类型: null \\；版本: RefObj..."
+        "defaultValue": "bivarianceHack",
+        "description": "类型: null ；版本: RefObj..."
       },
       {
         "name": "key",
         "label": "-",
         "type": "string",
         "defaultValue": "null",
-        "description": "类型: Key \\"
+        "description": "类型: Key"
       }
     ],
     "sourcePath": "tickling/toast.md",
@@ -9270,15 +9270,15 @@
         "name": "activeText",
         "label": "选中时的文本",
         "type": "string",
-        "defaultValue": "string \\",
-        "description": "类型: false \\；版本: ReactElement"
+        "defaultValue": "string",
+        "description": "类型: false ；版本: ReactElement"
       },
       {
         "name": "inactiveText",
         "label": "未选中时的文本",
         "type": "string",
-        "defaultValue": "string \\",
-        "description": "类型: false \\；版本: ReactElement"
+        "defaultValue": "string",
+        "description": "类型: false ；版本: ReactElement"
       },
       {
         "name": "disabled",
@@ -9319,56 +9319,56 @@
         "name": "bgColorActive",
         "label": "选中时的背景色",
         "type": "string",
-        "defaultValue": "\"#ff7000\"",
+        "defaultValue": "#ff7000",
         "description": "类型: string"
       },
       {
         "name": "bgColorInactive",
         "label": "未选中时的背景色",
         "type": "string",
-        "defaultValue": "\"#cccccc\"",
+        "defaultValue": "#cccccc",
         "description": "类型: string"
       },
       {
         "name": "circleColorActive",
         "label": "选中时圆形的背景色",
         "type": "string",
-        "defaultValue": "\"#ffffff\"",
+        "defaultValue": "#ffffff",
         "description": "类型: string"
       },
       {
         "name": "circleColorInactive",
         "label": "未选中时圆形的背景色",
         "type": "string",
-        "defaultValue": "\"#ffffff\"",
+        "defaultValue": "#ffffff",
         "description": "类型: string"
       },
       {
         "name": "bgColorActiveDisabled",
         "label": "禁用并选中时的背景色",
         "type": "string",
-        "defaultValue": "\"#ffc699\"",
+        "defaultValue": "#ffc699",
         "description": "类型: string"
       },
       {
         "name": "bgColorInactiveDisabled",
         "label": "禁用并未选中时的背景色",
         "type": "string",
-        "defaultValue": "\"#e8e8e8\"",
+        "defaultValue": "#e8e8e8",
         "description": "类型: string"
       },
       {
         "name": "circleColorActiveDisabled",
         "label": "禁用并选中时圆形的背景色",
         "type": "string",
-        "defaultValue": "\"#ffffff\"",
+        "defaultValue": "#ffffff",
         "description": "类型: string"
       },
       {
         "name": "circleColorInactiveDisabled",
         "label": "禁用并未选中时圆形的背景色",
         "type": "string",
-        "defaultValue": "\"#ffffff\"",
+        "defaultValue": "#ffffff",
         "description": "类型: string"
       },
       {
@@ -9410,7 +9410,7 @@
         "label": "显示的内容，可传入自定义节点",
         "type": "string",
         "defaultValue": "ReactElement",
-        "description": "类型: string \\"
+        "description": "类型: string"
       },
       {
         "name": "textClassName",
@@ -9526,8 +9526,8 @@
         "name": "level",
         "label": "文字等级，默认 32px（设计稿 720px）",
         "type": "string",
-        "defaultValue": "2 \\",
-        "description": "类型: 1 \\；版本: 3 \\"
+        "defaultValue": "2",
+        "description": "类型: 1 ；版本: 3"
       },
       {
         "name": "size",
@@ -9552,15 +9552,15 @@
         "name": "weight",
         "label": "字体字重",
         "type": "string",
-        "defaultValue": "normal \\",
-        "description": "类型: bold \\；版本: 100 \\"
+        "defaultValue": "normal",
+        "description": "类型: bold ；版本: 100"
       },
       {
         "name": "type",
         "label": "文本类型",
         "type": "string",
-        "defaultValue": "\"info\" \\",
-        "description": "类型: \"warning\" \\；版本: \"success\" \\"
+        "defaultValue": "info",
+        "description": "类型: warning ；版本: success"
       },
       {
         "name": "underline",

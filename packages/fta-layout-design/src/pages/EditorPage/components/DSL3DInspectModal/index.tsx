@@ -1,6 +1,6 @@
 import DSLElement from '@/components/DSLElement';
 import { apiServices } from '@/services';
-import { DesignData, DSLNode } from '@/types/dsl';
+import { DesignData, DSLNode } from '@fta/shared';
 import { DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons';
 import { App, Button, Modal } from 'antd';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';

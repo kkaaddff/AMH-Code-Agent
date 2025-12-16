@@ -1,10 +1,18 @@
 import { dslService } from '@/services/dslService';
-import { DesignData, DSLNode } from '@/types/dsl';
 import type { DocumentReference } from '@/types/project';
 import { api } from '@/utils/apiService';
 import { componentDetectionDebugLog } from '@/utils/componentDetectionDebug';
 import { FileImageOutlined, ReloadOutlined } from '@ant-design/icons';
+import {
+  AnnotationNode,
+  ComponentCategory,
+  DesignData,
+  DSLNode,
+  getComponentCategory,
+  isContainerComponent,
+} from '@fta/shared';
 import { Button, Modal, Space, Typography } from 'antd';
+import { FTA_COMPONENT_SCHEMAS } from '../constants/FTAComponentSchemas';
 import type { HookAPI } from 'antd/es/modal/useModal';
 import type { DataNode } from 'antd/es/tree';
 import { useMemo } from 'react';
@@ -14,10 +22,10 @@ import {
   calculateDSLNodeAbsolutePosition,
   findAnnotationByDSLNodeId,
   findAnnotationById,
-  findIntersectingAnnotations,
-  findNearestParentContainer,
   findContainingDSLNode,
   findDSLNodeById,
+  findIntersectingAnnotations,
+  findNearestParentContainer,
   findParentAnnotation,
   flattenAnnotationTree,
   flattenDSLNodeTree,
@@ -27,15 +35,7 @@ import {
 } from '../utils/DetectionCanvasV2Helper';
 
 import { convertToTreeData, createRootAnnotationFromDesignDoc } from '../components/LayerTreePanel/utils';
-import {
-  AnnotationNode,
-  AnnotationState,
-  ComponentCategory,
-  getComponentCategory,
-  isContainerComponent,
-  NodeType,
-  SelectedNodeItem,
-} from '../types/componentDetection';
+import { AnnotationState, NodeType, SelectedNodeItem } from '../types/componentDetection';
 import { saveAnnotationState } from '../utils/componentStorage';
 import { editorPageStore } from './EditorPageContext';
 
@@ -354,7 +354,7 @@ export const designDetectionActions = {
     );
 
     const hasAnnotatedChildren = descendantAnnotations.length > 0;
-    const componentCategory = getComponentCategory(ftaComponent);
+    const componentCategory = getComponentCategory(ftaComponent, FTA_COMPONENT_SCHEMAS);
     const isNonContainer =
       componentCategory === ComponentCategory.ATOMIC || componentCategory === ComponentCategory.BUSINESS;
 
@@ -435,7 +435,7 @@ export const designDetectionActions = {
       comment: additionalProps?.comment,
       isRoot: false,
       isMainPage: false,
-      isContainer: isContainerComponent(ftaComponent),
+      isContainer: isContainerComponent(ftaComponent, FTA_COMPONENT_SCHEMAS),
       children: hasAnnotatedChildren && isContainerLike ? detachedChildren : [],
       absoluteX: dslAbsolutePos.x,
       absoluteY: dslAbsolutePos.y,
@@ -568,7 +568,7 @@ export const designDetectionActions = {
     }
 
     const nextFTAComponent = updates.ftaComponent ?? targetAnnotation.ftaComponent;
-    const nextIsContainer = isContainerComponent(nextFTAComponent);
+    const nextIsContainer = isContainerComponent(nextFTAComponent, FTA_COMPONENT_SCHEMAS);
     const shouldClearChildren = targetAnnotation.children.length > 0 && !nextIsContainer;
 
     if (shouldClearChildren) {
@@ -630,7 +630,7 @@ export const designDetectionActions = {
         }
 
         if (updates.ftaComponent) {
-          updatedNode.isContainer = isContainerComponent(updates.ftaComponent);
+          updatedNode.isContainer = isContainerComponent(updates.ftaComponent, FTA_COMPONENT_SCHEMAS);
         } else if (shouldClearChildren) {
           updatedNode.isContainer = nextIsContainer;
         }
@@ -936,7 +936,7 @@ export const designDetectionActions = {
       comment,
       isRoot: false,
       isMainPage: false,
-      isContainer: isContainerComponent(ftaComponent),
+      isContainer: isContainerComponent(ftaComponent, FTA_COMPONENT_SCHEMAS),
       children,
       absoluteX,
       absoluteY,

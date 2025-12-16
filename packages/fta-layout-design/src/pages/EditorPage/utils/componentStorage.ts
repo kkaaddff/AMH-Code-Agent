@@ -1,6 +1,6 @@
 import { apiServices } from '@/services';
 import type { AnnotationSnapshot, DocumentReference } from '@/types/project';
-import { AnnotationNode } from '../types/componentDetection';
+import { AnnotationNode } from '@fta/shared';
 
 const ANNOTATION_VERSION = '1.0';
 

@@ -2,17 +2,6 @@
  * 数据模型相关类型定义
  * 使用 TypeScript Interfaces 作为单一事实来源
  */
-import type {
-  DataModelDefinition,
-  CreateDataModelRequest as SharedCreateDataModelRequest,
-  UpdateDataModelRequest as SharedUpdateDataModelRequest,
-} from '@fta/shared';
-
-// 重新导出共享类型
-export type { DataModelDefinition };
-export type CreateDataModelRequest = SharedCreateDataModelRequest;
-export type UpdateDataModelRequest = SharedUpdateDataModelRequest;
-
 export type TypeScriptEditorLanguage = 'typescript' | 'json' | 'jsonl' | 'jsonc';
 
 /**

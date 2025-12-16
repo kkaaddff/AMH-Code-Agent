@@ -1,6 +1,6 @@
 import { API_ENDPOINTS, buildApiUrl } from '@/config/api';
 import { apiServices, shouldUseMock } from '@/services';
-import type { AnnotationNode } from '../types/componentDetection';
+import type { AnnotationNode } from '@fta/shared';
 
 interface RequirementDocGenerationOptions {
   templateKey?: string;

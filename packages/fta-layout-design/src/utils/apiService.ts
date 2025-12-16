@@ -3,25 +3,23 @@
  * 统一管理所有服务端调用，包括请求拦截、响应处理、错误处理等
  */
 
-import { buildApiUrl, currentApiConfig, API_ENDPOINTS } from '@/config/api';
-import type { DocumentReference } from '@/types/project';
-import { DSLData } from '@/types/dsl';
+import { API_ENDPOINTS, buildApiUrl, currentApiConfig } from '@/config/api';
 import type {
+  CreateDataModelGroupRequest,
   DataModel,
   DataModelGroup,
-  CreateDataModelGroupRequest,
   UpdateDataModelGroupRequest,
-  CreateDataModelRequest,
-  UpdateDataModelRequest,
 } from '@/types/dataModel';
+import type { DocumentReference } from '@/types/project';
 import type {
+  CreateRestApiGroupRequest,
+  CreateRestApiRequest,
   RestApi,
   RestApiGroup,
-  CreateRestApiRequest,
-  UpdateRestApiRequest,
-  CreateRestApiGroupRequest,
   UpdateRestApiGroupRequest,
+  UpdateRestApiRequest,
 } from '@/types/restApi';
+import { CreateDataModelRequest, DSLData, UpdateDataModelRequest } from '@fta/shared';
 
 // 请求配置接口
 export interface RequestConfig {

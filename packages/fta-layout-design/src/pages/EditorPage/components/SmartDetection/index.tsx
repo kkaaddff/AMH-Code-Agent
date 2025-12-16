@@ -1,4 +1,4 @@
-import { DSLData, DSLNode } from '@/types/dsl';
+import { DSLData, DSLNode } from '@fta/shared';
 import { App } from 'antd';
 import confetti from 'canvas-confetti';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';

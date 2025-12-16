@@ -28,7 +28,7 @@ export interface ComponentSchema {
 // 注意：仅使用必要字段，保持运行时轻量映射
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import rawSchemas from './component-schemas.json';
+import rawSchemas from '@fta/shared/data/component-schemas.json';
 
 type RawProperty = {
   name: string;

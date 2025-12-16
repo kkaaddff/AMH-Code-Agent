@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { AnnotationNode } from '@fta/shared';
 import { App, Input, Modal, Radio, Spin, Typography } from 'antd';
 import html2canvas from 'html2canvas';
-
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './index.css';
-import { AnnotationNode } from '../../types/componentDetection';
 
 type ConflictChoice = 'left' | 'right' | 'both';
 

@@ -1,12 +1,13 @@
+import TypeScriptEditor from '@/components/TypeScriptEditor';
 import { dataModelService } from '@/services/dataModelService';
-import type { CreateDataModelRequest, DataModelGroup, TypeScriptEditorLanguage } from '@/types/dataModel';
+import type { DataModelGroup, TypeScriptEditorLanguage } from '@/types/dataModel';
 import { DEFAULT_TS_TEMPLATES } from '@/types/dataModel';
 import { RobotOutlined, WarningOutlined } from '@ant-design/icons';
+import { CreateDataModelRequest } from '@fta/shared';
 import { App, Button, Form, Input, Modal, Select, Space, Tabs, Tooltip, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useSnapshot } from 'valtio';
 import { editorPageActions, editorPageStore } from '../../contexts/EditorPageContext';
-import TypeScriptEditor from '@/components/TypeScriptEditor';
 import AiParseModal from '../AiParseModal';
 import './index.css';
 

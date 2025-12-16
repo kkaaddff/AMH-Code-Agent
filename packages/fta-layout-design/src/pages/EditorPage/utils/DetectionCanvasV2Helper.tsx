@@ -1,4 +1,4 @@
-import type { DSLNode, DesignData, AnnotationNode } from '@/types/dsl';
+import type { DSLNode, DesignData, AnnotationNode } from '@fta/shared';
 import { useState, useEffect, useCallback } from 'react';
 import { GRID_CONFIG, COLORS } from '../constants/CanvasConstant';
 import { isNodeHidden } from './nodeUtils';
